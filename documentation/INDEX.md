@@ -24,16 +24,22 @@ npm run validate    # Pre-commit checks
 
 System design and patterns — [architecture/](./architecture/)
 
-| Document                                                       | Description                         |
-| -------------------------------------------------------------- | ----------------------------------- |
-| [System Architecture](./architecture/system-architecture.md)   | Six-layer architecture overview     |
-| [Data Flow](./architecture/data-flow.md)                       | Data processing pipelines           |
-| [Component Hierarchy](./architecture/component-hierarchy.md)   | React component tree                |
-| [Worker Dependencies](./architecture/worker-dependencies.md)   | Web worker task graph               |
-| [Performance Patterns](./architecture/performance-patterns.md) | Optimization strategies             |
-| [Components](./architecture/COMPONENTS.md)                     | Reusable UI component API reference |
-| [Nested Error Usage](./architecture/NESTED_ERROR_USAGE.md)     | Error handling patterns             |
-| [Optimization Guide](./architecture/OPTIMIZATION_GUIDE.md)     | Fetch optimization strategies       |
+| Document                                                                             | Description                           |
+| ------------------------------------------------------------------------------------ | ------------------------------------- |
+| [System Architecture](./architecture/system-architecture.md)                         | Six-layer architecture overview       |
+| [Data Flow](./architecture/data-flow.md)                                             | Data processing pipelines             |
+| [Component Hierarchy](./architecture/component-hierarchy.md)                         | React component tree                  |
+| [Worker Dependencies](./architecture/worker-dependencies.md)                         | Web worker task graph                 |
+| [Performance Patterns](./architecture/performance-patterns.md)                       | Optimization strategies               |
+| [Components](./architecture/COMPONENTS.md)                                           | Reusable UI component API reference   |
+| [Nested Error Usage](./architecture/NESTED_ERROR_USAGE.md)                           | Error handling patterns               |
+| [Optimization Guide](./architecture/OPTIMIZATION_GUIDE.md)                           | Fetch optimization strategies         |
+| [Replay Actor Model Pipeline](./architecture/fight-replay-actor-model-pipeline.md)   | Reconstructed NPC model workflow      |
+| [Replay NPC Pipeline Runbook](./architecture/fight-replay-npc-pipeline-runbook.md)   | How to build a new NPC, and the traps |
+| [Replay NPC Asset Manifest](./architecture/fight-replay-npc-asset-manifest.md)       | Shipped NPC assets, budgets, coverage |
+| [Replay NPC Reference Catalog](./architecture/fight-replay-npc-reference-catalog.md) | Which bosses have reference plates    |
+| [Replay NPC GPU Queue Log](./architecture/fight-replay-npc-gpu-queue-log.md)         | Sequential GPU job record + lessons   |
+| [Replay Yandir Asset](./architecture/fight-replay-yandir-asset.md)                   | First reconstructed boss handoff      |
 
 ### Features
 

@@ -188,6 +188,12 @@ const AboutPage = React.lazy(() =>
   import('./pages/AboutPage').then((module) => ({ default: module.AboutPage })),
 );
 
+const ReplayModelViewerPage = React.lazy(() =>
+  import('./pages/ReplayModelViewerPage').then((module) => ({
+    default: module.ReplayModelViewerPage,
+  })),
+);
+
 const KalpaPage = React.lazy(() =>
   import('./pages/KalpaPage').then((module) => ({ default: module.KalpaPage })),
 );
@@ -1057,6 +1063,16 @@ const AppRoutes: React.FC = () => {
                 <ErrorBoundary>
                   <Suspense fallback={<LoadingFallback />}>
                     <WhatsNewPage />
+                  </Suspense>
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/replay-models"
+              element={
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <ReplayModelViewerPage />
                   </Suspense>
                 </ErrorBoundary>
               }

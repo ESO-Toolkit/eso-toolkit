@@ -1,0 +1,133 @@
+{
+  "slug": "orphic-shattered-shard",
+  "display_name": "Orphic Shattered Shard",
+  "aliases": [
+    "Orphic Shattered Shard",
+    "Shattered Shard"
+  ],
+  "encounter": {
+    "trial": "Lucent Citadel",
+    "encounter": "Orphic Shattered Shard",
+    "role": "boss",
+    "notes": "Large hulking crystalline humanoid; first Lucent Citadel coverage. Body is a mosaic of blue/violet crystal plates over a black substrate with molten orange-gold seams down the arms, chest and thighs. Head is a small faceted crystal mask with a spiked crest, sunk between very wide spiked shoulders. Long forward-held arms, one clawed hand, one broad flat blade/paddle hand. Spikes protrude from shoulders, forearms, hips, thighs and calves."
+  },
+  "work_dir": "build/orphic-shattered-shard",
+  "reference": {
+    "page_url": "https://esomodelviewer.com/characters/post/180-shattered-shard",
+    "directory": "orphic-shattered-shard-references",
+    "identity_note": "CONFIDENCE CAVEAT, stated deliberately. The source post is titled for the SPECIES (Shattered Shard) and does NOT name the Orphic variant; its body text describes them only as large, hulking humanoids made of crystal. This is family inference, not the direct identification we had for Lord Falgravn, whose page body text named him. The BASE MESH is certain - a Shattered Shard is a Shattered Shard. The TINT is not: the Orphic version is most likely a retint of this model, and the blue/violet-with-gold-seams colour shipped here comes from the generic species plates. Expect colour to need hand-tuning against in-game Lucent Citadel footage before this is treated as final.",
+    "orientation_check": "VERIFIED BY EYE before projecting, on plates/front-native.png and plates/back-native.png, per the standing rule after a set was once dropped front/back swapped. front (view-01) shows the faceted face mask, the orange molten chest seams, the forward-hanging clawed hand, the blade hand and the toes. back (view-03) shows the spiked dorsal crest, the shoulder blades, the buttocks, the calf spikes and the heels, and NO face. Convention holds. Same pose in both plates: the arms are held forward so they foreshorten from behind, and the mirrored clawed/blade hands correspond correctly - no pose mismatch. NOTE the head is entirely absent from the BACK silhouette (the dorsal crest rises above and in front of it), so back-of-head texels are grazing-fill, not observed.",
+    "plates": {
+      "front": {
+        "file": "view-01.jpg",
+        "role": "full-body-front"
+      },
+      "back": {
+        "file": "view-03.jpg",
+        "role": "full-body-back"
+      }
+    },
+    "closeups": [
+      {
+        "file": "view-04.jpg",
+        "role": "helm",
+        "view": "front",
+        "region": "head",
+        "accepted": false,
+        "registration": {
+          "scale": 0.32,
+          "row": 158.24,
+          "col": 337.88,
+          "width_error": 0.11366,
+          "method": "head-region-silhouette",
+          "profile_variation": 0.5832,
+          "seed_window_excluded_best": true
+        },
+        "rejected_reason": "REJECTED on the overlay, not on the number. This is a genuine front head closeup and would have been the documented fix for the run-mismatch warning, so it was tried first. Two disqualifying facts: (1) the fitter's best scale 0.320 fell OUTSIDE the seeded window [0.430, 0.958] and the tool itself flagged the closeup's shoulder detection as unreliable - the shoulders are cropped out of frame; (2) view-04 is shot from a LOW camera looking up at the subject, and the registration is scale+translate only, so no fit can reconcile the perspective. On plates/registration/front-view-04.png the closeup's shoulder line sits visibly wider and higher than the base plate's. Per the standing rule, a plate that cannot be verified is rejected rather than forced: a wrong plate on the face is far worse than a soft one."
+      },
+      {
+        "file": "view-08.jpg",
+        "role": "torso",
+        "view": "back",
+        "accepted": false,
+        "registration": {
+          "scale": 0.62,
+          "row": 163.1,
+          "col": 61.47,
+          "width_error": 0.04569,
+          "method": "silhouette-profile",
+          "profile_variation": 0.2199
+        },
+        "rejected_reason": "REJECTED on the overlay despite the lowest width error measured here (4.57%) - which is exactly the Shade-of-Siroria lesson that width error is not a reliability signal. On plates/registration/back-view-08.png the closeup's arms and legs are visibly displaced from the base plate's; the two silhouettes do not coincide. view-08 is a three-quarter-ish back crop, not an orthographic back view."
+      }
+    ]
+  },
+  "geometry": {
+    "source": "build/orphic-shattered-shard/orphic-shattered-shard-draft.glb",
+    "decimate": true,
+    "target_triangles": 45000,
+    "max_triangles": 47000,
+    "provenance": "Tencent Hunyuan3D-2mv (fp16, 50 steps, octree 380, seed 12345) from the letterboxed view-01/view-03 plates (1336px square). Draft: 873,740 faces, 91.4s - by far the highest draft face count in this project (previous high 324,924), because the subject is covered in several hundred small crystal spikes that marching cubes resolves individually.",
+    "budget_note": "45,000 - the STANDARD boss band (20-50k), not a hero exception. Falgravn and Olms took 70k only because thin wing membranes are the weakest case for marching-cubes reconstruction; this is a solid humanoid and does not qualify. See the README for the honest cost: decimating 873,740 -> 45,000 (19.4x) rounds off the smaller spikes."
+  },
+  "atlas": {
+    "size": 1024,
+    "jpeg_quality": 92,
+    "roughness": 0.78,
+    "material_name": "orphic-shattered-shard-atlas"
+  },
+  "uv_density": {
+    "head_scale": 1.0,
+    "head_v": 0.8,
+    "leg_scale": 1.0,
+    "leg_v": 0.45,
+    "ramp": 0.08,
+    "note": "Legacy scalar warp disabled; regions.boxes drives the density warp instead."
+  },
+  "projection": {
+    "supersample": 2,
+    "depth_size": 2048,
+    "pack_resolution": 2048,
+    "pack_padding": 4,
+    "blend_power": 3.0,
+    "silhouette_inset": 0.02,
+    "grazing_threshold": 0.35,
+    "dilate": 24,
+    "closeup_feather": 60,
+    "envelope_sigma": 3.0
+  },
+  "tone": {
+    "contrast": 1.08,
+    "saturation": 1.1
+  },
+  "unsharp": {
+    "sigma": 0.7,
+    "amount": 0.45,
+    "threshold": 0.01569
+  },
+  "output": {
+    "directory": "build/orphic-shattered-shard/out",
+    "suffix": "-overview-v1",
+    "max_bytes": 2500000
+  },
+  "rights": "The Elder Scrolls Online name, character design and related rights remain with ZeniMax Media/Bethesda Softworks. Reconstructed from published screenshots for an authorized fan prototype; not a claim that the IP is freely licensed.",
+  "regions": {
+    "boxes": [
+      {
+        "name": "skull",
+        "box": [
+          0.398,
+          0.795,
+          0.12,
+          0.622,
+          1.0,
+          0.9
+        ],
+        "feather": 0.04,
+        "uv_scale": 3.0
+      }
+    ],
+    "note": "A box rather than a scalar head_v_min, because at head height this silhouette is dominated by the spiked shoulders: at normalized y 0.90-0.92 the mesh spans x 0.22-0.85, so any height band wide enough to contain the jaw also swallows both pauldrons and their spikes and dilutes the boost. Boxes measured on THIS mesh. Verified visually on a membership render (box-check/) BEFORE spending projection time, per the standing rule from Olms - and it paid again, exactly as it did on Falgravn. The first placement (y0=0.885, from a naive slice scan that found x narrowing to 0.40-0.63 only above y=0.95) claimed the crown and crest and left the ENTIRE FACE outside the box; no downstream metric would have reported that. A second placement at y0=0.775 with x 0.375-0.645 captured the face but spilled a block onto the inner shoulders. The shipped box is the third: the three-quarter membership render shows red on the face, crest, jaw and neck and nothing else - torso, arms, hands, legs and feet unclaimed. 14,590 of 134,971 vertices (10.8%).",
+    "targeting_rationale": "Measured on this mesh, not transferred. Sweep on the decimated mesh (unwrap + measure only, no projection), head front-facing texels vs body front-facing texels: scale 1.0 -> 122^2 head / 364^2 body; 2.0 -> 209^2 / 330^2; 2.5 -> 238^2 / 313^2; 3.0 -> 262^2 / 299^2; 3.5 -> 279^2 / 286^2; 4.0 -> 293^2 / 276^2; 5.0 -> 313^2 / 262^2. Shipped 3.0. It is the smallest scale that clears the project humanoid bar of face >= 256^2 (262^2), and the body pays only 364^2 -> 299^2 for it. Deliberately NOT pushed further: the head occupies roughly 206 x 180 px in the source plate, so past about 260^2 the atlas is oversampling information the reference does not contain, and every texel beyond that is taken from the crystal-mosaic body surface - which is where this NPC identity actually lives, since the head is a smooth faceted mask with no face to resolve. Do not read 3.0 as a Falgravn/Olms number carried over; those were 5.0 and 4.0 against competing wing boxes."
+  }
+}

@@ -1,0 +1,415 @@
+import { existsSync } from 'fs';
+import { join } from 'path';
+
+import type { ActorPosition } from '../../../workers/calculations/CalculateActorPositions';
+
+import {
+  COOL_STICKMAN_ASSET,
+  NEUTRAL_MODEL_TINT,
+  type StaticReplayActorModelAsset,
+  resolveStaticModelTint,
+  resolveReplayModelUrl,
+  STATIC_REPLAY_ACTOR_MODEL_ASSETS,
+  findStaticActorModel,
+  normalizeActorName,
+  parseNpcModelPreviewMode,
+  resolveReplayActorModel,
+} from './replayActorModelRegistry';
+
+type TestActor = Pick<ActorPosition, 'type'> & { name?: string };
+
+const actor = (type: ActorPosition['type'], name?: string): TestActor => ({ type, name });
+
+describe('parseNpcModelPreviewMode', () => {
+  it('only accepts the exact prototype value', () => {
+    expect(parseNpcModelPreviewMode('prototype')).toBe('prototype');
+    expect(parseNpcModelPreviewMode('Prototype')).toBe('off');
+    expect(parseNpcModelPreviewMode('true')).toBe('off');
+    expect(parseNpcModelPreviewMode('')).toBe('off');
+    expect(parseNpcModelPreviewMode(null)).toBe('off');
+  });
+});
+
+describe('normalizeActorName', () => {
+  it('folds case, whitespace, apostrophes, and ESO Logs instance suffixes', () => {
+    expect(normalizeActorName('  Yandir   the Butcher ')).toBe('yandir the butcher');
+    expect(normalizeActorName('Yandir the Butcher #2')).toBe('yandir the butcher');
+    expect(normalizeActorName('Yandir the Butcher #17')).toBe('yandir the butcher');
+    expect(normalizeActorName('Kyne’s Aegis')).toBe("kyne's aegis");
+    expect(normalizeActorName(undefined)).toBe('');
+  });
+
+  it('does not strip a mid-name hash that is not an instance suffix', () => {
+    expect(normalizeActorName('Boss #2 Phase')).toBe('boss #2 phase');
+  });
+});
+
+describe('findStaticActorModel', () => {
+  it('matches a known boss by exact normalized name', () => {
+    expect(findStaticActorModel(actor('boss', 'Yandir the Butcher'))?.id).toBe(
+      'yandir-the-butcher-overview-v2',
+    );
+  });
+
+  it('matches the same boss when ESO Logs reports it as a plain enemy or adds an instance suffix', () => {
+    expect(findStaticActorModel(actor('enemy', 'yandir the butcher'))?.id).toBe(
+      'yandir-the-butcher-overview-v2',
+    );
+    expect(findStaticActorModel(actor('boss', 'Yandir the Butcher #2'))?.id).toBe(
+      'yandir-the-butcher-overview-v2',
+    );
+  });
+
+  it('refuses unsafe partial matches so an NPC never borrows another actor mesh', () => {
+    expect(findStaticActorModel(actor('boss', 'Yandir'))).toBeNull();
+    expect(findStaticActorModel(actor('boss', 'Yandir the Butchers Apprentice'))).toBeNull();
+    expect(findStaticActorModel(actor('enemy', 'Shade of Yandir the Butcher'))).toBeNull();
+  });
+
+  it('does not give hostile art to friendly actor types', () => {
+    expect(findStaticActorModel(actor('player', 'Yandir the Butcher'))).toBeNull();
+    expect(findStaticActorModel(actor('friendly_npc', 'Yandir the Butcher'))).toBeNull();
+    expect(findStaticActorModel(actor('pet', 'Yandir the Butcher'))).toBeNull();
+  });
+
+  it('returns null for unknown and unnamed actors', () => {
+    expect(findStaticActorModel(actor('boss', 'Some Unshipped Boss'))).toBeNull();
+    expect(findStaticActorModel(actor('enemy', undefined))).toBeNull();
+    expect(findStaticActorModel(actor('enemy', '   '))).toBeNull();
+  });
+});
+
+describe('resolveReplayActorModel', () => {
+  it('always gives players the CC0 flipbook regardless of preview mode', () => {
+    expect(resolveReplayActorModel(actor('player', 'Someone'), 'off')).toBe(COOL_STICKMAN_ASSET);
+    expect(resolveReplayActorModel(actor('player', 'Someone'), 'prototype')).toBe(
+      COOL_STICKMAN_ASSET,
+    );
+  });
+
+  it('keeps every hostile on the capsule until the prototype flag is set', () => {
+    expect(resolveReplayActorModel(actor('boss', 'Yandir the Butcher'), 'off')).toBeNull();
+    expect(resolveReplayActorModel(actor('enemy', 'Half-Giant Raider'), 'off')).toBeNull();
+  });
+
+  it('resolves a shipped boss only in prototype mode', () => {
+    expect(resolveReplayActorModel(actor('boss', 'Yandir the Butcher'), 'prototype')?.id).toBe(
+      'yandir-the-butcher-overview-v2',
+    );
+  });
+
+  it('resolves each shipped Kyne’s Aegis boss to its own asset', () => {
+    expect(resolveReplayActorModel(actor('boss', 'Captain Vrol'), 'prototype')?.id).toBe(
+      'captain-vrol-overview-v2',
+    );
+    expect(resolveReplayActorModel(actor('enemy', 'captain vrol #3'), 'prototype')?.id).toBe(
+      'captain-vrol-overview-v2',
+    );
+    expect(resolveReplayActorModel(actor('boss', 'Lord Falgravn'), 'prototype')?.id).toBe(
+      'lord-falgravn-overview-v1',
+    );
+  });
+
+  it('resolves the extracted-mesh bosses, and never lends them to their own adds', () => {
+    expect(resolveReplayActorModel(actor('boss', 'Stonebreaker'), 'prototype')?.id).toBe(
+      'stonebreaker-overview-v1',
+    );
+    expect(resolveReplayActorModel(actor('boss', 'Possessed Mantikora'), 'prototype')?.id).toBe(
+      'possessed-mantikora-overview-v1',
+    );
+    expect(
+      resolveReplayActorModel(actor('boss', 'Foundation Stone Atronach'), 'prototype')?.id,
+    ).toBe('foundation-stone-atronach-overview-v1');
+    // The Serpent encounter spawns plain Mantikora adds and several trials spawn plain stone
+    // atronachs. Neither may borrow the boss body - that would misread the fight.
+    expect(resolveReplayActorModel(actor('enemy', 'Mantikora'), 'prototype')).toBeNull();
+    expect(resolveReplayActorModel(actor('enemy', 'Stone Atronach'), 'prototype')).toBeNull();
+  });
+
+  it('separates the boss and dungeon tiers of the same body', () => {
+    // Same GLB, two entries, two scales. The dungeon `Storm Atronach` is the 4th most frequent name
+    // in the measured dungeon corpus (74 fight-appearances) and IS the same mesh — the model viewer
+    // says this body serves "generic Storm Atronachs" — so this is a tier split, not a lookalike.
+    const scaleOf = (name: string, type: 'boss' | 'enemy', expectedId: string) => {
+      const asset = resolveReplayActorModel(actor(type, name), 'prototype');
+      expect(asset?.id).toBe(expectedId);
+      if (!asset || asset.renderer !== 'static-boss')
+        throw new Error(`${name} is not a static boss`);
+      return asset;
+    };
+
+    const boss = scaleOf(
+      'Lightning Storm Atronach',
+      'boss',
+      'lightning-storm-atronach-overview-v1',
+    );
+    const trash = scaleOf('Storm Atronach', 'enemy', 'storm-atronach-trash-overview-v1');
+    expect(trash.path).toBe(boss.path);
+    expect(trash.transform.scale).toBeLessThan(boss.transform.scale);
+
+    // `Ruined Factotum` is verified HoF trash and shares the Saint Llothis body one tier down.
+    const factotumBoss = scaleOf('Pinnacle Factotum', 'boss', 'hof-factotum-overview-v1');
+    const factotumTrash = scaleOf('Ruined Factotum', 'enemy', 'ruined-factotum-trash-overview-v1');
+    expect(factotumTrash.path).toBe(factotumBoss.path);
+    expect(factotumTrash.transform.scale).toBeLessThan(factotumBoss.transform.scale);
+  });
+
+  it('covers the Refabrication Committee with the verified bare actor names', () => {
+    // Queried against four real Halls of Fabrication reports: the members are `Reducer`, not
+    // `Refabricated Reducer`. A guessed alias would fail silently to a capsule.
+    for (const name of ['Reducer', 'Reclaimer', 'Reactor']) {
+      expect(resolveReplayActorModel(actor('boss', name), 'prototype')?.id).toBe(
+        'hof-factotum-overview-v1',
+      );
+    }
+    // The refabricated ADDS are a different body and must not borrow it.
+    expect(resolveReplayActorModel(actor('enemy', 'Refabricated Sphere'), 'prototype')).toBeNull();
+    expect(resolveReplayActorModel(actor('enemy', 'Refabricated Spider'), 'prototype')).toBeNull();
+  });
+
+  it('falls back to the capsule for unrecognized hostiles instead of substituting another model', () => {
+    expect(resolveReplayActorModel(actor('enemy', 'Unmodelled Trash Mob'), 'prototype')).toBeNull();
+    // Kazpian has no reference imagery anywhere, so he is the durable stand-in for an unmodelled
+    // boss. This slot previously held Falgravn, who now ships - if Kazpian is ever built, move
+    // this to another unmodelled boss rather than deleting the assertion.
+    expect(resolveReplayActorModel(actor('boss', 'Overfiend Kazpian'), 'prototype')).toBeNull();
+    // A partial name must never borrow the full-name asset's body.
+    expect(resolveReplayActorModel(actor('boss', 'Vrol'), 'prototype')).toBeNull();
+    expect(resolveReplayActorModel(actor('boss', 'Falgravn the Lesser'), 'prototype')).toBeNull();
+  });
+
+  // Lesser enemies that reuse an already-shipped GLB. Names below are copied verbatim from
+  // `src/types/trial-encounters.ts`; matching is exact, so a typo fails silently to a capsule.
+  it("gives The Serpent's Image the Celestial Serpent's own asset", () => {
+    // Not a lookalike — the Image IS the Serpent's duplicate, so this is a faithful reuse.
+    expect(resolveReplayActorModel(actor('enemy', "The Serpent's Image"), 'prototype')?.id).toBe(
+      'the-serpent-overview-v1',
+    );
+    // Typographic apostrophe and the ESO Logs instance suffix both fold into the same alias.
+    expect(resolveReplayActorModel(actor('boss', 'The Serpent’s Image #2'), 'prototype')?.id).toBe(
+      'the-serpent-overview-v1',
+    );
+    expect(resolveReplayActorModel(actor('boss', 'The Serpent'), 'prototype')?.id).toBe(
+      'the-serpent-overview-v1',
+    );
+  });
+
+  it('keeps both Half-Giants on the capsule rather than lending them a Sea Giant body', () => {
+    // Captain Vrol's post puts the Half-Giants in his force but distinguishes them FROM Sea
+    // Giants, and the UESP research in the asset manifest lists them as Nords on the standard
+    // character rig. Vrol's body is therefore a lookalike, not a match, and the catalog's rule
+    // is that a wrong body misleads more than an abstract marker does.
+    expect(resolveReplayActorModel(actor('enemy', 'Half-Giant Bulwark'), 'prototype')).toBeNull();
+    expect(resolveReplayActorModel(actor('enemy', 'Half-Giant Raider'), 'prototype')).toBeNull();
+  });
+
+  it('gives both Sanctum Ophidia trolls the Craglorn troll body, smaller than Stonebreaker', () => {
+    const rockheaver = resolveReplayActorModel(actor('enemy', 'Rockheaver Troll'), 'prototype');
+    const berserker = resolveReplayActorModel(actor('enemy', 'Berserker Troll'), 'prototype');
+    expect(rockheaver?.id).toBe('craglorn-troll-trash-overview-v1');
+    expect(berserker?.id).toBe('craglorn-troll-trash-overview-v1');
+    const stonebreaker = resolveReplayActorModel(actor('boss', 'Stonebreaker'), 'prototype');
+    expect((rockheaver as StaticReplayActorModelAsset).path).toBe(
+      (stonebreaker as StaticReplayActorModelAsset).path,
+    );
+    expect((rockheaver as StaticReplayActorModelAsset).transform.scale).toBeLessThan(
+      (stonebreaker as StaticReplayActorModelAsset).transform.scale,
+    );
+  });
+
+  it('never lets a near-miss name borrow one of the reused bodies', () => {
+    // The whole point of the registry is that it does not partial-match or substitute a lookalike.
+    // Every name below is a plausible neighbour of a name that DOES resolve above.
+    [
+      'Serpent',
+      "The Serpent's Shadow",
+      'Image of the Serpent',
+      'Half-Giant',
+      'Half-Giant Raider Captain',
+      'Giant',
+      'Troll',
+      'Rockheaver',
+      'Frost Troll',
+      'Berserker',
+      'Berserker Trolls',
+    ].forEach((name) => {
+      expect(resolveReplayActorModel(actor('enemy', name), 'prototype')).toBeNull();
+    });
+  });
+
+  it('keeps friendly npcs and pets on the capsule', () => {
+    expect(resolveReplayActorModel(actor('friendly_npc', 'Ally'), 'prototype')).toBeNull();
+    expect(resolveReplayActorModel(actor('pet', 'Twilight'), 'prototype')).toBeNull();
+  });
+});
+
+describe('registry catalog integrity', () => {
+  it('ships provenance and a runtime path for every reconstructed asset', () => {
+    for (const asset of STATIC_REPLAY_ACTOR_MODEL_ASSETS) {
+      expect(asset.path).toMatch(/^models\/.+\.glb$/);
+      expect(asset.provenance.attributionFile).toMatch(/^public\/models\/.+\.md$/);
+      expect(asset.provenance.sourceUrl).toMatch(/^https:\/\//);
+      expect(asset.provenance.designation).toBe('project-authorized-fan-prototype');
+      expect(asset.transform.modelHeight).toBeGreaterThan(0);
+      expect(asset.transform.scale).toBeGreaterThan(0);
+    }
+  });
+
+  it('stores aliases already normalized so lookups can compare directly', () => {
+    for (const asset of STATIC_REPLAY_ACTOR_MODEL_ASSETS) {
+      expect(asset.aliases.length).toBeGreaterThan(0);
+      for (const alias of asset.aliases) {
+        expect(alias).toBe(normalizeActorName(alias));
+      }
+    }
+  });
+
+  it('never lets two assets claim the same alias', () => {
+    const seen = new Set<string>();
+    for (const asset of STATIC_REPLAY_ACTOR_MODEL_ASSETS) {
+      for (const alias of asset.aliases) {
+        expect(seen.has(alias)).toBe(false);
+        seen.add(alias);
+      }
+    }
+  });
+
+  // Two entries MAY share one GLB — that is how a lesser enemy reuses a shipped body while
+  // keeping its own transform — but the shared path still has to exist. A registry entry pointing
+  // at a file that was never built fails silently: the loader errors and the actor keeps the
+  // capsule, which is indistinguishable from "this NPC has no model".
+  it('points every entry at a GLB that is actually on disk', () => {
+    for (const asset of STATIC_REPLAY_ACTOR_MODEL_ASSETS) {
+      expect(existsSync(join(process.cwd(), 'public', asset.path))).toBe(true);
+      expect(existsSync(join(process.cwd(), asset.provenance.attributionFile))).toBe(true);
+    }
+  });
+
+  it('uses unique asset ids', () => {
+    const ids = STATIC_REPLAY_ACTOR_MODEL_ASSETS.map((asset) => asset.id);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+});
+
+describe('resolveReplayModelUrl', () => {
+  // Regression: the replay always renders on a nested route, so a bare catalog path resolved
+  // against the current URL and 404'd. The loader then errored and the capsule fallback took
+  // over, which looks identical to "this boss has no model" — a silent failure.
+  it('joins catalog paths to a sub-path deployment base, not the current route', () => {
+    expect(
+      resolveReplayModelUrl('models/fight-replay/npcs/boss.glb', '/dev-previews/pr-1516/'),
+    ).toBe('/dev-previews/pr-1516/models/fight-replay/npcs/boss.glb');
+  });
+
+  it('handles a root deployment', () => {
+    expect(resolveReplayModelUrl('models/a.glb', '/')).toBe('/models/a.glb');
+  });
+
+  it('adds a missing trailing slash on the base', () => {
+    expect(resolveReplayModelUrl('models/a.glb', '/base')).toBe('/base/models/a.glb');
+  });
+
+  it('falls back to root when the base is empty or undefined', () => {
+    expect(resolveReplayModelUrl('models/a.glb', undefined)).toBe('/models/a.glb');
+    expect(resolveReplayModelUrl('models/a.glb', '')).toBe('/models/a.glb');
+  });
+
+  it('never doubles the separator when the path is already root-relative', () => {
+    expect(resolveReplayModelUrl('/models/a.glb', '/base/')).toBe('/base/models/a.glb');
+  });
+
+  it('produces a usable url for every shipped asset', () => {
+    for (const asset of STATIC_REPLAY_ACTOR_MODEL_ASSETS) {
+      const url = resolveReplayModelUrl(asset.path, '/dev-previews/pr-1/');
+      expect(url.startsWith('/dev-previews/pr-1/models/')).toBe(true);
+      expect(url).not.toContain('//models');
+    }
+  });
+});
+
+describe('resolveStaticModelTint', () => {
+  const base: StaticReplayActorModelAsset = {
+    id: 'tint-fixture',
+    path: 'models/fight-replay/npcs/tint-fixture.glb',
+    renderer: 'static-boss',
+    actorTypes: ['boss', 'enemy'],
+    aliases: ['blood knight', 'crimson knight'],
+    transform: {
+      orientEuler: [0, 0, 0],
+      scale: 1,
+      yOffset: 0,
+      yawOffset: 0,
+      modelHeight: 2,
+    },
+    provenance: {
+      designation: 'project-authorized-fan-prototype',
+      sourceUrl: 'https://example.invalid/fixture',
+      attributionFile: 'public/models/fight-replay/npcs/README-fixture.md',
+    },
+  };
+
+  it('is neutral when the asset declares no tint at all', () => {
+    expect(resolveStaticModelTint(base, 'Blood Knight')).toBe(NEUTRAL_MODEL_TINT);
+  });
+
+  it('tints only the one asset that deliberately declares them', () => {
+    // This guard used to assert that NO catalog entry was tinted, which was the right check while
+    // the feature shipped inert. The Bloodknight now uses it on purpose, so the guard is narrowed
+    // rather than dropped: everything else must still resolve to neutral, so an accidental or
+    // stray tint is still caught.
+    const tinted = STATIC_REPLAY_ACTOR_MODEL_ASSETS.filter(
+      (asset) => asset.tint !== undefined || asset.aliasTints !== undefined,
+    ).map((asset) => asset.id);
+    expect(tinted).toEqual(['bloodknight-overview-v1']);
+
+    STATIC_REPLAY_ACTOR_MODEL_ASSETS.filter((asset) => !tinted.includes(asset.id)).forEach(
+      (asset) => {
+        asset.aliases.forEach((alias) => {
+          expect(resolveStaticModelTint(asset, alias)).toBe(NEUTRAL_MODEL_TINT);
+        });
+      },
+    );
+  });
+
+  it('resolves each Bloodknight sibling to its own tint through the real catalog entry', () => {
+    // The keys of `aliasTints` are NOT normalized on lookup — only the incoming actor name is — so
+    // a key written in title case would silently never match and produce no type error. These
+    // assertions exist to catch exactly that.
+    const knight = STATIC_REPLAY_ACTOR_MODEL_ASSETS.find(
+      (asset) => asset.id === 'bloodknight-overview-v1',
+    );
+    expect(knight).toBeDefined();
+    if (!knight) return;
+    // Blood Knight is the colour the atlas was actually built at, so it must stay neutral.
+    expect(resolveStaticModelTint(knight, 'Blood Knight')).toEqual([1, 1, 1]);
+    // The two siblings are name-derived estimates, but they must at least resolve to something
+    // other than neutral, which is what proves the keys match.
+    expect(resolveStaticModelTint(knight, 'Crimson Knight')).not.toEqual([1, 1, 1]);
+    expect(resolveStaticModelTint(knight, 'Bitter Knight')).not.toEqual([1, 1, 1]);
+    // An instance suffix must still resolve — ESO Logs appends ` #2` for duplicate spawns.
+    expect(resolveStaticModelTint(knight, 'Crimson Knight #2')).toEqual(
+      resolveStaticModelTint(knight, 'Crimson Knight'),
+    );
+  });
+
+  it('falls back to the asset-wide tint for an alias with no override', () => {
+    const asset = { ...base, tint: [0.9, 0.9, 1] as const };
+    expect(resolveStaticModelTint(asset, 'Blood Knight')).toEqual([0.9, 0.9, 1]);
+  });
+
+  it('prefers a per-alias tint over the asset-wide one', () => {
+    const asset = {
+      ...base,
+      tint: [0.9, 0.9, 1] as const,
+      aliasTints: { 'crimson knight': [1.2, 0.55, 0.55] as const },
+    };
+    expect(resolveStaticModelTint(asset, 'Crimson Knight')).toEqual([1.2, 0.55, 0.55]);
+    expect(resolveStaticModelTint(asset, 'Blood Knight')).toEqual([0.9, 0.9, 1]);
+  });
+
+  it('normalizes the actor name before matching an alias tint', () => {
+    const asset = { ...base, aliasTints: { 'crimson knight': [1.2, 0.55, 0.55] as const } };
+    expect(resolveStaticModelTint(asset, '  CRIMSON   Knight #3 ')).toEqual([1.2, 0.55, 0.55]);
+    expect(resolveStaticModelTint(asset, undefined)).toBe(NEUTRAL_MODEL_TINT);
+  });
+});

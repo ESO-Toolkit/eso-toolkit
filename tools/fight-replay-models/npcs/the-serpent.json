@@ -1,0 +1,158 @@
+{
+  "slug": "the-serpent",
+  "display_name": "The Serpent",
+  "aliases": [
+    "The Serpent"
+  ],
+  "encounter": {
+    "trial": "Celestial",
+    "role": "boss",
+    "notes": "Slimmer red-brown armour, hooded gold mask."
+  },
+  "work_dir": "build/the-serpent-o512",
+  "reference": {
+    "page_url": "https://esomodelviewer.com/characters/post/169-the-serpent",
+    "directory": "the-serpent-references",
+    "plates": {
+      "front": {
+        "file": "view-01.jpg",
+        "role": "full-body-front"
+      },
+      "back": {
+        "file": "view-03.jpg",
+        "role": "full-body-back"
+      }
+    },
+    "side_plates": {
+      "available": false,
+      "note": "No true left/right profile is published. No profile was synthesized; fabricated detail is not permitted."
+    },
+    "closeups": [
+      {
+        "file": "view-07.jpg",
+        "role": "torso",
+        "view": "front",
+        "accepted": true,
+        "registration": {
+          "scale": 0.27,
+          "row": 41.02,
+          "col": 262.84,
+          "width_error": 0.10613,
+          "method": "silhouette-profile",
+          "verified_by": "overlay reviewed 2026-09-06"
+        }
+      },
+      {
+        "file": "view-08.jpg",
+        "role": "torso",
+        "view": "back",
+        "accepted": true,
+        "registration": {
+          "scale": 0.38,
+          "row": 192.0,
+          "col": 175.27,
+          "width_error": 0.07978,
+          "method": "silhouette-profile",
+          "verified_by": "overlay reviewed 2026-09-06"
+        }
+      },
+      {
+        "file": "view-10.jpg",
+        "role": "legs",
+        "view": "front",
+        "accepted": false,
+        "rejected_reason": "overlay boots overshoot below the base feet (4.38%)"
+      },
+      {
+        "file": "view-11.jpg",
+        "role": "legs",
+        "view": "front",
+        "accepted": false,
+        "rejected_reason": "same overshoot signature (2.24%)"
+      },
+      {
+        "file": "view-05.jpg",
+        "role": "face",
+        "view": "front",
+        "accepted": false,
+        "rejected_reason": "UNHELMED bare-face plate; the model wears a hooded gold mask"
+      },
+      {
+        "file": "view-06.jpg",
+        "role": "helm",
+        "view": "front",
+        "accepted": false,
+        "rejected_reason": "back-of-head plate, not verifiable"
+      },
+      {
+        "file": "view-04.jpg",
+        "role": "helm",
+        "view": "front",
+        "region": "head",
+        "accepted": true,
+        "registration": {
+          "scale": 0.136,
+          "row": 118.07,
+          "col": 401.21,
+          "width_error": null,
+          "method": "manual-mask-feature-alignment",
+          "verified_by": "overlay reviewed 2026-09-06; eye sockets, third eye and toothed jaw single-imaged at 8x zoom",
+          "note": "Automatic silhouette registration found no viable fit. At head height the plate silhouette is dominated by the wide gold horn plates, which the reconstruction placed differently, so equal normalized u stops meaning the same feature and face texels sampled hood. Registered instead by aligning the bright bone mask centroid directly, then swept scale 0.126-0.146 and judged on eye-socket doubling; 0.134-0.138 single-image, outside that they double."
+        }
+      }
+    ]
+  },
+  "geometry": {
+    "source": "build/the-serpent/the-serpent-draft-o512.glb",
+    "decimate": true,
+    "target_triangles": 45000,
+    "max_triangles": 50000,
+    "provenance": "Tencent Hunyuan3D-2mv (fp16, 50 steps, octree 512, seed 12345) from view-01/view-03. Draft: 552,520 faces, 104.6s. Octree raised from 380 to sharpen the recessed mask inside the hood."
+  },
+  "atlas": {
+    "size": 1024,
+    "jpeg_quality": 92,
+    "roughness": 0.78,
+    "material_name": "the-serpent-atlas"
+  },
+  "regions": {
+    "head_v_min": 0.7735,
+    "head_feather": 0.12,
+    "note": "shoulder detector 0.7735, verified visually at the collar below the hooded mask"
+  },
+  "uv_density": {
+    "head_scale": 2.4,
+    "head_v": 0.7735,
+    "leg_scale": 1.0,
+    "leg_v": 0.45,
+    "ramp": 0.08,
+    "note": "Tuned for this silhouette: the crested helm plus halo ring is a far larger share of the body than a normal head, so it needs much LESS boost than Vrol (5.5) or Yandir (8.0). head_scale 5.5 overshot to 321^2 with the head taking 38.5% of the atlas; 2.0 lands ~258^2 at ~25%."
+  },
+  "projection": {
+    "supersample": 2,
+    "depth_size": 2048,
+    "pack_resolution": 2048,
+    "pack_padding": 4,
+    "blend_power": 3.0,
+    "silhouette_inset": 0.02,
+    "grazing_threshold": 0.35,
+    "dilate": 24,
+    "closeup_feather": 60,
+    "envelope_sigma": 3.0
+  },
+  "tone": {
+    "contrast": 1.08,
+    "saturation": 1.1
+  },
+  "unsharp": {
+    "sigma": 0.7,
+    "amount": 0.45,
+    "threshold": 0.01569
+  },
+  "output": {
+    "directory": "build/the-serpent-o512/out",
+    "suffix": "-overview-v1",
+    "max_bytes": 2500000
+  },
+  "rights": "The Elder Scrolls Online name, character design and related rights remain with ZeniMax Media/Bethesda Softworks. Reconstructed from published screenshots for an authorized fan prototype; not a claim that the IP is freely licensed."
+}

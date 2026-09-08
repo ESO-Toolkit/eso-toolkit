@@ -9,6 +9,10 @@
 # The CSP host list below is kept in sync with the app's real network surface. The
 # broad img-src https: is intentional: build-guide imports may display user-supplied
 # HTTPS images, while scripts and network requests remain explicitly allowlisted.
+# blob: in connect-src is required by the 3D fight replay: three.js GLTFLoader decodes
+# textures embedded in a .glb through ImageBitmapLoader, which fetches a temporary blob:
+# URL, so connect-src governs it rather than img-src. Without it the geometry still loads
+# and the model renders untextured instead of falling back.
 # Validate in report-only mode before enforcing on a new host.
 /*
   X-Content-Type-Options: nosniff
@@ -16,4 +20,4 @@
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=()
   Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
-  Content-Security-Policy: default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; frame-ancestors 'self'; script-src 'self' __CSP_INLINE_SCRIPT_HASHES__ 'wasm-unsafe-eval' https://www.googletagmanager.com https://cdn.jsdelivr.net; worker-src 'self' blob: https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https:; connect-src 'self' https://www.esologs.com https://roster-hub-api.eso-toolkit.workers.dev https://eso-toolkit-discord-bot.eso-toolkit.workers.dev https://api.github.com https://gist.githubusercontent.com https://api.rollbar.com https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://esolog.uesp.net https://cdn.jsdelivr.net https://tessdata.projectnaptha.com; frame-src 'self' kalpa:; manifest-src 'self'
+  Content-Security-Policy: default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; frame-ancestors 'self'; script-src 'self' __CSP_INLINE_SCRIPT_HASHES__ 'wasm-unsafe-eval' https://www.googletagmanager.com https://cdn.jsdelivr.net; worker-src 'self' blob: https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https:; connect-src 'self' blob: https://www.esologs.com https://roster-hub-api.eso-toolkit.workers.dev https://eso-toolkit-discord-bot.eso-toolkit.workers.dev https://api.github.com https://gist.githubusercontent.com https://api.rollbar.com https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://esolog.uesp.net https://cdn.jsdelivr.net https://tessdata.projectnaptha.com; frame-src 'self' kalpa:; manifest-src 'self'

@@ -1,0 +1,125 @@
+{
+  "slug": "boneman",
+  "display_name": "Boneman",
+  "aliases": [
+    "Boneman"
+  ],
+  "encounter": {
+    "trial": "(dungeons)",
+    "encounter": "skeleton archetype",
+    "role": "trash",
+    "notes": "ARCHETYPE asset, not a single encounter. Skeletons are the largest measured creature archetype in the dungeon corpus - 62 distinct names, 822 appearances - and 100% of dungeon NPCs are capsules today. Catalogued as 'Boneman', which is why a sweep for 'skeleton' missed the whole family."
+  },
+  "work_dir": "build/boneman",
+  "reference": {
+    "page_url": "https://esomodelviewer.com/creatures/post/125-boneman-man-mer",
+    "directory": "boneman-references",
+    "plates": {
+      "front": {
+        "file": "view-01.jpg",
+        "role": "full-body-front"
+      },
+      "back": {
+        "file": "view-03.jpg",
+        "role": "full-body-back"
+      }
+    },
+    "side_plates": {
+      "available": false,
+      "why": "The gallery publishes no full-body left or right profile; view-02 is a three-quarter and the rest are closeups. measure-view-coverage puts the cost at neither-camera 23.1% -> 18.3%, which is modest here because an upright A-pose humanoid is the shape two cameras cover best."
+    },
+    "closeups": [
+      {
+        "file": "view-04.jpg",
+        "role": "skull",
+        "view": "front",
+        "region": "head",
+        "accepted": true,
+        "registration": {
+          "scale": 0.245,
+          "row": 16.51,
+          "col": 290.4,
+          "width_error": 0.11441,
+          "method": "head-region-silhouette",
+          "profile_variation": 0.4989,
+          "suggested_head_v_min": 0.8597,
+          "shoulder_source": "hand-set",
+          "auto_shoulder_v": 0.7043,
+          "head_v_min_override": 0.86,
+          "seed_window_excluded_best": true,
+          "verified_by": "overlay reviewed 2026-09-08: one skull, one pair of glowing eye sockets, one tooth row, one cervical spine. No feature doubling anywhere. The base-plate skull is roughly 4% wider at the temples and its chin sits a few pixels lower, which reads as SOFT rather than doubled - the case the runbook explicitly prefers to a forced fit."
+        },
+        "note": "The FIRST closeup accepted on this project since the Saints, and it only registered because of --head-v-min. The automatic detector returns 0.7043 - the RIBCAGE - because a skeleton's widest upper row is the ribs, not the shoulders. At that band the match would have been ribs-to-ribs and the skull would never have been seen. Hand-set to 0.86, measured off the mesh (the skull occupies v 0.86-1.0 at x 0.40-0.60; the shoulders appear at v 0.82-0.86 spanning x 0.26-0.74)."
+      },
+      {
+        "file": "view-05.jpg",
+        "role": "skull",
+        "view": "front",
+        "region": "head",
+        "accepted": false,
+        "rejected_reason": "13.23% at scale 0.265, against view-04's 11.44% on the same feature. It is a three-quarter skull, so it cannot register to a straight-on base plate as well as view-04 does; there is no reason to take the weaker of two plates for the same region."
+      },
+      {
+        "file": "view-07.jpg",
+        "role": "torso",
+        "view": "front",
+        "accepted": false,
+        "rejected_reason": "4.84% - by far the lowest error measured on this subject, and rejected anyway. The ribcage, spine and pelvis align cleanly, but the overlay doubles both HANDS, offset outward and down by roughly a finger's length. Sixth confirmation on this project that width error is not a reliability signal. The base plate already covers the torso squarely, so there is nothing to gain against a real risk of smeared hands."
+      }
+    ],
+    "closeup_note": "One accepted (the skull), two rejected. Accepting a closeup at all is unusual here - 15 consecutive candidates were rejected across the three assets built earlier in this session - and it was only possible because the head band could be hand-set."
+  },
+  "geometry": {
+    "source": "build/boneman/boneman-draft.glb",
+    "decimate": true,
+    "target_triangles": 5000,
+    "max_triangles": 6000,
+    "provenance": "Tencent Hunyuan3D-2mv (fp16, 50 steps, octree 380, seed 12345) from the letterboxed view-01/view-03 plates (1052px square). Draft: 287,774 faces, 84.1s. The concern going in was that a skeleton is mostly holes - thin bones and gaps that two-view reconstruction would fuse into a mannequin. It did not: the clay render resolves individual ribs, the pelvis, a segmented spine, separated fore/upper arm bones and articulated hands. Screened at 23.1% blind BEFORE any projection time, comfortably inside the shipped band of 5.6-31.5%.",
+    "budget_note": "Lesser-enemy budget: ~5,000 triangles and a 512px atlas, because skeletons appear dozens at a time."
+  },
+  "atlas": {
+    "size": 512,
+    "jpeg_quality": 92,
+    "roughness": 0.55,
+    "material_name": "boneman-atlas"
+  },
+  "regions": {
+    "head_v_min": 0.86,
+    "head_feather": 0.1,
+    "note": "HAND-SET, not the detector's value. The detector returns 0.7043 because a skeleton's widest upper-body row is the RIBCAGE, not the shoulders - a failure mode not previously recorded (the known ones are head ornaments, robe cones and wingspans). Measured on the mesh: skull v 0.86-1.0 spanning x 0.40-0.60; shoulders v 0.82-0.86 spanning x 0.26-0.74."
+  },
+  "uv_density": {
+    "head_scale": 2.5,
+    "head_v": 0.86,
+    "leg_scale": 1.0,
+    "leg_v": 0.45,
+    "ramp": 0.08
+  },
+  "projection": {
+    "supersample": 2,
+    "depth_size": 2048,
+    "pack_resolution": 2048,
+    "pack_padding": 4,
+    "blend_power": 3.0,
+    "silhouette_inset": 0.02,
+    "grazing_threshold": 0.35,
+    "dilate": 12,
+    "closeup_feather": 60,
+    "envelope_sigma": 3.0
+  },
+  "tone": {
+    "contrast": 1.08,
+    "saturation": 1.1
+  },
+  "unsharp": {
+    "sigma": 0.7,
+    "amount": 0.45,
+    "threshold": 0.01569
+  },
+  "output": {
+    "directory": "build/boneman/out",
+    "suffix": "-overview-v1",
+    "max_bytes": 400000
+  },
+  "rights": "The Elder Scrolls Online name, character design and related rights remain with ZeniMax Media/Bethesda Softworks. Reconstructed from published screenshots for an authorized fan prototype; not a claim that the IP is freely licensed."
+}

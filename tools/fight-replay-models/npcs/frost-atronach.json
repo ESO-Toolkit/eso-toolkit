@@ -1,0 +1,83 @@
+{
+  "slug": "frost-atronach",
+  "display_name": "Frost Atronach",
+  "aliases": [
+    "Frost Atronach"
+  ],
+  "encounter": {
+    "trial": "Aetherian Archive",
+    "encounter": "Frost Atronach",
+    "role": "trash",
+    "notes": "Uniform ice-blue humanoid atronach with glowing eyes. SAME MESH as the Lucent Citadel Crystal Atronach: geometry is the crystal-atronach Hunyuan draft, reused verbatim, and only the plates and the atlas differ. Deliberately NOT a tint of the Crystal build - instanceColor multiplies and cannot raise a channel, so it can never take Crystal's iridescent purple/green facets to Frost's uniform ice blue. Two atlases, ~340KB each, is the honest cost."
+  },
+  "work_dir": "build/frost-atronach",
+  "reference": {
+    "page_url": "https://esomodelviewer.com/creatures/post/153-frost-atronach",
+    "directory": "frost-atronach-references",
+    "plates": {
+      "front": {
+        "file": "view-01.jpg",
+        "role": "full-body-front"
+      },
+      "back": {
+        "file": "view-03.jpg",
+        "role": "full-body-back"
+      }
+    },
+    "closeups": [],
+    "closeup_policy": "Deliberately none - 512px trash profile, base plates carry a 992/997px subject and already oversample the atlas ~2x.",
+    "orientation_verified": "2026-09-07, head crops side by side (_advice-crops/fa-heads.jpg): view-01 shows the carved face with two glowing eyes under the crest; view-03 is the smooth fractured rear of the crest with no face. The same crops also confirm the shared mesh - the two sets' silhouettes are identical."
+  },
+  "geometry": {
+    "source": "build/crystal-atronach/crystal-atronach-draft.glb",
+    "decimate": true,
+    "target_triangles": 5000,
+    "max_triangles": 6000,
+    "provenance": "NO GPU RUN FOR THIS ASSET. Geometry is the crystal-atronach draft (Hunyuan3D-2mv fp16, 50 steps, octree 380, seed 12345, 511,260 faces) reused verbatim. Justified by measurement, not by the post text alone: all 12 plates in both galleries measure the same subject box to within 3px (v01 656x992 vs 658x992, v03 567x997 vs 569x996, and the same for the 10 detail views), so the two sets are the same mesh under the same camera on the same turntable."
+  },
+  "atlas": {
+    "size": 512,
+    "jpeg_quality": 92,
+    "roughness": 0.62,
+    "material_name": "frost-atronach-atlas"
+  },
+  "regions": {
+    "head_v_min": 0.7,
+    "head_feather": 0.12,
+    "note": "NOT the shoulder-detector value. The detector reports 0.8202 front / 0.8139 back, but on this subject the band above that line is the bare CREST SPIKE - the faceted face mask sits BELOW the shoulders, at v~0.73 (measured on _advice-crops/frost-atronach-plates.jpg). A 0.82 band would have spent the boost on a featureless spike. 0.70 puts the face mask, the crest and the upper chest inside the band; the boost is kept modest (x2.5, not the humanoid x5) because the band is large and the subject is a uniform crystal shell with no high-frequency facial detail to resolve."
+  },
+  "uv_density": {
+    "head_scale": 2.5,
+    "head_v": 0.7,
+    "leg_scale": 1.0,
+    "leg_v": 0.45,
+    "ramp": 0.08
+  },
+  "projection": {
+    "supersample": 2,
+    "depth_size": 2048,
+    "pack_resolution": 2048,
+    "pack_padding": 4,
+    "blend_power": 3.0,
+    "silhouette_inset": 0.02,
+    "grazing_threshold": 0.35,
+    "dilate": 12,
+    "closeup_feather": 60,
+    "envelope_sigma": 3.0
+  },
+  "tone": {
+    "contrast": 1.08,
+    "saturation": 1.1
+  },
+  "unsharp": {
+    "sigma": 0.7,
+    "amount": 0.45,
+    "threshold": 0.01569
+  },
+  "output": {
+    "directory": "build/frost-atronach/out",
+    "suffix": "-overview-v1",
+    "max_bytes": 400000
+  },
+  "rights": "The Elder Scrolls Online name, character design and related rights remain with ZeniMax Media/Bethesda Softworks. Reconstructed from published screenshots for an authorized fan prototype; not a claim that the IP is freely licensed."
+}

@@ -1,0 +1,149 @@
+{
+  "slug": "the-warrior",
+  "display_name": "The Warrior",
+  "aliases": [
+    "The Warrior"
+  ],
+  "encounter": {
+    "trial": "Celestial",
+    "role": "boss",
+    "notes": "Broad bone/stone plate armour, horned skull helm."
+  },
+  "work_dir": "build/the-warrior",
+  "reference": {
+    "page_url": "https://esomodelviewer.com/characters/post/172-the-warrior",
+    "directory": "the-warrior-references",
+    "plates": {
+      "front": {
+        "file": "view-01.jpg",
+        "role": "full-body-front"
+      },
+      "back": {
+        "file": "view-03.jpg",
+        "role": "full-body-back"
+      }
+    },
+    "side_plates": {
+      "available": false,
+      "note": "No true left/right profile is published. No profile was synthesized; fabricated detail is not permitted."
+    },
+    "closeups": [
+      {
+        "file": "view-07.jpg",
+        "role": "torso",
+        "view": "front",
+        "accepted": true,
+        "registration": {
+          "scale": 0.28,
+          "row": 84.5,
+          "col": 259.79,
+          "width_error": 0.03684,
+          "method": "silhouette-profile",
+          "verified_by": "overlay reviewed 2026-09-06"
+        }
+      },
+      {
+        "file": "view-08.jpg",
+        "role": "torso",
+        "view": "back",
+        "accepted": true,
+        "registration": {
+          "scale": 0.39,
+          "row": 209.0,
+          "col": 150.75,
+          "width_error": 0.0812,
+          "method": "silhouette-profile",
+          "verified_by": "overlay reviewed 2026-09-06"
+        }
+      },
+      {
+        "file": "view-04.jpg",
+        "role": "helm",
+        "view": "front",
+        "accepted": false,
+        "rejected_reason": "head-region fit 6.80% but the overlay shows the horns and brow doubled - the base horns sit higher and narrower than the overlay"
+      },
+      {
+        "file": "view-10.jpg",
+        "role": "legs",
+        "view": "front",
+        "accepted": false,
+        "rejected_reason": "overlay boots overshoot below the base feet (3.38% error); leg plates have now misregistered on 6 of 6 models"
+      },
+      {
+        "file": "view-11.jpg",
+        "role": "legs",
+        "view": "front",
+        "accepted": false,
+        "rejected_reason": "same overshoot signature (3.18%)"
+      },
+      {
+        "file": "view-05.jpg",
+        "role": "face",
+        "view": "front",
+        "accepted": false,
+        "rejected_reason": "UNHELMED bare-face plate; this model wears a horned skull helm, so projecting it would paint a face over the helm"
+      },
+      {
+        "file": "view-06.jpg",
+        "role": "helm",
+        "view": "front",
+        "accepted": false,
+        "rejected_reason": "back-of-head plate; the equivalent has failed on every model attempted"
+      }
+    ]
+  },
+  "geometry": {
+    "source": "build/the-warrior/the-warrior-draft.glb",
+    "decimate": true,
+    "target_triangles": 45000,
+    "max_triangles": 50000,
+    "provenance": "TBD"
+  },
+  "atlas": {
+    "size": 1024,
+    "jpeg_quality": 92,
+    "roughness": 0.78,
+    "material_name": "the-warrior-atlas"
+  },
+  "regions": {
+    "head_v_min": 0.7632,
+    "head_feather": 0.12,
+    "note": "shoulder detector 0.7632, verified visually at the pauldron top"
+  },
+  "uv_density": {
+    "head_scale": 3.5,
+    "head_v": 0.7632,
+    "leg_scale": 1.0,
+    "leg_v": 0.45,
+    "ramp": 0.08,
+    "note": "Tuned for this silhouette: the crested helm plus halo ring is a far larger share of the body than a normal head, so it needs much LESS boost than Vrol (5.5) or Yandir (8.0). head_scale 5.5 overshot to 321^2 with the head taking 38.5% of the atlas; 2.0 lands ~258^2 at ~25%."
+  },
+  "projection": {
+    "supersample": 2,
+    "depth_size": 2048,
+    "pack_resolution": 2048,
+    "pack_padding": 4,
+    "blend_power": 3.0,
+    "silhouette_inset": 0.02,
+    "grazing_threshold": 0.35,
+    "dilate": 24,
+    "closeup_feather": 60,
+    "envelope_sigma": 3.0
+  },
+  "tone": {
+    "contrast": 1.08,
+    "saturation": 1.1
+  },
+  "unsharp": {
+    "sigma": 0.7,
+    "amount": 0.45,
+    "threshold": 0.01569
+  },
+  "output": {
+    "directory": "build/the-warrior/out",
+    "suffix": "-overview-v1",
+    "max_bytes": 2500000
+  },
+  "rights": "The Elder Scrolls Online name, character design and related rights remain with ZeniMax Media/Bethesda Softworks. Reconstructed from published screenshots for an authorized fan prototype; not a claim that the IP is freely licensed."
+}

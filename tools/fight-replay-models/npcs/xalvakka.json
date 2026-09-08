@@ -1,0 +1,149 @@
+{
+  "slug": "xalvakka",
+  "display_name": "Xalvakka",
+  "aliases": [
+    "Xalvakka"
+  ],
+  "encounter": {
+    "trial": "Rockgrove",
+    "encounter": "Xalvakka",
+    "role": "boss",
+    "notes": "ROUTE C. The extracted Harvester_Monstrous_Boss has the same straight-tail bind pose that made Lamia_A_Boss unusable for Ozara (ymin -3.91, normalised to a 0.594 x 0.377 x 2.0 pencil with the torso in the top quarter). Reconstructing from the plates sidesteps it, exactly as Ozara did."
+  },
+  "work_dir": "build/xalvakka-c",
+  "reference": {
+    "page_url": "https://esomodelviewer.com/creatures/post/84-harvester-dagonic",
+    "directory": "xalvakka-harvester-dagonic-references",
+    "plates": {
+      "front": {
+        "file": "view-01.jpg",
+        "role": "full-body-front"
+      },
+      "back": {
+        "file": "view-03.jpg",
+        "role": "full-body-back"
+      }
+    },
+    "side_plates": {
+      "available": false,
+      "why": "The gallery publishes no full-body left or right profile. view-02 and view-06 are three-quarters and view-09/view-10 are tail crops. Accepted rather than synthesised."
+    },
+    "closeups": [
+      {
+        "file": "view-04.jpg",
+        "role": "head",
+        "view": "front",
+        "region": "head",
+        "accepted": false,
+        "rejected_reason": "21.04% at scale 0.850 with col=-288.9 - the fit runs off the left edge of the plate. view-04 and view-11 returned an IDENTICAL fit to three decimal places, so they are near-duplicate frames."
+      },
+      {
+        "file": "view-11.jpg",
+        "role": "head",
+        "view": "front",
+        "region": "head",
+        "accepted": false,
+        "rejected_reason": "Identical fit to view-04 (21.04%, scale 0.850, col=-288.9); same rejection."
+      },
+      {
+        "file": "view-05.jpg",
+        "role": "head",
+        "view": "front",
+        "region": "head",
+        "accepted": false,
+        "rejected_reason": "5.44% - the lowest error measured on this subject, and DOUBLED. Zooming the overlay on the face shows two pairs of eyes and two tooth rows, offset down-left by about a third of a face height, plus a ghost horn crown offset up-right. Fifth confirmation on this project that a good width error is not evidence of correct registration."
+      },
+      {
+        "file": "view-07.jpg",
+        "role": "torso",
+        "view": "front",
+        "accepted": false,
+        "rejected_reason": "15.74%; the overlay ghosts both right-hand arms out to the right of the real arms."
+      },
+      {
+        "file": "view-08.jpg",
+        "role": "torso",
+        "view": "back",
+        "accepted": false,
+        "rejected_reason": "11.21%; the overlay ghosts the arms out to both sides."
+      },
+      {
+        "file": "view-06.jpg",
+        "role": "back",
+        "view": "back",
+        "accepted": false,
+        "rejected_reason": "15.39%; same arm-ghosting signature."
+      }
+    ],
+    "closeup_note": "All six rejected on their overlays. Unlike Ozara, this head IS starved by that: the verified box spans v 0.815-1.0 of a 994 px subject and the FACE proper only v 0.83-0.88, so the face occupies roughly 50 px of the base plate. A straight-on orthographic head plate is the highest-value follow-up for this asset by a wide margin."
+  },
+  "geometry": {
+    "source": "build/xalvakka-c/xalvakka-draft.glb",
+    "decimate": true,
+    "target_triangles": 45000,
+    "max_triangles": 47000,
+    "provenance": "Tencent Hunyuan3D-2mv (fp16, 50 steps, octree 380, seed 12345) from the letterboxed view-01/view-03 plates (1057px square). Draft: 663,362 faces, 60.9s. Unlike Ozara, the two plates here agree on the tail as well as the body - the coil is in the same configuration in both - which makes this the cleanest opposed pair used on this project. Clay render accepted (build/xalvakka-c/clay-draft-sheet.jpg): four arms, horned skull, plated abdomen and spined dorsal ridge all resolved.",
+    "budget_note": "45,000 - the standard boss band. Decimation is 14.7x from 663,362; the subject's detail is surface relief rather than thin protrusions, so it survives."
+  },
+  "atlas": {
+    "size": 1024,
+    "jpeg_quality": 92,
+    "roughness": 0.7,
+    "material_name": "xalvakka-atlas"
+  },
+  "uv_density": {
+    "head_scale": 1.0,
+    "head_v": 0.8,
+    "leg_scale": 1.0,
+    "leg_v": 0.45,
+    "ramp": 0.08,
+    "note": "Legacy scalar warp disabled; regions.boxes drives the density warp instead."
+  },
+  "projection": {
+    "supersample": 2,
+    "depth_size": 2048,
+    "pack_resolution": 2048,
+    "pack_padding": 4,
+    "blend_power": 3.0,
+    "silhouette_inset": 0.02,
+    "grazing_threshold": 0.35,
+    "dilate": 24,
+    "closeup_feather": 60,
+    "envelope_sigma": 3.0
+  },
+  "tone": {
+    "contrast": 1.08,
+    "saturation": 1.1
+  },
+  "unsharp": {
+    "sigma": 0.7,
+    "amount": 0.45,
+    "threshold": 0.01569
+  },
+  "output": {
+    "directory": "build/xalvakka-c/out",
+    "suffix": "-overview-v1",
+    "max_bytes": 2500000
+  },
+  "rights": "The Elder Scrolls Online name, character design and related rights remain with ZeniMax Media/Bethesda Softworks. Reconstructed from published screenshots for an authorized fan prototype; not a claim that the IP is freely licensed.",
+  "regions": {
+    "head_v_min": 0.815,
+    "head_feather": 0.1,
+    "boxes": [
+      {
+        "name": "head",
+        "box": [
+          0.42,
+          0.815,
+          0.6,
+          0.64,
+          1.0,
+          1.0
+        ],
+        "feather": 0.04,
+        "uv_scale": 3.5
+      }
+    ],
+    "note": "Box verified on a membership render before projection. Two placements were rejected first, and the diagnosis technique is worth reusing: rather than nudging one box and re-rendering, three ADJACENT bands were coloured at once (0.78-0.83, 0.83-0.88, 0.88-1.0) so the render says directly which band holds the face. It is v 0.83-0.88; the horns are 0.88-1.0 and the collar 0.78-0.83. That also corrected a misreading - the first two boxes DID contain the face, but the face is so small on this subject that at contact-sheet scale the claimed region looked like horns only. The shoulder detector works here for once, suggesting 0.8034 against the hand-set 0.815."
+  }
+}

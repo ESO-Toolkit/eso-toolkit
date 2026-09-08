@@ -1,0 +1,172 @@
+{
+  "slug": "saint-llothis",
+  "display_name": "Saint Llothis the Pious",
+  "aliases": [
+    "Saint Llothis the Pious",
+    "Saint Llothis"
+  ],
+  "encounter": {
+    "trial": "Asylum Sanctorium",
+    "role": "boss",
+    "notes": "Ornate bone/ivory Dwemer-style construct: tall crested helm with a halo ring behind the head, filigree wing-like pauldrons, engraved chest plate, segmented waist, dark leather shorts, ornate thigh/knee plates and greaves, clawed gauntlets."
+  },
+  "work_dir": "build/saint-llothis",
+  "reference": {
+    "page_url": "https://esomodelviewer.com/creatures/post/89-saint-llothis-the-pious",
+    "directory": "saint-llothis-references",
+    "plates": {
+      "front": {
+        "file": "view-01.jpg",
+        "role": "full-body-front"
+      },
+      "back": {
+        "file": "view-03.jpg",
+        "role": "full-body-back"
+      }
+    },
+    "side_plates": {
+      "available": false,
+      "note": "No true left/right profile is published. No profile was synthesized; fabricated detail is not permitted."
+    },
+    "closeups": [
+      {
+        "file": "view-10.jpg",
+        "role": "legs",
+        "view": "front",
+        "accepted": true,
+        "registration": {
+          "scale": 0.64,
+          "row": 380.5,
+          "col": -83.4,
+          "width_error": 0.04788,
+          "method": "silhouette-profile",
+          "verified_by": "overlay reviewed 2026-09-06",
+          "note": "Listed before the torso plate so the torso wins in the overlap; the engine has no region gate for non-head closeups, only list order plus frame feather."
+        }
+      },
+      {
+        "file": "view-08.jpg",
+        "role": "torso",
+        "view": "front",
+        "accepted": true,
+        "registration": {
+          "scale": 0.39,
+          "row": 206.0,
+          "col": 155.15,
+          "width_error": 0.06498,
+          "method": "silhouette-profile",
+          "verified_by": "overlay reviewed 2026-09-06"
+        }
+      },
+      {
+        "file": "view-09.jpg",
+        "role": "torso",
+        "view": "back",
+        "accepted": true,
+        "registration": {
+          "scale": 0.38,
+          "row": 214.0,
+          "col": 170.71,
+          "width_error": 0.042,
+          "method": "silhouette-profile",
+          "verified_by": "overlay reviewed 2026-09-06"
+        }
+      },
+      {
+        "file": "view-11.jpg",
+        "role": "legs",
+        "view": "back",
+        "accepted": false,
+        "rejected_reason": "MISREGISTERED despite the lowest width error of any plate (3.65%). The overlay shows greaves, boots and gauntlets doubled with a ~25px offset. Width error alone is not sufficient evidence; the overlay is."
+      },
+      {
+        "file": "view-04.jpg",
+        "role": "helm",
+        "view": "front",
+        "accepted": false,
+        "rejected_reason": "head-region fit returned 11.38% because the closeup has no shoulders in frame, so its own shoulder detection fell back and the seeded scale window (0.533-1.189) excluded the true scale of ~0.455. A wide manual sweep reaches 4.75%, but that overlay still shows the flanking halo rings doubled by ~3%, which would blur exactly the features the closeup exists to sharpen."
+      },
+      {
+        "file": "view-05.jpg",
+        "role": "helm",
+        "view": "front",
+        "accepted": false,
+        "rejected_reason": "three-quarter front-left capture, not a front-axis plate; projecting it as front would smear"
+      },
+      {
+        "file": "view-06.jpg",
+        "role": "helm",
+        "view": "back",
+        "accepted": false,
+        "rejected_reason": "head-region width error 37.21%; overlay shows the halo ring grossly oversized"
+      },
+      {
+        "file": "view-07.jpg",
+        "role": "helm",
+        "view": "back",
+        "accepted": false,
+        "rejected_reason": "head-region width error 39.76%; features do not correspond"
+      },
+      {
+        "file": "view-02.jpg",
+        "role": "three-quarter",
+        "view": "front",
+        "accepted": false,
+        "rejected_reason": "redundant given view-01/view-03 and off-axis"
+      }
+    ]
+  },
+  "geometry": {
+    "source": "build/saint-llothis/saint-llothis-draft.glb",
+    "decimate": true,
+    "target_triangles": 45000,
+    "max_triangles": 50000,
+    "provenance": "Tencent Hunyuan3D-2mv (hunyuan3d-dit-v2-mv, fp16, 50 steps, octree 380, seed 12345) from view-01/view-03 only. Draft: 378,032 faces, 2 shells, 0 boundary edges, 79.5s on an RTX 4070 Ti Super."
+  },
+  "atlas": {
+    "size": 1024,
+    "jpeg_quality": 92,
+    "roughness": 0.78,
+    "material_name": "saint-llothis-atlas"
+  },
+  "regions": {
+    "head_v_min": 0.78,
+    "head_feather": 0.12,
+    "note": "Shoulder detector returned 0.7841 (front) / 0.7984 (back) and was verified visually against the plate: the line sits at the pauldron top and keeps the whole helm and halo inside the head band. 0.78 is used so both views are comfortably covered."
+  },
+  "uv_density": {
+    "head_scale": 2.0,
+    "head_v": 0.78,
+    "leg_scale": 1.0,
+    "leg_v": 0.45,
+    "ramp": 0.08,
+    "note": "Tuned for this silhouette: the crested helm plus halo ring is a far larger share of the body than a normal head, so it needs much LESS boost than Vrol (5.5) or Yandir (8.0). head_scale 5.5 overshot to 321^2 with the head taking 38.5% of the atlas; 2.0 lands ~258^2 at ~25%."
+  },
+  "projection": {
+    "supersample": 2,
+    "depth_size": 2048,
+    "pack_resolution": 2048,
+    "pack_padding": 4,
+    "blend_power": 3.0,
+    "silhouette_inset": 0.02,
+    "grazing_threshold": 0.35,
+    "dilate": 24,
+    "closeup_feather": 60,
+    "envelope_sigma": 3.0
+  },
+  "tone": {
+    "contrast": 1.08,
+    "saturation": 1.1
+  },
+  "unsharp": {
+    "sigma": 0.7,
+    "amount": 0.45,
+    "threshold": 0.01569
+  },
+  "output": {
+    "directory": "build/saint-llothis/out",
+    "suffix": "-overview-v1",
+    "max_bytes": 2500000
+  },
+  "rights": "The Elder Scrolls Online name, character design and related rights remain with ZeniMax Media/Bethesda Softworks. Reconstructed from published screenshots for an authorized fan prototype; not a claim that the IP is freely licensed."
+}

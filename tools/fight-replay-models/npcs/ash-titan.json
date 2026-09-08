@@ -1,0 +1,126 @@
+{
+  "slug": "ash-titan",
+  "display_name": "Ash Titan",
+  "aliases": [
+    "Ash Titan"
+  ],
+  "encounter": {
+    "trial": "Rockgrove",
+    "encounter": "Ash Titan",
+    "role": "mini_boss",
+    "notes": "Winged daedric titan. Crouched, forward-leaning biped stance with clawed hands and feet, a horned skull, a glowing lava chest, a long barbed tail and two very large membrane wings. The wingspan (1824px) is more than twice the height (752px), which is why the measured subject height is 'only' 753/735px - it is wide, not low-resolution. Region-box recipe, per Saint Olms and Lord Falgravn, not the humanoid head-band."
+  },
+  "work_dir": "build/ash-titan",
+  "reference": {
+    "page_url": "https://esomodelviewer.com/creatures/post/112-ash-titan",
+    "directory": "ash-titan-references",
+    "plates": {
+      "front": {
+        "file": "view-01.jpg",
+        "role": "full-body-front"
+      },
+      "back": {
+        "file": "view-03.jpg",
+        "role": "full-body-back"
+      }
+    },
+    "closeups": [],
+    "closeup_policy": "Deliberately none - 512px trash profile.",
+    "orientation_verified": "2026-09-07, side by side in _advice-crops/at-set.jpg: view-01 shows the horned face, the glowing lava chest, the forward-reaching clawed hands and the foot claws; view-03 shows the dorsal spine ridge, the barbed tail and the wings from behind. Gallery order matches the front/back convention.",
+    "pose_mismatch": "MINOR and known. The wing sweep differs slightly between the two plates - view-03 has the wings flatter and more fully spread - and the tail is fully visible only in view-03, hidden behind the body in view-01. Two-view reconstruction assumes one pose, so expect the tail to be the weakest region. Same class of defect as Saint Olms, recorded rather than papered over."
+  },
+  "geometry": {
+    "source": "build/ash-titan/ash-titan-draft.glb",
+    "decimate": true,
+    "target_triangles": 5000,
+    "max_triangles": 6000,
+    "provenance": "Tencent Hunyuan3D-2mv (fp16, 50 steps, octree 380, seed 12345) from build/ash-titan/plates/{front,back}-geometry.png (2371x2371, letterboxed - the wingspan is 2.4x the height). Draft: 256,472 faces in 75.2s on an RTX 4070 Ti Super. TRASH budget 5,000 target / 6,000 max."
+  },
+  "atlas": {
+    "size": 512,
+    "jpeg_quality": 92,
+    "roughness": 0.78,
+    "material_name": "ash-titan-atlas"
+  },
+  "uv_density": {
+    "head_scale": 1.0,
+    "head_v": 0.8,
+    "leg_scale": 1.0,
+    "leg_v": 0.45,
+    "ramp": 0.08,
+    "note": "Legacy scalar warp disabled; regions.boxes drives the density warp."
+  },
+  "projection": {
+    "supersample": 2,
+    "depth_size": 2048,
+    "pack_resolution": 2048,
+    "pack_padding": 4,
+    "blend_power": 3.0,
+    "silhouette_inset": 0.02,
+    "grazing_threshold": 0.35,
+    "dilate": 12,
+    "closeup_feather": 60,
+    "envelope_sigma": 3.0
+  },
+  "tone": {
+    "contrast": 1.08,
+    "saturation": 1.1
+  },
+  "unsharp": {
+    "sigma": 0.7,
+    "amount": 0.45,
+    "threshold": 0.01569
+  },
+  "output": {
+    "directory": "build/ash-titan/out",
+    "suffix": "-overview-v1",
+    "max_bytes": 400000
+  },
+  "rights": "The Elder Scrolls Online name, character design and related rights remain with ZeniMax Media/Bethesda Softworks. Reconstructed from published screenshots for an authorized fan prototype; not a claim that the IP is freely licensed.",
+  "regions": {
+    "boxes": [
+      {
+        "name": "skull",
+        "box": [
+          0.435,
+          0.6,
+          0.62,
+          0.565,
+          1.0,
+          1.0
+        ],
+        "feather": 0.04,
+        "uv_scale": 4.0
+      },
+      {
+        "name": "wing-left",
+        "box": [
+          0.0,
+          0.2,
+          0.0,
+          0.3,
+          1.0,
+          0.72
+        ],
+        "feather": 0.05,
+        "uv_scale": 1.6
+      },
+      {
+        "name": "wing-right",
+        "box": [
+          0.7,
+          0.2,
+          0.0,
+          1.0,
+          1.0,
+          0.72
+        ],
+        "feather": 0.05,
+        "uv_scale": 1.6
+      }
+    ],
+    "note": "No head_v_min: like Saint Olms this silhouette's top edge is WING, not head, so no height threshold selects the skull. Boxes verified on a membership render (build/ash-titan/box-check/, sheet at _advice-crops/ash-titan-boxcheck.jpg) and it took THREE placements. Attempt 1 ([0.41,0.74,0.62]-[0.59,1,1]) claimed the horns and the crown but left the MUZZLE, jaw and brow grey - the exact 'face outside the box' error the standing rule exists for, and invisible to every downstream number. Attempt 2 (ny from 0.55, nx 0.39-0.61) fixed the face but swallowed the shoulders. Attempt 3, shipped, claims horns + skull + muzzle and stops at the neck. The wing boxes were also capped at nz<=0.72 in attempt 2 because at nz<=1.0 they were claiming the forward-reaching HANDS.",
+    "targeting_rationale": "Skull x4.0 and wings x1.6, the same split-identity logic as Saint Olms: a small horned skull that anchors the model at closeup and two large membranes that dominate the silhouette at replay distance. The wing boost is lower than Olms' x2.0 because this atlas is 512 not 1024, so there is a quarter of the texel budget to divide and over-boosting the ~45%-of-surface wings would starve everything else.",
+    "axis_note": "Box coordinates are in the DRAFT/decimated mesh frame, which is NOT the exported frame: prepare-static-boss.py swaps the last two axes on export. Measured here, ash-titan-decimated.glb has extents (1.997, 0.728, 1.234) and the exported GLB reports (1.9975, 1.2343, 0.7279) - so in box space axis 0 is the wingspan, axis 1 is DEPTH and axis 2 is HEIGHT. The skull box [0.435,0.60,0.62]-[0.565,1.0,1.0] therefore means: centred on the wingspan, the forward 40% in depth, the top 38% in height. Confirmed the right way round by the membership render, not by reading the numbers - which is the point of the rule."
+  }
+}

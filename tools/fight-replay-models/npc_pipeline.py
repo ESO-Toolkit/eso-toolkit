@@ -1,0 +1,1249 @@
+"""Reconstruction engine for fight-replay NPC assets.
+
+This module is the shared implementation behind the command line scripts in this
+folder. It is importable (underscored name) while the scripts stay hyphenated to
+match the rest of the repository.
+
+Everything runs under the project's Python interpreter, which supplies both
+CUDA torch and ``bpy``. There is no standalone Blender install; do not write
+``blender --background --python ...`` commands against these scripts.
+
+The engine projects reference plates directly into a UV atlas at texel
+resolution. The superseded vertex-colour path (colour carried on ~29k vertices
+and baked at the end) is gone: it capped colour at roughly a ninth of what a
+1024 atlas holds and produced visibly smeared results.
+"""
+
+from __future__ import annotations
+
+import json
+from dataclasses import dataclass, field
+from pathlib import Path
+
+import numpy as np
+import trimesh
+import xatlas
+from numba import njit, prange
+from PIL import Image
+from scipy import ndimage
+from scipy.sparse import coo_matrix
+from scipy.sparse.csgraph import connected_components
+from scipy.spatial import cKDTree
+from trimesh.visual.material import PBRMaterial
+from trimesh.visual.texture import TextureVisuals
+
+LUMA = np.array([0.299, 0.587, 0.114], dtype=np.float32)
+
+
+# --------------------------------------------------------------------------
+# colour helpers
+# --------------------------------------------------------------------------
+def srgb_to_linear(c):
+    return np.where(c <= 0.04045, c / 12.92, ((c + 0.055) / 1.055) ** 2.4)
+
+
+def linear_to_srgb(c):
+    c = np.maximum(c, 0.0)
+    return np.where(c <= 0.0031308, c * 12.92, 1.055 * c ** (1 / 2.4) - 0.055)
+
+
+# --------------------------------------------------------------------------
+# silhouette-normalised projection (retained from the original projector)
+# --------------------------------------------------------------------------
+def _fill_empty_slices(minimums: np.ndarray, maximums: np.ndarray) -> None:
+    populated = np.flatnonzero(np.isfinite(minimums))
+    if not len(populated):
+        raise RuntimeError("Could not calculate occupied mesh slices")
+    for index in np.flatnonzero(~np.isfinite(minimums)):
+        nearest = populated[np.argmin(np.abs(populated - index))]
+        minimums[index] = minimums[nearest]
+        maximums[index] = maximums[nearest]
+
+
+def projected_u(points, slice_indices, screen_right, slice_count, envelope_sigma=0.0):
+    """Horizontal coordinate of each point within its own height slice.
+
+    This is what registers the mesh against the plate: both are normalised by
+    the silhouette extent at the same height, so a reconstruction whose
+    silhouette matches the plate lands its features in the right place.
+    """
+    projected = points @ screen_right
+    minimums = np.full(slice_count, np.inf)
+    maximums = np.full(slice_count, -np.inf)
+    np.minimum.at(minimums, slice_indices, projected)
+    np.maximum.at(maximums, slice_indices, projected)
+    _fill_empty_slices(minimums, maximums)
+    if envelope_sigma > 0:
+        minimums = ndimage.gaussian_filter1d(minimums, envelope_sigma, mode="nearest")
+        maximums = ndimage.gaussian_filter1d(maximums, envelope_sigma, mode="nearest")
+    span = np.maximum(maximums[slice_indices] - minimums[slice_indices], 1e-6)
+    return np.clip((projected - minimums[slice_indices]) / span, 0.0, 1.0)
+
+
+# --------------------------------------------------------------------------
+# reference plates
+# --------------------------------------------------------------------------
+class Plate:
+    """A NATIVE-resolution RGBA reference with silhouette bookkeeping.
+
+    Plates are never upsampled. An earlier revision Lanczos-upscaled the crop
+    twice before sampling, which manufactured staircase detail that measured as
+    sharpness but mipped to mush.
+    """
+
+    def __init__(self, path: Path, feather: int = 0, envelope_sigma: float = 0.0):
+        rgba = np.asarray(Image.open(path).convert("RGBA"), dtype=np.float32) / 255.0
+        self.path = Path(path)
+        self.rgb = rgba[:, :, :3]
+        self.alpha = rgba[:, :, 3] > 0.5
+        if not self.alpha.any():
+            raise RuntimeError(f"plate has no opaque pixels: {path}")
+        self.h, self.w = self.alpha.shape
+        rows = np.flatnonzero(self.alpha.any(axis=1))
+        self.top, self.bottom = int(rows[0]), int(rows[-1])
+
+        left = np.full(self.h, np.nan)
+        right = np.full(self.h, np.nan)
+        for y in range(self.h):
+            xs = np.flatnonzero(self.alpha[y])
+            if len(xs):
+                left[y], right[y] = xs[0], xs[-1]
+        known = np.flatnonzero(np.isfinite(left))
+        for y in np.flatnonzero(~np.isfinite(left)):
+            n = known[np.argmin(np.abs(known - y))]
+            left[y], right[y] = left[n], right[n]
+        if envelope_sigma > 0:
+            sigma_rows = envelope_sigma * (self.bottom - self.top) / 255.0
+            left = ndimage.gaussian_filter1d(left, sigma_rows, mode="nearest")
+            right = ndimage.gaussian_filter1d(right, sigma_rows, mode="nearest")
+        self.row_left, self.row_right = left, right
+
+        # Used only when all four bilinear taps land in background.
+        _, self.nearest = ndimage.distance_transform_edt(~self.alpha, return_indices=True)
+
+        if feather > 0:
+            inside = ndimage.distance_transform_edt(self.alpha)
+            border = np.minimum.outer(
+                np.minimum(np.arange(self.h), self.h - 1 - np.arange(self.h)),
+                np.minimum(np.arange(self.w), self.w - 1 - np.arange(self.w)),
+            )
+            self.weight = (np.clip(inside / 3.0, 0, 1) * np.clip(border / feather, 0, 1)).astype(
+                np.float32
+            )
+        else:
+            self.weight = self.alpha.astype(np.float32)
+
+    def sample(self, x, y):
+        """Alpha-weighted bilinear sample. Returns (rgb, weight)."""
+        x = np.clip(x, 0, self.w - 1.001)
+        y = np.clip(y, 0, self.h - 1.001)
+        x0 = np.floor(x).astype(np.int32)
+        y0 = np.floor(y).astype(np.int32)
+        fx = (x - x0)[:, None]
+        fy = (y - y0)[:, None]
+        x1, y1 = x0 + 1, y0 + 1
+        acc = np.zeros((len(x), 3), np.float32)
+        wsum = np.zeros((len(x), 1), np.float32)
+        for xi, yi, bw in (
+            (x0, y0, (1 - fx) * (1 - fy)),
+            (x1, y0, fx * (1 - fy)),
+            (x0, y1, (1 - fx) * fy),
+            (x1, y1, fx * fy),
+        ):
+            a = self.weight[yi, xi][:, None] * bw
+            acc += self.rgb[yi, xi] * a
+            wsum += a
+        good = wsum[:, 0] > 1e-4
+        out = np.zeros_like(acc)
+        out[good] = acc[good] / wsum[good]
+        if (~good).any():
+            iy = np.clip(np.rint(y[~good]).astype(np.int32), 0, self.h - 1)
+            ix = np.clip(np.rint(x[~good]).astype(np.int32), 0, self.w - 1)
+            out[~good] = self.rgb[self.nearest[0][iy, ix], self.nearest[1][iy, ix]]
+        return out, np.clip(wsum[:, 0], 0, 1)
+
+    def target_coords(self, u, v, inset):
+        y = self.bottom - np.clip(v, 0, 1) * (self.bottom - self.top)
+        iy = np.clip(np.rint(y).astype(np.int32), 0, self.h - 1)
+        left, right = self.row_left[iy], self.row_right[iy]
+        span = right - left
+        pad = np.minimum(span * inset, np.maximum(span * 0.45, 0.0))
+        x = left + pad + np.clip(u, 0, 1) * (span - 2 * pad)
+        return x, y
+
+
+# --------------------------------------------------------------------------
+# rasterisers
+# --------------------------------------------------------------------------
+@njit(cache=True, parallel=True)
+def raster_attributes(uv_px, faces, positions, normals, face_island, size):
+    pos = np.zeros((size, size, 3), np.float32)
+    nrm = np.zeros((size, size, 3), np.float32)
+    isl = np.full((size, size), -1, np.int32)
+    cover = np.zeros((size, size), np.uint8)
+    for fi in prange(len(faces)):
+        i0, i1, i2 = faces[fi, 0], faces[fi, 1], faces[fi, 2]
+        x0, y0 = uv_px[i0, 0], uv_px[i0, 1]
+        x1, y1 = uv_px[i1, 0], uv_px[i1, 1]
+        x2, y2 = uv_px[i2, 0], uv_px[i2, 1]
+        den = (y1 - y2) * (x0 - x2) + (x2 - x1) * (y0 - y2)
+        if abs(den) < 1e-12:
+            continue
+        lo_x = max(0, int(np.floor(min(x0, x1, x2))) - 1)
+        hi_x = min(size - 1, int(np.ceil(max(x0, x1, x2))) + 1)
+        lo_y = max(0, int(np.floor(min(y0, y1, y2))) - 1)
+        hi_y = min(size - 1, int(np.ceil(max(y0, y1, y2))) + 1)
+        for y in range(lo_y, hi_y + 1):
+            sy = y + 0.5
+            for x in range(lo_x, hi_x + 1):
+                sx = x + 0.5
+                w0 = ((y1 - y2) * (sx - x2) + (x2 - x1) * (sy - y2)) / den
+                w1 = ((y2 - y0) * (sx - x2) + (x0 - x2) * (sy - y2)) / den
+                w2 = 1.0 - w0 - w1
+                if w0 >= -0.35 and w1 >= -0.35 and w2 >= -0.35:
+                    for c in range(3):
+                        pos[y, x, c] = (
+                            positions[i0, c] * w0 + positions[i1, c] * w1 + positions[i2, c] * w2
+                        )
+                        nrm[y, x, c] = (
+                            normals[i0, c] * w0 + normals[i1, c] * w1 + normals[i2, c] * w2
+                        )
+                    isl[y, x] = face_island[fi]
+                    cover[y, x] = 1
+    return pos, nrm, isl, cover
+
+
+@njit(cache=True)
+def raster_depth(sx, sy, sz, faces, size, keep_max):
+    depth = np.full((size, size), -1e9 if keep_max else 1e9, np.float32)
+    for fi in range(len(faces)):
+        i0, i1, i2 = faces[fi, 0], faces[fi, 1], faces[fi, 2]
+        x0, y0, z0 = sx[i0], sy[i0], sz[i0]
+        x1, y1, z1 = sx[i1], sy[i1], sz[i1]
+        x2, y2, z2 = sx[i2], sy[i2], sz[i2]
+        den = (y1 - y2) * (x0 - x2) + (x2 - x1) * (y0 - y2)
+        if abs(den) < 1e-12:
+            continue
+        for y in range(
+            max(0, int(min(y0, y1, y2))), min(size - 1, int(np.ceil(max(y0, y1, y2)))) + 1
+        ):
+            py = y + 0.5
+            for x in range(
+                max(0, int(min(x0, x1, x2))), min(size - 1, int(np.ceil(max(x0, x1, x2)))) + 1
+            ):
+                px = x + 0.5
+                w0 = ((y1 - y2) * (px - x2) + (x2 - x1) * (py - y2)) / den
+                w1 = ((y2 - y0) * (px - x2) + (x0 - x2) * (py - y2)) / den
+                w2 = 1.0 - w0 - w1
+                if w0 >= -1e-4 and w1 >= -1e-4 and w2 >= -1e-4:
+                    z = z0 * w0 + z1 * w1 + z2 * w2
+                    if keep_max:
+                        if z > depth[y, x]:
+                            depth[y, x] = z
+                    elif z < depth[y, x]:
+                        depth[y, x] = z
+    return depth
+
+
+# --------------------------------------------------------------------------
+# small helpers
+# --------------------------------------------------------------------------
+def island_ids(faces, vertex_count):
+    rows = np.repeat(np.arange(len(faces)), 3)
+    inc = coo_matrix(
+        (np.ones(len(rows)), (rows, faces.ravel())), shape=(len(faces), vertex_count)
+    ).tocsr()
+    count, labels = connected_components(inc @ inc.T, directed=False)
+    return count, labels.astype(np.int32)
+
+
+def block_mean(values, cover, factor):
+    size = values.shape[0] // factor
+    if values.ndim == 2:
+        values = values[..., None]
+    c = cover.reshape(size, factor, size, factor, 1).astype(np.float32)
+    v = values.reshape(size, factor, size, factor, values.shape[-1])
+    num = (v * c).sum(axis=(1, 3))
+    den = c.sum(axis=(1, 3))
+    out = np.zeros_like(num)
+    ok = den[:, :, 0] > 0
+    out[ok] = num[ok] / den[ok]
+    return np.squeeze(out), ok
+
+
+def smoothstep(a, b, t):
+    x = np.clip((t - a) / max(b - a, 1e-9), 0, 1)
+    return x * x * (3 - 2 * x)
+
+
+def normalise_region_boxes(boxes, default_feather=0.06, default_scale=None):
+    """Validate and normalise region-box config into a plain list of dicts.
+
+    A box is ``[x0, y0, z0, x1, y1, z1]`` in NORMALISED model space - each
+    coordinate 0-1 across the mesh's own bounding box on that axis - plus an
+    optional ``feather`` (falloff width, same units) and ``uv_scale``.
+
+    This exists because ``regions.head_v_min`` is a scalar on normalised HEIGHT,
+    and no scalar threshold can select identity that is not at the top of the
+    silhouette. Saint Olms's top is wing and his skull sits mid-height; head
+    ornaments rising above the crown (all three Cloudrest Shades) and robe cones
+    (The Mage) break it from the other direction. A neck-minimum detector was
+    tried as a replacement and was WORSE - erratic on back plates - so do not
+    re-attempt that; a box states the answer instead of inferring it.
+    """
+    out = []
+    for index, entry in enumerate(boxes or []):
+        raw = entry["box"] if isinstance(entry, dict) else entry
+        values = [float(v) for v in raw]
+        if len(values) != 6:
+            raise ValueError(f"region box {index} needs 6 values [x0,y0,z0,x1,y1,z1], got {len(values)}")
+        low = np.minimum(values[:3], values[3:])
+        high = np.maximum(values[:3], values[3:])
+        if np.any(high - low <= 0):
+            raise ValueError(f"region box {index} is degenerate: {values}")
+        meta = entry if isinstance(entry, dict) else {}
+        out.append({
+            "name": meta.get("name", f"box{index}"),
+            "low": low.astype(np.float64),
+            "high": high.astype(np.float64),
+            "feather": float(meta.get("feather", default_feather)),
+            "uv_scale": float(meta.get("uv_scale", default_scale if default_scale else 1.0)),
+            "note": meta.get("note"),
+        })
+    return out
+
+
+def region_box_weight(vertices, box, lo=None, hi=None):
+    """Smooth 0-1 membership of each vertex in a normalised axis-aligned box.
+
+    Falloff is on the Euclidean distance OUTSIDE the box in normalised units, so
+    a corner ramps as smoothly as a face. A hard box would put a step in the
+    density field, and a step in a deformation field is exactly the defect that
+    ``envelope_sigma`` exists to remove elsewhere in this pipeline.
+    """
+    lo = vertices.min(axis=0) if lo is None else lo
+    hi = vertices.max(axis=0) if hi is None else hi
+    span = np.maximum(hi - lo, 1e-9)
+    normalised = (vertices - lo) / span
+    outside = np.maximum(box["low"] - normalised, normalised - box["high"])
+    distance = np.linalg.norm(np.maximum(outside, 0.0), axis=1)
+    feather = max(box["feather"], 1e-6)
+    return 1.0 - smoothstep(0.0, feather, distance)
+
+
+def region_boxes_weight(vertices, boxes, lo=None, hi=None):
+    """Combined membership across several boxes (max, so boxes never stack)."""
+    if not boxes:
+        return np.zeros(len(vertices))
+    lo = vertices.min(axis=0) if lo is None else lo
+    hi = vertices.max(axis=0) if hi is None else hi
+    weights = [region_box_weight(vertices, box, lo, hi) for box in boxes]
+    return np.maximum.reduce(weights)
+
+
+def region_box_warp(vertices, boxes):
+    """Inflate each region box's contents so xatlas spends texels there.
+
+    Same principle as :func:`uv_density_warp` - the warp is applied to a
+    THROWAWAY copy that is only unwrapped; the shipped geometry never changes -
+    but scaled about each box's own centre with a smooth falloff, so it works
+    wherever the region sits rather than only at the top of the model. Boxes are
+    applied in order; overlapping boxes compound, which is why they should be
+    written disjoint.
+    """
+    if not boxes:
+        return vertices, None
+    lo, hi = vertices.min(axis=0), vertices.max(axis=0)
+    span = np.maximum(hi - lo, 1e-9)
+    warped = np.array(vertices, dtype=np.float64, copy=True)
+    applied = np.zeros(len(vertices))
+    for box in boxes:
+        if box["uv_scale"] == 1.0:
+            continue
+        weight = region_box_weight(warped, box, lo, hi)
+        centre = lo + (box["low"] + box["high"]) / 2.0 * span
+        scale = 1.0 + (box["uv_scale"] - 1.0) * weight[:, None]
+        warped = centre + (warped - centre) * scale
+        applied = np.maximum(applied, weight)
+    return warped, applied
+
+
+def uv_density_warp(vertices, head_scale, head_v, leg_scale, leg_v, ramp):
+    """Return a copy of the mesh warped so xatlas spends texels where we want.
+
+    xatlas allocates atlas area in proportion to 3D surface area, so enlarging
+    the head on a throwaway copy buys it texels. The UVs are then applied to the
+    ORIGINAL geometry, leaving the shipped mesh untouched.
+
+    The scale must be applied LOCALLY. Scaling about the model centre displaces
+    the head far enough that the neck ramp degenerates into slivers whose area
+    swamps the atlas; x/z are therefore scaled about the vertical axis and y is
+    warped by the integral of the field, so every face sees a locally uniform
+    scale.
+    """
+    if head_scale == 1.0 and leg_scale == 1.0:
+        return vertices, None
+
+    lo, hi = vertices.min(axis=0), vertices.max(axis=0)
+    vn = (vertices[:, 1] - lo[1]) / max(hi[1] - lo[1], 1e-9)
+
+    def field(t):
+        s = 1.0 + (head_scale - 1.0) * smoothstep(head_v - ramp, head_v, t)
+        return s * (1.0 - (1.0 - leg_scale) * (1.0 - smoothstep(leg_v, leg_v + ramp, t)))
+
+    s = field(vn)
+    grid = np.linspace(0.0, 1.0, 4001)
+    sg = field(grid)
+    cumulative = np.concatenate([[0.0], np.cumsum(0.5 * (sg[1:] + sg[:-1]) * np.diff(grid))])
+    span_y = max(hi[1] - lo[1], 1e-9)
+    cx, cz = (lo[0] + hi[0]) / 2.0, (lo[2] + hi[2]) / 2.0
+
+    warped = np.empty_like(vertices)
+    warped[:, 0] = cx + (vertices[:, 0] - cx) * s
+    warped[:, 2] = cz + (vertices[:, 2] - cz) * s
+    warped[:, 1] = lo[1] + np.interp(vn, grid, cumulative) * span_y
+    return warped, s
+
+
+# --------------------------------------------------------------------------
+# head-band run-structure detector
+# --------------------------------------------------------------------------
+# The horizontal coordinate is normalised by the SILHOUETTE SPAN in each height
+# slice, which silently assumes the mesh row and the plate row describe the same
+# arrangement of features. On an ornamented head they need not: the plate row can
+# be several disconnected opaque runs (horn, gap, horn) while the mesh row at the
+# same normalised height is a single run, because the reconstruction merged the
+# ornaments into the body. Per-slice normalisation maps both to [0, 1], so equal
+# u stops meaning the same feature.
+#
+# This detector counts opaque runs per slice on both sides and compares their
+# normalised centres. It is O(rows) and reuses the front depth buffer the
+# projection already rasterises; nothing extra is rendered.
+#
+# WHAT IT CANNOT SEE - measured, do not re-litigate. It compares SILHOUETTES, so
+# it only sees features that break the outline. The Celestial Serpent's gold
+# mask is not one: at mask height (v 0.865-0.895) the plate alpha is
+# horn/gap/hood/gap/horn and the bright bone occupies at most 42 px INSIDE the
+# ~175 px hood run. The manifest's premise that the row reads "horn, gap, mask,
+# gap, horn" in alpha does not hold against the actual plate. The Serpent's
+# horns do appear on both sides, offset by ~4 slices, which is a real finding but
+# a much weaker signal than its mask defect. Consequently this detector scores
+# The Serpent LOW (9%, 9th of the 10 shipped models) and does not identify it.
+# Catching a recessed interior feature needs a luminance/interior-structure
+# comparison, not a silhouette one.
+def _row_cells(row, bins=128):
+    """Resample a boolean row to ``bins`` majority-vote cells across its span.
+
+    Without this the two sides of the comparison are measured at wildly
+    different resolutions - a 2048-wide depth buffer gives the mesh row roughly
+    1,000 px at head height while the native plate row is ~200 px - so any
+    pixel-denominated noise floor is ~5x stricter on the plate. Measured that
+    way the detector inverts: it reports filigree antialiasing as structure and
+    scores an ornamented head BELOW an ordinary one.
+    """
+    mask = np.asarray(row, dtype=bool)
+    xs = np.flatnonzero(mask)
+    if not len(xs):
+        return None, 0.0
+    span_px = float(xs[-1] - xs[0] + 1)
+    inside = mask[xs[0]:xs[-1] + 1].astype(np.float32)
+    edges = np.floor(np.linspace(0, len(inside), int(bins) + 1)).astype(int)
+    sums = np.add.reduceat(inside, edges[:-1])
+    cells = (sums / np.maximum(np.diff(edges), 1)) >= 0.5
+    if not cells.any():
+        cells[:] = True
+    return cells, span_px
+
+
+def opaque_runs(row, min_run_frac=0.03, merge_gap_frac=0.03, bins=128):
+    """Opaque runs of a boolean row, as centres normalised across the row span.
+
+    Returns ``(centres, widths, span_px)``, both lists in [0, 1] of the row's own
+    silhouette span. Runs separated by a gap narrower than ``merge_gap_frac`` are
+    merged and runs shorter than ``min_run_frac`` are dropped, so antialiasing
+    specks and one-pixel rasterisation cracks cannot manufacture a run.
+    """
+    cells, span_px = _row_cells(row, bins)
+    if cells is None:
+        return [], [], 0.0
+    ys = np.flatnonzero(cells)
+    breaks = np.flatnonzero(np.diff(ys) > 1)
+    starts = np.concatenate([[ys[0]], ys[breaks + 1]])
+    ends = np.concatenate([ys[breaks], [ys[-1]]])
+
+    merged: list[list[int]] = []
+    for start, end in zip(starts, ends):
+        if merged and (start - merged[-1][1] - 1) <= merge_gap_frac * bins:
+            merged[-1][1] = int(end)
+        else:
+            merged.append([int(start), int(end)])
+    kept = [r for r in merged if (r[1] - r[0] + 1) >= min_run_frac * bins]
+    if not kept:
+        kept = [[int(ys[0]), int(ys[-1])]]
+
+    centres = [((start + end + 1) / 2.0) / bins for start, end in kept]
+    widths = [(end - start + 1) / bins for start, end in kept]
+    return centres, widths, span_px
+
+
+def correspondence_displacement(mesh_runs, plate_runs):
+    """Worst feature displacement silhouette-normalised ``u`` imposes on a slice.
+
+    ``mesh_runs`` and ``plate_runs`` are ``(centres, widths)`` from
+    :func:`opaque_runs`, both in units of their own row's span. The projection
+    maps a mesh point at normalised ``u`` onto the plate at the SAME ``u``, so
+    the error is what happens to each run: runs are paired by interval overlap,
+    a pair contributes the distance between its centres, and a run with no
+    partner contributes its own width, because the whole of it is projected onto
+    something else.
+
+    One alternative was tried and is recorded so it is not repeated.
+    **Cumulative-coverage mass transport** (``C_plate^-1(C_mesh(u))``) is
+    discontinuous at every gap: two visually near-identical rows whose left runs
+    differ by two cells report a huge error, because the mesh's right run begins
+    at a mass fraction the plate has not reached yet. Measured on Captain Vrol at
+    v=0.945 it returned 0.603 for rows differing by three pixels. It did rank
+    The Serpent above Saint Llothis, but only by that artefact.
+    """
+    mesh_centres, mesh_widths = mesh_runs
+    plate_centres, plate_widths = plate_runs
+    if not mesh_centres or not plate_centres:
+        return 0.0
+
+    def intervals(centres, widths):
+        return [(c - w / 2.0, c + w / 2.0, w) for c, w in zip(centres, widths)]
+
+    mesh = intervals(mesh_centres, mesh_widths)
+    plate = intervals(plate_centres, plate_widths)
+
+    error = 0.0
+    for source, other, source_centres, other_centres in (
+        (mesh, plate, mesh_centres, plate_centres),
+        (plate, mesh, plate_centres, mesh_centres),
+    ):
+        for index, (lo, hi, width) in enumerate(source):
+            best, best_overlap = None, 0.0
+            for j, (olo, ohi, _) in enumerate(other):
+                overlap = max(0.0, min(hi, ohi) - max(lo, olo))
+                if overlap > best_overlap:
+                    best, best_overlap = j, overlap
+            if best is None or best_overlap < 0.5 * width:
+                # Nothing on the far side covers this run: all of it lands on
+                # the wrong feature.
+                error = max(error, width)
+            else:
+                error = max(error, abs(source_centres[index] - other_centres[best]))
+    return float(error)
+
+
+def detect_run_count_mismatch(mesh_coverage, plate, v_min, v_max=1.0, slices=64,
+                              tolerance=0.15, min_run_frac=0.03,
+                              merge_gap_frac=0.03, bins=128):
+    """Compare per-slice opaque-run structure between the mesh and a plate.
+
+    ``mesh_coverage`` is a boolean image whose row index runs bottom-to-top over
+    the model's normalised height - the front depth buffer's coverage, which the
+    projection already rasterises, so nothing extra is rendered. ``plate`` is a
+    :class:`Plate`. For every slice in the band both rows are reduced to opaque
+    runs with normalised centres, and to a correspondence displacement.
+
+    A slice is flagged when its displacement exceeds ``tolerance``. Run-count
+    differences are recorded per slice and summarised, but are NOT the flag on
+    their own - see :func:`correspondence_displacement`.
+    """
+    mesh_coverage = np.asarray(mesh_coverage, dtype=bool)
+    rows = mesh_coverage.shape[0]
+    plate_band = max(plate.bottom - plate.top, 1)
+
+    checked = 0
+    flagged = []
+    count_mismatch = 0
+    displacements = []
+    for v in np.linspace(float(v_min), float(v_max), int(slices), endpoint=False):
+        mesh_row = mesh_coverage[min(int(round(v * (rows - 1))), rows - 1)]
+        plate_y = min(max(int(round(plate.bottom - v * plate_band)), 0), plate.h - 1)
+        plate_row = plate.alpha[plate_y]
+        mesh_centres, mesh_widths, mesh_span = opaque_runs(
+            mesh_row, min_run_frac, merge_gap_frac, bins)
+        plate_centres, plate_widths, plate_span = opaque_runs(
+            plate_row, min_run_frac, merge_gap_frac, bins)
+        if not mesh_centres or not plate_centres:
+            continue
+        checked += 1
+
+        differing = len(mesh_centres) != len(plate_centres)
+        count_mismatch += int(differing)
+        displacement = correspondence_displacement(
+            (mesh_centres, mesh_widths), (plate_centres, plate_widths))
+        displacements.append(displacement)
+        if displacement > tolerance:
+            flagged.append({
+                "v": round(float(v), 4),
+                "displacement": round(displacement, 4),
+                "run_counts_differ": differing,
+                "mesh_runs": len(mesh_centres),
+                "plate_runs": len(plate_centres),
+                "mesh_centres": [round(c, 4) for c in mesh_centres],
+                "plate_centres": [round(c, 4) for c in plate_centres],
+                "mesh_span_px": round(mesh_span, 1),
+                "plate_span_px": round(plate_span, 1),
+            })
+
+    values = np.asarray(displacements) if displacements else np.zeros(1)
+    return {
+        "v_min": round(float(v_min), 4),
+        "v_max": round(float(v_max), 4),
+        "slices_checked": checked,
+        "slices_flagged": len(flagged),
+        "run_count_mismatches": count_mismatch,
+        "flagged_fraction": round(len(flagged) / max(checked, 1), 4),
+        "displacement_mean": round(float(values.mean()), 4),
+        "displacement_p90": round(float(np.percentile(values, 90)), 4),
+        "displacement_max": round(float(values.max()), 4),
+        "tolerance": tolerance,
+        "slices": flagged[:16],
+    }
+
+
+def run_mismatch_warning(result, threshold=0.20):
+    """Build-report warning text, or None when the band is structurally sound.
+
+    Threshold read off all ten shipped models rather than guessed. Measured
+    flagged fractions at the defaults, front plate, each model's own
+    ``head_v_min``::
+
+        siroria .53  felms .45  relequen .45  galenwe .33  llothis .28
+        warrior .28  vrol .27   yandir .11    serpent .09  mage .05
+
+    At 0.20 it fires on the seven heads whose plate and reconstruction resolve
+    the silhouette differently and stays silent on the three that agree. It is a
+    prompt to look at the head overlay, NOT an accept/reject gate - four
+    automatic registration gates have already been tried and abandoned here.
+
+    It does not identify The Serpent; see the note above :func:`_row_cells` for
+    the measurement that explains why a silhouette detector cannot.
+    """
+    if not result or result["slices_checked"] == 0:
+        return None
+    if result["flagged_fraction"] < threshold:
+        return None
+    return (
+        f"head band shows run-structure mismatch on {result['slices_flagged']} of "
+        f"{result['slices_checked']} slices "
+        f"({result['flagged_fraction'] * 100:.0f}%; "
+        f"{result['run_count_mismatches']} differ in opaque-run count, worst feature "
+        f"displacement {result['displacement_max'] * 100:.0f}% of span, p90 "
+        f"{result['displacement_p90'] * 100:.0f}%) - this head likely needs a "
+        "hand-registered plate. Silhouette-normalised u only corresponds when the mesh row "
+        "and the plate row resolve the same features; where they do not, register the "
+        "closeup on the feature itself and judge it on doubling, not on a width metric."
+    )
+
+
+# --------------------------------------------------------------------------
+# measurement
+# --------------------------------------------------------------------------
+def measure_uv_allocation(vertices, faces, uvs, head_v_min, atlas_size, front_dot=0.5,
+                          region_boxes=None):
+    """Region / front-facing-region share of the atlas, in texels.
+
+    Without ``region_boxes`` the region is the head band ``vn > head_v_min``,
+    byte-identical to the original behaviour. With them the region is the union
+    of the boxes and the reported metric is REGION texels rather than face
+    texels - the keys stay ``head``/``face`` so every existing report, config
+    and reader keeps working, and ``region`` records which definition was used.
+    """
+    lo, hi = vertices.min(axis=0), vertices.max(axis=0)
+    span = np.maximum(hi - lo, 1e-9)
+
+    if region_boxes:
+        weight = region_boxes_weight(vertices, region_boxes, lo, hi)
+        region = (weight[faces] >= 0.5).all(axis=1)
+        definition = {
+            "kind": "boxes",
+            "boxes": [
+                {"name": b["name"], "box": [round(float(v), 4) for v in (*b["low"], *b["high"])],
+                 "feather": b["feather"], "uv_scale": b["uv_scale"], "note": b["note"]}
+                for b in region_boxes
+            ],
+        }
+    else:
+        vn = (vertices[:, 1] - lo[1]) / span[1]
+        region = (vn[faces] > head_v_min).all(axis=1)
+        definition = {"kind": "head_v_min", "head_v_min": float(head_v_min)}
+
+    a, b, c = uvs[faces[:, 0]], uvs[faces[:, 1]], uvs[faces[:, 2]]
+    uv_area = 0.5 * np.abs(np.cross(b - a, c - a))
+    total = max(uv_area.sum(), 1e-12)
+
+    p0, p1, p2 = vertices[faces[:, 0]], vertices[faces[:, 1]], vertices[faces[:, 2]]
+    n = np.cross(p1 - p0, p2 - p0)
+    n /= np.maximum(np.linalg.norm(n, axis=1, keepdims=True), 1e-12)
+    face_mask = region & (n[:, 2] > front_dot)
+
+    result = {"region": definition}
+    for name, mask in (("head", region), ("face", face_mask)):
+        texels = float(uv_area[mask].sum()) * atlas_size * atlas_size
+        result[name] = {
+            "faces": int(mask.sum()),
+            "uv_fraction_of_used": float(uv_area[mask].sum() / total),
+            "percent_of_atlas": float(texels / (atlas_size * atlas_size) * 100.0),
+            "texels": int(round(texels)),
+            "equivalent_square": round(float(np.sqrt(max(texels, 0.0))), 1),
+        }
+    return result
+
+
+# --------------------------------------------------------------------------
+# reference cameras
+# --------------------------------------------------------------------------
+# Front and back are mandatory. Left and right are OPTIONAL and exist only when
+# a config supplies a REAL side plate: most reference pages publish no true
+# profile, and a profile is never synthesised - an early Yandir build carried a
+# generated left view and it was removed as invented detail. With no side plate
+# the answer is fewer cameras, not a fabricated one.
+#
+# Each camera is orthographic along a model axis. ``direction`` points from the
+# subject TOWARDS the camera, so the facing term stays ``normal . direction``.
+# Screen-right is ``up x direction``, which reproduces the original [+X, -X]
+# pair for front/back exactly - the cross products are integral, so a two-view
+# build is numerically unchanged.
+UP = np.array([0.0, 1.0, 0.0])
+VIEW_DIRECTIONS = {
+    "front": np.array([0.0, 0.0, 1.0]),
+    "back": np.array([0.0, 0.0, -1.0]),
+    "right": np.array([1.0, 0.0, 0.0]),
+    "left": np.array([-1.0, 0.0, 0.0]),
+}
+# Fixed order with front/back first, so a two-view build indexes every array
+# (sampled colours, visibility columns, blend weights) exactly as it did before
+# side plates existed.
+VIEW_ORDER = ("front", "back", "right", "left")
+SIDE_VIEWS = ("right", "left")
+
+
+def ordered_views(plates):
+    """The supplied views in canonical order. Front and back are required."""
+    missing = [v for v in ("front", "back") if v not in plates]
+    if missing:
+        raise ValueError(f"base plates are missing required view(s): {missing}")
+    unknown = sorted(v for v in plates if v not in VIEW_ORDER)
+    if unknown:
+        raise ValueError(f"unknown reference view(s): {unknown}; expected {list(VIEW_ORDER)}")
+    return [v for v in VIEW_ORDER if v in plates]
+
+
+def view_screen_right(view):
+    """Screen-right vector of a camera: ``up x direction``."""
+    return np.cross(UP, VIEW_DIRECTIONS[view])
+
+
+def view_depth_axis(view):
+    """``(axis, keep_max)`` for a camera's occlusion test.
+
+    ``axis`` is the model axis the camera looks along; ``keep_max`` is True when
+    the camera sits at +axis, so the surface nearest it is the one with the
+    LARGEST coordinate on that axis.
+    """
+    direction = VIEW_DIRECTIONS[view]
+    axis = int(np.argmax(np.abs(direction)))
+    return axis, bool(direction[axis] > 0)
+
+
+def axis_depth_buffers(vertices, faces, lo, span, size, axis):
+    """Near and far depth along ``axis``, rasterised in the other two axes.
+
+    Axis 2 is the front/back camera pair (screen x comes from X); axis 0 is the
+    right/left pair (screen x comes from Z). Height is the screen y for both
+    pairs, which is what lets one shared row index query either - and is also why
+    only the two HORIZONTAL axes are supported. A top/bottom pair would have to
+    rasterise (x, z) and would need its own row index; every camera this engine
+    has is horizontal, so that case is rejected rather than silently mis-mapped.
+    """
+    if axis not in (0, 2):
+        raise ValueError(f"depth axis {axis} is not horizontal; cameras are on x and z only")
+    screen_axis = 0 if axis == 2 else 2
+    sx = ((vertices[:, screen_axis] - lo[screen_axis]) / span[screen_axis]
+          * (size - 1)).astype(np.float32)
+    sy = ((vertices[:, 1] - lo[1]) / span[1] * (size - 1)).astype(np.float32)
+    sz = vertices[:, axis].astype(np.float32)
+    return raster_depth(sx, sy, sz, faces, size, True), raster_depth(
+        sx, sy, sz, faces, size, False)
+
+
+# --------------------------------------------------------------------------
+# main projection
+# --------------------------------------------------------------------------
+@dataclass
+class CloseupRef:
+    plate: Plate
+    scale: float
+    row: float
+    col: float
+    source: str
+    v_min: float | None = None
+    v_feather: float = 0.12
+
+
+@dataclass
+class ProjectionSettings:
+    atlas_size: int = 1024
+    supersample: int = 2
+    depth_size: int = 2048
+    pack_resolution: int = 2048
+    pack_padding: int = 4
+    blend_power: float = 3.0
+    silhouette_inset: float = 0.02
+    grazing_threshold: float = 0.35
+    # Gaussian smoothing (in height slices) applied to the mesh AND plate silhouette envelopes
+    # before they normalise the horizontal coordinate. Non-zero by default: at 0 the envelopes step
+    # abruptly where the shoulders meet the neck, and because the mesh and plate step at slightly
+    # different heights the two normalisations stop cancelling — which threw the sampled plate
+    # coordinate 40-70px sideways in a single texel row and drew a hard bar across the chin and
+    # pauldrons. The normalisation is a deformation field correcting mesh-vs-plate silhouette error,
+    # so it should be band-limited; a step in it corrects nothing and amplifies a 2-3 slice
+    # registration error into a ~20% horizontal error. Raise it if a seam persists.
+    envelope_sigma: float = 3.0
+    contrast: float = 1.08
+    saturation: float = 1.10
+    unsharp_sigma: float = 0.7
+    unsharp_amount: float = 0.45
+    unsharp_threshold: float = 4 / 255
+    dilate: int = 24
+    roughness: float = 0.78
+    closeup_feather: int = 60
+    head_uv_scale: float = 1.0
+    head_uv_v: float = 0.80
+    leg_uv_scale: float = 1.0
+    leg_uv_v: float = 0.45
+    uv_ramp: float = 0.08
+    chart_max_cost: float = 64.0
+    chart_normal_deviation_weight: float = 0.5
+    material_name: str = "ProjectedAtlas"
+    head_v_min_measure: float = 0.80
+    # Region boxes ([x0,y0,z0,x1,y1,z1] in normalised model space, plus optional
+    # per-box uv_scale/feather) replace the head_v_min scalar when supplied. A
+    # scalar on normalised height cannot select identity that is not at the top
+    # of the silhouette (Saint Olms's skull sits below the wings) and misfires on
+    # crests that rise above the crown.
+    region_boxes: list = field(default_factory=list)
+    # Head-band run-structure detector.
+    run_mismatch_slices: int = 64
+    run_mismatch_tolerance: float = 0.15
+    run_mismatch_threshold: float = 0.20
+    log: object = print
+    stats: dict = field(default_factory=dict)
+
+
+def blend_views(sampled, align, visible, blend_power):
+    """Mix the per-camera samples by how squarely each camera sees the texel.
+
+    Generalised from two cameras to N WITHOUT changing the rule: the weight is
+    still ``exp(power * (cos - 1))`` on the angle between the surface normal and
+    the camera, a camera the texel is occluded from is still attenuated by 1e-4
+    rather than removed (so a texel no camera can see still resolves to its best
+    guess instead of dividing by zero), and the weights are still normalised.
+
+    Returns ``(colours, weights)``; the weights are also what the per-view
+    coverage report is measured from.
+    """
+    weights = np.exp(blend_power * (align - 1.0))
+    weights = np.where(~visible, weights * 1e-4, weights)
+    weights /= np.maximum(weights.sum(axis=1, keepdims=True), 1e-12)
+    return np.sum(sampled * weights[:, :, None], axis=1), weights
+
+
+def unwrap_atlas(vertices, faces, settings: "ProjectionSettings"):
+    """xatlas unwrap of ``vertices`` (already density-warped, if at all).
+
+    Split out of :func:`project_atlas` unchanged so that a coverage measurement
+    can be taken on the SAME charts the projection would use, without needing
+    plates. Returns ``(mapping, faces, uvs, utilization)``; the UVs are applied
+    to the original geometry by the caller, which is why the warp is a throwaway.
+    """
+    chart = xatlas.ChartOptions()
+    chart.max_cost = settings.chart_max_cost
+    chart.normal_deviation_weight = settings.chart_normal_deviation_weight
+    chart.roundness_weight = 0.01
+    chart.straightness_weight = 3.0
+    chart.normal_seam_weight = 1.0
+    chart.texture_seam_weight = 0.25
+    chart.max_iterations = 8
+    pack = xatlas.PackOptions()
+    # xatlas clamps a chart to the packer resolution. UVs are normalised and
+    # rasterised into our own texture, so a larger packer resolution is free and
+    # keeps that clamp away from the enlarged head charts.
+    pack.resolution = settings.pack_resolution
+    pack.padding = settings.pack_padding
+    pack.bruteForce = True
+    pack.rotate_charts = True
+    pack.blockAlign = True
+
+    atlas = xatlas.Atlas()
+    atlas.add_mesh(np.asarray(vertices).astype(np.float32), np.asarray(faces).astype(np.uint32))
+    atlas.generate(chart_options=chart, pack_options=pack)
+    mapping, afaces, uvs = atlas[0]
+    return mapping, np.asarray(afaces, np.int64), np.asarray(uvs, np.float64), float(
+        atlas.utilization)
+
+
+def project_atlas(mesh_path, base_plates, closeups, settings: ProjectionSettings,
+                  atlas_path: Path, glb_path: Path):
+    """Project plates into a UV atlas and write the textured GLB + lossless PNG.
+
+    ``base_plates`` maps view name -> :class:`Plate`. ``front`` and ``back`` are
+    required; ``right`` and ``left`` are used when supplied and otherwise simply
+    do not exist, which is the two-camera behaviour this engine shipped with.
+    """
+    say = settings.log
+    stats = settings.stats
+    views = ordered_views(base_plates)
+    if len(views) > 2:
+        say(f"cameras: {len(views)} ({', '.join(views)})")
+
+    mesh = trimesh.load(mesh_path, force="scene").to_geometry()
+    mesh.merge_vertices()
+    V = np.asarray(mesh.vertices, np.float64)
+    F = np.asarray(mesh.faces, np.int64)
+    N = np.asarray(mesh.vertex_normals, np.float64)
+    say(f"geometry: faces={len(F):,} verts={len(V):,}")
+
+    region_boxes = normalise_region_boxes(
+        settings.region_boxes, default_scale=settings.head_uv_scale
+    )
+    if region_boxes:
+        # Boxes replace the height band entirely: mixing a vertical field with a
+        # box would double-scale wherever they overlap.
+        V_unwrap, _ = region_box_warp(V, region_boxes)
+        for box in region_boxes:
+            say(f"uv density: region '{box['name']}' x{box['uv_scale']} "
+                f"box={[round(float(v), 3) for v in (*box['low'], *box['high'])]} "
+                f"feather={box['feather']}")
+    else:
+        V_unwrap, _ = uv_density_warp(
+            V, settings.head_uv_scale, settings.head_uv_v,
+            settings.leg_uv_scale, settings.leg_uv_v, settings.uv_ramp,
+        )
+        if V_unwrap is not V:
+            say(f"uv density: head x{settings.head_uv_scale} above v={settings.head_uv_v}, "
+                f"legs x{settings.leg_uv_scale} below v={settings.leg_uv_v}, "
+                f"ramp={settings.uv_ramp}")
+
+    mapping, afaces, uvs, utilization = unwrap_atlas(V_unwrap, F, settings)
+    aV, aN = V[mapping], N[mapping]
+    nisl, face_isl = island_ids(afaces, len(aV))
+    say(f"unwrap: charts={nisl} ({len(afaces)/nisl:.1f} faces/chart) "
+        f"utilization={utilization:.3f}")
+    stats["chart_count"] = int(nisl)
+    stats["xatlas_utilization"] = round(float(utilization), 4)
+
+    size = settings.atlas_size
+    S = size * settings.supersample
+    uv_px = np.empty_like(uvs, np.float32)
+    uv_px[:, 0] = uvs[:, 0] * (S - 1)
+    uv_px[:, 1] = (1 - uvs[:, 1]) * (S - 1)
+    pos, nrm, isl, cover = raster_attributes(
+        uv_px, afaces, aV.astype(np.float32), aN.astype(np.float32), face_isl, S
+    )
+    covb = cover.astype(bool)
+
+    lo, hi = V.min(axis=0), V.max(axis=0)
+    span = np.maximum(hi - lo, 1e-9)
+    ds = settings.depth_size
+    # One near/far pair per camera AXIS: front/back share the z pair, left/right
+    # the x pair. The x pair is rasterised only when a side plate was supplied,
+    # so a two-view build does exactly the work it always did.
+    depth = {2: axis_depth_buffers(V, F, lo, span, ds, 2)}
+    depth_front, depth_back = depth[2]
+    if any(view in views for view in SIDE_VIEWS):
+        depth[0] = axis_depth_buffers(V, F, lo, span, ds, 0)
+
+    # Structural check on the head band, free: the front depth buffer already
+    # carries the mesh's front coverage, so comparing its opaque runs against the
+    # plate's costs one pass over ~64 rows. Fires on ornamented heads (horns,
+    # halos, crests) where equal normalised u stops meaning the same feature.
+    mismatch = detect_run_count_mismatch(
+        depth_front > -1e8, base_plates["front"],
+        v_min=settings.head_v_min_measure,
+        slices=settings.run_mismatch_slices,
+        tolerance=settings.run_mismatch_tolerance,
+    )
+    stats["head_run_mismatch"] = mismatch
+    warning = run_mismatch_warning(mismatch, settings.run_mismatch_threshold)
+    stats["warnings"] = ([warning] if warning else []) + list(stats.get("warnings", []))
+    say(f"head band runs: {mismatch['slices_flagged']}/{mismatch['slices_checked']} slices "
+        f"mismatched, {mismatch['run_count_mismatches']} with differing run counts "
+        f"(feature displacement mean {mismatch['displacement_mean'] * 100:.1f}%, "
+        f"p90 {mismatch['displacement_p90'] * 100:.1f}% of span)")
+    if warning:
+        say(f"WARNING: {warning}")
+
+    pts = pos[covb].astype(np.float64)
+    nn = nrm[covb].astype(np.float64)
+    nn /= np.maximum(np.linalg.norm(nn, axis=1, keepdims=True), 1e-9)
+    qx = np.clip(((pts[:, 0] - lo[0]) / span[0] * (ds - 1)).astype(np.int32), 0, ds - 1)
+    qy = np.clip(((pts[:, 1] - lo[1]) / span[1] * (ds - 1)).astype(np.int32), 0, ds - 1)
+    qz = np.clip(((pts[:, 2] - lo[2]) / span[2] * (ds - 1)).astype(np.int32), 0, ds - 1)
+    screen_x = {2: qx, 0: qz}
+    columns = []
+    for view in views:
+        axis, keep_max = view_depth_axis(view)
+        near, far = depth[axis]
+        column = screen_x[axis]
+        bias = 0.01 * span[axis]
+        columns.append(pts[:, axis] >= near[qy, column] - bias if keep_max
+                       else pts[:, axis] <= far[qy, column] + bias)
+    visible = np.stack(columns, axis=1)
+    neither = float((~visible.any(axis=1)).mean() * 100)
+    say("visibility: "
+        + " ".join(f"{view}={visible[:, k].mean() * 100:.1f}%" for k, view in enumerate(views))
+        + f" neither={neither:.1f}%")
+
+    v = np.clip((pts[:, 1] - lo[1]) / span[1], 0, 1)
+    slice_idx = np.clip((v * 255).astype(np.int32), 0, 255)
+    dirs = np.array([VIEW_DIRECTIONS[view] for view in views])
+    rights = np.array([view_screen_right(view) for view in views])
+    us = [projected_u(pts, slice_idx, r, 256, settings.envelope_sigma) for r in rights]
+
+    sampled = np.zeros((len(pts), len(views), 3), np.float32)
+    for k, view in enumerate(views):
+        plate = base_plates[view]
+        x, y = plate.target_coords(us[k], v, settings.silhouette_inset)
+        rgb, _ = plate.sample(x, y)
+        for ref in closeups.get(view, []):
+            cx, cy = (x - ref.col) / ref.scale, (y - ref.row) / ref.scale
+            crgb, cw = ref.plate.sample(cx, cy)
+            inside = (cx >= 0) & (cx <= ref.plate.w - 1) & (cy >= 0) & (cy <= ref.plate.h - 1)
+            gate = np.ones_like(cw)
+            if ref.v_min is not None:
+                gate = np.clip(
+                    (v - (ref.v_min - ref.v_feather)) / max(ref.v_feather, 1e-6), 0.0, 1.0
+                ).astype(np.float32)
+            w = (cw * inside * gate)[:, None]
+            rgb = rgb * (1 - w) + crgb * w
+            scope = f"region>v{ref.v_min:.3f} feather {ref.v_feather:.3f}" if ref.v_min else "whole plate"
+            say(f"  {view}: {ref.source} ({scope}) -> {(w[:,0]>0.01).mean()*100:.1f}% of texels")
+        sampled[:, k] = rgb
+
+    align = nn @ dirs.T
+    colors, weights = blend_views(sampled, align, visible, settings.blend_power)
+    observed = np.where(visible, align, -1.0).max(axis=1)
+
+    # Per-view coverage, so adding a camera is measurable rather than asserted.
+    # "visible" is the occlusion test alone; "primary" is the share of texels for
+    # which that camera carries the most blend weight, i.e. where the colour
+    # actually comes from. The two differ widely on a deep subject, where a texel
+    # can be visible from a camera it is nearly edge-on to.
+    primary = weights.argmax(axis=1)
+    stats["visibility"] = {
+        "views": list(views),
+        "neither_percent": round(neither, 2),
+        "per_view": {
+            view: {
+                "visible_percent": round(float(visible[:, k].mean() * 100), 2),
+                "primary_percent": round(float((primary == k).mean() * 100), 2),
+            }
+            for k, view in enumerate(views)
+        },
+    }
+
+    f = settings.supersample
+    full_c = np.zeros((S, S, 3), np.float32)
+    full_c[covb] = colors
+    full_o = np.full((S, S), -1.0, np.float32)
+    full_o[covb] = observed
+    full_p = np.zeros((S, S, 3), np.float32)
+    full_p[covb] = pts
+    img, ok = block_mean(full_c, covb, f)
+    obs, _ = block_mean(full_o, covb, f)
+    pts_lo, _ = block_mean(full_p, covb, f)
+    isl_lo = isl.reshape(size, f, size, f).max(axis=(1, 3))
+    filled = ok
+    coverage = float(filled.mean())
+    say(f"raster {S}x{S} -> {size}: {filled.sum():,} texels covered ({coverage*100:.1f}%)")
+    stats["coverage_percent"] = round(coverage * 100, 2)
+    stats["covered_texels"] = int(filled.sum())
+
+    # --- grazing fill: chart-local, feathered -----------------------------
+    low = filled & (obs < settings.grazing_threshold)
+    say(f"grazing: {100*low.sum()/max(filled.sum(),1):.1f}% of covered texels below "
+        f"cos={settings.grazing_threshold}")
+    filled_count = 0
+    for cid in np.unique(isl_lo[filled]):
+        m = filled & (isl_lo == cid)
+        lo_m, hi_m = m & low, m & ~low
+        if lo_m.sum() == 0 or hi_m.sum() < 8:
+            continue
+        src = pts_lo[hi_m]
+        k = min(12, len(src))
+        d, i = cKDTree(src).query(pts_lo[lo_m], k=k, workers=-1)
+        if k == 1:
+            d, i = d[:, None], i[:, None]
+        w = 1.0 / np.maximum(d, 1e-6) ** 2
+        w /= w.sum(axis=1, keepdims=True)
+        blended = np.sum(img[hi_m][i] * w[:, :, None], axis=1)
+        ramp = np.clip(
+            (settings.grazing_threshold - obs[lo_m]) / max(settings.grazing_threshold, 1e-6), 0, 1
+        )[:, None]
+        img[lo_m] = img[lo_m] * (1 - ramp) + blended * ramp
+        filled_count += int(lo_m.sum())
+    say(f"  filled {filled_count:,} texels ({100*filled_count/max(filled.sum(),1):.1f}%)")
+    stats["grazing_fill_texels"] = filled_count
+    stats["grazing_fill_percent"] = round(100 * filled_count / max(int(filled.sum()), 1), 2)
+
+    # --- tone: area-weighted so it is invariant to UV allocation ----------
+    srgb = np.clip(img, 0, 1)
+    tri = np.cross(aV[afaces[:, 1]] - aV[afaces[:, 0]], aV[afaces[:, 2]] - aV[afaces[:, 0]])
+    face_area = 0.5 * np.linalg.norm(tri, axis=1)
+    area_per_island = np.bincount(face_isl, weights=face_area, minlength=nisl)
+    texels_per_island = np.bincount(np.clip(isl_lo[filled], 0, nisl - 1), minlength=nisl)
+    density = np.divide(
+        area_per_island, np.maximum(texels_per_island, 1),
+        out=np.zeros(nisl), where=texels_per_island > 0,
+    )
+    tw = density[np.clip(isl_lo, 0, nisl - 1)]
+    obs_mask = filled & (obs > 0.5)
+
+    def weighted(mask, image):
+        w = tw[mask]
+        px = image[mask] * 255
+        total = max(w.sum(), 1e-9) * 3
+        mean = (px * w[:, None]).sum() / total
+        var = ((px - mean) ** 2 * w[:, None]).sum() / total
+        return mean, float(np.sqrt(max(var, 0.0)))
+
+    src_px = np.concatenate([p.rgb[p.alpha] for p in base_plates.values()]) * 255
+    m0, s0 = weighted(obs_mask, srgb)
+    pivot = m0 / 255.0
+    x = np.clip(pivot + (srgb - pivot) * settings.contrast, 0, 1)
+    m1, _ = weighted(obs_mask, x)
+    delta = float(np.clip((src_px.mean() - m1) / 255.0, -0.12, 0.12))
+    x = np.clip(x + delta, 0, 1)
+    luma = (x * LUMA).sum(axis=2, keepdims=True)
+    x = np.clip(luma + (x - luma) * settings.saturation, 0, 1)
+    m2, s2 = weighted(obs_mask, x)
+    say(f"tone: source mean={src_px.mean():.1f} std={src_px.std():.1f} | "
+        f"atlas(area-weighted) {m0:.1f}/{s0:.1f} -> {m2:.1f}/{s2:.1f} "
+        f"(contrast {settings.contrast}, exposure {delta*255:+.1f}, saturation {settings.saturation})")
+    stats["tone"] = {
+        "source_mean": round(float(src_px.mean()), 2),
+        "source_std": round(float(src_px.std()), 2),
+        "atlas_mean_before": round(float(m0), 2),
+        "atlas_mean_after": round(float(m2), 2),
+        "atlas_std_after": round(float(s2), 2),
+        "exposure_delta": round(delta * 255, 2),
+    }
+
+    # --- masked unsharp ---------------------------------------------------
+    sharp_mask = filled & (obs > 0.5)
+    wgt = sharp_mask.astype(np.float32)[:, :, None]
+    num = ndimage.gaussian_filter(x * wgt, (settings.unsharp_sigma, settings.unsharp_sigma, 0))
+    den = ndimage.gaussian_filter(wgt, (settings.unsharp_sigma, settings.unsharp_sigma, 0))
+    detail = x - num / np.maximum(den, 1e-6)
+    act = (np.abs(detail).max(axis=2) > settings.unsharp_threshold) & sharp_mask
+    x[act] = np.clip(x[act] + settings.unsharp_amount * detail[act], 0, 1)
+    say(f"unsharp: sigma={settings.unsharp_sigma} amount={settings.unsharp_amount} "
+        f"-> {act.sum():,} texels ({100*act.sum()/max(filled.sum(),1):.1f}%)")
+
+    # --- dilate + write ---------------------------------------------------
+    dist, near = ndimage.distance_transform_edt(~filled, return_indices=True)
+    grow = (~filled) & (dist <= settings.dilate)
+    x[grow] = x[near[0][grow], near[1][grow]]
+    texture = Image.fromarray(np.rint(np.clip(x, 0, 1) * 255).astype(np.uint8), "RGB")
+    atlas_path.parent.mkdir(parents=True, exist_ok=True)
+    texture.save(atlas_path)
+    Image.fromarray((filled * 255).astype(np.uint8), "L").save(
+        atlas_path.with_name(atlas_path.stem + "-coverage.png")
+    )
+
+    out = trimesh.Trimesh(
+        vertices=aV, faces=afaces, vertex_normals=aN, process=False,
+        visual=TextureVisuals(
+            uv=uvs,
+            material=PBRMaterial(
+                baseColorTexture=texture, metallicFactor=0.0,
+                roughnessFactor=settings.roughness, doubleSided=False,
+                name=settings.material_name,
+            ),
+        ),
+    )
+    glb_path.parent.mkdir(parents=True, exist_ok=True)
+    out.export(glb_path, file_type="glb")
+
+    stats["uv_allocation"] = measure_uv_allocation(
+        aV, afaces, uvs, settings.head_v_min_measure, size, region_boxes=region_boxes
+    )
+    label = "region" if region_boxes else "head"
+    say(f"uv allocation: {label} {stats['uv_allocation']['head']['texels']:,} texels "
+        f"({stats['uv_allocation']['head']['percent_of_atlas']:.1f}% of atlas), "
+        f"{label} front-facing {stats['uv_allocation']['face']['texels']:,} texels "
+        f"(~{stats['uv_allocation']['face']['equivalent_square']:.0f}^2)")
+    return stats
+
+
+# --------------------------------------------------------------------------
+# finished-asset inspection
+# --------------------------------------------------------------------------
+def inspect_glb(path: Path, master_png: Path | None = None):
+    """Read back a finished GLB: geometry, texture encoding, bounds, PSNR."""
+    import io
+    import struct
+
+    raw = Path(path).read_bytes()
+    json_length = struct.unpack_from("<I", raw, 12)[0]
+    doc = json.loads(raw[20:20 + json_length].decode("utf-8"))
+    primitive = doc["meshes"][0]["primitives"][0]
+
+    report = {
+        "bytes": int(Path(path).stat().st_size),
+        "mesh_count": len(doc["meshes"]),
+        "material_count": len(doc.get("materials", [])),
+        "primitive_count": len(doc["meshes"][0]["primitives"]),
+        "attributes": sorted(primitive["attributes"].keys()),
+        "has_skins": "skins" in doc,
+        "has_animations": "animations" in doc,
+        "has_morph_targets": primitive.get("targets") is not None,
+        "extensions_used": doc.get("extensionsUsed"),
+        "node_name": doc.get("nodes", [{}])[0].get("name"),
+        "material_name": (doc.get("materials") or [{}])[0].get("name"),
+    }
+
+    if doc.get("images"):
+        view = doc["bufferViews"][doc["images"][0]["bufferView"]]
+        offset = 12 + 8 + json_length + 8 + view.get("byteOffset", 0)
+        data = raw[offset:offset + view["byteLength"]]
+        picture = Image.open(io.BytesIO(data))
+        report["texture"] = {
+            "mime": doc["images"][0].get("mimeType"),
+            "bytes": len(data),
+            "size": list(picture.size),
+            "mode": picture.mode,
+            "luma_quant_table": [int(q) for q in picture.quantization[0][:8]]
+            if getattr(picture, "quantization", None) else None,
+            "sampling": [list(s) for s in picture.layer] if hasattr(picture, "layer") else None,
+            "chroma_subsampled": (
+                any(s[1] != 1 or s[2] != 1 for s in picture.layer)
+                if hasattr(picture, "layer") and picture.layer else None
+            ),
+        }
+        if master_png and Path(master_png).exists():
+            ref = np.asarray(Image.open(master_png).convert("RGB"), dtype=np.float64)
+            got = np.asarray(picture.convert("RGB"), dtype=np.float64)
+            if ref.shape == got.shape:
+                mse = ((ref - got) ** 2).mean()
+                report["texture"]["psnr_db"] = (
+                    round(float(10 * np.log10(255.0 ** 2 / mse)), 2) if mse > 0 else None
+                )
+
+    geometry = next(iter(trimesh.load(path, force="scene").geometry.values()))
+    minimum, maximum = geometry.bounds
+    report.update({
+        "triangles": int(len(geometry.faces)),
+        "vertices": int(len(geometry.vertices)),
+        "bounds_min": [round(float(v), 6) for v in minimum],
+        "bounds_max": [round(float(v), 6) for v in maximum],
+        "dimensions": [round(float(v), 4) for v in (maximum - minimum)],
+        "min_y": round(float(minimum[1]), 6),
+        "centred_xz": [round(float(v), 6) for v in ((minimum + maximum) / 2)[[0, 2]]],
+    })
+    return report

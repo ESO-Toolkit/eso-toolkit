@@ -1,0 +1,142 @@
+{
+  "slug": "shade-of-siroria",
+  "display_name": "Shade of Siroria",
+  "aliases": [
+    "Shade of Siroria"
+  ],
+  "encounter": {
+    "trial": "Cloudrest",
+    "role": "boss",
+    "notes": "Female base body, crimson bodysuit, gold corset."
+  },
+  "work_dir": "build/shade-of-siroria",
+  "reference": {
+    "page_url": "https://esomodelviewer.com/characters/post/234-shade-of-siroria",
+    "directory": "shade-of-siroria-references",
+    "plates": {
+      "front": {
+        "file": "view-01.jpg",
+        "role": "full-body-front"
+      },
+      "back": {
+        "file": "view-03.jpg",
+        "role": "full-body-back"
+      }
+    },
+    "side_plates": {
+      "available": false,
+      "note": "No true left/right profile is published. No profile was synthesized; fabricated detail is not permitted."
+    },
+    "closeups": [
+      {
+        "file": "view-07.jpg",
+        "role": "torso",
+        "view": "front",
+        "accepted": true,
+        "registration": {
+          "scale": 0.41,
+          "row": 166.0,
+          "col": 139.39,
+          "width_error": 0.0446,
+          "method": "silhouette-profile",
+          "verified_by": "overlay reviewed 2026-09-06"
+        }
+      },
+      {
+        "file": "view-08.jpg",
+        "role": "torso",
+        "view": "back",
+        "accepted": true,
+        "registration": {
+          "scale": 0.35,
+          "row": 265.0,
+          "col": 170.44,
+          "width_error": 0.05169,
+          "method": "silhouette-profile",
+          "verified_by": "overlay reviewed 2026-09-06"
+        }
+      },
+      {
+        "file": "view-04.jpg",
+        "role": "helm",
+        "view": "front",
+        "accepted": false,
+        "rejected_reason": "head-region fit 0.75% - the LOWEST error measured anywhere in this project - yet the overlay is grossly oversized. Definitive proof that width error is not evidence."
+      },
+      {
+        "file": "view-09.jpg",
+        "role": "legs",
+        "view": "front",
+        "accepted": false,
+        "rejected_reason": "overlay boots overshoot below the base feet (3.49%)"
+      },
+      {
+        "file": "view-10.jpg",
+        "role": "legs",
+        "view": "front",
+        "accepted": false,
+        "rejected_reason": "same overshoot signature (2.66%)"
+      },
+      {
+        "file": "view-06.jpg",
+        "role": "helm",
+        "view": "front",
+        "accepted": false,
+        "rejected_reason": "shot against black feathers, very low contrast"
+      }
+    ]
+  },
+  "geometry": {
+    "source": "build/shade-of-siroria/shade-of-siroria-draft.glb",
+    "decimate": true,
+    "target_triangles": 45000,
+    "max_triangles": 50000,
+    "provenance": "TBD"
+  },
+  "atlas": {
+    "size": 1024,
+    "jpeg_quality": 92,
+    "roughness": 0.78,
+    "material_name": "shade-of-siroria-atlas"
+  },
+  "regions": {
+    "head_v_min": 0.775,
+    "head_feather": 0.12,
+    "note": "detector gave 0.8030 front but MISFIRED to 0.9580 on the back (feathers). Hand-set to 0.7750 and verified visually."
+  },
+  "uv_density": {
+    "head_scale": 3.0,
+    "head_v": 0.775,
+    "leg_scale": 1.0,
+    "leg_v": 0.45,
+    "ramp": 0.08,
+    "note": "Tuned for this silhouette: the crested helm plus halo ring is a far larger share of the body than a normal head, so it needs much LESS boost than Vrol (5.5) or Yandir (8.0). head_scale 5.5 overshot to 321^2 with the head taking 38.5% of the atlas; 2.0 lands ~258^2 at ~25%."
+  },
+  "projection": {
+    "supersample": 2,
+    "depth_size": 2048,
+    "pack_resolution": 2048,
+    "pack_padding": 4,
+    "blend_power": 3.0,
+    "silhouette_inset": 0.02,
+    "grazing_threshold": 0.35,
+    "dilate": 24,
+    "closeup_feather": 60,
+    "envelope_sigma": 3.0
+  },
+  "tone": {
+    "contrast": 1.08,
+    "saturation": 1.1
+  },
+  "unsharp": {
+    "sigma": 0.7,
+    "amount": 0.45,
+    "threshold": 0.01569
+  },
+  "output": {
+    "directory": "build/shade-of-siroria/out",
+    "suffix": "-overview-v1",
+    "max_bytes": 2500000
+  },
+  "rights": "The Elder Scrolls Online name, character design and related rights remain with ZeniMax Media/Bethesda Softworks. Reconstructed from published screenshots for an authorized fan prototype; not a claim that the IP is freely licensed."
+}

@@ -1,0 +1,53 @@
+{
+  "slug": "tideborn-taleria",
+  "display_name": "Tideborn Taleria",
+  "aliases": ["Tideborn Taleria", "Coral Air Atronach"],
+  "encounter": {
+    "trial": "Dreadsail Reef",
+    "encounter": "Tideborn Taleria",
+    "role": "boss",
+    "notes": "ROUTE B: geometry is the EXTRACTED game mesh AirAtronach_Coral_Boss. A levitating construct of disjoint coral-encrusted rock: 46 welded shells with no connecting geometry, which is the creature, not a defect."
+  },
+  "work_dir": "build/tideborn-taleria",
+  "reference": {
+    "page_url": "https://esomodelviewer.com/creatures/post/158-tideborn-taleria",
+    "directory": "tideborn-taleria-references",
+    "plates": {
+      "front": { "file": "view-01.jpg", "role": "full-body-front" },
+      "back": { "file": "view-03.jpg", "role": "full-body-back" }
+    },
+    "side_plates": {
+      "available": false,
+      "why": "10 captures, none a full-body profile: 01 front, 02 three-quarter, 03 back, 08 a closer back, the rest head and shoulder closeups. measure-view-coverage's estimate of what a real pair would buy is recorded in the build report; it is not synthesised."
+    },
+    "closeups": []
+  },
+  "geometry": {
+    "source": "build/tideborn-taleria/tideborn-taleria-source.glb",
+    "decimate": false,
+    "target_triangles": 19862,
+    "max_triangles": 50000,
+    "provenance": "EXTRACTED game mesh AirAtronach_Coral_Boss.glb (feat/trial-boss-models), 19,862 tris, 46 welded shells, +Y up / +Z front, feet (lowest floating chunk) at y=0. prepare-static-boss.py --normalize-height 2.0 only. No Hunyuan and no GPU.",
+    "pose_mismatch": "PRESENT and moderate. Normalised to height 2.0 the mesh is 3.861 wide, width/height 1.93; the reference subject is 907x1006px, width/height 0.90. The mesh's bind pose holds the two arm-chains out and forward at roughly 45 degrees where the references hang them down at the sides, so the mesh is about twice as wide for its height. The engine's per-slice silhouette-normalised u is the right tool for this - both mesh and plate resolve the same three opaque runs (left arm, body, right arm) at almost every height, so the correspondence is structurally sound and only the horizontal scale differs. Watch the run-mismatch warning in the report."
+  },
+  "atlas": { "size": 1024, "jpeg_quality": 92, "roughness": 0.78, "material_name": "tideborn-taleria-atlas" },
+  "regions": {
+    "head_v_min": 0.56,
+    "head_feather": 0.08,
+    "boxes": [
+      { "name": "head", "box": [0.36, 0.56, 0.02, 0.64, 1.0, 0.60], "feather": 0.04, "uv_scale": 4.0 }
+    ],
+    "note": "VERIFIED on a membership render (_advice-crops/tideborn-taleria-boxcheck.jpg). The FIRST TWO attempts ([0.37,0.66,0]-[0.63,1,1] and [0.39,0.73,0.02]-[0.61,1,0.55]) claimed only the horns and the crown dome and left the V-shaped visor face OUTSIDE the box - the exact failure the standing rule exists for, and invisible in every metric. y_min lowered to 0.56 to take the face in. It now also takes the inner faces of the two shoulder chunks, which is accepted: over-claiming a neighbour costs texel density, under-claiming the face costs identity."
+  },
+  "uv_density": { "head_scale": 1.0, "head_v": 0.8, "leg_scale": 1.0, "leg_v": 0.45, "ramp": 0.08,
+    "note": "Legacy scalar warp disabled; regions.boxes drives the density warp." },
+  "projection": {
+    "supersample": 2, "depth_size": 2048, "pack_resolution": 2048, "pack_padding": 4,
+    "blend_power": 3.0, "silhouette_inset": 0.02, "grazing_threshold": 0.35,
+    "dilate": 24, "closeup_feather": 60, "envelope_sigma": 3.0
+  },
+  "tone": { "contrast": 1.08, "saturation": 1.1 },
+  "unsharp": { "sigma": 0.7, "amount": 0.45, "threshold": 0.01569 },
+  "output": { "directory": "build/tideborn-taleria/out", "suffix": "-overview-v1", "max_bytes": 2500000 },
+  "rights": "The Elder Scrolls Online name, character design and related rights remain with ZeniMax Media/Bethesda Softworks. Reconstructed from published screenshots for an authorized fan prototype; not a claim that the IP is freely licensed."
+}
