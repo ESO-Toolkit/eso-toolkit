@@ -154,6 +154,36 @@ describe('friendlyBuffEventsSlice', () => {
     expect(client.query).toHaveBeenCalledTimes(2);
   });
 
+  it.each([
+    ['NaN in a bounded interval', Number.NaN, true],
+    ['infinite on an unrestricted first page', Number.POSITIVE_INFINITY, false],
+  ])('rejects a %s pagination cursor', async (_label, cursor, restrictToFightWindow) => {
+    const store = createStore();
+    const client = {
+      query: jest.fn().mockResolvedValue({
+        reportData: {
+          report: {
+            events: { data: [], nextPageTimestamp: cursor },
+          },
+        },
+      }),
+    } as unknown as EsoLogsClient;
+
+    await store.dispatch(
+      fetchFriendlyBuffEvents({
+        reportCode: 'ABC123',
+        fight: { ...fight, endTime: 1 },
+        client,
+        intervalSize: 100,
+        restrictToFightWindow,
+      }) as never,
+    );
+
+    expect(getEntry(store)?.status).toBe('failed');
+    expect(getEntry(store)?.error).toBe('Friendly buff event pagination cursor did not advance');
+    expect(client.query).toHaveBeenCalledTimes(1);
+  });
+
   it('limits concurrent interval queries', async () => {
     const store = createStore();
     const resolvers: Array<() => void> = [];

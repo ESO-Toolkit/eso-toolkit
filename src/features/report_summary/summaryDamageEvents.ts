@@ -5,7 +5,15 @@ import {
   type GetDamageEventsQuery,
   HostilityType,
 } from '../../graphql/gql/graphql';
-import { EVENT_PAGE_LIMIT } from '../../store/events_data/constants';
+import {
+  EVENT_MAX_EVENTS_PER_STREAM,
+  EVENT_MAX_PAGES_PER_STREAM,
+  EVENT_PAGE_LIMIT,
+} from '../../store/events_data/constants';
+import {
+  assertCompleteEventPage,
+  deduplicateEventPages,
+} from '../../store/events_data/utils/deduplicateEvents';
 import type { DamageEvent } from '../../types/combatlogEvents';
 
 /**
@@ -34,29 +42,52 @@ export async function fetchSummaryFriendlyDamageEvents({
   fight: FightFragment;
   client: EsoLogsClient;
 }): Promise<DamageEvent[]> {
-  let allEvents: DamageEvent[] = [];
+  const eventPages: DamageEvent[][] = [];
   let nextPageTimestamp: number | null = null;
+  let pageCount = 0;
+  let eventCount = 0;
 
   do {
+    if (pageCount >= EVENT_MAX_PAGES_PER_STREAM) {
+      throw new Error(
+        `Summary damage event pagination exceeded ${EVENT_MAX_PAGES_PER_STREAM} pages`,
+      );
+    }
+    const requestedStartTime = nextPageTimestamp ?? fight.startTime;
     const response: GetDamageEventsQuery = await client.query({
       query: GetDamageEventsDocument,
       fetchPolicy: 'no-cache',
       variables: {
         code: reportCode,
         fightIds: [Number(fight.id)],
-        startTime: nextPageTimestamp ?? fight.startTime,
+        startTime: requestedStartTime,
         endTime: fight.endTime ?? undefined,
         hostilityType: HostilityType.Friendlies,
         limit: EVENT_PAGE_LIMIT,
       },
     });
+    pageCount += 1;
 
     const page = response.reportData?.report?.events;
-    if (page?.data) {
-      allEvents = allEvents.concat(page.data as DamageEvent[]);
+    assertCompleteEventPage(page, 'Summary damage');
+    if (page.data.length) {
+      eventCount += page.data.length;
+      if (eventCount > EVENT_MAX_EVENTS_PER_STREAM) {
+        throw new Error(
+          `Summary damage event pagination exceeded ${EVENT_MAX_EVENTS_PER_STREAM} events`,
+        );
+      }
+      eventPages.push(page.data as DamageEvent[]);
     }
-    nextPageTimestamp = page?.nextPageTimestamp ?? null;
-  } while (nextPageTimestamp);
+    const followingTimestamp = page.nextPageTimestamp ?? null;
+    if (
+      followingTimestamp != null &&
+      (!Number.isFinite(followingTimestamp) || followingTimestamp <= requestedStartTime)
+    ) {
+      throw new Error('Summary damage event pagination cursor did not advance');
+    }
+    nextPageTimestamp = followingTimestamp;
+  } while (nextPageTimestamp != null);
 
-  return allEvents;
+  return deduplicateEventPages(eventPages);
 }

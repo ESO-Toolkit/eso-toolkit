@@ -2,6 +2,14 @@ import { gql } from '@apollo/client';
 
 import type { EsoLogsClient } from '../../esologsClient';
 import type { FightFragment } from '../../graphql/gql/graphql';
+import {
+  EVENT_MAX_EVENTS_PER_STREAM,
+  EVENT_MAX_PAGES_PER_STREAM,
+} from '../../store/events_data/constants';
+import {
+  assertCompleteEventPage,
+  deduplicateEventPages,
+} from '../../store/events_data/utils/deduplicateEvents';
 import { KnownAbilities } from '../../types/abilities';
 
 /** A resurrection cast targeting a player — the moment they were revived. */
@@ -77,35 +85,57 @@ export async function fetchResurrectionEvents({
   fight: FightFragment;
   client: EsoLogsClient;
 }): Promise<ResurrectionEvent[]> {
-  const out: ResurrectionEvent[] = [];
+  const eventPages: RawCastEvent[][] = [];
   let nextPageTimestamp: number | null = null;
-  let pages = 0;
+  let pageCount = 0;
+  let eventCount = 0;
 
   do {
+    if (pageCount >= EVENT_MAX_PAGES_PER_STREAM) {
+      throw new Error(`Resurrection event pagination exceeded ${EVENT_MAX_PAGES_PER_STREAM} pages`);
+    }
+    const requestedStartTime = nextPageTimestamp ?? fight.startTime;
     const response = (await client.query({
       query: RESURRECTION_CASTS_QUERY,
       fetchPolicy: 'no-cache',
       variables: {
         code: reportCode,
         fightIds: [Number(fight.id)],
-        startTime: nextPageTimestamp ?? fight.startTime,
+        startTime: requestedStartTime,
         endTime: fight.endTime ?? undefined,
         abilityID: KnownAbilities.RESURRECT,
       },
     })) as ResurrectionCastsResponse;
 
     const page = response?.reportData?.report?.events;
-    for (const ev of page?.data ?? []) {
-      if (
-        ev?.type === 'cast' &&
-        typeof ev.targetID === 'number' &&
-        typeof ev.timestamp === 'number'
-      ) {
-        out.push({ targetID: ev.targetID, timestamp: ev.timestamp });
-      }
+    assertCompleteEventPage(page, 'Resurrection');
+    const pageEvents = page.data;
+    eventPages.push(pageEvents);
+    pageCount += 1;
+    eventCount += pageEvents.length;
+    if (eventCount > EVENT_MAX_EVENTS_PER_STREAM) {
+      throw new Error(
+        `Resurrection event pagination exceeded ${EVENT_MAX_EVENTS_PER_STREAM} events`,
+      );
     }
-    nextPageTimestamp = page?.nextPageTimestamp ?? null;
-  } while (nextPageTimestamp && ++pages < 20);
 
-  return out;
+    const followingTimestamp = page.nextPageTimestamp ?? null;
+    if (
+      followingTimestamp != null &&
+      (!Number.isFinite(followingTimestamp) || followingTimestamp <= requestedStartTime)
+    ) {
+      throw new Error('Resurrection event pagination cursor did not advance');
+    }
+    nextPageTimestamp = followingTimestamp;
+  } while (nextPageTimestamp != null);
+
+  return deduplicateEventPages(eventPages).flatMap((event) =>
+    event.type === 'cast' &&
+    typeof event.targetID === 'number' &&
+    Number.isFinite(event.targetID) &&
+    typeof event.timestamp === 'number' &&
+    Number.isFinite(event.timestamp)
+      ? [{ targetID: event.targetID, timestamp: event.timestamp }]
+      : [],
+  );
 }

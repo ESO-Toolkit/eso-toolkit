@@ -18,7 +18,13 @@ import {
   trimCache,
 } from '../utils/keyedCacheState';
 
-import { EVENT_CACHE_MAX_ENTRIES, EVENT_PAGE_LIMIT } from './constants';
+import {
+  EVENT_CACHE_MAX_ENTRIES,
+  EVENT_MAX_EVENTS_PER_STREAM,
+  EVENT_MAX_PAGES_PER_STREAM,
+  EVENT_PAGE_LIMIT,
+} from './constants';
+import { assertCompleteEventPage, deduplicateEventPages } from './utils/deduplicateEvents';
 import { createCurrentRequest, isStaleResponse } from './utils/requestTracking';
 
 type DeathEventsRequest = ReturnType<typeof createCurrentRequest> | null;
@@ -67,44 +73,82 @@ const initialState: DeathEventsState = {
   accessOrder: [],
 };
 
+const hasFreshCache = (entry: DeathEventsEntry | undefined): boolean => {
+  const lastFetchedTimestamp = entry?.cacheMetadata.lastFetchedTimestamp;
+  return (
+    entry?.status === 'succeeded' &&
+    typeof lastFetchedTimestamp === 'number' &&
+    Date.now() - lastFetchedTimestamp < DATA_FETCH_CACHE_TIMEOUT
+  );
+};
+
 export const fetchDeathEvents = createAsyncThunk<
   DeathEvent[],
   { reportCode: string; fight: FightFragment; client: EsoLogsClient },
   { state: LocalRootState; rejectValue: string }
 >(
   'deathEvents/fetchDeathEvents',
-  async ({ reportCode, fight, client }) => {
+  async ({ reportCode, fight, client }, { signal }) => {
     // Fetch both friendly and enemy death events
     const hostilityTypes = [HostilityType.Friendlies, HostilityType.Enemies];
-    let allEvents: LogEvent[] = [];
+    const eventStreams: LogEvent[][] = [];
 
     for (const hostilityType of hostilityTypes) {
+      const eventPages: LogEvent[][] = [];
+      let totalEvents = 0;
+      let pageCount = 0;
       let nextPageTimestamp: number | null = null;
 
       do {
+        signal.throwIfAborted();
+        if (pageCount >= EVENT_MAX_PAGES_PER_STREAM) {
+          throw new Error(`Death event pagination exceeded ${EVENT_MAX_PAGES_PER_STREAM} pages`);
+        }
+
+        const requestedStartTime = nextPageTimestamp ?? fight.startTime;
         const response: GetDeathEventsQuery = await client.query({
           query: GetDeathEventsDocument,
           fetchPolicy: 'no-cache',
+          context: { fetchOptions: { signal } },
           variables: {
             code: reportCode,
             fightIds: [Number(fight.id)],
-            startTime: nextPageTimestamp ?? fight.startTime,
+            startTime: requestedStartTime,
             endTime: fight.endTime,
             hostilityType: hostilityType,
             limit: EVENT_PAGE_LIMIT,
           },
         });
+        pageCount += 1;
 
         const page = response.reportData?.report?.events;
-        if (page?.data) {
-          allEvents = allEvents.concat(page.data);
+        assertCompleteEventPage(page, 'Death');
+        if (page.data.length) {
+          totalEvents += page.data.length;
+          if (totalEvents > EVENT_MAX_EVENTS_PER_STREAM) {
+            throw new Error(
+              `Death event pagination exceeded ${EVENT_MAX_EVENTS_PER_STREAM} events`,
+            );
+          }
+          eventPages.push(page.data);
         }
-        nextPageTimestamp = page?.nextPageTimestamp ?? null;
-      } while (nextPageTimestamp);
+        const followingTimestamp = page.nextPageTimestamp ?? null;
+        if (
+          followingTimestamp != null &&
+          (!Number.isFinite(followingTimestamp) || followingTimestamp <= requestedStartTime)
+        ) {
+          throw new Error('Death event pagination cursor did not advance');
+        }
+        nextPageTimestamp = followingTimestamp;
+      } while (nextPageTimestamp != null);
+
+      eventStreams.push(deduplicateEventPages(eventPages));
     }
 
     // Filter to only death events
-    const deathEvents = allEvents.filter((event) => event.type === 'death') as DeathEvent[];
+    const deathEvents = eventStreams
+      .flat()
+      .filter((event) => event.type === 'death') as DeathEvent[];
     return deathEvents;
   },
   {
@@ -113,13 +157,7 @@ export const fetchDeathEvents = createAsyncThunk<
       const { key } = resolveCacheKey({ reportCode, fightId: Number(fight.id) });
       const entry = state.entries[key];
 
-      const lastFetchedTimestamp = entry?.cacheMetadata.lastFetchedTimestamp;
-      const isCached = Boolean(entry?.events.length);
-      const isFresh =
-        typeof lastFetchedTimestamp === 'number' &&
-        Date.now() - lastFetchedTimestamp < DATA_FETCH_CACHE_TIMEOUT;
-
-      if (isCached && isFresh) {
+      if (hasFreshCache(entry)) {
         return false; // Prevent thunk execution
       }
 
@@ -130,6 +168,7 @@ export const fetchDeathEvents = createAsyncThunk<
 
       return true; // Allow thunk execution
     },
+    dispatchConditionRejection: true,
   },
 );
 
@@ -215,6 +254,15 @@ const deathEventsSlice = createSlice({
           fightId: Number(action.meta.arg.fight.id),
         });
         const entry = ensureEntry(state, key);
+        if (action.meta.condition) {
+          if (hasFreshCache(entry)) {
+            entry.status = 'succeeded';
+            entry.error = null;
+            entry.currentRequest = null;
+            touchAccessOrder(state, key);
+          }
+          return;
+        }
         if (
           isStaleResponse(
             entry.currentRequest,
