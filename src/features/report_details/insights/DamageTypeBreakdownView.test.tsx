@@ -43,7 +43,7 @@ describe('DamageTypeBreakdownView critical metric labels', () => {
 
     const criticalRate = screen.getByText('Crit hit rate 50.0%');
     expect(screen.getByText('Crit damage share 90.0%')).toBeInTheDocument();
-    expect(screen.getByText('damage share')).toBeInTheDocument();
+    expect(screen.getByText('overlapping damage share')).toBeInTheDocument();
 
     await user.hover(criticalRate);
     expect(await screen.findByRole('tooltip')).toHaveTextContent(
@@ -83,7 +83,7 @@ describe('DamageTypeBreakdownView critical metric labels', () => {
 
     expect(screen.getByText('Crit hit rate unavailable')).toBeInTheDocument();
     expect(screen.getByText('Crit damage share unavailable')).toBeInTheDocument();
-    expect(screen.getByText('Damage share unavailable')).toBeInTheDocument();
+    expect(screen.getByText('Overlapping damage share unavailable')).toBeInTheDocument();
     expect(screen.queryByText('Crit hit rate 0.0%')).not.toBeInTheDocument();
     expect(screen.queryByText('Crit damage share 0.0%')).not.toBeInTheDocument();
     expect(screen.queryByText('0.0%')).not.toBeInTheDocument();

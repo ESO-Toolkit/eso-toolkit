@@ -4,10 +4,12 @@ import { FightFragment } from '../../../graphql/gql/graphql';
 import { useDamageEvents, useReportMasterData } from '../../../hooks';
 import { useSelectedTargetIds } from '../../../hooks/useSelectedTargetIds';
 import { DamageTypeFlags } from '../../../types/abilities';
-import { HitType } from '../../../types/combatlogEvents';
 
 import { DamageTypeBreakdownView } from './DamageTypeBreakdownView';
-import { categorizeDamageEvents, type DamageCategoryKey } from './damageTypeCategorization';
+import {
+  categorizeDamageEventsWithMetrics,
+  type DamageCategoryKey,
+} from './damageTypeCategorization';
 
 interface DamageTypeBreakdownPanelProps {
   fight: FightFragment;
@@ -64,35 +66,14 @@ export const DamageTypeBreakdownPanel: React.FC<DamageTypeBreakdownPanelProps> =
       if (selectedPlayerId != null && event.sourceID !== selectedPlayerId) return false;
       return true;
     };
-    const categorized = categorizeDamageEvents(damageEvents, reportMasterData.abilitiesById, {
+    const {
+      all: categorized,
+      eligible: eligibleCategorized,
+      critical: criticalCategorized,
+      unknownHitType: unknownHitTypeCategorized,
+    } = categorizeDamageEventsWithMetrics(damageEvents, reportMasterData.abilitiesById, {
       includeEvent: isSelectedEvent,
     });
-    const eligibleCategorized = categorizeDamageEvents(
-      damageEvents,
-      reportMasterData.abilitiesById,
-      {
-        includeEvent: (event) =>
-          isSelectedEvent(event) &&
-          (event.hitType === HitType.Normal || event.hitType === HitType.Critical),
-      },
-    );
-    const criticalCategorized = categorizeDamageEvents(
-      damageEvents,
-      reportMasterData.abilitiesById,
-      {
-        includeEvent: (event) => isSelectedEvent(event) && event.hitType === HitType.Critical,
-      },
-    );
-    const unknownHitTypeCategorized = categorizeDamageEvents(
-      damageEvents,
-      reportMasterData.abilitiesById,
-      {
-        includeEvent: (event) =>
-          isSelectedEvent(event) &&
-          event.hitType !== HitType.Normal &&
-          event.hitType !== HitType.Critical,
-      },
-    );
 
     const breakdown: DamageTypeBreakdown[] = CATEGORY_META.filter(
       (meta) => categorized[meta.key].totalDamage > 0,

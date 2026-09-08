@@ -266,11 +266,13 @@ export const DamageTypeBreakdownView: React.FC<DamageTypeBreakdownViewProps> = (
                     : 'Critical damage share is unavailable because one or more hit types are unknown.'
                   : `Critical damage share: ${formatNumber(damageType.criticalDamage)} critical damage out of ${formatNumber(damageType.totalDamage)} total damage.`;
               const damageShareLabel =
-                percentage === null ? 'Damage share unavailable' : `${percentage.toFixed(1)}%`;
+                percentage === null
+                  ? 'Overlapping damage share unavailable'
+                  : `${percentage.toFixed(1)}%`;
               const damageShareAriaLabel =
                 percentage === null
-                  ? 'Damage share unavailable because total damage is zero'
-                  : `Damage share: ${percentage.toFixed(1)}% of total damage`;
+                  ? 'Overlapping damage share unavailable because total damage is zero'
+                  : `Overlapping damage share: ${percentage.toFixed(1)}% of total damage; categories may overlap`;
               // Try custom mapping first (by display name), then fall back to enum-based mapping
               const color =
                 CUSTOM_DAMAGE_TYPE_COLORS[damageType.displayName] ||
@@ -446,7 +448,7 @@ export const DamageTypeBreakdownView: React.FC<DamageTypeBreakdownViewProps> = (
                                 textShadow: '1px 1px 1px rgba(0,0,0,0.8)',
                               }}
                             >
-                              damage share
+                              overlapping damage share
                             </Typography>
                           </Box>
                         </Tooltip>

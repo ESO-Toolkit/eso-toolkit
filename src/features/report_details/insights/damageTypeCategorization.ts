@@ -84,6 +84,80 @@ export type AbilitiesLookup = Record<string | number, AbilityTypeInfo | undefine
 
 const makeBucket = (): DamageCategoryTotals => ({ totalDamage: 0, hitCount: 0, criticalHits: 0 });
 
+const makeCategorizedDamage = (): CategorizedDamage => ({
+  magic: makeBucket(),
+  martial: makeBucket(),
+  direct: makeBucket(),
+  poison: makeBucket(),
+  dot: makeBucket(),
+  aoe: makeBucket(),
+  statusEffects: makeBucket(),
+  fire: makeBucket(),
+  totalDamage: 0,
+});
+
+export interface CategorizedDamageMetrics {
+  all: CategorizedDamage;
+  eligible: CategorizedDamage;
+  critical: CategorizedDamage;
+  unknownHitType: CategorizedDamage;
+}
+
+const isEligibleHit = (event: DamageEvent): boolean =>
+  event.hitType === HitType.Normal || event.hitType === HitType.Critical;
+
+const addToBucket = (bucket: DamageCategoryTotals, amount: number, crit: number): void => {
+  bucket.totalDamage += amount;
+  bucket.hitCount += 1;
+  bucket.criticalHits += crit;
+};
+
+/** Accumulate all panel metric populations in one event traversal. */
+export function categorizeDamageEventsWithMetrics(
+  events: readonly DamageEvent[] | undefined | null,
+  abilitiesById: AbilitiesLookup | undefined | null,
+  options?: { includeEvent?: (event: DamageEvent) => boolean },
+): CategorizedDamageMetrics {
+  const metrics: CategorizedDamageMetrics = {
+    all: makeCategorizedDamage(),
+    eligible: makeCategorizedDamage(),
+    critical: makeCategorizedDamage(),
+    unknownHitType: makeCategorizedDamage(),
+  };
+  if (!events) return metrics;
+  const include = options?.includeEvent;
+
+  for (const event of events) {
+    if (event.sourceIsFriendly !== true || event.targetIsFriendly) continue;
+    if (include && !include(event)) continue;
+
+    const amount = event.amount || 0;
+    const crit = event.hitType === HitType.Critical ? 1 : 0;
+    const ability = abilitiesById?.[event.abilityGameID];
+    const typeNum = ability?.type != null ? Number(ability.type) : 0;
+    const categories: DamageCategoryKey[] = [];
+    if (event.tick !== true || event.abilityGameID === KnownAbilities.RAPID_STRIKES)
+      categories.push('direct');
+    if (event.tick === true) categories.push('dot');
+    if ((typeNum & POISON) === POISON || (typeNum & DISEASE) === DISEASE) categories.push('poison');
+    if ((typeNum & FIRE) === FIRE) categories.push('fire');
+    if (AOE_ABILITY_IDS.has(event.abilityGameID)) categories.push('aoe');
+    if (STATUS_EFFECT_ABILITY_IDS.has(event.abilityGameID)) categories.push('statusEffects');
+    if ((typeNum & MAGIC_FLAGS) !== 0) categories.push('magic');
+    if ((typeNum & MARTIAL_FLAGS) !== 0) categories.push('martial');
+
+    const populations = [metrics.all];
+    if (isEligibleHit(event)) populations.push(metrics.eligible);
+    if (event.hitType === HitType.Critical) populations.push(metrics.critical);
+    if (!isEligibleHit(event)) populations.push(metrics.unknownHitType);
+    for (const population of populations) {
+      population.totalDamage += amount;
+      for (const category of categories) addToBucket(population[category], amount, crit);
+    }
+  }
+  return metrics;
+}
+
 /**
  * Categorize a stream of damage events into the shared damage-type buckets.
  *
@@ -96,54 +170,7 @@ export function categorizeDamageEvents(
   abilitiesById: AbilitiesLookup | undefined | null,
   options?: { includeEvent?: (event: DamageEvent) => boolean },
 ): CategorizedDamage {
-  const result: CategorizedDamage = {
-    magic: makeBucket(),
-    martial: makeBucket(),
-    direct: makeBucket(),
-    poison: makeBucket(),
-    dot: makeBucket(),
-    aoe: makeBucket(),
-    statusEffects: makeBucket(),
-    fire: makeBucket(),
-    totalDamage: 0,
-  };
-
-  if (!events) return result;
-
-  const include = options?.includeEvent;
-
-  for (const event of events) {
-    // Count player-outgoing damage only (excludes damage taken, friendly fire).
-    if (event.sourceIsFriendly !== true || event.targetIsFriendly) continue;
-    if (include && !include(event)) continue;
-
-    const amount = event.amount || 0;
-    const crit = event.hitType === HitType.Critical ? 1 : 0;
-    const ability = abilitiesById?.[event.abilityGameID];
-    const typeNum = ability?.type != null ? Number(ability.type) : 0;
-
-    result.totalDamage += amount;
-
-    const add = (bucket: DamageCategoryTotals): void => {
-      bucket.totalDamage += amount;
-      bucket.hitCount += 1;
-      bucket.criticalHits += crit;
-    };
-
-    const isDirectDamage =
-      event.tick !== true || event.abilityGameID === KnownAbilities.RAPID_STRIKES;
-
-    if (isDirectDamage) add(result.direct);
-    if (event.tick === true) add(result.dot);
-    if ((typeNum & POISON) === POISON || (typeNum & DISEASE) === DISEASE) add(result.poison);
-    if ((typeNum & FIRE) === FIRE) add(result.fire);
-    if (AOE_ABILITY_IDS.has(event.abilityGameID)) add(result.aoe);
-    if (STATUS_EFFECT_ABILITY_IDS.has(event.abilityGameID)) add(result.statusEffects);
-    if ((typeNum & MAGIC_FLAGS) !== 0) add(result.magic);
-    if ((typeNum & MARTIAL_FLAGS) !== 0) add(result.martial);
-  }
-
-  return result;
+  return categorizeDamageEventsWithMetrics(events, abilitiesById, options).all;
 }
 
 /** A bucket within an exclusive partition. */
