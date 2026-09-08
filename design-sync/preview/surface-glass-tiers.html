@@ -1,0 +1,237 @@
+<!-- @dsCard group="Surfaces" -->
+<meta charset="utf-8">
+<title>Glass Tiers — Blur Ladder + Tooltip / Dialog / AppBar / Alert Glass</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; box-sizing:border-box; }
+  body { font-family:Inter,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif; background:#0b1220; padding:20px; }
+  h1,h2,h3 { font-family:'Space Grotesk',Inter,system-ui,sans-serif; font-weight:600; }
+
+  [data-color-scheme="dark"] {
+    --bg:#0b1220; --panel:#0f172a; --panel-2:#0d1430; --text:#e5e7eb; --muted:#94a3b8;
+    --accent:#38bdf8; --accent-2:#00e1ff; --ok:#22c55e; --warn:#ff9800; --danger:#ef4444;
+    --border:#1f2937;
+  }
+  [data-color-scheme="light"] {
+    --bg:#f8fafc; --panel:#ffffff; --panel-2:#f8fafc; --text:#1e293b; --muted:#64748b;
+    --accent:#0f172a; --accent-2:#1e293b; --ok:#059669; --warn:#f97316; --danger:#dc2626;
+    --border:#bcd9ff;
+  }
+  /* NOTE: light --accent is deliberately dark slate #0f172a, NOT a light blue.
+     Cyan #38bdf8 accents remain hard-coded in many dark-leaning recipes even in light mode. */
+
+  .ds-card { max-width:1100px; margin:0 auto; color:#e5e7eb; }
+  .ds-title { font-size:1.4rem; color:#e5e7eb; margin-bottom:4px; }
+  .ds-sub { font-size:.8rem; color:#94a3b8; margin-bottom:16px; }
+  .ds-modes { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  @media (max-width:760px){ .ds-modes { grid-template-columns:1fr; } }
+  .ds-mode { border-radius:16px; padding:18px; background:var(--bg); color:var(--text); border:1px solid var(--border); position:relative; overflow:hidden; }
+  .ds-mode > h2 { font-size:.72rem; text-transform:uppercase; letter-spacing:.12em; color:var(--muted); margin-bottom:14px; position:relative; z-index:1; }
+  .ds-src { font-size:.68rem; color:var(--muted); font-family:'JetBrains Mono',Consolas,monospace; margin-top:6px; }
+
+  .ds-backdrop { position:absolute; inset:0; pointer-events:none; }
+  [data-color-scheme="dark"] .ds-backdrop {
+    background:
+      radial-gradient(ellipse 60% 40% at 20% 25%, rgba(56,189,248,.28), transparent 65%),
+      radial-gradient(ellipse 50% 45% at 80% 30%, rgba(129,140,248,.24), transparent 65%),
+      radial-gradient(ellipse 55% 50% at 55% 80%, rgba(192,132,252,.18), transparent 65%),
+      #0b1220;
+  }
+  [data-color-scheme="light"] .ds-backdrop {
+    background:
+      radial-gradient(ellipse 60% 40% at 20% 25%, rgba(125,211,252,.5), transparent 65%),
+      radial-gradient(ellipse 50% 45% at 80% 30%, rgba(196,181,253,.42), transparent 65%),
+      radial-gradient(ellipse 55% 50% at 55% 80%, rgba(167,243,208,.38), transparent 65%),
+      #f8fafc;
+  }
+  .demo-z { position:relative; z-index:1; }
+  .sect { font-size:.62rem; text-transform:uppercase; letter-spacing:.1em; color:var(--muted); margin:16px 0 8px; position:relative; z-index:1; }
+  .sect:first-of-type { margin-top:0; }
+
+  /* ── Blur ladder tiles (emergent rule, not a single source file) ─────── */
+  .ladder { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+  .tier { border-radius:12px; padding:10px 8px; border:1px solid rgba(148,210,255,0.18); min-height:74px; }
+  [data-color-scheme="dark"] .tier { background:rgba(15,23,42,0.35); }
+  [data-color-scheme="light"] .tier { background:rgba(255,255,255,0.35); border-color:rgba(15,23,42,0.14); }
+  .tier .t-name { font-size:.66rem; font-weight:600; }
+  .tier .t-blur { font-size:.6rem; color:var(--muted); font-family:'JetBrains Mono',Consolas,monospace; margin-top:2px; }
+  .b6{backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);}
+  .b8{backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);}
+  .b10{backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);}
+  .b16{backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);}
+  .b20{backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);}
+  .b24{backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);}
+
+  /* ── G5 tooltip glass — src/ReduxThemeProvider.tsx:233-263 ───────────── */
+  .tt { border-radius:12px; padding:10px 12px; font-size:.72rem;
+        backdrop-filter:blur(16px) saturate(1.4); -webkit-backdrop-filter:blur(16px) saturate(1.4); }
+  [data-color-scheme="dark"] .tt {
+    border:1px solid rgba(148, 210, 255, 0.12);
+    box-shadow:0 8px 32px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  }
+  [data-color-scheme="light"] .tt {
+    border:1px solid rgba(0, 0, 0, 0.12);
+    box-shadow:0 8px 32px rgba(15, 23, 42, 0.1), 0 2px 8px rgba(15, 23, 42, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  }
+  [data-color-scheme="dark"] .tt-gear  { background:rgba(10, 16, 32, 0.78); }
+  [data-color-scheme="dark"] .tt-skill { background:rgba(10, 16, 32, 0.92); }
+  [data-color-scheme="light"] .tt-gear  { background:rgba(255, 255, 255, 0.82); }
+  [data-color-scheme="light"] .tt-skill { background:rgba(255, 255, 255, 0.92); }
+
+  /* ── G6 dialog glass — src/ReduxThemeProvider.tsx:385-402 ────────────── */
+  .dlg { border-radius:24px; padding:14px; font-size:.72rem;
+         backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); }
+  [data-color-scheme="dark"] .dlg {
+    background:linear-gradient(135deg, rgba(15,23,42,0.97) 0%, rgba(13,20,48,0.97) 100%);
+    border:1px solid rgba(255,255,255,0.08);
+    box-shadow:0 24px 64px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.03) inset;
+  }
+  [data-color-scheme="light"] .dlg {
+    background:linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(248,250,252,0.98) 100%);
+    border:1px solid rgba(0,0,0,0.08);
+    box-shadow:0 12px 40px rgba(15,23,42,0.12), 0 4px 12px rgba(15,23,42,0.06);
+  }
+  /* Reduced-blur PickerDialog variant — PickerDialog.tsx:282-320 */
+  .picker { position:relative; border-radius:20px; padding:14px; font-size:.72rem;
+            backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); }
+  [data-color-scheme="dark"] .picker {
+    background:linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(0, 225, 255, 0.12) 100%);
+    border:1px solid #1f2937;
+    box-shadow:0 8px 30px rgba(0,0,0,0.25);
+  }
+  [data-color-scheme="light"] .picker {
+    background:linear-gradient(135deg, rgba(255,255,255,0.98), rgba(248,250,252,0.98));
+    border:1px solid rgba(0, 0, 0, 0.08);
+    box-shadow:0 4px 12px rgba(15,23,42,0.06);
+  }
+  .picker::after { content:""; position:absolute; top:0; left:10%; right:10%; height:1px; pointer-events:none; z-index:1; }
+  [data-color-scheme="dark"] .picker::after {
+    background:linear-gradient(90deg, transparent, rgba(var(--be-accent-rgb, 56, 189, 248), 0.35), transparent);
+  }
+  [data-color-scheme="light"] .picker::after {
+    background:linear-gradient(90deg, transparent, rgba(var(--be-accent-rgb, 56, 189, 248), 0.18), transparent);
+  }
+  /* Low-perf opaque fallback — src/index.css:183-186 (dark only) */
+  .dlg-lowperf { border-radius:24px; padding:14px; font-size:.72rem;
+                 background:#0f172a; background-image:none; border:1px solid rgba(255,255,255,0.08); }
+
+  /* ── G7 appbar glass — src/ReduxThemeProvider.tsx:147-156 ────────────── */
+  .appbar { padding:10px 14px; font-size:.72rem; font-weight:600;
+            backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); }
+  [data-color-scheme="dark"] .appbar {
+    background-color:rgba(11, 18, 32, 0.95);
+    border-bottom:1px solid rgba(56, 189, 248, 0.15);
+  }
+  [data-color-scheme="light"] .appbar {
+    background-color:rgba(255, 255, 255, 0.98);
+    border-bottom:1px solid rgba(15, 23, 42, 0.08);
+  }
+
+  /* ── G15 alert glass — src/ReduxThemeProvider.tsx:454-482 ────────────── */
+  .alert { border-radius:12px; border:1px solid var(--border); padding:8px 12px; font-size:.72rem; color:var(--text);
+           backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); margin-bottom:6px; }
+  [data-color-scheme="dark"] .al-info    { background-color:rgba(56, 189, 248, 0.08); }
+  [data-color-scheme="light"] .al-info    { background-color:rgba(56, 189, 248, 0.06); }
+  [data-color-scheme="dark"] .al-warning { background-color:rgba(255, 152, 0, 0.08); }
+  [data-color-scheme="light"] .al-warning { background-color:rgba(249, 115, 22, 0.06); }
+  [data-color-scheme="dark"] .al-error   { background-color:rgba(239, 68, 68, 0.08); }
+  [data-color-scheme="light"] .al-error   { background-color:rgba(220, 38, 38, 0.06); }
+  [data-color-scheme="dark"] .al-success { background-color:rgba(34, 197, 94, 0.08); }
+  [data-color-scheme="light"] .al-success { background-color:rgba(5, 150, 105, 0.06); }
+
+  .row2 { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .callout { margin-top:14px; padding:10px 12px; border-radius:10px; border:1px solid var(--border); background:var(--panel); font-size:.7rem; line-height:1.5; color:var(--text); position:relative; z-index:1; }
+  .callout code { font-family:'JetBrains Mono',Consolas,monospace; font-size:.66rem; }
+</style>
+<div class="ds-card">
+  <h1 class="ds-title">Glass Tiers — the Blur Ladder</h1>
+  <p class="ds-sub">The emergent blur-tier rule (chrome 8–10 → chips 6–10 → cards 12–16 → dialogs 10–20 → menus 20–24 → hero/tooltip 22–24), with live swatches of tooltip (G5), dialog (G6), appbar (G7) and alert (G15) glass. All values exact from source.</p>
+  <div class="ds-modes">
+    <section class="ds-mode" data-color-scheme="dark">
+      <div class="ds-backdrop"></div>
+      <h2>Dark</h2>
+      <div class="demo-z">
+        <div class="sect">Blur ladder (emergent rule)</div>
+        <div class="ladder">
+          <div class="tier b8"><div class="t-name">Chips / pills</div><div class="t-blur">blur 6–10 (shown: 8)</div></div>
+          <div class="tier b10"><div class="t-name">Chrome / appbar</div><div class="t-blur">blur 8–10 (shown: 10)</div></div>
+          <div class="tier b16"><div class="t-name">Cards</div><div class="t-blur">blur 12–16 (shown: 16)</div></div>
+          <div class="tier b20"><div class="t-name">Dialogs</div><div class="t-blur">blur 10–20 (shown: 20)</div></div>
+          <div class="tier b24"><div class="t-name">Menus</div><div class="t-blur">blur 20–24 (shown: 24)</div></div>
+          <div class="tier b24"><div class="t-name">Hero / tooltip</div><div class="t-blur">blur 22–24 (shown: 24)</div></div>
+        </div>
+        <div class="ds-src">emergent ladder rule — see catalog; per-surface sources below</div>
+
+        <div class="sect">G5 tooltip glass — blur(16px) saturate(1.4)</div>
+        <div class="row2">
+          <div class="tt tt-gear">.gear-set-tooltip<br>rgba(10, 16, 32, 0.78)</div>
+          <div class="tt tt-skill">.skill-tooltip<br>rgba(10, 16, 32, 0.92)</div>
+        </div>
+        <div class="ds-src">src/ReduxThemeProvider.tsx:233-263</div>
+
+        <div class="sect">G6 dialog glass</div>
+        <div class="dlg">Global .MuiDialog paper — blur(20px), radius 24, 135° 0.97-alpha slate gradient</div>
+        <div class="ds-src">src/ReduxThemeProvider.tsx:385-402</div>
+        <div class="picker" style="margin-top:8px;">PickerDialog variant — blur reduced 20px → 10px (Phase 3 M9), cyan 12%-alpha 135° gradient, ::after top-edge glow at left/right 10%</div>
+        <div class="ds-src">src/features/build-editor/components/primitives/PickerDialog.tsx:282-320</div>
+        <div class="dlg-lowperf" style="margin-top:8px;">Low-perf fallback — data-perf='low' strips all backdrop-filter; dark glass dialogs snap to solid #0f172a</div>
+        <div class="ds-src">src/index.css:136-140,183-186</div>
+
+        <div class="sect">G7 appbar glass</div>
+        <div class="appbar">MuiAppBar — rgba(11, 18, 32, 0.95) + blur(10px), borderBottom rgba(56, 189, 248, 0.15)</div>
+        <div class="ds-src">src/ReduxThemeProvider.tsx:147-156</div>
+
+        <div class="sect">G15 alert glass — blur(8px), radius 12, border var(--border)</div>
+        <div class="alert al-info">standardInfo — rgba(56, 189, 248, 0.08)</div>
+        <div class="alert al-warning">standardWarning — rgba(255, 152, 0, 0.08)</div>
+        <div class="alert al-error">standardError — rgba(239, 68, 68, 0.08)</div>
+        <div class="alert al-success">standardSuccess — rgba(34, 197, 94, 0.08)</div>
+        <div class="ds-src">src/ReduxThemeProvider.tsx:454-482</div>
+      </div>
+    </section>
+    <section class="ds-mode" data-color-scheme="light">
+      <div class="ds-backdrop"></div>
+      <h2>Light</h2>
+      <div class="demo-z">
+        <div class="sect">Blur ladder (emergent rule)</div>
+        <div class="ladder">
+          <div class="tier b8"><div class="t-name">Chips / pills</div><div class="t-blur">blur 6–10 (shown: 8)</div></div>
+          <div class="tier b10"><div class="t-name">Chrome / appbar</div><div class="t-blur">blur 8–10 (shown: 10)</div></div>
+          <div class="tier b16"><div class="t-name">Cards</div><div class="t-blur">blur 12–16 (shown: 16)</div></div>
+          <div class="tier b20"><div class="t-name">Dialogs</div><div class="t-blur">blur 10–20 (shown: 20)</div></div>
+          <div class="tier b24"><div class="t-name">Menus</div><div class="t-blur">blur 20–24 (shown: 24)</div></div>
+          <div class="tier b24"><div class="t-name">Hero / tooltip</div><div class="t-blur">blur 22–24 (shown: 24)</div></div>
+        </div>
+        <div class="ds-src">emergent ladder rule — see catalog; per-surface sources below</div>
+
+        <div class="sect">G5 tooltip glass — blur(16px) saturate(1.4)</div>
+        <div class="row2">
+          <div class="tt tt-gear">.gear-set-tooltip<br>rgba(255, 255, 255, 0.82)</div>
+          <div class="tt tt-skill">.skill-tooltip<br>rgba(255, 255, 255, 0.92)</div>
+        </div>
+        <div class="ds-src">src/ReduxThemeProvider.tsx:233-263</div>
+
+        <div class="sect">G6 dialog glass</div>
+        <div class="dlg">Global .MuiDialog paper — blur(20px), radius 24, 135° 0.98-alpha white gradient</div>
+        <div class="ds-src">src/ReduxThemeProvider.tsx:385-402</div>
+        <div class="picker" style="margin-top:8px;">PickerDialog variant — blur(10px), 0.98-alpha white gradient, ::after glow at 0.18 alpha</div>
+        <div class="ds-src">src/features/build-editor/components/primitives/PickerDialog.tsx:282-320</div>
+
+        <div class="sect">G7 appbar glass</div>
+        <div class="appbar">MuiAppBar — rgba(255, 255, 255, 0.98) + blur(10px), borderBottom rgba(15, 23, 42, 0.08)</div>
+        <div class="ds-src">src/ReduxThemeProvider.tsx:147-156</div>
+
+        <div class="sect">G15 alert glass — blur(8px), radius 12, border var(--border)</div>
+        <div class="alert al-info">standardInfo — rgba(56, 189, 248, 0.06)</div>
+        <div class="alert al-warning">standardWarning — rgba(249, 115, 22, 0.06)</div>
+        <div class="alert al-error">standardError — rgba(220, 38, 38, 0.06)</div>
+        <div class="alert al-success">standardSuccess — rgba(5, 150, 105, 0.06)</div>
+        <div class="ds-src">src/ReduxThemeProvider.tsx:454-482</div>
+      </div>
+    </section>
+  </div>
+  <div class="callout" data-color-scheme="dark" style="background:#0f172a; border-color:#1f2937; color:#e5e7eb;">
+    <strong>Ladder vs. source:</strong> the catalog's "hero/tooltip 22–24" tier refers to hero surfaces like the HeaderBar dropdown (<code>blur(24px)</code>); the tooltips themselves measure <code>blur(16px) saturate(1.4)</code> in source. The dialog tier spans 10 (PickerDialog, perf-reduced) to 20 (global). The low-perf axis (<code>html[data-perf='low']</code>) strips <em>every</em> backdrop-filter app-wide — src/index.css:136-140. Light-mode alerts use different rgb bases than dark (e.g. warning 249,115,22 vs 255,152,0).
+  </div>
+</div>

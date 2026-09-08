@@ -1,0 +1,148 @@
+<!-- @dsCard group="Boundaries" -->
+<meta charset="utf-8">
+<title>Edge Masks &amp; Clips — fades, clipPath, overflow rules (B15)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; box-sizing:border-box; }
+  body { font-family:Inter,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif; background:#0b1220; padding:20px; }
+  h1,h2,h3 { font-family:'Space Grotesk',Inter,system-ui,sans-serif; font-weight:600; }
+
+  [data-color-scheme="dark"] {
+    --bg:#0b1220; --panel:#0f172a; --panel-2:#0d1430; --text:#e5e7eb; --muted:#94a3b8;
+    --accent:#38bdf8; --accent-2:#00e1ff; --ok:#22c55e; --warn:#ff9800; --danger:#ef4444;
+    --border:#1f2937;
+  }
+  [data-color-scheme="light"] {
+    --bg:#f8fafc; --panel:#ffffff; --panel-2:#f8fafc; --text:#1e293b; --muted:#64748b;
+    --accent:#0f172a; --accent-2:#1e293b; --ok:#059669; --warn:#f97316; --danger:#dc2626;
+    --border:#bcd9ff;
+  }
+
+  .ds-card { max-width:1100px; margin:0 auto; color:#e5e7eb; }
+  .ds-title { font-size:1.4rem; color:#e5e7eb; margin-bottom:4px; }
+  .ds-sub { font-size:.8rem; color:#94a3b8; margin-bottom:16px; }
+  .ds-modes { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  @media (max-width:760px){ .ds-modes { grid-template-columns:1fr; } }
+  .ds-mode { border-radius:16px; padding:18px; background:var(--bg); color:var(--text); border:1px solid var(--border); position:relative; overflow:hidden; }
+  .ds-mode > h2 { font-size:.72rem; text-transform:uppercase; letter-spacing:.12em; color:var(--muted); margin-bottom:14px; position:relative; z-index:1; }
+  .ds-src { font-size:.68rem; color:var(--muted); font-family:'JetBrains Mono',Consolas,monospace; margin-top:6px; }
+
+  .ds-z { position:relative; z-index:1; }
+  .demo-block { margin-bottom:16px; }
+  .demo-label { font-size:.7rem; font-weight:600; color:var(--text); margin-bottom:6px; }
+
+  /* ── B15a: scroll-edge mask fades, 24px per edge — MetricsScrollRow.tsx:27-40 (demo'd static) ── */
+  .pill-row { display:flex; gap:8px; overflow:hidden; padding:2px 0; }
+  .pill-row .pill { flex-shrink:0; font-size:.7rem; padding:5px 12px; border-radius:999px;
+    background:var(--panel-2); border:1px solid var(--border); color:var(--text); white-space:nowrap; }
+  .fade-right { mask-image:linear-gradient(to right, #000 0, #000 calc(100% - 24px), transparent 100%);
+    -webkit-mask-image:linear-gradient(to right, #000 0, #000 calc(100% - 24px), transparent 100%); }
+  .fade-left { mask-image:linear-gradient(to right, transparent 0, #000 24px, #000 100%);
+    -webkit-mask-image:linear-gradient(to right, transparent 0, #000 24px, #000 100%); }
+  .fade-both { mask-image:linear-gradient(to right, transparent 0, #000 24px, #000 calc(100% - 24px), transparent 100%);
+    -webkit-mask-image:linear-gradient(to right, transparent 0, #000 24px, #000 calc(100% - 24px), transparent 100%); }
+
+  /* ── B15b: marquee fade — LandingPage.tsx:878-879 ── */
+  .marquee { overflow:hidden; padding:10px 0; white-space:nowrap; font-size:.72rem; color:var(--muted);
+    mask-image:linear-gradient(90deg, transparent 0%, black 10%, black 90%, transparent 100%);
+    -webkit-mask-image:linear-gradient(90deg, transparent 0%, black 10%, black 90%, transparent 100%); }
+  [data-color-scheme="dark"] .marquee { border-top:1px solid rgba(255,255,255,0.04); border-bottom:1px solid rgba(255,255,255,0.04);
+    background:rgba(255, 255, 255, 0.01); }
+  [data-color-scheme="light"] .marquee { border-top:1px solid rgba(0,0,0,0.04); border-bottom:1px solid rgba(0,0,0,0.04);
+    background:rgba(0, 0, 0, 0.01); }
+  @keyframes marqueeScroll { from { transform:translateX(0); } to { transform:translateX(-50%); } }
+  .marquee .track { display:inline-block; animation:marqueeScroll 14s linear infinite; }
+
+  /* ── B15c: chip-rail fade — RosterViewPage.tsx:1449 ── */
+  .chip-rail { display:flex; gap:4px; overflow:hidden; padding:6px 0;
+    backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+    mask-image:linear-gradient(90deg, #000 92%, transparent);
+    -webkit-mask-image:linear-gradient(90deg, #000 92%, transparent); }
+  .chip-rail .chip { flex-shrink:0; font-size:.68rem; padding:4px 10px; border-radius:999px;
+    background:var(--panel-2); border:1px solid var(--border); white-space:nowrap; }
+
+  /* ── B15d: clipPath progress with negative insets — AttributeBar.tsx:155-171 ── */
+  .attr-track { position:relative; height:14px; border-radius:4px; margin:6px 0 2px; }
+  [data-color-scheme="dark"] .attr-track { background:rgba(255,255,255,0.06); }
+  [data-color-scheme="light"] .attr-track { background:rgba(15,23,42,0.08); }
+  .attr-fill { height:100%; width:100%; border-radius:4px;
+    background:linear-gradient(90deg, #38bdf8 0%, rgba(56, 189, 248, 0.55) 100%);
+    box-shadow:0 0 10px rgba(56, 189, 248, 0.45), inset 0 1px 0 rgba(255,255,255,0.18);
+    clip-path:inset(-12px 36% -12px -12px round 4px); }
+
+  .note { font-size:.74rem; color:#94a3b8; line-height:1.55; margin-top:14px;
+    border:1px solid #1f2937; border-radius:10px; padding:10px 14px; background:#0f172a; }
+  .note b { color:#e5e7eb; }
+  .note code { font-size:.68rem; }
+</style>
+<div class="ds-card">
+  <h1 class="ds-title">Edge Masks &amp; Clips (B15)</h1>
+  <p class="ds-sub">Scroll-edge mask fades, marquee/chip-rail fades, clipPath progress with negative insets, and the overflow visible-vs-hidden negotiation. Sources: MetricsScrollRow.tsx:27-40, LandingPage.tsx:878-879, RosterViewPage.tsx:1449, AttributeBar.tsx:155-171</p>
+  <div class="ds-modes">
+    <section class="ds-mode" data-color-scheme="dark">
+      <h2>Dark</h2>
+      <div class="ds-z">
+        <div class="demo-block">
+          <div class="demo-label">Scroll-edge mask fades — 24px per scrollable edge (static variants)</div>
+          <div class="pill-row fade-right" style="margin-bottom:6px"><span class="pill">DPS 131.2k</span><span class="pill">Uptime 98%</span><span class="pill">Deaths 0</span><span class="pill">Res 2</span><span class="pill">Interrupts 4</span><span class="pill">Bash 12</span><span class="pill">Dodges 9</span><span class="pill">Blocks 31</span></div>
+          <div class="pill-row fade-left" style="margin-bottom:6px"><span class="pill">DPS 131.2k</span><span class="pill">Uptime 98%</span><span class="pill">Deaths 0</span><span class="pill">Res 2</span><span class="pill">Interrupts 4</span><span class="pill">Bash 12</span><span class="pill">Dodges 9</span><span class="pill">Blocks 31</span></div>
+          <div class="pill-row fade-both"><span class="pill">DPS 131.2k</span><span class="pill">Uptime 98%</span><span class="pill">Deaths 0</span><span class="pill">Res 2</span><span class="pill">Interrupts 4</span><span class="pill">Bash 12</span><span class="pill">Dodges 9</span><span class="pill">Blocks 31</span></div>
+          <div class="ds-src">FADE_PX = 24; per-edge dynamic (right = "more this way →") — MetricsScrollRow.tsx:27-40, applied :99-104</div>
+        </div>
+        <div class="demo-block">
+          <div class="demo-label">Marquee fade — 10% / 90% stops</div>
+          <div class="marquee"><span class="track">LOG AGGREGATOR · ROSTER BUILDER · BUILD EDITOR · FIGHT REPLAY · PARSE ANALYSIS · ULTIMATE CALCULATOR · LOG AGGREGATOR · ROSTER BUILDER · BUILD EDITOR · FIGHT REPLAY · PARSE ANALYSIS · ULTIMATE CALCULATOR · </span></div>
+          <div class="ds-src">maskImage: linear-gradient(90deg, transparent 0%, black 10%, black 90%, transparent 100%) — LandingPage.tsx:878-879</div>
+        </div>
+        <div class="demo-block">
+          <div class="demo-label">Chip-rail fade — right edge only, 92% stop</div>
+          <div class="chip-rail"><span class="chip">AA</span><span class="chip">SO</span><span class="chip">HRC</span><span class="chip">MoL</span><span class="chip">HoF</span><span class="chip">AS</span><span class="chip">CR</span><span class="chip">SS</span><span class="chip">KA</span><span class="chip">RG</span><span class="chip">DSR</span><span class="chip">SE</span><span class="chip">LC</span><span class="chip">OC</span></div>
+          <div class="ds-src">maskImage: linear-gradient(90deg, #000 92%, transparent) — RosterViewPage.tsx:1449</div>
+        </div>
+        <div class="demo-block">
+          <div class="demo-label">clipPath progress — negative insets keep the glow un-clipped (64% fill)</div>
+          <div class="attr-track"><div class="attr-fill"></div></div>
+          <div class="ds-src">clipPath: inset(-12px 36% -12px -12px round 4px); fill 90deg color → alpha(color, 0.55); glow 0 0 10px alpha(color, 0.45) — AttributeBar.tsx:155-171</div>
+        </div>
+      </div>
+    </section>
+    <section class="ds-mode" data-color-scheme="light">
+      <h2>Light</h2>
+      <div class="ds-z">
+        <div class="demo-block">
+          <div class="demo-label">Scroll-edge mask fades — 24px per scrollable edge (static variants)</div>
+          <div class="pill-row fade-right" style="margin-bottom:6px"><span class="pill">DPS 131.2k</span><span class="pill">Uptime 98%</span><span class="pill">Deaths 0</span><span class="pill">Res 2</span><span class="pill">Interrupts 4</span><span class="pill">Bash 12</span><span class="pill">Dodges 9</span><span class="pill">Blocks 31</span></div>
+          <div class="pill-row fade-left" style="margin-bottom:6px"><span class="pill">DPS 131.2k</span><span class="pill">Uptime 98%</span><span class="pill">Deaths 0</span><span class="pill">Res 2</span><span class="pill">Interrupts 4</span><span class="pill">Bash 12</span><span class="pill">Dodges 9</span><span class="pill">Blocks 31</span></div>
+          <div class="pill-row fade-both"><span class="pill">DPS 131.2k</span><span class="pill">Uptime 98%</span><span class="pill">Deaths 0</span><span class="pill">Res 2</span><span class="pill">Interrupts 4</span><span class="pill">Bash 12</span><span class="pill">Dodges 9</span><span class="pill">Blocks 31</span></div>
+          <div class="ds-src">CSS mask blends with any translucent card bg in any theme — MetricsScrollRow.tsx:52-59</div>
+        </div>
+        <div class="demo-block">
+          <div class="demo-label">Marquee fade — 10% / 90% stops</div>
+          <div class="marquee"><span class="track">LOG AGGREGATOR · ROSTER BUILDER · BUILD EDITOR · FIGHT REPLAY · PARSE ANALYSIS · ULTIMATE CALCULATOR · LOG AGGREGATOR · ROSTER BUILDER · BUILD EDITOR · FIGHT REPLAY · PARSE ANALYSIS · ULTIMATE CALCULATOR · </span></div>
+          <div class="ds-src">LandingPage.tsx:878-879</div>
+        </div>
+        <div class="demo-block">
+          <div class="demo-label">Chip-rail fade — right edge only, 92% stop</div>
+          <div class="chip-rail"><span class="chip">AA</span><span class="chip">SO</span><span class="chip">HRC</span><span class="chip">MoL</span><span class="chip">HoF</span><span class="chip">AS</span><span class="chip">CR</span><span class="chip">SS</span><span class="chip">KA</span><span class="chip">RG</span><span class="chip">DSR</span><span class="chip">SE</span><span class="chip">LC</span><span class="chip">OC</span></div>
+          <div class="ds-src">RosterViewPage.tsx:1449</div>
+        </div>
+        <div class="demo-block">
+          <div class="demo-label">clipPath progress — negative insets keep the glow un-clipped (64% fill)</div>
+          <div class="attr-track"><div class="attr-fill"></div></div>
+          <div class="ds-src">AttributeBar.tsx:155-171 (fill gradient is mode-independent)</div>
+        </div>
+      </div>
+    </section>
+  </div>
+  <div class="note">
+    <b>Why clip-path, not width:</b> width is a layout property, so the spring animation forced a reflow every frame; clip-path
+    composites. Negative insets on the three static sides (<code>-12px</code>) keep the fill's outer glow un-clipped — clip-path
+    clips the element's <b>own</b> box-shadow — and <code>round 4px</code> preserves the rounded cap at the moving edge
+    (AttributeBar.tsx:149-154).<br>
+    <b>Overflow negotiation rule:</b> a surface keeps <code>overflow: hidden</code> when it paints decorations that must stay
+    inside its rounded corners (GlassPanel / glassCardSurface top strips, the expanded replay deck's corner glow), but must switch
+    to <code>overflow: visible</code> when children render beyond its edge — the compact replay overlay's scrub-preview bubble
+    (replayDesign.ts:135-139) and the top-DPS card's negative-inset electric ring + halo (PlayerCard.tsx:601-605).
+  </div>
+</div>

@@ -1,0 +1,158 @@
+<!-- @dsCard group="Boundaries" -->
+<meta charset="utf-8">
+<title>Focus Rings — all variants (B16)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; box-sizing:border-box; }
+  body { font-family:Inter,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif; background:#0b1220; padding:20px; }
+  h1,h2,h3 { font-family:'Space Grotesk',Inter,system-ui,sans-serif; font-weight:600; }
+
+  [data-color-scheme="dark"] {
+    --bg:#0b1220; --panel:#0f172a; --panel-2:#0d1430; --text:#e5e7eb; --muted:#94a3b8;
+    --accent:#38bdf8; --accent-2:#00e1ff; --ok:#22c55e; --warn:#ff9800; --danger:#ef4444;
+    --border:#1f2937;
+  }
+  [data-color-scheme="light"] {
+    --bg:#f8fafc; --panel:#ffffff; --panel-2:#f8fafc; --text:#1e293b; --muted:#64748b;
+    --accent:#0f172a; --accent-2:#1e293b; --ok:#059669; --warn:#f97316; --danger:#dc2626;
+    --border:#bcd9ff;
+  }
+  /* NOTE: light --accent is deliberately dark slate #0f172a, NOT a light blue. */
+
+  .ds-card { max-width:1100px; margin:0 auto; color:#e5e7eb; }
+  .ds-title { font-size:1.4rem; color:#e5e7eb; margin-bottom:4px; }
+  .ds-sub { font-size:.8rem; color:#94a3b8; margin-bottom:16px; }
+  .ds-modes { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  @media (max-width:760px){ .ds-modes { grid-template-columns:1fr; } }
+  .ds-mode { border-radius:16px; padding:18px; background:var(--bg); color:var(--text); border:1px solid var(--border); position:relative; overflow:hidden; }
+  .ds-mode > h2 { font-size:.72rem; text-transform:uppercase; letter-spacing:.12em; color:var(--muted); margin-bottom:14px; position:relative; z-index:1; }
+  .ds-src { font-size:.68rem; color:var(--muted); font-family:'JetBrains Mono',Consolas,monospace; margin-top:6px; }
+
+  .ds-z { position:relative; z-index:1; }
+  .demo-block { margin-bottom:16px; }
+  .demo-label { font-size:.7rem; font-weight:600; color:var(--text); margin-bottom:8px; }
+  .row { display:flex; flex-wrap:wrap; gap:14px; align-items:center; }
+
+  .btn { font-family:inherit; font-size:.78rem; font-weight:600; padding:8px 16px;
+    border-radius:8px; background:var(--panel-2); color:var(--text);
+    border:1px solid var(--border); cursor:pointer; }
+
+  /* ── .u-focus-ring — ReduxThemeProvider.tsx:904-908 (ring forced via .force-ring) ── */
+  .u-focus-ring:focus-visible, .u-focus-ring.force-ring {
+    outline:2px solid var(--accent);
+    outline-offset:2px;
+    border-radius:inherit; }
+
+  /* ── .u-hover-glow — ReduxThemeProvider.tsx:898-903 (forced via .force-glow) ── */
+  .u-hover-glow { transition:box-shadow .2s ease; }
+  .u-hover-glow:hover, .u-hover-glow.force-glow {
+    box-shadow:0 0 0 3px rgba(56, 189, 248, 0.25); }
+
+  /* ── be-accent variant — BuildEditorThemeProvider.tsx:35-43 ── */
+  .be-focus:focus-visible, .be-focus.force-ring {
+    outline:2px solid var(--be-accent, #38bdf8);
+    outline-offset:2px; }
+
+  /* ── FOCUS_BORDER outline — latestReportsStyles.ts:29, :143 ── */
+  .lr-focus:focus-visible, .lr-focus.force-ring {
+    outline:2px solid rgba(96,165,250,0.55);
+    outline-offset:2px; }
+
+  /* ── Input shadow rings ── */
+  .field { font-family:inherit; font-size:.78rem; padding:9px 12px; border-radius:8px;
+    color:var(--text); width:100%; max-width:280px; display:block; }
+  /* MUI filled input focus — ReduxThemeProvider.tsx:339-344: 0 0 0 2px `${tokens.accent}40` */
+  [data-color-scheme="dark"] .field.mui-input { background:var(--bg); border:1px solid rgba(56, 189, 248, 0.3); }
+  [data-color-scheme="light"] .field.mui-input { background:rgba(255, 255, 255, 1); border:1px solid rgba(144, 202, 249, 0.5); }
+  [data-color-scheme="dark"] .field.mui-input:focus, [data-color-scheme="dark"] .field.mui-input.force-ring {
+    box-shadow:0 0 0 2px #38bdf840; outline:none; }
+  [data-color-scheme="light"] .field.mui-input:focus, [data-color-scheme="light"] .field.mui-input.force-ring {
+    box-shadow:0 0 0 2px #0f172a40; outline:none; }
+  /* Latest-reports glass field focus — latestReportsStyles.ts:29-30, 66-69 */
+  [data-color-scheme="dark"] .field.lr-input { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.10); }
+  [data-color-scheme="light"] .field.lr-input { background:rgba(255,255,255,0.7); border:1px solid rgba(0,0,0,0.08); }
+  .field.lr-input:focus, .field.lr-input.force-ring {
+    border-color:rgba(96,165,250,0.55); border-width:1px;
+    box-shadow:0 0 0 3px rgba(96,165,250,0.12); outline:none; }
+
+  /* ── MetricPill double ring — MetricPill.tsx:119-121 ── */
+  .metric-pill-demo { display:inline-flex; flex-direction:column; align-items:center; justify-content:center;
+    min-width:70px; padding:4px 12px; border-radius:4px; cursor:pointer;
+    background:linear-gradient(135deg, rgba(56, 189, 248, 0.22) 0%, rgba(56, 189, 248, 0.08) 100%);
+    border:1px solid rgba(56, 189, 248, 0.4); outline:none; }
+  .metric-pill-demo .lbl { font-size:.6rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.05em; }
+  .metric-pill-demo .val { font-size:.82rem; font-weight:700; font-variant-numeric:tabular-nums; }
+  .metric-pill-demo:focus-visible, .metric-pill-demo.force-ring {
+    box-shadow:0 0 0 2px var(--panel), 0 0 0 4px var(--accent); }
+
+  .defect-note { font-size:.74rem; color:#94a3b8; line-height:1.5; margin-top:14px;
+    border:1px solid #1f2937; border-left:3px solid #ef4444; border-radius:10px;
+    padding:10px 14px; background:#0f172a; }
+  .defect-note b { color:#e5e7eb; }
+</style>
+<div class="ds-card">
+  <h1 class="ds-title">Focus Rings — all variants (B16)</h1>
+  <p class="ds-sub">Rings forced visible via classes. Sources: ReduxThemeProvider.tsx:898-908, :339-344 · BuildEditorThemeProvider.tsx:35-43 · latestReportsStyles.ts:29-30, :66-69, :143 · MetricPill.tsx:119-121</p>
+  <div class="ds-modes">
+    <section class="ds-mode" data-color-scheme="dark">
+      <h2>Dark</h2>
+      <div class="ds-z">
+        <div class="demo-block">
+          <div class="demo-label">Outline rings (2px, offset 2)</div>
+          <div class="row">
+            <button class="btn u-focus-ring force-ring">.u-focus-ring</button>
+            <button class="btn be-focus force-ring">be-accent ring</button>
+            <button class="btn lr-focus force-ring">FOCUS_BORDER ring</button>
+            <button class="btn u-hover-glow force-glow">.u-hover-glow</button>
+          </div>
+          <div class="ds-src">outline 2px var(--accent) offset 2 — ReduxThemeProvider.tsx:904-908 · var(--be-accent, #38bdf8) — BuildEditorThemeProvider.tsx:35-43 · rgba(96,165,250,0.55) — latestReportsStyles.ts:143 · hover glow 0 0 0 3px rgba(56,189,248,0.25) — :898-903</div>
+        </div>
+        <div class="demo-block">
+          <div class="demo-label">Input shadow rings (focus forced)</div>
+          <input class="field mui-input force-ring" value="MUI filled input — 0 0 0 2px accent40" readonly style="margin-bottom:8px">
+          <input class="field lr-input force-ring" value="Glass field — 0 0 0 3px rgba(96,165,250,0.12)" readonly>
+          <div class="ds-src">boxShadow 0 0 0 2px `${tokens.accent}40` — ReduxThemeProvider.tsx:341-343 · FOCUS_BORDER + FOCUS_GLOW — latestReportsStyles.ts:29-30, 66-69</div>
+        </div>
+        <div class="demo-block">
+          <div class="demo-label">MetricPill double ring — paper gap + primary ring</div>
+          <span class="metric-pill-demo force-ring" tabindex="0"><span class="lbl">DPS</span><span class="val">131.2k</span></span>
+          <div class="ds-src">0 0 0 2px background.paper, 0 0 0 4px primary.main — MetricPill.tsx:119-121</div>
+        </div>
+      </div>
+    </section>
+    <section class="ds-mode" data-color-scheme="light">
+      <h2>Light</h2>
+      <div class="ds-z">
+        <div class="demo-block">
+          <div class="demo-label">Outline rings (2px, offset 2)</div>
+          <div class="row">
+            <button class="btn u-focus-ring force-ring">.u-focus-ring</button>
+            <button class="btn be-focus force-ring">be-accent ring</button>
+            <button class="btn lr-focus force-ring">FOCUS_BORDER ring</button>
+            <button class="btn u-hover-glow force-glow">.u-hover-glow</button>
+          </div>
+          <div class="ds-src">light var(--accent) = #0f172a (slate ring); be-accent + FOCUS_BORDER stay blue; hover glow stays cyan</div>
+        </div>
+        <div class="demo-block">
+          <div class="demo-label">Input shadow rings (focus forced)</div>
+          <input class="field mui-input force-ring" value="MUI filled input — 0 0 0 2px accent40" readonly style="margin-bottom:8px">
+          <input class="field lr-input force-ring" value="Glass field — 0 0 0 3px rgba(96,165,250,0.12)" readonly>
+          <div class="ds-src">ReduxThemeProvider.tsx:341-343 (same `${tokens.accent}40` expression both modes) · latestReportsStyles.ts:29-30 (mode-independent)</div>
+        </div>
+        <div class="demo-block">
+          <div class="demo-label">MetricPill double ring — paper gap + primary ring</div>
+          <span class="metric-pill-demo force-ring" tabindex="0"><span class="lbl">DPS</span><span class="val">131.2k</span></span>
+          <div class="ds-src">MetricPill.tsx:119-121 (paper = #fff in light)</div>
+        </div>
+      </div>
+    </section>
+  </div>
+  <div class="defect-note">
+    <b>Known defect — do not replicate:</b> <code>u-hover-lift</code> and <code>u-fade-in-up</code> are referenced as classNames in
+    8 components (e.g. PlayerCard.tsx:1198) but are <b>defined nowhere</b> — no global style registers them, so they silently do
+    nothing (the reduced-motion block at ReduxThemeProvider.tsx:915 even tries to disable the nonexistent
+    <code>u-fade-in-up</code>). Use <code>.u-focus-ring</code>, <code>.u-hover-glow</code>, <code>.u-fade-in</code>,
+    <code>.u-tab-enter</code> — the ones that exist.
+  </div>
+</div>

@@ -1,0 +1,208 @@
+<!-- @dsCard group="Surfaces" -->
+<meta charset="utf-8">
+<title>Card-Grid Glass (G13) + Scribing Glass (G10)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; box-sizing:border-box; }
+  body { font-family:Inter,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif; background:#0b1220; padding:20px; }
+  h1,h2,h3 { font-family:'Space Grotesk',Inter,system-ui,sans-serif; font-weight:600; }
+
+  [data-color-scheme="dark"] {
+    --bg:#0b1220; --panel:#0f172a; --panel-2:#0d1430; --text:#e5e7eb; --muted:#94a3b8;
+    --accent:#38bdf8; --accent-2:#00e1ff; --ok:#22c55e; --warn:#ff9800; --danger:#ef4444;
+    --border:#1f2937;
+  }
+  [data-color-scheme="light"] {
+    --bg:#f8fafc; --panel:#ffffff; --panel-2:#f8fafc; --text:#1e293b; --muted:#64748b;
+    --accent:#0f172a; --accent-2:#1e293b; --ok:#059669; --warn:#f97316; --danger:#dc2626;
+    --border:#bcd9ff;
+  }
+  /* NOTE: light --accent is deliberately dark slate #0f172a, NOT a light blue.
+     Cyan #38bdf8 accents remain hard-coded in many dark-leaning recipes even in light mode. */
+
+  .ds-card { max-width:1100px; margin:0 auto; color:#e5e7eb; }
+  .ds-title { font-size:1.4rem; color:#e5e7eb; margin-bottom:4px; }
+  .ds-sub { font-size:.8rem; color:#94a3b8; margin-bottom:16px; }
+  .ds-modes { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  @media (max-width:760px){ .ds-modes { grid-template-columns:1fr; } }
+  .ds-mode { border-radius:16px; padding:18px; background:var(--bg); color:var(--text); border:1px solid var(--border); position:relative; overflow:hidden; }
+  .ds-mode > h2 { font-size:.72rem; text-transform:uppercase; letter-spacing:.12em; color:var(--muted); margin-bottom:14px; position:relative; z-index:1; }
+  .ds-src { font-size:.68rem; color:var(--muted); font-family:'JetBrains Mono',Consolas,monospace; margin-top:6px; }
+
+  .ds-backdrop { position:absolute; inset:0; pointer-events:none; }
+  [data-color-scheme="dark"] .ds-backdrop {
+    background:
+      radial-gradient(ellipse 60% 40% at 20% 25%, rgba(56,189,248,.28), transparent 65%),
+      radial-gradient(ellipse 50% 45% at 80% 30%, rgba(129,140,248,.24), transparent 65%),
+      radial-gradient(ellipse 55% 50% at 55% 80%, rgba(192,132,252,.18), transparent 65%),
+      #0b1220;
+  }
+  [data-color-scheme="light"] .ds-backdrop {
+    background:
+      radial-gradient(ellipse 60% 40% at 20% 25%, rgba(125,211,252,.5), transparent 65%),
+      radial-gradient(ellipse 50% 45% at 80% 30%, rgba(196,181,253,.42), transparent 65%),
+      radial-gradient(ellipse 55% 50% at 55% 80%, rgba(167,243,208,.38), transparent 65%),
+      #f8fafc;
+  }
+  .demo-z { position:relative; z-index:1; display:flex; flex-direction:column; gap:12px; }
+
+  /* ── G13 profile build card — PublicProfilePage.tsx:94-120 (useCardSx),
+       accent shown: sorcerer #00acc1 (accent flows from CLASS_COLOR_MAP) ── */
+  .g13 {
+    display:flex; flex-direction:column; position:relative; border-radius:16px; overflow:hidden;
+    backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+    transition:transform 0.22s ease, box-shadow 0.22s ease;
+    padding:16px 14px 12px; font-size:.74rem;
+  }
+  .g13 .h { font-family:'Space Grotesk',Inter,sans-serif; font-weight:600; font-size:.86rem; }
+  .g13 .b { color:var(--muted); font-size:.66rem; margin-top:2px; }
+  [data-color-scheme="dark"] .g13 {
+    border:1px solid rgba(255,255,255,0.09);
+    background:linear-gradient(135deg, #00acc114 0%, rgba(56, 189, 248, 0.10) 50%, rgba(0, 225, 255, 0.10) 100%);
+    box-shadow:0 2px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06);
+  }
+  [data-color-scheme="light"] .g13 {
+    border:1px solid rgba(0,0,0,0.09);
+    background:linear-gradient(135deg, #00acc112 0%, rgba(219, 234, 254, 0.45) 50%, rgba(224, 242, 254, 0.45) 100%);
+    box-shadow:0 2px 12px rgba(0,0,0,0.07), inset 0 1px 0 rgba(255,255,255,0.9);
+  }
+  .g13:hover, .g13.is-hover { transform:translateY(-5px); }
+  [data-color-scheme="dark"] .g13:hover, [data-color-scheme="dark"] .g13.is-hover {
+    box-shadow:0 0 0 1px #00acc135, 0 16px 40px -8px #00acc150, 0 6px 20px -4px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.08);
+  }
+  [data-color-scheme="light"] .g13:hover, [data-color-scheme="light"] .g13.is-hover {
+    box-shadow:0 0 0 1px #00acc125, 0 16px 40px -8px #00acc135, 0 6px 20px -4px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.9);
+  }
+  /* Glowing feathered accent bar — PublicProfilePage.tsx:122-138 */
+  .g13 .accentbar {
+    position:absolute; top:0; left:0; right:0; height:4px;
+    background:linear-gradient(90deg, transparent 0%, #00acc180 20%, #00acc1 50%, #00acc180 80%, transparent 100%);
+    box-shadow:0 0 12px #00acc180, 0 0 28px #00acc140;
+    border-radius:16px 16px 0 0; z-index:2;
+  }
+  /* Sub-tier: tag chips blur 8 — PublicProfilePage.tsx:328-347 */
+  .g13 .tags { display:flex; gap:6px; margin-top:8px; flex-wrap:wrap; }
+  .g13 .tag {
+    display:inline-flex; align-items:center; padding:3px 8px; border-radius:6px;
+    font-size:.72rem; font-weight:700; letter-spacing:.02em; line-height:1.4; white-space:nowrap;
+    backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+  }
+  [data-color-scheme="dark"] .g13 .tag { background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.12); color:rgba(255,255,255,0.55); }
+  [data-color-scheme="light"] .g13 .tag { background:rgba(0,0,0,0.05); border:1px solid rgba(0,0,0,0.10); color:rgba(0,0,0,0.55); }
+  /* Sub-tier: footer bar blur 6 — PublicProfilePage.tsx:379-392 */
+  .g13 .cfoot {
+    display:flex; align-items:stretch; margin-top:10px; border-radius:8px; overflow:hidden;
+    backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); font-size:.66rem; color:var(--muted);
+  }
+  [data-color-scheme="dark"] .g13 .cfoot { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.06); }
+  [data-color-scheme="light"] .g13 .cfoot { background:rgba(0,0,0,0.025); border:1px solid rgba(0,0,0,0.05); }
+  .g13 .cfoot .stripe { width:3px; background:#00acc1; }
+  .g13 .cfoot .fx { padding:6px 10px; }
+
+  /* ── RosterCard amber variant — RosterCard.tsx:215,227-244 (radius 3 = 30px) ── */
+  .roster { border-radius:30px; }
+  [data-color-scheme="dark"] .roster {
+    background:linear-gradient(135deg, #eab30818 0%, rgba(250, 204, 21, 0.10) 50%, rgba(245, 158, 11, 0.10) 100%);
+  }
+  [data-color-scheme="light"] .roster {
+    background:linear-gradient(135deg, #eab30814 0%, rgba(254, 243, 199, 0.55) 50%, rgba(253, 230, 138, 0.45) 100%);
+  }
+  [data-color-scheme="dark"] .roster:hover, [data-color-scheme="dark"] .roster.is-hover {
+    box-shadow:0 0 0 1px #eab30835, 0 16px 40px -8px #eab30850, 0 6px 20px -4px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.08);
+  }
+  [data-color-scheme="light"] .roster:hover, [data-color-scheme="light"] .roster.is-hover {
+    box-shadow:0 0 0 1px #eab30825, 0 16px 40px -8px #eab30835, 0 6px 20px -4px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.9);
+  }
+  .roster .accentbar {
+    background:linear-gradient(90deg, transparent 0%, #eab30880 20%, #eab308 50%, #eab30880 80%, transparent 100%);
+    box-shadow:0 0 12px #eab30880, 0 0 28px #eab30840;
+    border-radius:30px 30px 0 0;
+  }
+  .roster .cfoot .stripe { background:#eab308; }
+
+  /* ── G10 scribing glass — scribingStyles.ts:93-118 (glassPanelSx, radius 20) ── */
+  .g10 {
+    position:relative; border-radius:20px; padding:16px 14px; font-size:.74rem;
+    backdrop-filter:blur(16px) saturate(1.4); -webkit-backdrop-filter:blur(16px) saturate(1.4);
+  }
+  .g10 .h { font-family:'Space Grotesk',Inter,sans-serif; font-weight:600; font-size:.86rem; }
+  .g10 .b { color:var(--muted); font-size:.66rem; margin-top:2px; }
+  [data-color-scheme="dark"] .g10 {
+    border:1px solid rgba(255, 255, 255, 0.08);
+    background:linear-gradient(180deg, rgba(16, 26, 46, 0.74) 0%, rgba(5, 8, 15, 0.74) 100%);
+    box-shadow:0 18px 50px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  }
+  [data-color-scheme="light"] .g10 {
+    border:1px solid rgba(15, 23, 42, 0.08);
+    background:linear-gradient(180deg, rgba(238, 244, 251, 0.85) 0%, rgba(255, 255, 255, 0.96) 100%);
+    box-shadow:0 12px 36px rgba(15, 23, 42, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  }
+  /* accent-tinted border option: alpha(accent, dark ? 0.3 : 0.28) */
+  [data-color-scheme="dark"] .g10.has-accent { border-color:rgba(56, 189, 248, 0.3); }
+  [data-color-scheme="light"] .g10.has-accent { border-color:rgba(56, 189, 248, 0.28); }
+
+  .callout { margin-top:14px; padding:10px 12px; border-radius:10px; border:1px solid #1f2937; background:#0f172a; font-size:.7rem; line-height:1.5; color:#e5e7eb; }
+  .callout code { font-family:'JetBrains Mono',Consolas,monospace; font-size:.66rem; }
+</style>
+<div class="ds-card">
+  <h1 class="ds-title">Card-Grid Glass (G13) + Scribing Glass (G10)</h1>
+  <p class="ds-sub">G13: accent-tinted 135° gradient cards at blur 12 with glowing feathered accent bars and glass sub-tiers (tag chips blur 8, footer bar blur 6); the RosterCard amber sibling; G10: the scribing frosted panel at blur(16) saturate(1.4). Sources: src/pages/PublicProfilePage.tsx:94-138,328-392; src/features/roster-hub/components/RosterCard.tsx:215-244; src/features/scribing/presentation/components/scribingStyles.ts:93-118.</p>
+  <div class="ds-modes">
+    <section class="ds-mode" data-color-scheme="dark">
+      <div class="ds-backdrop"></div>
+      <h2>Dark</h2>
+      <div class="demo-z">
+        <div class="g13">
+          <div class="accentbar"></div>
+          <div class="h">Sorcerer — Storm DPS</div>
+          <div class="b">useCardSx('#00acc1', true) — 135° accent14 → cyan 0.10 → aqua 0.10, blur 12</div>
+          <div class="tags"><span class="tag">PvE</span><span class="tag">Trial</span><span class="tag">U46</span></div>
+          <div class="cfoot"><span class="stripe"></span><span class="fx">▲ 128 · 2w ago</span></div>
+        </div>
+        <div class="ds-src">PublicProfilePage.tsx:94-120 card · :122-138 AccentBar · :328-347 tag chips (blur 8) · :379-392 footer (blur 6)</div>
+        <div class="g13 roster is-hover">
+          <div class="accentbar"></div>
+          <div class="h">Roster — vSE Prog (.is-hover)</div>
+          <div class="b">Amber #eab308: accent18 → rgba(250,204,21,0.10) → rgba(245,158,11,0.10); hover ring 0 0 0 1px #eab30835 + 0 16px 40px -8px #eab30850 + translateY(-5px)</div>
+          <div class="cfoot"><span class="stripe"></span><span class="fx">12 players · vSE HM</span></div>
+        </div>
+        <div class="ds-src">RosterCard.tsx:215,227-244 — same recipe, borderRadius 3 (30px) vs 16px</div>
+        <div class="g10 has-accent">
+          <div class="h">Scribing — Grimoire panel</div>
+          <div class="b">180° rgba(16,26,46,0.74) → rgba(5,8,15,0.74), blur(16px) saturate(1.4), accent border rgba(56,189,248,0.3)</div>
+        </div>
+        <div class="ds-src">scribingStyles.ts:93-118 — glassPanelSx(theme, { accent })</div>
+      </div>
+    </section>
+    <section class="ds-mode" data-color-scheme="light">
+      <div class="ds-backdrop"></div>
+      <h2>Light</h2>
+      <div class="demo-z">
+        <div class="g13">
+          <div class="accentbar"></div>
+          <div class="h">Sorcerer — Storm DPS</div>
+          <div class="b">useCardSx('#00acc1', false) — accent12 → rgba(219,234,254,0.45) → rgba(224,242,254,0.45)</div>
+          <div class="tags"><span class="tag">PvE</span><span class="tag">Trial</span><span class="tag">U46</span></div>
+          <div class="cfoot"><span class="stripe"></span><span class="fx">▲ 128 · 2w ago</span></div>
+        </div>
+        <div class="ds-src">PublicProfilePage.tsx:94-120 — light blue-tinted whites; inset white 0.9 highlight</div>
+        <div class="g13 roster is-hover">
+          <div class="accentbar"></div>
+          <div class="h">Roster — vSE Prog (.is-hover)</div>
+          <div class="b">Light amber: accent14 → rgba(254,243,199,0.55) → rgba(253,230,138,0.45); hover ring #eab30825 / #eab30835</div>
+          <div class="cfoot"><span class="stripe"></span><span class="fx">12 players · vSE HM</span></div>
+        </div>
+        <div class="ds-src">RosterCard.tsx:227-244</div>
+        <div class="g10 has-accent">
+          <div class="h">Scribing — Grimoire panel</div>
+          <div class="b">180° rgba(238,244,251,0.85) → rgba(255,255,255,0.96), accent border rgba(56,189,248,0.28)</div>
+        </div>
+        <div class="ds-src">scribingStyles.ts:93-118</div>
+      </div>
+    </section>
+  </div>
+  <div class="callout">
+    <strong>Notes:</strong> G13's accent flows in from <code>CLASS_COLOR_MAP</code> / <code>ROLE_ACCENT</code> (sorcerer <code>#00acc1</code> shown) and uses 2-digit hex-alpha suffixes (<code>#00acc114</code>, hover <code>#00acc150</code>). Hover is a lift+ring signature: <code>translateY(-5px)</code> + <code>0 0 0 1px accent35</code> + <code>0 16px 40px -8px accent50</code>. The AccentBar is a feathered 4px gradient (<code>transparent → accent80 20% → accent 50% → accent80 80% → transparent</code>) with a double glow — the top-strip family's "solo bar" member. G10 is the alpha()-based dialect of the card recipe: same anatomy, <code>saturate(1.4)</code> added, radius 20.
+  </div>
+</div>

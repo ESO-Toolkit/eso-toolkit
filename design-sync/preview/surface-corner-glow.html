@@ -1,0 +1,224 @@
+<!-- @dsCard group="Surfaces" -->
+<meta charset="utf-8">
+<title>Corner-Glow Surfaces — Replay Control Deck (G11) + Footer Radial Blooms</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; box-sizing:border-box; }
+  body { font-family:Inter,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif; background:#0b1220; padding:20px; }
+  h1,h2,h3 { font-family:'Space Grotesk',Inter,system-ui,sans-serif; font-weight:600; }
+
+  [data-color-scheme="dark"] {
+    --bg:#0b1220; --panel:#0f172a; --panel-2:#0d1430; --text:#e5e7eb; --muted:#94a3b8;
+    --accent:#38bdf8; --accent-2:#00e1ff; --ok:#22c55e; --warn:#ff9800; --danger:#ef4444;
+    --border:#1f2937;
+  }
+  [data-color-scheme="light"] {
+    --bg:#f8fafc; --panel:#ffffff; --panel-2:#f8fafc; --text:#1e293b; --muted:#64748b;
+    --accent:#0f172a; --accent-2:#1e293b; --ok:#059669; --warn:#f97316; --danger:#dc2626;
+    --border:#bcd9ff;
+  }
+  /* NOTE: light --accent is deliberately dark slate #0f172a, NOT a light blue.
+     Cyan #38bdf8 accents remain hard-coded in many dark-leaning recipes even in light mode. */
+
+  .ds-card { max-width:1100px; margin:0 auto; color:#e5e7eb; }
+  .ds-title { font-size:1.4rem; color:#e5e7eb; margin-bottom:4px; }
+  .ds-sub { font-size:.8rem; color:#94a3b8; margin-bottom:16px; }
+  .ds-modes { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  @media (max-width:760px){ .ds-modes { grid-template-columns:1fr; } }
+  .ds-mode { border-radius:16px; padding:18px; background:var(--bg); color:var(--text); border:1px solid var(--border); position:relative; overflow:hidden; }
+  .ds-mode > h2 { font-size:.72rem; text-transform:uppercase; letter-spacing:.12em; color:var(--muted); margin-bottom:14px; position:relative; z-index:1; }
+  .ds-src { font-size:.68rem; color:var(--muted); font-family:'JetBrains Mono',Consolas,monospace; margin-top:6px; }
+
+  .ds-backdrop { position:absolute; inset:0; pointer-events:none; }
+  [data-color-scheme="dark"] .ds-backdrop {
+    background:
+      radial-gradient(ellipse 60% 40% at 20% 25%, rgba(56,189,248,.28), transparent 65%),
+      radial-gradient(ellipse 50% 45% at 80% 30%, rgba(129,140,248,.24), transparent 65%),
+      radial-gradient(ellipse 55% 50% at 55% 80%, rgba(192,132,252,.18), transparent 65%),
+      #0b1220;
+  }
+  [data-color-scheme="light"] .ds-backdrop {
+    background:
+      radial-gradient(ellipse 60% 40% at 20% 25%, rgba(125,211,252,.5), transparent 65%),
+      radial-gradient(ellipse 50% 45% at 80% 30%, rgba(196,181,253,.42), transparent 65%),
+      radial-gradient(ellipse 55% 50% at 55% 80%, rgba(167,243,208,.38), transparent 65%),
+      #f8fafc;
+  }
+  .demo-z { position:relative; z-index:1; }
+  .sect { font-size:.62rem; text-transform:uppercase; letter-spacing:.1em; color:var(--muted); margin:16px 0 8px; position:relative; z-index:1; }
+  .sect:first-of-type { margin-top:0; }
+
+  /* ── G11 replay transport deck — replayDesign.ts:92-154 (transportSurface)
+     Theme values resolved: dark primary #38bdf8, secondary #00e1ff, paper
+     #0f172a, default #0b1220; light primary #0f172a, secondary #1e293b,
+     paper #ffffff, default #f8fafc, divider #bcd9ff. Overlay variant shown
+     (blur applies only when overlay=true). */
+  .deck { position:relative; border:1px solid; padding:14px 16px; font-size:.72rem; color:var(--text); }
+  .deck .h { font-family:'Space Grotesk',Inter,sans-serif; font-weight:600; font-size:.84rem; }
+  .deck .b { color:var(--muted); font-size:.66rem; margin-top:3px; }
+  /* Top-edge light seam ::before — left/right 6% */
+  .deck::before {
+    content:""; position:absolute; top:0; left:6%; right:6%; height:1px; pointer-events:none;
+  }
+  [data-color-scheme="dark"] .deck::before { background:linear-gradient(90deg, transparent, #00e1ff, transparent); opacity:0.7; }
+  [data-color-scheme="light"] .deck::before { background:linear-gradient(90deg, transparent, #1e293b, transparent); opacity:0.4; }
+  /* full overlay deck — blur 10, corner glows + vertical gradient */
+  .deck-full {
+    border-radius:12px 12px 0 0; border-bottom:none; overflow:hidden;
+    backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+  }
+  [data-color-scheme="dark"] .deck-full {
+    border-color:rgba(148,210,255,0.18);
+    background-image:
+      radial-gradient(120% 140% at 12% 0%, #38bdf824, transparent 42%),
+      radial-gradient(90% 120% at 92% 8%, #00e1ff14, transparent 50%),
+      linear-gradient(180deg, rgba(15, 23, 42, 0.82) 0%, rgba(11, 18, 32, 0.82) 100%);
+    box-shadow:0 14px 40px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.05);
+  }
+  [data-color-scheme="light"] .deck-full {
+    border-color:#bcd9ff;
+    background-image:
+      radial-gradient(120% 140% at 12% 0%, #0f172a10, transparent 45%),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.88) 0%, rgba(248, 250, 252, 0.88) 120%);
+    box-shadow:0 10px 28px rgba(15,23,42,0.12), inset 0 1px 0 rgba(255,255,255,0.7);
+  }
+  /* compact overlay deck — blur 6, bottom-up scrim, overflow visible */
+  .deck-compact {
+    border-radius:12px 12px 0 0; border-bottom:none; overflow:visible;
+    backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
+  }
+  [data-color-scheme="dark"] .deck-compact {
+    border-color:rgba(148,210,255,0.18);
+    background-image:linear-gradient(0deg, rgba(11, 18, 32, 0.88) 0%, rgba(15, 23, 42, 0.5) 60%, transparent 100%);
+    box-shadow:0 14px 40px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.05);
+  }
+  [data-color-scheme="light"] .deck-compact {
+    border-color:#bcd9ff;
+    background-image:linear-gradient(0deg, rgba(248, 250, 252, 0.88) 0%, rgba(255, 255, 255, 0.5) 60%, transparent 100%);
+    box-shadow:0 10px 28px rgba(15,23,42,0.12), inset 0 1px 0 rgba(255,255,255,0.7);
+  }
+  .transport { display:flex; gap:10px; align-items:center; margin-top:8px; }
+  .transport .btn { width:26px; height:26px; border-radius:50%; border:1px solid var(--border); background:var(--panel); display:inline-flex; align-items:center; justify-content:center; font-size:.6rem; color:var(--accent); }
+  .transport .rail { flex:1; height:4px; border-radius:2px; background:var(--border); position:relative; }
+  .transport .rail i { position:absolute; inset:0 60% 0 0; border-radius:2px; background:linear-gradient(90deg, var(--accent), var(--accent-2)); }
+
+  /* ── Footer radial-bloom panels — src/components/Footer.tsx:99-193
+     accent: dark #38bdf8 / light #2563eb; secondary: dark #a855f7 / light #7c3aed */
+  .fp {
+    position:relative; isolation:isolate; overflow:hidden; border-radius:30px;
+    padding:18px; font-size:.72rem; color:var(--text);
+    backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+  }
+  .fp .h { font-family:'Space Grotesk',Inter,sans-serif; font-weight:600; font-size:.84rem; }
+  .fp .b { color:var(--muted); font-size:.66rem; margin-top:3px; }
+  .fp > * { position:relative; z-index:1; }
+  .fp::before, .fp::after { content:""; position:absolute; pointer-events:none; z-index:0; }
+  .fp::before { inset:0; }
+  /* overview panel — Footer.tsx:99-145 */
+  [data-color-scheme="dark"] .fp-overview {
+    background:linear-gradient(150deg, rgba(15, 23, 42, 0.96) 0%, rgba(21, 34, 56, 0.88) 48%, rgba(12, 21, 36, 0.92) 100%);
+    border:1px solid rgba(56, 189, 248, 0.3);
+    box-shadow:0 32px 64px rgba(2, 6, 23, 0.58);
+  }
+  [data-color-scheme="light"] .fp-overview {
+    background:linear-gradient(150deg, rgba(226, 232, 240, 0.92) 0%, rgba(241, 245, 249, 0.95) 48%, rgba(248, 250, 252, 0.98) 100%);
+    border:1px solid rgba(37, 99, 235, 0.22);
+    box-shadow:0 28px 56px rgba(148, 163, 184, 0.3);
+  }
+  [data-color-scheme="dark"] .fp-overview::before { background:radial-gradient(circle at top left, rgba(56, 189, 248, 0.35) 0%, transparent 55%); }
+  [data-color-scheme="light"] .fp-overview::before { background:radial-gradient(circle at top left, rgba(37, 99, 235, 0.2) 0%, transparent 55%); }
+  .fp-overview::after { bottom:-80px; right:-80px; width:220px; height:220px; }
+  [data-color-scheme="dark"] .fp-overview::after { background:radial-gradient(circle, rgba(168, 85, 247, 0.28) 0%, transparent 65%); }
+  [data-color-scheme="light"] .fp-overview::after { background:radial-gradient(circle, rgba(124, 58, 237, 0.18) 0%, transparent 65%); }
+  /* links panel — Footer.tsx:147-193 */
+  [data-color-scheme="dark"] .fp-links {
+    background:linear-gradient(150deg, rgba(10, 15, 28, 0.96) 0%, rgba(17, 24, 39, 0.9) 52%, rgba(10, 15, 28, 0.94) 100%);
+    border:1px solid rgba(56, 189, 248, 0.32);
+    box-shadow:0 34px 66px rgba(2, 6, 23, 0.6);
+  }
+  [data-color-scheme="light"] .fp-links {
+    background:linear-gradient(150deg, rgba(226, 232, 240, 0.9) 0%, rgba(234, 239, 247, 0.95) 52%, rgba(248, 250, 252, 0.98) 100%);
+    border:1px solid rgba(37, 99, 235, 0.24);
+    box-shadow:0 30px 60px rgba(148, 163, 184, 0.32);
+  }
+  [data-color-scheme="dark"] .fp-links::before { background:radial-gradient(circle at top right, rgba(56, 189, 248, 0.32) 0%, transparent 55%); }
+  [data-color-scheme="light"] .fp-links::before { background:radial-gradient(circle at top right, rgba(37, 99, 235, 0.18) 0%, transparent 55%); }
+  .fp-links::after { bottom:-90px; left:-60px; width:200px; height:200px; }
+  [data-color-scheme="dark"] .fp-links::after { background:radial-gradient(circle, rgba(168, 85, 247, 0.25) 0%, transparent 60%); }
+  [data-color-scheme="light"] .fp-links::after { background:radial-gradient(circle, rgba(124, 58, 237, 0.16) 0%, transparent 60%); }
+
+  .callout { margin-top:14px; padding:10px 12px; border-radius:10px; border:1px solid #1f2937; background:#0f172a; font-size:.7rem; line-height:1.5; color:#e5e7eb; }
+  .callout code { font-family:'JetBrains Mono',Consolas,monospace; font-size:.66rem; }
+</style>
+<div class="ds-card">
+  <h1 class="ds-title">Corner-Glow Surfaces — Replay Deck (G11) + Footer Blooms</h1>
+  <p class="ds-sub">G11: the "lit control deck" — two radial corner glows over a vertical gradient, a 1px inset top seam at 6%, variable blur (compact 6 / full 10). Footer pattern: 150° panel gradient + opposing radial corner blooms under isolation:isolate. Sources: src/features/fight_replay/constants/replayDesign.ts:92-154; src/components/Footer.tsx:99-193.</p>
+  <div class="ds-modes">
+    <section class="ds-mode" data-color-scheme="dark">
+      <div class="ds-backdrop"></div>
+      <h2>Dark</h2>
+      <div class="demo-z">
+        <div class="sect">G11 — transportSurface(overlay, full) · blur 10</div>
+        <div class="deck deck-full">
+          <div class="h">Fight Replay — control deck</div>
+          <div class="b">Corner glows #38bdf824 (12% 0%) + #00e1ff14 (92% 8%) over 180° paper→default at 0.82 alpha; seam #00e1ff @ 0.7</div>
+          <div class="transport"><span class="btn">▶</span><span class="rail"><i></i></span><span>0:42 / 5:10</span></div>
+        </div>
+        <div class="ds-src">replayDesign.ts:92-154 — transportSurface(theme, overlay=true, compact=false)</div>
+
+        <div class="sect">G11 — compact overlay · blur 6, bottom-up scrim, overflow:visible</div>
+        <div class="deck deck-compact">
+          <div class="transport" style="margin-top:0;"><span class="btn">▶</span><span class="rail"><i></i></span><span>0:42</span></div>
+          <div class="b">Scrim: 0° rgba(11,18,32,0.88) → rgba(15,23,42,0.5) 60% → transparent (scene reads through the top)</div>
+        </div>
+        <div class="ds-src">replayDesign.ts:107-131,139 — compact swaps the panel stops for a bottom-anchored scrim</div>
+
+        <div class="sect">Footer radial blooms (isolation:isolate)</div>
+        <div class="fp fp-overview" style="margin-bottom:10px;">
+          <div class="h">Overview panel</div>
+          <div class="b">::before top-left cyan rgba(56,189,248,0.35) → 55% · ::after 220px violet circle rgba(168,85,247,0.28) at bottom -80 / right -80</div>
+        </div>
+        <div class="fp fp-links">
+          <div class="h">Links panel</div>
+          <div class="b">::before top-right cyan 0.32 · ::after 200px violet 0.25 at bottom -90 / left -60</div>
+        </div>
+        <div class="ds-src">Footer.tsx:99-145 (overviewPanelSx), :147-193 (linksPanelSx) — accents #38bdf8 / #a855f7</div>
+      </div>
+    </section>
+    <section class="ds-mode" data-color-scheme="light">
+      <div class="ds-backdrop"></div>
+      <h2>Light</h2>
+      <div class="demo-z">
+        <div class="sect">G11 — transportSurface(overlay, full) · blur 10</div>
+        <div class="deck deck-full">
+          <div class="h">Fight Replay — control deck</div>
+          <div class="b">Single whisper glow #0f172a10 (light primary is slate); seam #1e293b @ 0.4; border 'divider' #bcd9ff</div>
+          <div class="transport"><span class="btn">▶</span><span class="rail"><i></i></span><span>0:42 / 5:10</span></div>
+        </div>
+        <div class="ds-src">replayDesign.ts:130-131 — light drops the second corner glow</div>
+
+        <div class="sect">G11 — compact overlay · blur 6</div>
+        <div class="deck deck-compact">
+          <div class="transport" style="margin-top:0;"><span class="btn">▶</span><span class="rail"><i></i></span><span>0:42</span></div>
+          <div class="b">Scrim: rgba(248,250,252,0.88) → rgba(255,255,255,0.5) 60% → transparent</div>
+        </div>
+        <div class="ds-src">replayDesign.ts:123-125</div>
+
+        <div class="sect">Footer radial blooms</div>
+        <div class="fp fp-overview" style="margin-bottom:10px;">
+          <div class="h">Overview panel</div>
+          <div class="b">Light accents shift: #2563eb blooms at 0.2, #7c3aed at 0.18 over a 150° slate-white gradient</div>
+        </div>
+        <div class="fp fp-links">
+          <div class="h">Links panel</div>
+          <div class="b">::before top-right rgba(37,99,235,0.18) · ::after rgba(124,58,237,0.16)</div>
+        </div>
+        <div class="ds-src">Footer.tsx:25-27 — accentColor #2563eb, secondaryAccent #7c3aed in light</div>
+      </div>
+    </section>
+  </div>
+  <div class="callout">
+    <strong>Notes:</strong> transportSurface only gains <code>backdrop-filter</code> in the overlay variant (docked over the 3D canvas); the in-flow deck uses solid paper/default stops and no blur. The expanded deck keeps <code>overflow:hidden</code> so corner glows stay in the rounded corners; compact must be <code>overflow:visible</code> for the scrub-preview bubble. A quieter sibling, <code>markerDeckSurface</code> (replayDesign.ts:164-198), uses alpha() corner washes with the seam at 5%. The Footer's <code>isolation:isolate</code> + <code>&amp; &gt; * { z-index:1 }</code> keeps the blooms behind content. Corner-glow hexes use 2-digit hex alpha (<code>#38bdf824</code> ≈ 0.14) — a third alpha dialect beside rgba() and alpha().
+  </div>
+</div>

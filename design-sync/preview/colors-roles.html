@@ -1,0 +1,236 @@
+<!-- @dsCard group="Colors" -->
+<meta charset="utf-8">
+<title>Role Colors — Solids, Gradients, Washes, Progress Fills</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; box-sizing:border-box; }
+  body { font-family:Inter,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif; background:#0b1220; padding:20px; }
+  h1,h2,h3 { font-family:'Space Grotesk',Inter,system-ui,sans-serif; font-weight:600; }
+
+  [data-color-scheme="dark"] {
+    --bg:#0b1220; --panel:#0f172a; --panel-2:#0d1430; --text:#e5e7eb; --muted:#94a3b8;
+    --accent:#38bdf8; --accent-2:#00e1ff; --ok:#22c55e; --warn:#ff9800; --danger:#ef4444;
+    --border:#1f2937;
+  }
+  [data-color-scheme="light"] {
+    --bg:#f8fafc; --panel:#ffffff; --panel-2:#f8fafc; --text:#1e293b; --muted:#64748b;
+    --accent:#0f172a; --accent-2:#1e293b; --ok:#059669; --warn:#f97316; --danger:#dc2626;
+    --border:#bcd9ff;
+  }
+  /* NOTE: light --accent is deliberately dark slate #0f172a, NOT a light blue.
+     Cyan #38bdf8 accents remain hard-coded in many dark-leaning recipes even in light mode. */
+
+  .ds-card { max-width:1100px; margin:0 auto; color:#e5e7eb; }
+  .ds-title { font-size:1.4rem; color:#e5e7eb; margin-bottom:4px; }
+  .ds-sub { font-size:.8rem; color:#94a3b8; margin-bottom:16px; }
+  .ds-modes { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  @media (max-width:760px){ .ds-modes { grid-template-columns:1fr; } }
+  .ds-mode { border-radius:16px; padding:18px; background:var(--bg); color:var(--text); border:1px solid var(--border); position:relative; overflow:hidden; }
+  .ds-mode > h2 { font-size:.72rem; text-transform:uppercase; letter-spacing:.12em; color:var(--muted); margin-bottom:14px; position:relative; z-index:1; }
+  .ds-src { font-size:.68rem; color:var(--muted); font-family:'JetBrains Mono',Consolas,monospace; margin-top:6px; }
+
+  /* card-specific */
+  .sec { margin-bottom:18px; position:relative; z-index:1; }
+  .sec h3 { font-size:.7rem; text-transform:uppercase; letter-spacing:.1em; color:var(--muted); margin-bottom:8px; }
+  .role-row { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+  .role-sw { border:1px solid var(--border); border-radius:10px; overflow:hidden; background:var(--panel); }
+  .role-sw .chip { height:38px; }
+  .role-sw .meta { padding:5px 8px; }
+  .role-sw .name { font-size:.6rem; color:var(--muted); }
+  .role-sw .hex { font-family:'JetBrains Mono',Consolas,monospace; font-size:.62rem; color:var(--text); word-break:break-all; }
+
+  /* mini table */
+  .mini-table { border:1px solid var(--border); border-radius:10px; overflow:hidden; font-size:.72rem; }
+  [data-color-scheme="dark"] .mini-table {
+    background:linear-gradient(135deg, rgb(110 170 240 / 25%) 0%, rgb(152 131 227 / 15%) 50%, rgb(173 192 255 / 8%) 100%);
+  }
+  [data-color-scheme="light"] .mini-table {
+    background:linear-gradient(135deg, rgb(110 214 240 / 25%) 0%, rgb(131 208 227 / 15%) 50%, rgb(35 122 144 / 8%) 100%);
+  }
+  .mini-table .tr { display:grid; grid-template-columns:1fr 64px 56px; padding:6px 10px; border-bottom:1px solid var(--border); align-items:center; }
+  .mini-table .tr:last-child { border-bottom:none; }
+  .mini-table .th { font-size:.62rem; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); }
+  .mono { font-family:'JetBrains Mono',Consolas,monospace; }
+  .role-dot { display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:6px; vertical-align:-1px; }
+
+  /* accordion header */
+  .mini-accordion { border-radius:10px; padding:9px 12px; font-size:.74rem; font-weight:600; display:flex; justify-content:space-between; align-items:center;
+    background:linear-gradient(135deg, rgb(110 170 240 / 25%) 0%, rgb(213 201 255 / 15%) 50%, rgb(255 255 255 / 8%) 100%); }
+  [data-color-scheme="dark"] .mini-accordion { border:1px solid rgba(66, 45, 45, 0.1); box-shadow:0 2px 8px 0 rgba(0, 0, 0, 0.2);
+    text-shadow:0 2px 4px rgba(0,0,0,0.8), 0 4px 8px rgba(0,0,0,0.4), 0 8px 16px rgba(0,0,0,0.2); }
+  [data-color-scheme="light"] .mini-accordion { border:1px solid rgba(15, 23, 42, 0.12); box-shadow:0 2px 4px 0 rgba(15, 23, 42, 0.06);
+    text-shadow:0 1px 2px rgba(15, 23, 42, 0.15), 0 2px 4px rgba(15, 23, 42, 0.08); }
+  .mini-accordion-bg { border-radius:10px; padding:9px 12px; font-size:.74rem; margin-top:8px; border:1px solid var(--border); }
+  [data-color-scheme="dark"] .mini-accordion-bg {
+    background:linear-gradient(135deg, rgb(110 214 240 / 25%) 0%, rgb(131 208 227 / 15%) 50%, rgb(35 122 144 / 8%) 100%); }
+  [data-color-scheme="light"] .mini-accordion-bg {
+    background:linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.95) 50%, rgba(241, 245, 249, 0.98) 100%); }
+
+  /* progress bars — track per useRoleColors.ts:78-91 */
+  .pb-track { height:8px; border-radius:4px; overflow:hidden; margin-bottom:4px; }
+  [data-color-scheme="dark"] .pb-track { background:rgba(117, 117, 117, 0.3); border:none; box-shadow:inset 0 1px 2px rgba(0, 0, 0, 0.4); }
+  [data-color-scheme="light"] .pb-track { background:rgba(203, 213, 225, 0.4); border:1px solid rgba(15, 23, 42, 0.08); box-shadow:inset 0 1px 2px rgba(15, 23, 42, 0.1); }
+  .pb-bar { height:100%; border-radius:4px; }
+  [data-color-scheme="dark"] .pb-bar { box-shadow:0 1px 3px rgba(0, 0, 0, 0.3); }
+  [data-color-scheme="light"] .pb-bar { box-shadow:0 1px 2px rgba(0, 0, 0, 0.15); }
+
+  /* buff uptime bar — BuffUptimeProgressBar.tsx:286-294 (radius 2 in source; glow-on-fill) */
+  .buff-track { height:12px; border-radius:2px; background:transparent; overflow:visible; margin-bottom:4px; }
+  .buff-bar { height:100%; border-radius:2px; }
+  [data-color-scheme="dark"] .buff-bar { background:linear-gradient(90deg, #3b82f6 0%, #8b5cf6 100%);
+    box-shadow:0 2px 8px rgba(59, 130, 246, 0.3), 0 0 20px rgba(139, 92, 246, 0.2); }
+  [data-color-scheme="light"] .buff-bar { background:linear-gradient(90deg, #67e8f9 0%, #93c5fd 25%, #c4b5fd 75%, #f9a8d4 100%);
+    box-shadow:0 1px 3px rgba(103, 232, 249, 0.3), 0 0 8px rgba(147, 197, 253, 0.2); }
+
+  /* termination demo */
+  .term { border:1px solid var(--border); border-radius:10px; overflow:hidden; font-size:.7rem; }
+  .term .band { padding:8px 12px; font-weight:600; color:#fff; }
+  .term .band.seam { border-bottom:1px solid var(--border); }
+  .term .body { padding:8px 12px; background:var(--panel); color:var(--muted); }
+  .term-label { font-size:.62rem; margin-top:4px; }
+  .term-label.ok { color:var(--ok); }
+  .term-label.bad { color:var(--danger); }
+  .term-pair { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+</style>
+<div class="ds-card">
+  <h1 class="ds-title">Role Colors — Solids, Gradients, Washes, Progress Fills</h1>
+  <p class="ds-sub">DPS / Healer / Tank identity colors and everywhere they touch chrome. Sources: src/utils/roleColors.ts, src/hooks/useRoleColors.ts:45-91, src/features/report_details/insights/BuffUptimeProgressBar.tsx:286-294</p>
+  <div class="ds-modes">
+
+    <section class="ds-mode" data-color-scheme="dark">
+      <h2>Dark</h2>
+
+      <div class="sec">
+        <h3>Role solids (DARK_ROLE_COLORS)</h3>
+        <div class="role-row">
+          <div class="role-sw"><div class="chip" style="background:#ff8b61"></div><div class="meta"><div class="name">dps</div><div class="hex">#ff8b61</div></div></div>
+          <div class="role-sw"><div class="chip" style="background:#b970ff"></div><div class="meta"><div class="name">healer</div><div class="hex">#b970ff</div></div></div>
+          <div class="role-sw"><div class="chip" style="background:#62baff"></div><div class="meta"><div class="name">tank</div><div class="hex">#62baff</div></div></div>
+        </div>
+        <div class="ds-src">src/utils/roleColors.ts:5-9 — dark mode uses solids only, for text AND fills</div>
+      </div>
+
+      <div class="sec">
+        <h3>Table wash (getTableBackground)</h3>
+        <div class="mini-table">
+          <div class="tr"><span class="th">Player</span><span class="th">DPS</span><span class="th">%</span></div>
+          <div class="tr"><span><span class="role-dot" style="background:#ff8b61"></span>Stamblade</span><span class="mono">112.4k</span><span class="mono">31.2</span></div>
+          <div class="tr"><span><span class="role-dot" style="background:#b970ff"></span>Wardenheal</span><span class="mono">8.1k</span><span class="mono">2.2</span></div>
+          <div class="tr"><span><span class="role-dot" style="background:#62baff"></span>DKTank</span><span class="mono">14.9k</span><span class="mono">4.1</span></div>
+        </div>
+        <div class="ds-src">linear-gradient(135deg, rgb(110 170 240 / 25%) 0%, rgb(152 131 227 / 15%) 50%, rgb(173 192 255 / 8%) 100%) — src/hooks/useRoleColors.ts:45-49</div>
+      </div>
+
+      <div class="sec">
+        <h3>Accordion (getAccordionStyles + getAccordionBackground)</h3>
+        <div class="mini-accordion"><span>Damage Done</span><span>▾</span></div>
+        <div class="ds-src">getAccordionStyles — bg linear-gradient(135deg, rgb(110 170 240 / 25%) 0%, rgb(213 201 255 / 15%) 50%, rgb(255 255 255 / 8%) 100%) (mode-independent); border 1px solid rgba(66, 45, 45, 0.1); shadow 0 2px 8px 0 rgba(0, 0, 0, 0.2) — src/hooks/useRoleColors.ts:57-64</div>
+        <div class="mini-accordion-bg">getAccordionBackground (dark branch)</div>
+        <div class="ds-src">linear-gradient(135deg, rgb(110 214 240 / 25%) 0%, rgb(131 208 227 / 15%) 50%, rgb(35 122 144 / 8%) 100%) — src/hooks/useRoleColors.ts:51-55</div>
+      </div>
+
+      <div class="sec">
+        <h3>Progress fills</h3>
+        <div class="buff-track"><div class="buff-bar" style="width:78%"></div></div>
+        <div class="ds-src">buff uptime, dark 2-stop + glow-on-fill: linear-gradient(90deg, #3b82f6 0%, #8b5cf6 100%); box-shadow 0 2px 8px rgba(59, 130, 246, 0.3), 0 0 20px rgba(139, 92, 246, 0.2) — BuffUptimeProgressBar.tsx:286-294</div>
+        <div class="pb-track" style="margin-top:10px"><div class="pb-bar" style="width:62%; background:linear-gradient(90deg, rgba(255, 139, 97, 0.7) 0%, rgba(255, 139, 97, 0.5) 100%)"></div></div>
+        <div class="ds-src">MUTED_ORANGE_PROGRESS_DARK — bar linear-gradient(90deg, rgba(255, 139, 97, 0.7) 0%, rgba(255, 139, 97, 0.5) 100%) on bg rgba(255, 139, 97, 0.12) — src/utils/roleColors.ts:26-29; track: rgba(117, 117, 117, 0.3), inset 0 1px 2px rgba(0, 0, 0, 0.4) — useRoleColors.ts:78-91</div>
+      </div>
+
+      <div class="sec">
+        <h3>How role-colored areas terminate</h3>
+        <div class="term-pair">
+          <div>
+            <div class="term">
+              <div class="band seam" style="background:#62baff; color:#0b1220">Tank section</div>
+              <div class="body">content below the seam</div>
+            </div>
+            <div class="term-label ok">DO — hard 1px border seam</div>
+          </div>
+          <div>
+            <div class="term">
+              <div class="band" style="background:linear-gradient(180deg, #62baff 0%, transparent 100%); color:#0b1220">Tank section</div>
+              <div class="body">content</div>
+            </div>
+            <div class="term-label bad">DON'T — never fade out</div>
+          </div>
+        </div>
+        <div class="ds-src">B9 rule: role-colored regions end at a hard 1px var(--border) seam, never a gradient fade</div>
+      </div>
+    </section>
+
+    <section class="ds-mode" data-color-scheme="light">
+      <h2>Light</h2>
+
+      <div class="sec">
+        <h3>Role gradients (LIGHT_ROLE_COLORS)</h3>
+        <div class="role-row">
+          <div class="role-sw"><div class="chip" style="background:linear-gradient(135deg, #ff9246 36% 36%, #ff3400e6 100%)"></div><div class="meta"><div class="name">dps</div><div class="hex">135deg, #ff9246 36% 36%, #ff3400e6 100%</div></div></div>
+          <div class="role-sw"><div class="chip" style="background:linear-gradient(135deg, #9333ea 0%, #c084fc 100%)"></div><div class="meta"><div class="name">healer</div><div class="hex">135deg, #9333ea 0%, #c084fc 100%</div></div></div>
+          <div class="role-sw"><div class="chip" style="background:linear-gradient(135deg, #0ea5e9 0%, #38bdf8 100%)"></div><div class="meta"><div class="name">tank</div><div class="hex">135deg, #0ea5e9 0%, #38bdf8 100%</div></div></div>
+        </div>
+        <div class="ds-src">src/utils/roleColors.ts:12-16 — note dps uses a double stop "36% 36%" and 8-digit hex #ff3400e6, exactly as in source</div>
+      </div>
+
+      <div class="sec">
+        <h3>Solid fallbacks (LIGHT_ROLE_COLORS_SOLID)</h3>
+        <div class="role-row">
+          <div class="role-sw"><div class="chip" style="background:#ff5722"></div><div class="meta"><div class="name">dps</div><div class="hex">#ff5722</div></div></div>
+          <div class="role-sw"><div class="chip" style="background:#7c3aed"></div><div class="meta"><div class="name">healer</div><div class="hex">#7c3aed</div></div></div>
+          <div class="role-sw"><div class="chip" style="background:#0891b2"></div><div class="meta"><div class="name">tank</div><div class="hex">#0891b2</div></div></div>
+        </div>
+        <div class="ds-src">src/utils/roleColors.ts:19-23 — used where gradients can't render (progress bars, dots) via getRoleColorSolid / getPlayerColor</div>
+      </div>
+
+      <div class="sec">
+        <h3>Table wash (getTableBackground)</h3>
+        <div class="mini-table">
+          <div class="tr"><span class="th">Player</span><span class="th">DPS</span><span class="th">%</span></div>
+          <div class="tr"><span><span class="role-dot" style="background:#ff5722"></span>Stamblade</span><span class="mono">112.4k</span><span class="mono">31.2</span></div>
+          <div class="tr"><span><span class="role-dot" style="background:#7c3aed"></span>Wardenheal</span><span class="mono">8.1k</span><span class="mono">2.2</span></div>
+          <div class="tr"><span><span class="role-dot" style="background:#0891b2"></span>DKTank</span><span class="mono">14.9k</span><span class="mono">4.1</span></div>
+        </div>
+        <div class="ds-src">linear-gradient(135deg, rgb(110 214 240 / 25%) 0%, rgb(131 208 227 / 15%) 50%, rgb(35 122 144 / 8%) 100%) — src/hooks/useRoleColors.ts:45-49 (light branch)</div>
+      </div>
+
+      <div class="sec">
+        <h3>Accordion (getAccordionStyles + getAccordionBackground)</h3>
+        <div class="mini-accordion"><span>Damage Done</span><span>▾</span></div>
+        <div class="ds-src">getAccordionStyles — same mode-independent gradient; border 1px solid rgba(15, 23, 42, 0.12); shadow 0 2px 4px 0 rgba(15, 23, 42, 0.06) — src/hooks/useRoleColors.ts:57-64</div>
+        <div class="mini-accordion-bg">getAccordionBackground (light branch)</div>
+        <div class="ds-src">linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.95) 50%, rgba(241, 245, 249, 0.98) 100%) — src/hooks/useRoleColors.ts:51-55</div>
+      </div>
+
+      <div class="sec">
+        <h3>Progress fills</h3>
+        <div class="buff-track"><div class="buff-bar" style="width:78%"></div></div>
+        <div class="ds-src">buff uptime, light 4-stop pastel + softer glow: linear-gradient(90deg, #67e8f9 0%, #93c5fd 25%, #c4b5fd 75%, #f9a8d4 100%); box-shadow 0 1px 3px rgba(103, 232, 249, 0.3), 0 0 8px rgba(147, 197, 253, 0.2) — BuffUptimeProgressBar.tsx:286-294</div>
+        <div class="pb-track" style="margin-top:10px"><div class="pb-bar" style="width:62%; background:linear-gradient(90deg, rgba(255, 139, 97, 0.6) 0%, rgba(255, 139, 97, 0.4) 100%)"></div></div>
+        <div class="ds-src">MUTED_ORANGE_PROGRESS_LIGHT — bar linear-gradient(90deg, rgba(255, 139, 97, 0.6) 0%, rgba(255, 139, 97, 0.4) 100%) on bg rgba(255, 139, 97, 0.08) — src/utils/roleColors.ts:31-34; track: rgba(203, 213, 225, 0.4), border 1px solid rgba(15, 23, 42, 0.08), inset 0 1px 2px rgba(15, 23, 42, 0.1) — useRoleColors.ts:78-91</div>
+      </div>
+
+      <div class="sec">
+        <h3>How role-colored areas terminate</h3>
+        <div class="term-pair">
+          <div>
+            <div class="term">
+              <div class="band seam" style="background:linear-gradient(135deg, #0ea5e9 0%, #38bdf8 100%)">Tank section</div>
+              <div class="body">content below the seam</div>
+            </div>
+            <div class="term-label ok">DO — hard 1px border seam</div>
+          </div>
+          <div>
+            <div class="term">
+              <div class="band" style="background:linear-gradient(180deg, #0ea5e9 0%, transparent 100%)">Tank section</div>
+              <div class="body">content</div>
+            </div>
+            <div class="term-label bad">DON'T — never fade out</div>
+          </div>
+        </div>
+        <div class="ds-src">B9 rule: role-colored regions end at a hard 1px var(--border) seam, never a gradient fade</div>
+      </div>
+    </section>
+
+  </div>
+</div>

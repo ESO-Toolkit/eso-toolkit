@@ -1,0 +1,62 @@
+<!-- @dsCard group="Colors" -->
+<meta charset="utf-8">
+<title>ESO Class Colors</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; box-sizing:border-box; }
+  body { font-family:Inter,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif; background:#0b1220; color:#e5e7eb; padding:20px; }
+  h1 { font-family:'Space Grotesk',Inter,sans-serif; font-weight:600; font-size:1.2rem; margin-bottom:2px; }
+  .sub { font-size:.75rem; color:#94a3b8; margin-bottom:16px; font-family:'JetBrains Mono',Consolas,monospace; }
+  .row { display:flex; gap:14px; flex-wrap:wrap; }
+  .cls { display:flex; flex-direction:column; align-items:center; gap:6px; width:104px;
+         padding:12px 8px; border-radius:12px; background:#0f172a; border:1px solid #1f2937; }
+  .cls img { width:52px; height:52px; object-fit:contain; filter:drop-shadow(0 0 8px var(--glow)); }
+  .cls .grad { width:100%; height:6px; border-radius:3px; background:var(--gradient); }
+  .cls .name { font-size:10px; color:#94a3b8; letter-spacing:.05em; text-transform:uppercase; text-align:center; font-weight:600; }
+  .cls .hex { font-size:9px; color:#64748b; font-family:'JetBrains Mono',Consolas,monospace; }
+  .note { margin-top:16px; font-size:.72rem; color:#94a3b8; max-width:720px; line-height:1.5; }
+  .note code { font-family:'JetBrains Mono',Consolas,monospace; color:#7ee8ff; font-size:.68rem; }
+</style>
+<h1>ESO Class Colors</h1>
+<div class="sub">CLASS_COLOR_MAP — src/features/build-editor/theme/classColorMap.ts (accent / glow 0.35 / 135° gradient)</div>
+<div class="row">
+  <div class="cls" style="--glow:rgba(224,92,0,.35); --gradient:linear-gradient(135deg,#e05c00 0%,#ff8a3d 100%)">
+    <img src="../assets/classes/dragonknight.png" alt=""><div class="grad"></div>
+    <div class="name">Dragonknight</div><div class="hex">#e05c00</div>
+  </div>
+  <div class="cls" style="--glow:rgba(0,172,193,.35); --gradient:linear-gradient(135deg,#00acc1 0%,#4dd0e1 100%)">
+    <img src="../assets/classes/sorcerer.png" alt=""><div class="grad"></div>
+    <div class="name">Sorcerer</div><div class="hex">#00acc1</div>
+  </div>
+  <div class="cls" style="--glow:rgba(229,57,53,.35); --gradient:linear-gradient(135deg,#e53935 0%,#ef9a9a 100%)">
+    <img src="../assets/classes/nightblade.png" alt=""><div class="grad"></div>
+    <div class="name">Nightblade</div><div class="hex">#e53935</div>
+  </div>
+  <div class="cls" style="--glow:rgba(255,179,0,.35); --gradient:linear-gradient(135deg,#ffb300 0%,#ffe082 100%)">
+    <img src="../assets/classes/templar.png" alt=""><div class="grad"></div>
+    <div class="name">Templar</div><div class="hex">#ffb300</div>
+  </div>
+  <div class="cls" style="--glow:rgba(38,166,154,.35); --gradient:linear-gradient(135deg,#26a69a 0%,#4dd0c8 100%)">
+    <img src="../assets/classes/warden.png" alt=""><div class="grad"></div>
+    <div class="name">Warden</div><div class="hex">#26a69a</div>
+  </div>
+  <div class="cls" style="--glow:rgba(124,77,255,.35); --gradient:linear-gradient(135deg,#7c4dff 0%,#b388ff 100%)">
+    <img src="../assets/classes/necromancer.png" alt=""><div class="grad"></div>
+    <div class="name">Necromancer</div><div class="hex">#7c4dff</div>
+  </div>
+  <div class="cls" style="--glow:rgba(67,160,71,.35); --gradient:linear-gradient(135deg,#43a047 0%,#81c784 100%)">
+    <img src="../assets/classes/arcanist.png" alt=""><div class="grad"></div>
+    <div class="name">Arcanist</div><div class="hex">#43a047</div>
+  </div>
+  <div class="cls" style="--glow:rgba(148,163,184,.30); --gradient:linear-gradient(135deg,#64748b 0%,#94a3b8 100%)">
+    <img src="../assets/classes/mundus-stone.png" alt=""><div class="grad"></div>
+    <div class="name">Any class</div><div class="hex">#94a3b8</div>
+  </div>
+</div>
+<div class="note">
+  Injected at runtime as CSS custom properties on the build-editor wrapper:
+  <code>--be-accent</code>, <code>--be-accent-rgb</code>, <code>--be-glow</code>, <code>--be-gradient</code>
+  (BuildEditorThemeProvider.tsx). Consume as <code>rgba(var(--be-accent-rgb, 56, 189, 248), α)</code>.
+  Same hexes are mirrored in esoStaticData.ts and UltimateCalculator.tsx — this map is canonical.
+</div>

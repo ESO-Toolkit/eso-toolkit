@@ -1,0 +1,152 @@
+<!-- @dsCard group="Boundaries" -->
+<meta charset="utf-8">
+<title>Table Seams — accentTableSx (B12)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; box-sizing:border-box; }
+  body { font-family:Inter,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif; background:#0b1220; padding:20px; }
+  h1,h2,h3 { font-family:'Space Grotesk',Inter,system-ui,sans-serif; font-weight:600; }
+
+  [data-color-scheme="dark"] {
+    --bg:#0b1220; --panel:#0f172a; --panel-2:#0d1430; --text:#e5e7eb; --muted:#94a3b8;
+    --accent:#38bdf8; --accent-2:#00e1ff; --ok:#22c55e; --warn:#ff9800; --danger:#ef4444;
+    --border:#1f2937;
+  }
+  [data-color-scheme="light"] {
+    --bg:#f8fafc; --panel:#ffffff; --panel-2:#f8fafc; --text:#1e293b; --muted:#64748b;
+    --accent:#0f172a; --accent-2:#1e293b; --ok:#059669; --warn:#f97316; --danger:#dc2626;
+    --border:#bcd9ff;
+  }
+
+  .ds-card { max-width:1100px; margin:0 auto; color:#e5e7eb; }
+  .ds-title { font-size:1.4rem; color:#e5e7eb; margin-bottom:4px; }
+  .ds-sub { font-size:.8rem; color:#94a3b8; margin-bottom:16px; }
+  .ds-modes { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  @media (max-width:760px){ .ds-modes { grid-template-columns:1fr; } }
+  .ds-mode { border-radius:16px; padding:18px; background:var(--bg); color:var(--text); border:1px solid var(--border); position:relative; overflow:hidden; }
+  .ds-mode > h2 { font-size:.72rem; text-transform:uppercase; letter-spacing:.12em; color:var(--muted); margin-bottom:14px; position:relative; z-index:1; }
+  .ds-src { font-size:.68rem; color:var(--muted); font-family:'JetBrains Mono',Consolas,monospace; margin-top:6px; }
+
+  .ds-z { position:relative; z-index:1; }
+  .demo-label { font-size:.7rem; font-weight:600; color:var(--text); margin-bottom:6px; }
+
+  /* ── B12: accentTableSx — summaryStyles.ts:17-46 (info accent 56,189,248) ── */
+  /* color set explicitly: quirks-mode viewers don't inherit color into <table> */
+  .accent-table { width:100%; border-collapse:collapse; font-size:.78rem; color:var(--text); }
+  .accent-table th, .accent-table td {
+    padding:8px 12px; text-align:left; font-variant-numeric:tabular-nums;
+    border-bottom:1px solid; }
+  [data-color-scheme="dark"] .accent-table th, [data-color-scheme="dark"] .accent-table td {
+    border-bottom-color:rgba(148, 163, 184, 0.12); }
+  [data-color-scheme="light"] .accent-table th, [data-color-scheme="light"] .accent-table td {
+    border-bottom-color:rgba(15, 23, 42, 0.08); }
+  /* thead: 2px accent seam + diagonal wash */
+  .accent-table thead th {
+    text-transform:uppercase; letter-spacing:0.5px; font-size:11px; font-weight:700;
+    color:var(--muted); }
+  [data-color-scheme="dark"] .accent-table thead th {
+    border-bottom:2px solid rgba(56, 189, 248, 0.4);
+    background:linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(56, 189, 248, 0.03) 100%); }
+  [data-color-scheme="light"] .accent-table thead th {
+    border-bottom:2px solid rgba(56, 189, 248, 0.32);
+    background:linear-gradient(135deg, rgba(56, 189, 248, 0.09) 0%, rgba(56, 189, 248, 0.02) 100%); }
+  /* zebra 0.035 / 0.015 */
+  .accent-table tbody tr { transition:background-color 0.15s ease; }
+  [data-color-scheme="dark"] .accent-table tbody tr:nth-of-type(odd) td {
+    background-color:rgba(148, 163, 184, 0.035); }
+  [data-color-scheme="light"] .accent-table tbody tr:nth-of-type(odd) td {
+    background-color:rgba(15, 23, 42, 0.015); }
+  /* hover tint + first-cell inset rail (also forced via .is-hover for the static demo) */
+  [data-color-scheme="dark"] .accent-table tbody tr:hover td,
+  [data-color-scheme="dark"] .accent-table tbody tr.is-hover td {
+    background-color:rgba(56, 189, 248, 0.1); }
+  [data-color-scheme="light"] .accent-table tbody tr:hover td,
+  [data-color-scheme="light"] .accent-table tbody tr.is-hover td {
+    background-color:rgba(56, 189, 248, 0.07); }
+  [data-color-scheme="dark"] .accent-table tbody tr:hover td:first-of-type,
+  [data-color-scheme="dark"] .accent-table tbody tr.is-hover td:first-of-type {
+    box-shadow:inset 3px 0 0 rgba(56, 189, 248, 0.95); }
+  [data-color-scheme="light"] .accent-table tbody tr:hover td:first-of-type,
+  [data-color-scheme="light"] .accent-table tbody tr.is-hover td:first-of-type {
+    box-shadow:inset 3px 0 0 rgba(56, 189, 248, 0.85); }
+  /* last-row border removal */
+  .accent-table tbody tr:last-of-type td { border-bottom:none; }
+
+  /* ── B12: fightAccordionSx — summaryStyles.ts:205-217 ── */
+  .fight-accordion { margin-bottom:8px; border-radius:8px; overflow:hidden;
+    box-shadow:none; }
+  [data-color-scheme="dark"] .fight-accordion {
+    background-color:rgba(255, 255, 255, 0.025);
+    border:1px solid rgba(255, 255, 255, 0.07); }
+  [data-color-scheme="light"] .fight-accordion {
+    background-color:rgba(15, 23, 42, 0.02);
+    border:1px solid rgba(15, 23, 42, 0.07); }
+  /* MUI Accordion's default top divider (::before) is killed: '&::before': { display: 'none' } */
+  .fight-accordion::before { display:none; }
+  .fight-accordion .acc-head { display:flex; justify-content:space-between; align-items:center;
+    padding:10px 14px; font-size:.8rem; font-weight:600; cursor:pointer; }
+  .fight-accordion .acc-head .chev { color:var(--muted); font-size:.7rem; }
+  .fight-accordion .acc-body { padding:0 14px 12px; font-size:.74rem; color:var(--muted); }
+
+  .note { font-size:.74rem; color:#94a3b8; line-height:1.5; margin-top:14px;
+    border:1px solid #1f2937; border-radius:10px; padding:10px 14px; background:#0f172a; }
+  .note b { color:#e5e7eb; }
+</style>
+<div class="ds-card">
+  <h1 class="ds-title">Table Seams — accentTableSx (B12)</h1>
+  <p class="ds-sub">2px accent header seam + diagonal wash, zebra 0.035, hover tint with first-cell inset rail, last-row border removal. Source: src/features/report_summary/summaryStyles.ts:17-46 (accentTableSx), :205-217 (fightAccordionSx)</p>
+  <div class="ds-modes">
+    <section class="ds-mode" data-color-scheme="dark">
+      <h2>Dark</h2>
+      <div class="ds-z">
+        <div class="demo-label">accentTableSx(dark, '56, 189, 248') — 3rd row hover forced</div>
+        <table class="accent-table">
+          <thead><tr><th>Player</th><th>DPS</th><th>Uptime</th><th>Deaths</th></tr></thead>
+          <tbody>
+            <tr><td>@arcanist-prime</td><td>131,240</td><td>98.2%</td><td>0</td></tr>
+            <tr><td>@stamplar-one</td><td>124,905</td><td>96.7%</td><td>1</td></tr>
+            <tr class="is-hover"><td>@nightblade-two</td><td>119,344</td><td>95.1%</td><td>0</td></tr>
+            <tr><td>@sorc-supreme</td><td>112,872</td><td>93.8%</td><td>2</td></tr>
+          </tbody>
+        </table>
+        <div class="ds-src">accentTableSx — summaryStyles.ts:17-46 (hover rail :41-43 inset 3px 0 0 rgba(A,0.95))</div>
+        <div class="demo-label" style="margin-top:14px">fightAccordionSx — ::before kill + overflow hidden</div>
+        <div class="fight-accordion">
+          <div class="acc-head"><span>Fight 3 — Hall of Fleshcraft (kill)</span><span class="chev">▾</span></div>
+          <div class="acc-body">Subtle-glass frame: bg rgba(255,255,255,0.025), border rgba(255,255,255,0.07). MUI's default ::before divider is display:none'd; overflow:hidden clips inner tables to the radius.</div>
+        </div>
+        <div class="ds-src">fightAccordionSx — summaryStyles.ts:205-217</div>
+      </div>
+    </section>
+    <section class="ds-mode" data-color-scheme="light">
+      <h2>Light</h2>
+      <div class="ds-z">
+        <div class="demo-label">accentTableSx(light, '56, 189, 248') — 3rd row hover forced</div>
+        <table class="accent-table">
+          <thead><tr><th>Player</th><th>DPS</th><th>Uptime</th><th>Deaths</th></tr></thead>
+          <tbody>
+            <tr><td>@arcanist-prime</td><td>131,240</td><td>98.2%</td><td>0</td></tr>
+            <tr><td>@stamplar-one</td><td>124,905</td><td>96.7%</td><td>1</td></tr>
+            <tr class="is-hover"><td>@nightblade-two</td><td>119,344</td><td>95.1%</td><td>0</td></tr>
+            <tr><td>@sorc-supreme</td><td>112,872</td><td>93.8%</td><td>2</td></tr>
+          </tbody>
+        </table>
+        <div class="ds-src">seam rgba(A,0.32), wash 0.09→0.02, zebra 0.015, hover 0.07, rail 0.85 — summaryStyles.ts:17-46</div>
+        <div class="demo-label" style="margin-top:14px">fightAccordionSx — ::before kill + overflow hidden</div>
+        <div class="fight-accordion">
+          <div class="acc-head"><span>Fight 3 — Hall of Fleshcraft (kill)</span><span class="chev">▾</span></div>
+          <div class="acc-body">Light frame: bg rgba(15,23,42,0.02), border rgba(15,23,42,0.07).</div>
+        </div>
+        <div class="ds-src">fightAccordionSx — summaryStyles.ts:205-217</div>
+      </div>
+    </section>
+  </div>
+  <div class="note">
+    <b>Seam anatomy.</b> Cell borders stay near-invisible (rgba(148,163,184,0.12) dark / rgba(15,23,42,0.08) light) with
+    <code>tabular-nums</code> everywhere; the <b>only</b> strong horizontal line is the 2px accent seam under the header, backed
+    by a 135° accent wash (0.12→0.03 dark). Zebra rows sit at alpha 0.035 (dark) — deliberately faint. Row hover adds an accent
+    tint plus an <code>inset 3px 0 0</code> rail on the first cell only, and the final row drops its border so the table ends at
+    the card edge, not at a line. The same accents come from SUMMARY_ACCENTS (info/damage/death).
+  </div>
+</div>

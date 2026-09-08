@@ -1,0 +1,202 @@
+<!-- @dsCard group="Boundaries" -->
+<meta charset="utf-8">
+<title>Accent Rails — borderLeft &amp; inset-shadow</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; box-sizing:border-box; }
+  body { font-family:Inter,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif; background:#0b1220; padding:20px; }
+  h1,h2,h3 { font-family:'Space Grotesk',Inter,system-ui,sans-serif; font-weight:600; }
+
+  [data-color-scheme="dark"] {
+    --bg:#0b1220; --panel:#0f172a; --panel-2:#0d1430; --text:#e5e7eb; --muted:#94a3b8;
+    --accent:#38bdf8; --accent-2:#00e1ff; --ok:#22c55e; --warn:#ff9800; --danger:#ef4444;
+    --border:#1f2937;
+  }
+  [data-color-scheme="light"] {
+    --bg:#f8fafc; --panel:#ffffff; --panel-2:#f8fafc; --text:#1e293b; --muted:#64748b;
+    --accent:#0f172a; --accent-2:#1e293b; --ok:#059669; --warn:#f97316; --danger:#dc2626;
+    --border:#bcd9ff;
+  }
+  /* NOTE: light --accent is deliberately dark slate #0f172a, NOT a light blue.
+     Cyan #38bdf8 accents remain hard-coded in many dark-leaning recipes even in light mode. */
+
+  .ds-card { max-width:1100px; margin:0 auto; color:#e5e7eb; }
+  .ds-title { font-size:1.4rem; color:#e5e7eb; margin-bottom:4px; }
+  .ds-sub { font-size:.8rem; color:#94a3b8; margin-bottom:16px; }
+  .ds-modes { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  @media (max-width:760px){ .ds-modes { grid-template-columns:1fr; } }
+  .ds-mode { border-radius:16px; padding:18px; background:var(--bg); color:var(--text); border:1px solid var(--border); position:relative; overflow:hidden; }
+  .ds-mode > h2 { font-size:.72rem; text-transform:uppercase; letter-spacing:.12em; color:var(--muted); margin-bottom:14px; position:relative; z-index:1; }
+  .ds-src { font-size:.68rem; color:var(--muted); font-family:'JetBrains Mono',Consolas,monospace; margin-top:6px; }
+
+  .ds-z { position:relative; z-index:1; }
+  .demo-block { margin-bottom:18px; }
+  .demo-label { font-size:.7rem; font-weight:600; color:var(--text); margin-bottom:6px; }
+
+  /* ── B1a: role-colored slot card rail — src/components/roster/DPSSlotCard.tsx:172-189 ── */
+  .slot-card { border-radius:12px; padding:12px 14px; cursor:default;
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.2s ease; }
+  [data-color-scheme="dark"] .slot-card {
+    background-color:#ff8b610a;                 /* `${dpsRoleColors.dps}0a` (dark dps #ff8b61) */
+    border:1px solid #ff8b6120;
+    border-left:3px solid #ff8b61;
+  }
+  [data-color-scheme="light"] .slot-card {
+    background-color:#ff572206;                 /* `${dpsRoleColors.dps}06` (light solid dps #ff5722) */
+    border:1px solid #ff572218;
+    border-left:3px solid #ff5722;
+  }
+  [data-color-scheme="dark"] .slot-card:hover, [data-color-scheme="dark"] .slot-card.is-hover {
+    transform:translateY(-1px);
+    border-color:#ff8b6135; border-left-color:#ff8b61;
+    box-shadow:0 4px 16px #ff8b6118, 0 2px 8px rgba(0,0,0,0.1);
+  }
+  [data-color-scheme="light"] .slot-card:hover, [data-color-scheme="light"] .slot-card.is-hover {
+    transform:translateY(-1px);
+    border-color:#ff572235; border-left-color:#ff5722;
+    box-shadow:0 4px 16px #ff572218, 0 2px 8px rgba(0,0,0,0.1);
+  }
+  .slot-card .name { font-weight:600; font-size:.85rem; }
+  .slot-card .sub { font-size:.72rem; color:var(--muted); }
+
+  /* ── B1b: selection rail transparent-reserve — src/components/PerFightBuilds.tsx:805-810 ── */
+  .sel-row { position:relative; border-radius:8px; padding:6px 8px 6px 10px;
+    display:flex; align-items:center; gap:6px; font-size:.8rem;
+    border-left:3px solid transparent; background-color:transparent;
+    transition:background-color 0.15s ease; }
+  .sel-row.is-active { border-left:3px solid #38bdf8; }
+  [data-color-scheme="dark"] .sel-row.is-active { background-color:rgba(56,189,248,0.12); }
+  [data-color-scheme="light"] .sel-row.is-active { background-color:rgba(56,189,248,0.10); }
+
+  /* ── B1c: semantic 3px rail callout — src/features/report_summary/summaryStyles.ts:189-201 (patternCalloutSx) ── */
+  .callout { border-radius:8px; padding:10px 14px; margin-bottom:8px; font-size:.78rem;
+    backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); }
+  [data-color-scheme="dark"] .callout { color:rgb(226, 232, 240); }
+  [data-color-scheme="light"] .callout { color:rgb(30, 41, 59); }
+  /* High severity — coral 248,113,113 (SEVERITY_ACCENTS.High) */
+  [data-color-scheme="dark"] .callout.coral {
+    border:1px solid rgba(248, 113, 113, 0.28); border-left:3px solid rgb(248, 113, 113);
+    background:linear-gradient(135deg, rgba(248, 113, 113, 0.13) 0%, rgba(248, 113, 113, 0.04) 100%); }
+  [data-color-scheme="light"] .callout.coral {
+    border:1px solid rgba(248, 113, 113, 0.24); border-left:3px solid rgb(248, 113, 113);
+    background:linear-gradient(135deg, rgba(248, 113, 113, 0.09) 0%, rgba(248, 113, 113, 0.03) 100%); }
+  /* Medium severity — amber 251,191,36 */
+  [data-color-scheme="dark"] .callout.amber {
+    border:1px solid rgba(251, 191, 36, 0.28); border-left:3px solid rgb(251, 191, 36);
+    background:linear-gradient(135deg, rgba(251, 191, 36, 0.13) 0%, rgba(251, 191, 36, 0.04) 100%); }
+  [data-color-scheme="light"] .callout.amber {
+    border:1px solid rgba(251, 191, 36, 0.24); border-left:3px solid rgb(251, 191, 36);
+    background:linear-gradient(135deg, rgba(251, 191, 36, 0.09) 0%, rgba(251, 191, 36, 0.03) 100%); }
+
+  /* ── B2a: layout-safe inset rail on list rows — summaryStyles.ts:235-243 (listRowHoverSx, info accent) ── */
+  .list-row { padding:8px 12px; font-size:.8rem; border-radius:4px;
+    transition:background-color 0.15s ease, box-shadow 0.15s ease; }
+  [data-color-scheme="dark"] .list-row:hover, [data-color-scheme="dark"] .list-row.is-hover {
+    background-color:rgba(56, 189, 248, 0.07);
+    box-shadow:inset 3px 0 0 rgba(56, 189, 248, 0.8); }
+  [data-color-scheme="light"] .list-row:hover, [data-color-scheme="light"] .list-row.is-hover {
+    background-color:rgba(56, 189, 248, 0.05);
+    box-shadow:inset 3px 0 0 rgba(56, 189, 248, 0.7); }
+
+  /* ── B2b: 2px inset rail + translateX — src/components/HeaderBar.tsx:449-456 (menuItemSx hover) ── */
+  .menu-item { padding:8px 12px; margin:2px 6px; border-radius:10px; font-size:.82rem;
+    display:flex; flex-direction:column; gap:1px;
+    transition:background 0.25s ease, transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s ease; }
+  .menu-item .secondary { font-size:.7rem; opacity:0.45; transition:opacity 0.25s ease; }
+  [data-color-scheme="dark"] .menu-item:hover, [data-color-scheme="dark"] .menu-item.is-hover {
+    background:linear-gradient(135deg, rgba(56,189,248,0.12) 0%, rgba(56,189,248,0.03) 100%);
+    transform:translateX(4px);
+    box-shadow:inset 2px 0 0 #38bdf8, 0 2px 12px rgba(56,189,248,0.1); }
+  [data-color-scheme="light"] .menu-item:hover, [data-color-scheme="light"] .menu-item.is-hover {
+    background:linear-gradient(135deg, rgba(56,189,248,0.10) 0%, rgba(56,189,248,0.02) 100%);
+    transform:translateX(4px);
+    box-shadow:inset 2px 0 0 #38bdf8, 0 2px 8px rgba(56,189,248,0.06); }
+  .menu-item:hover .secondary, .menu-item.is-hover .secondary { opacity:0.75; }
+
+  .rule-note { font-size:.74rem; color:#94a3b8; line-height:1.5; margin-top:14px;
+    border:1px solid #1f2937; border-radius:10px; padding:10px 14px; background:#0f172a; }
+  .rule-note b { color:#e5e7eb; }
+</style>
+<div class="ds-card">
+  <h1 class="ds-title">Accent Rails — borderLeft &amp; inset-shadow</h1>
+  <p class="ds-sub">B1 borderLeft rails (role / selection / semantic) + B2 layout-safe inset-shadow rails. Sources: DPSSlotCard.tsx:172-189, PerFightBuilds.tsx:805-810, summaryStyles.ts:189-201/235-243, HeaderBar.tsx:449-456</p>
+  <div class="ds-modes">
+    <section class="ds-mode" data-color-scheme="dark">
+      <h2>Dark</h2>
+      <div class="ds-z">
+        <div class="demo-block">
+          <div class="demo-label">B1 — role-colored slot card rail (hover state on 2nd)</div>
+          <div class="slot-card" style="margin-bottom:8px"><div class="name">@stamplar-one</div><div class="sub">Banner Jail DD</div></div>
+          <div class="slot-card is-hover"><div class="name">@nightblade-two</div><div class="sub">Martial Knowledge Jail DD</div></div>
+          <div class="ds-src">borderLeft: 3px solid #ff8b61 over #ff8b610a fill — src/components/roster/DPSSlotCard.tsx:172-189</div>
+        </div>
+        <div class="demo-block">
+          <div class="demo-label">B1 — selection rail, transparent-reserve trick</div>
+          <div class="sel-row is-active">Fight 3 — Hall of Fleshcraft</div>
+          <div class="sel-row">Fight 4 — Overfiend Kazpian</div>
+          <div class="ds-src">active ? '3px solid #38bdf8' : '3px solid transparent' — src/components/PerFightBuilds.tsx:805</div>
+        </div>
+        <div class="demo-block">
+          <div class="demo-label">B1 — semantic 3px rail callout</div>
+          <div class="callout coral">High: 6 deaths to Burst Damage in the execute phase.</div>
+          <div class="callout amber">Medium: uptime on Major Slayer dipped below 70%.</div>
+          <div class="ds-src">patternCalloutSx(dark, accentRgb) — src/features/report_summary/summaryStyles.ts:189-201</div>
+        </div>
+        <div class="demo-block">
+          <div class="demo-label">B2 — inset-shadow rail on list rows (hover forced)</div>
+          <div class="list-row">Colossus drop coverage</div>
+          <div class="list-row is-hover">Off-balance uptime windows</div>
+          <div class="ds-src">inset 3px 0 0 rgba(56,189,248,0.8) — listRowHoverSx, summaryStyles.ts:235-243</div>
+        </div>
+        <div class="demo-block">
+          <div class="demo-label">B2 — 2px inset rail + translateX(4px) (hover forced)</div>
+          <div class="menu-item"><span>Latest Reports</span><span class="secondary">Browse recent trial logs</span></div>
+          <div class="menu-item is-hover"><span>Roster Builder</span><span class="secondary">Plan a 12-player comp</span></div>
+          <div class="ds-src">inset 2px 0 0 accent + translateX(4px) — src/components/HeaderBar.tsx:449-456</div>
+        </div>
+      </div>
+    </section>
+    <section class="ds-mode" data-color-scheme="light">
+      <h2>Light</h2>
+      <div class="ds-z">
+        <div class="demo-block">
+          <div class="demo-label">B1 — role-colored slot card rail (hover state on 2nd)</div>
+          <div class="slot-card" style="margin-bottom:8px"><div class="name">@stamplar-one</div><div class="sub">Banner Jail DD</div></div>
+          <div class="slot-card is-hover"><div class="name">@nightblade-two</div><div class="sub">Martial Knowledge Jail DD</div></div>
+          <div class="ds-src">borderLeft: 3px solid #ff5722 over #ff572206 fill — DPSSlotCard.tsx:172-189 (light solid dps)</div>
+        </div>
+        <div class="demo-block">
+          <div class="demo-label">B1 — selection rail, transparent-reserve trick</div>
+          <div class="sel-row is-active">Fight 3 — Hall of Fleshcraft</div>
+          <div class="sel-row">Fight 4 — Overfiend Kazpian</div>
+          <div class="ds-src">active ? '3px solid #38bdf8' : '3px solid transparent' — PerFightBuilds.tsx:805</div>
+        </div>
+        <div class="demo-block">
+          <div class="demo-label">B1 — semantic 3px rail callout</div>
+          <div class="callout coral">High: 6 deaths to Burst Damage in the execute phase.</div>
+          <div class="callout amber">Medium: uptime on Major Slayer dipped below 70%.</div>
+          <div class="ds-src">patternCalloutSx(light, accentRgb) — summaryStyles.ts:189-201</div>
+        </div>
+        <div class="demo-block">
+          <div class="demo-label">B2 — inset-shadow rail on list rows (hover forced)</div>
+          <div class="list-row">Colossus drop coverage</div>
+          <div class="list-row is-hover">Off-balance uptime windows</div>
+          <div class="ds-src">inset 3px 0 0 rgba(56,189,248,0.7) — listRowHoverSx, summaryStyles.ts:235-243</div>
+        </div>
+        <div class="demo-block">
+          <div class="demo-label">B2 — 2px inset rail + translateX(4px) (hover forced)</div>
+          <div class="menu-item"><span>Latest Reports</span><span class="secondary">Browse recent trial logs</span></div>
+          <div class="menu-item is-hover"><span>Roster Builder</span><span class="secondary">Plan a 12-player comp</span></div>
+          <div class="ds-src">inset 2px 0 0 accent + translateX(4px) — HeaderBar.tsx:449-456</div>
+        </div>
+      </div>
+    </section>
+  </div>
+  <div class="rule-note">
+    <b>Border rail vs inset rail.</b> A <b>borderLeft rail</b> (B1) is a layout property — it shifts content 3px, so
+    toggleable rails must reserve the space with <code>3px solid transparent</code> when inactive (the PerFightBuilds trick).
+    An <b>inset-shadow rail</b> (B2, <code>box-shadow: inset 3px 0 0 …</code>) paints inside the box with zero layout shift,
+    so it is the idiom for hover/transient rails (table first-cells, list rows, menu items).
+  </div>
+</div>

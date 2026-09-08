@@ -1,0 +1,233 @@
+<!-- @dsCard group="Surfaces" -->
+<meta charset="utf-8">
+<title>Build-Editor Panel Glass (G3) + Class-Accent CSS Vars</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; box-sizing:border-box; }
+  body { font-family:Inter,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif; background:#0b1220; padding:20px; }
+  h1,h2,h3 { font-family:'Space Grotesk',Inter,system-ui,sans-serif; font-weight:600; }
+
+  [data-color-scheme="dark"] {
+    --bg:#0b1220; --panel:#0f172a; --panel-2:#0d1430; --text:#e5e7eb; --muted:#94a3b8;
+    --accent:#38bdf8; --accent-2:#00e1ff; --ok:#22c55e; --warn:#ff9800; --danger:#ef4444;
+    --border:#1f2937;
+  }
+  [data-color-scheme="light"] {
+    --bg:#f8fafc; --panel:#ffffff; --panel-2:#f8fafc; --text:#1e293b; --muted:#64748b;
+    --accent:#0f172a; --accent-2:#1e293b; --ok:#059669; --warn:#f97316; --danger:#dc2626;
+    --border:#bcd9ff;
+  }
+  /* NOTE: light --accent is deliberately dark slate #0f172a, NOT a light blue.
+     Cyan #38bdf8 accents remain hard-coded in many dark-leaning recipes even in light mode. */
+
+  .ds-card { max-width:1100px; margin:0 auto; color:#e5e7eb; }
+  .ds-title { font-size:1.4rem; color:#e5e7eb; margin-bottom:4px; }
+  .ds-sub { font-size:.8rem; color:#94a3b8; margin-bottom:16px; }
+  .ds-modes { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  @media (max-width:760px){ .ds-modes { grid-template-columns:1fr; } }
+  .ds-mode { border-radius:16px; padding:18px; background:var(--bg); color:var(--text); border:1px solid var(--border); position:relative; overflow:hidden; }
+  .ds-mode > h2 { font-size:.72rem; text-transform:uppercase; letter-spacing:.12em; color:var(--muted); margin-bottom:14px; position:relative; z-index:1; }
+  .ds-src { font-size:.68rem; color:var(--muted); font-family:'JetBrains Mono',Consolas,monospace; margin-top:6px; }
+
+  .ds-backdrop { position:absolute; inset:0; pointer-events:none; }
+  [data-color-scheme="dark"] .ds-backdrop {
+    background:
+      radial-gradient(ellipse 60% 40% at 20% 25%, rgba(56,189,248,.28), transparent 65%),
+      radial-gradient(ellipse 50% 45% at 80% 30%, rgba(129,140,248,.24), transparent 65%),
+      radial-gradient(ellipse 55% 50% at 55% 80%, rgba(192,132,252,.18), transparent 65%),
+      #0b1220;
+  }
+  [data-color-scheme="light"] .ds-backdrop {
+    background:
+      radial-gradient(ellipse 60% 40% at 20% 25%, rgba(125,211,252,.5), transparent 65%),
+      radial-gradient(ellipse 50% 45% at 80% 30%, rgba(196,181,253,.42), transparent 65%),
+      radial-gradient(ellipse 55% 50% at 55% 80%, rgba(167,243,208,.38), transparent 65%),
+      #f8fafc;
+  }
+  .demo-z { position:relative; z-index:1; }
+  .sect { font-size:.62rem; text-transform:uppercase; letter-spacing:.1em; color:var(--muted); margin:16px 0 8px; position:relative; z-index:1; }
+  .sect:first-of-type { margin-top:0; }
+
+  /* ── G3 GlassPanel — buildEditorTokens.ts:9-17 + GlassPanel.tsx:31-124 ──
+     NOTE (faithful): BE_TOKENS.glass.blur = 16 exists as a token, but
+     GlassPanel never applies backdropFilter — panels are transcribed WITHOUT
+     blur, exactly as rendered in the app. borderRadius: 3 = 30px (base 10). */
+  .g3 {
+    position:relative; border-radius:30px; padding:14px 16px; font-size:.74rem;
+    transition:box-shadow 0.3s ease, border-color 0.25s ease;
+  }
+  .g3 .h { font-family:'Space Grotesk',Inter,sans-serif; font-weight:600; font-size:.84rem; margin-bottom:2px; }
+  .g3 .b { color:var(--muted); font-size:.68rem; }
+  [data-color-scheme="dark"] .g3 { background:rgba(15, 23, 42, 0.84); }
+  [data-color-scheme="light"] .g3 { background:rgba(255, 255, 255, 0.84); }
+  /* default variant */
+  [data-color-scheme="dark"] .g3-default {
+    border:1px solid rgba(255, 255, 255, 0.09);
+    box-shadow:0 8px 32px rgba(0, 0, 0, 0.32), 0 1px 0 rgba(255, 255, 255, 0.05) inset;
+  }
+  [data-color-scheme="light"] .g3-default {
+    border:1px solid rgba(15, 23, 42, 0.13);
+    box-shadow:0 4px 24px rgba(15, 23, 42, 0.10), 0 1px 0 rgba(255, 255, 255, 0.80) inset;
+  }
+  [data-color-scheme="dark"] .g3-default.has-glow:hover {
+    box-shadow:0 8px 32px rgba(0, 0, 0, 0.26), 0 0 18px rgba(var(--be-accent-rgb, 56, 189, 248), 0.07);
+  }
+  /* primary variant — inner top glow slit ::after */
+  [data-color-scheme="dark"] .g3-primary {
+    border:1px solid rgba(255, 255, 255, 0.09);
+    box-shadow:0 8px 40px rgba(0, 0, 0, 0.42), 0 1px 0 rgba(255, 255, 255, 0.06) inset;
+  }
+  [data-color-scheme="light"] .g3-primary {
+    border:1px solid rgba(15, 23, 42, 0.13);
+    box-shadow:0 4px 28px rgba(15, 23, 42, 0.14), 0 1px 0 rgba(255, 255, 255, 0.90) inset;
+  }
+  .g3-primary::after {
+    content:""; position:absolute; top:1px; left:12%; right:12%; height:1px;
+    background:linear-gradient(90deg, transparent 0%, rgba(var(--be-accent-rgb, 56, 189, 248), 0.70) 50%, transparent 100%);
+    pointer-events:none; z-index:2;
+  }
+  [data-color-scheme="dark"] .g3-primary.has-glow:hover {
+    box-shadow:0 12px 48px rgba(0, 0, 0, 0.38), 0 0 32px rgba(var(--be-accent-rgb, 56, 189, 248), 0.12);
+  }
+  [data-color-scheme="light"] .g3-primary.has-glow:hover {
+    box-shadow:0 6px 32px rgba(15, 23, 42, 0.16);
+  }
+  /* subtle variant */
+  [data-color-scheme="dark"] .g3-subtle {
+    border:1px solid rgba(255, 255, 255, 0.05);
+    box-shadow:0 4px 16px rgba(0, 0, 0, 0.18);
+  }
+  [data-color-scheme="light"] .g3-subtle {
+    border:1px solid rgba(15, 23, 42, 0.06);
+    box-shadow:0 2px 8px rgba(15, 23, 42, 0.05);
+  }
+
+  /* ── Class-accent CSS-var mechanism (B8) — classColorMap.ts +
+       BuildEditorThemeProvider.tsx:26-29. Vars set inline per panel below. */
+  .class-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .class-panel { border-radius:16px; padding:10px 12px; }
+  .class-panel .cn { font-weight:600; font-size:.72rem; }
+  .class-panel .cv { font-family:'JetBrains Mono',Consolas,monospace; font-size:.58rem; color:var(--muted); margin-top:2px; }
+  .class-panel .swatchline { display:flex; align-items:center; gap:6px; margin-top:6px; }
+  .class-panel .dot { width:14px; height:14px; border-radius:50%; background:var(--be-accent); box-shadow:0 0 10px var(--be-glow); }
+  .class-panel .grad { flex:1; height:8px; border-radius:4px; background:var(--be-gradient); }
+  .class-panel.g3-primary:hover {
+    border-color:rgba(var(--be-accent-rgb), 0.35);
+    box-shadow:0 12px 48px rgba(0, 0, 0, 0.38), 0 0 32px rgba(var(--be-accent-rgb), 0.12);
+  }
+
+  .callout { margin-top:14px; padding:10px 12px; border-radius:10px; border:1px solid #1f2937; background:#0f172a; font-size:.7rem; line-height:1.5; color:#e5e7eb; }
+  .callout code { font-family:'JetBrains Mono',Consolas,monospace; font-size:.66rem; }
+</style>
+<div class="ds-card">
+  <h1 class="ds-title">Build-Editor Panel Glass (G3) + Class-Accent CSS Vars</h1>
+  <p class="ds-sub">GlassPanel's three variants over BE_TOKENS, the primary tier's ::after inset top slit (top:1px, left/right:12%), and the --be-accent / --be-accent-rgb / --be-glow / --be-gradient class-theming mechanism. Sources: src/features/build-editor/theme/buildEditorTokens.ts:9-17, components/primitives/GlassPanel.tsx:31-124, theme/classColorMap.ts:16-65, theme/BuildEditorThemeProvider.tsx:26-29.</p>
+  <div class="ds-modes">
+    <section class="ds-mode" data-color-scheme="dark">
+      <div class="ds-backdrop"></div>
+      <h2>Dark</h2>
+      <div class="demo-z">
+        <div class="sect">Three variants (hover the primary/default for glow)</div>
+        <div class="g3 g3-primary has-glow" style="margin-bottom:8px;">
+          <div class="h">variant='primary'</div>
+          <div class="b">Inner top glow slit ::after — rgba(var(--be-accent-rgb), 0.70), left/right 12%. Used for Identity, Equipment, Skills, Champion.</div>
+          <div class="ds-src">GlassPanel.tsx:95-108; shadow :59-62</div>
+        </div>
+        <div class="g3 g3-default has-glow" style="margin-bottom:8px;">
+          <div class="h">variant='default'</div>
+          <div class="b">bg rgba(15, 23, 42, 0.84), border rgba(255, 255, 255, 0.09), shadow BE_TOKENS.glass.shadow</div>
+          <div class="ds-src">buildEditorTokens.ts:9-17</div>
+        </div>
+        <div class="g3 g3-subtle">
+          <div class="h">variant='subtle'</div>
+          <div class="b">Quieter border rgba(255, 255, 255, 0.05) + minimal shadow (Settings, Screenshots)</div>
+          <div class="ds-src">GlassPanel.tsx:49-57,63-66</div>
+        </div>
+
+        <div class="sect">One primary panel per ESO class (hover for class-keyed glow)</div>
+        <div class="class-grid">
+          <div class="g3 g3-primary class-panel" style="--be-accent:#94a3b8; --be-accent-rgb:148, 163, 184; --be-glow:rgba(148, 163, 184, 0.30); --be-gradient:linear-gradient(135deg, #64748b 0%, #94a3b8 100%);">
+            <div class="cn">any-class</div><div class="cv">#94a3b8 · glow 0.30</div>
+            <div class="swatchline"><span class="dot"></span><span class="grad"></span></div>
+          </div>
+          <div class="g3 g3-primary class-panel" style="--be-accent:#e05c00; --be-accent-rgb:224, 92, 0; --be-glow:rgba(224, 92, 0, 0.35); --be-gradient:linear-gradient(135deg, #e05c00 0%, #ff8a3d 100%);">
+            <div class="cn">dragonknight</div><div class="cv">#e05c00 → #ff8a3d</div>
+            <div class="swatchline"><span class="dot"></span><span class="grad"></span></div>
+          </div>
+          <div class="g3 g3-primary class-panel" style="--be-accent:#00acc1; --be-accent-rgb:0, 172, 193; --be-glow:rgba(0, 172, 193, 0.35); --be-gradient:linear-gradient(135deg, #00acc1 0%, #4dd0e1 100%);">
+            <div class="cn">sorcerer</div><div class="cv">#00acc1 → #4dd0e1</div>
+            <div class="swatchline"><span class="dot"></span><span class="grad"></span></div>
+          </div>
+          <div class="g3 g3-primary class-panel" style="--be-accent:#e53935; --be-accent-rgb:229, 57, 53; --be-glow:rgba(229, 57, 53, 0.35); --be-gradient:linear-gradient(135deg, #e53935 0%, #ef9a9a 100%);">
+            <div class="cn">nightblade</div><div class="cv">#e53935 → #ef9a9a</div>
+            <div class="swatchline"><span class="dot"></span><span class="grad"></span></div>
+          </div>
+          <div class="g3 g3-primary class-panel" style="--be-accent:#ffb300; --be-accent-rgb:255, 179, 0; --be-glow:rgba(255, 179, 0, 0.35); --be-gradient:linear-gradient(135deg, #ffb300 0%, #ffe082 100%);">
+            <div class="cn">templar</div><div class="cv">#ffb300 → #ffe082</div>
+            <div class="swatchline"><span class="dot"></span><span class="grad"></span></div>
+          </div>
+          <div class="g3 g3-primary class-panel" style="--be-accent:#26a69a; --be-accent-rgb:38, 166, 154; --be-glow:rgba(38, 166, 154, 0.35); --be-gradient:linear-gradient(135deg, #26a69a 0%, #4dd0c8 100%);">
+            <div class="cn">warden</div><div class="cv">#26a69a → #4dd0c8</div>
+            <div class="swatchline"><span class="dot"></span><span class="grad"></span></div>
+          </div>
+          <div class="g3 g3-primary class-panel" style="--be-accent:#7c4dff; --be-accent-rgb:124, 77, 255; --be-glow:rgba(124, 77, 255, 0.35); --be-gradient:linear-gradient(135deg, #7c4dff 0%, #b388ff 100%);">
+            <div class="cn">necromancer</div><div class="cv">#7c4dff → #b388ff</div>
+            <div class="swatchline"><span class="dot"></span><span class="grad"></span></div>
+          </div>
+          <div class="g3 g3-primary class-panel" style="--be-accent:#43a047; --be-accent-rgb:67, 160, 71; --be-glow:rgba(67, 160, 71, 0.35); --be-gradient:linear-gradient(135deg, #43a047 0%, #81c784 100%);">
+            <div class="cn">arcanist</div><div class="cv">#43a047 → #81c784</div>
+            <div class="swatchline"><span class="dot"></span><span class="grad"></span></div>
+          </div>
+        </div>
+        <div class="ds-src">classColorMap.ts:16-65 — vars injected by BuildEditorThemeProvider.tsx:26-29</div>
+      </div>
+    </section>
+    <section class="ds-mode" data-color-scheme="light">
+      <div class="ds-backdrop"></div>
+      <h2>Light</h2>
+      <div class="demo-z">
+        <div class="sect">Three variants</div>
+        <div class="g3 g3-primary has-glow" style="margin-bottom:8px;">
+          <div class="h">variant='primary'</div>
+          <div class="b">Same slit alphas in light mode (0.70) — only bg/border/shadow swap; inset highlight rises to white 0.90</div>
+          <div class="ds-src">GlassPanel.tsx:59-62,95-108</div>
+        </div>
+        <div class="g3 g3-default has-glow" style="margin-bottom:8px;">
+          <div class="h">variant='default'</div>
+          <div class="b">bg rgba(255, 255, 255, 0.84), border rgba(15, 23, 42, 0.13), inset white 0.80</div>
+          <div class="ds-src">buildEditorTokens.ts:10-16</div>
+        </div>
+        <div class="g3 g3-subtle">
+          <div class="h">variant='subtle'</div>
+          <div class="b">border rgba(15, 23, 42, 0.06), shadow 0 2px 8px rgba(15, 23, 42, 0.05)</div>
+          <div class="ds-src">GlassPanel.tsx:49-57,63-66</div>
+        </div>
+
+        <div class="sect">Class accents (same map in both modes)</div>
+        <div class="class-grid">
+          <div class="g3 g3-primary class-panel" style="--be-accent:#e05c00; --be-accent-rgb:224, 92, 0; --be-glow:rgba(224, 92, 0, 0.35); --be-gradient:linear-gradient(135deg, #e05c00 0%, #ff8a3d 100%);">
+            <div class="cn">dragonknight</div><div class="cv">#e05c00 → #ff8a3d</div>
+            <div class="swatchline"><span class="dot"></span><span class="grad"></span></div>
+          </div>
+          <div class="g3 g3-primary class-panel" style="--be-accent:#00acc1; --be-accent-rgb:0, 172, 193; --be-glow:rgba(0, 172, 193, 0.35); --be-gradient:linear-gradient(135deg, #00acc1 0%, #4dd0e1 100%);">
+            <div class="cn">sorcerer</div><div class="cv">#00acc1 → #4dd0e1</div>
+            <div class="swatchline"><span class="dot"></span><span class="grad"></span></div>
+          </div>
+          <div class="g3 g3-primary class-panel" style="--be-accent:#ffb300; --be-accent-rgb:255, 179, 0; --be-glow:rgba(255, 179, 0, 0.35); --be-gradient:linear-gradient(135deg, #ffb300 0%, #ffe082 100%);">
+            <div class="cn">templar</div><div class="cv">#ffb300 → #ffe082</div>
+            <div class="swatchline"><span class="dot"></span><span class="grad"></span></div>
+          </div>
+          <div class="g3 g3-primary class-panel" style="--be-accent:#7c4dff; --be-accent-rgb:124, 77, 255; --be-glow:rgba(124, 77, 255, 0.35); --be-gradient:linear-gradient(135deg, #7c4dff 0%, #b388ff 100%);">
+            <div class="cn">necromancer</div><div class="cv">#7c4dff → #b388ff</div>
+            <div class="swatchline"><span class="dot"></span><span class="grad"></span></div>
+          </div>
+        </div>
+        <div class="ds-src">classColorMap.ts — CLASS_COLOR_MAP is mode-independent</div>
+      </div>
+    </section>
+  </div>
+  <div class="callout">
+    <strong>Faithful quirks:</strong> <code>BE_TOKENS.glass.blur: 16</code> is declared but GlassPanel never applies <code>backdropFilter</code> — these panels render <em>without</em> blur in the real app, and are shown without blur here. Primary panels previously used a gradient <code>borderImage</code>; it was removed because the shorthand let <code>border-color</code> fall back to <code>currentColor</code>, reading as a debug outline (GlassPanel.tsx:6-9,45-48). The provider also scopes a focus ring: <code>outline: 2px solid var(--be-accent, #38bdf8); outline-offset: 2px</code> (BuildEditorThemeProvider.tsx:35-43).
+  </div>
+</div>

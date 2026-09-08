@@ -1,0 +1,236 @@
+<!-- @dsCard group="Patterns" -->
+<meta charset="utf-8">
+<title>Performance Tiers — data-perf Axis</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; box-sizing:border-box; }
+  body { font-family:Inter,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif; background:#0b1220; padding:20px; }
+  h1,h2,h3 { font-family:'Space Grotesk',Inter,system-ui,sans-serif; font-weight:600; }
+
+  [data-color-scheme="dark"] {
+    --bg:#0b1220; --panel:#0f172a; --panel-2:#0d1430; --text:#e5e7eb; --muted:#94a3b8;
+    --accent:#38bdf8; --accent-2:#00e1ff; --ok:#22c55e; --warn:#ff9800; --danger:#ef4444;
+    --border:#1f2937;
+  }
+  [data-color-scheme="light"] {
+    --bg:#f8fafc; --panel:#ffffff; --panel-2:#f8fafc; --text:#1e293b; --muted:#64748b;
+    --accent:#0f172a; --accent-2:#1e293b; --ok:#059669; --warn:#f97316; --danger:#dc2626;
+    --border:#bcd9ff;
+  }
+  /* NOTE: light --accent is deliberately dark slate #0f172a, NOT a light blue.
+     Cyan #38bdf8 accents remain hard-coded in many dark-leaning recipes even in light mode. */
+
+  .ds-card { max-width:1100px; margin:0 auto; color:#e5e7eb; }
+  .ds-title { font-size:1.4rem; color:#e5e7eb; margin-bottom:4px; }
+  .ds-sub { font-size:.8rem; color:#94a3b8; margin-bottom:16px; }
+  .ds-modes { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  @media (max-width:760px){ .ds-modes { grid-template-columns:1fr; } }
+  .ds-mode { border-radius:16px; padding:18px; background:var(--bg); color:var(--text); border:1px solid var(--border); position:relative; overflow:hidden; }
+  .ds-mode > h2 { font-size:.72rem; text-transform:uppercase; letter-spacing:.12em; color:var(--muted); margin-bottom:14px; position:relative; z-index:1; }
+  .ds-src { font-size:.68rem; color:var(--muted); font-family:'JetBrains Mono',Consolas,monospace; margin-top:6px; }
+
+  /* Mini-backdrop (simplified Nebula/Aurora) so backdrop-filter is visible */
+  .ds-backdrop { position:absolute; inset:0; pointer-events:none; }
+  [data-color-scheme="dark"] .ds-backdrop {
+    background:
+      radial-gradient(ellipse 60% 40% at 20% 25%, rgba(56,189,248,.28), transparent 65%),
+      radial-gradient(ellipse 50% 45% at 80% 30%, rgba(129,140,248,.24), transparent 65%),
+      radial-gradient(ellipse 55% 50% at 55% 80%, rgba(192,132,252,.18), transparent 65%),
+      #0b1220;
+  }
+  [data-color-scheme="light"] .ds-backdrop {
+    background:
+      radial-gradient(ellipse 60% 40% at 20% 25%, rgba(125,211,252,.5), transparent 65%),
+      radial-gradient(ellipse 50% 45% at 80% 30%, rgba(196,181,253,.42), transparent 65%),
+      radial-gradient(ellipse 55% 50% at 55% 80%, rgba(167,243,208,.38), transparent 65%),
+      #f8fafc;
+  }
+  .demo-z { position:relative; z-index:1; }
+
+  /* ── Glass dialog paper — PickerDialog.tsx:286-303 (the ".glass-dialog" reduced-blur
+     variant the low-tier fallback in index.css:179-186 exists for) ── */
+  .pd { border-radius:20px; padding:14px; min-height:150px; }
+  [data-color-scheme="dark"] .pd-high {
+    backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+    background:linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(0, 225, 255, 0.12) 100%);
+    border:1px solid #1f2937;
+    box-shadow:0 8px 30px rgba(0,0,0,0.25);
+  }
+  /* Low tier, dark: backdrop-filter stripped + opaque fallback (index.css:183-186) */
+  [data-color-scheme="dark"] .pd-low {
+    background:#0f172a; background-image:none;
+    border:1px solid #1f2937;
+    box-shadow:0 8px 30px rgba(0,0,0,0.25);
+  }
+  [data-color-scheme="light"] .pd-high {
+    backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+    background:linear-gradient(135deg, rgba(255,255,255,0.98), rgba(248,250,252,0.98));
+    border:1px solid rgba(0, 0, 0, 0.08);
+    box-shadow:0 4px 12px rgba(15,23,42,0.06);
+  }
+  /* Low tier, light: SAME paper minus blur — >=98%-alpha, so no fallback rule exists */
+  [data-color-scheme="light"] .pd-low {
+    background:linear-gradient(135deg, rgba(255,255,255,0.98), rgba(248,250,252,0.98));
+    border:1px solid rgba(0, 0, 0, 0.08);
+    box-shadow:0 4px 12px rgba(15,23,42,0.06);
+  }
+  .pd h3 { font-size:.8rem; margin-bottom:8px; color:var(--text); }
+  .pd .line { height:6px; border-radius:3px; background:var(--muted); opacity:.3; margin-bottom:6px; }
+
+  /* Decorative infinite animation: runs at high tier, frozen at base styles on low
+     (frozen state emulated here with animation:none — in the app the freeze comes
+     from the index.css:155-162 rule, not from component code) */
+  @keyframes perfShimmer { 0%{background-position:0% 50%} 100%{background-position:200% 50%} }
+  .shimmer { height:8px; border-radius:4px; margin:10px 0 6px;
+    background:linear-gradient(90deg, rgba(56,189,248,.1), rgba(56,189,248,.55), rgba(56,189,248,.1));
+    background-size:200% 100%; animation:perfShimmer 3s linear infinite; }
+  .pd-low .shimmer { animation:none; }
+
+  /* Feedback animation: KEEPS moving on low tier via the custom-property escape
+     hatch (index.css:164-169) — durations match MUI's own timing */
+  @keyframes perfSpin { to { transform:rotate(360deg); } }
+  .spinner { width:18px; height:18px; border-radius:50%; display:inline-block; vertical-align:middle;
+    border:2px solid transparent; border-top-color:var(--accent); border-right-color:var(--accent);
+    animation:perfSpin 1.4s linear infinite; }
+  .spin-row { display:flex; align-items:center; gap:8px; font-size:.68rem; color:var(--muted); margin-top:8px; }
+
+  .pair { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .pair-label { font-size:.66rem; font-family:'JetBrains Mono',Consolas,monospace; color:var(--muted); margin-bottom:6px; }
+
+  pre.code { background:#0d1430; border:1px solid #1f2937; border-radius:10px; padding:12px;
+    font-family:'JetBrains Mono',Consolas,monospace; font-size:.66rem; line-height:1.55;
+    color:#94a3b8; overflow-x:auto; margin-top:8px; white-space:pre; }
+  pre.code b { color:#e5e7eb; font-weight:500; }
+  .doc-panel { border-radius:16px; padding:18px; background:#0f172a; border:1px solid #1f2937; margin-top:16px; }
+  .doc-panel h2 { font-size:.72rem; text-transform:uppercase; letter-spacing:.12em; color:#94a3b8; margin-bottom:10px; }
+  .note { font-size:.72rem; color:#94a3b8; line-height:1.5; margin-top:8px; }
+  .note b { color:#e5e7eb; font-weight:600; }
+  table.fx { width:100%; border-collapse:collapse; font-size:.72rem; margin-top:8px; }
+  table.fx th, table.fx td { text-align:left; padding:6px 10px; border-bottom:1px solid #1f2937; color:#e5e7eb; vertical-align:top; }
+  table.fx th { color:#94a3b8; font-weight:600; text-transform:uppercase; font-size:.62rem; letter-spacing:.08em; }
+</style>
+<div class="ds-card">
+  <h1 class="ds-title">Performance Tiers — the data-perf Axis</h1>
+  <p class="ds-sub">A third global styling axis beside color scheme: <code>&lt;html data-perf="low|medium|high"&gt;</code>, mirrored from the Redux store (src/index.tsx:29). Static CSS in src/index.css:129-186 strips expensive effects wholesale at low tier. Sources: src/index.css:100-190, src/utils/detectPerfTier.ts</p>
+
+  <div class="ds-modes">
+    <section class="ds-mode" data-color-scheme="dark">
+      <div class="ds-backdrop"></div>
+      <h2 class="demo-z">Dark</h2>
+      <div class="demo-z">
+        <div class="pair">
+          <div>
+            <div class="pair-label">data-perf="high"</div>
+            <div class="pd pd-high">
+              <h3>Glass dialog</h3>
+              <div class="line"></div><div class="line" style="width:70%"></div>
+              <div class="shimmer"></div>
+              <div class="spin-row"><span class="spinner"></span> loading&hellip;</div>
+            </div>
+          </div>
+          <div>
+            <div class="pair-label">data-perf="low"</div>
+            <div class="pd pd-low">
+              <h3>Glass dialog</h3>
+              <div class="line"></div><div class="line" style="width:70%"></div>
+              <div class="shimmer"></div>
+              <div class="spin-row"><span class="spinner"></span> loading&hellip;</div>
+            </div>
+          </div>
+        </div>
+        <div class="ds-src">high: blur(10) + rgba(56,189,248,.12)&rarr;rgba(0,225,255,.12) gradient — PickerDialog.tsx:286-303<br>low: opaque #0f172a, background-image none — index.css:183-186; shimmer frozen (:155-162); spinner keeps 1.4s via escape hatch (:166-169)</div>
+      </div>
+    </section>
+
+    <section class="ds-mode" data-color-scheme="light">
+      <div class="ds-backdrop"></div>
+      <h2 class="demo-z">Light</h2>
+      <div class="demo-z">
+        <div class="pair">
+          <div>
+            <div class="pair-label">data-perf="high"</div>
+            <div class="pd pd-high">
+              <h3>Glass dialog</h3>
+              <div class="line"></div><div class="line" style="width:70%"></div>
+              <div class="shimmer"></div>
+              <div class="spin-row"><span class="spinner"></span> loading&hellip;</div>
+            </div>
+          </div>
+          <div>
+            <div class="pair-label">data-perf="low"</div>
+            <div class="pd pd-low">
+              <h3>Glass dialog</h3>
+              <div class="line"></div><div class="line" style="width:70%"></div>
+              <div class="shimmer"></div>
+              <div class="spin-row"><span class="spinner"></span> loading&hellip;</div>
+            </div>
+          </div>
+        </div>
+        <div class="ds-src">high: blur(10) + rgba(255,255,255,.98)&rarr;rgba(248,250,252,.98) gradient — PickerDialog.tsx:286-303<br>low: same paper minus blur — light papers are &ge;98%-alpha even without blur, so NO fallback rule exists (index.css:179-182)</div>
+      </div>
+    </section>
+  </div>
+
+  <div class="doc-panel">
+    <h2>What low tier strips — src/index.css (verbatim)</h2>
+    <pre class="code"><b>/* 1. Every backdrop-filter — index.css:136-140. "this one rule drops the measured
+      27 active layers on landing to 0". `filter` is intentionally left alone. */</b>
+html[data-perf='low'],
+html[data-perf='low'] * {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+<b>/* 2. Animation kill — index.css:155-162. Entrance animations (fill forwards/both)
+      complete instantly at final state; infinite loops (landing orbs, marquee,
+      shimmers, electric borders, legendary chips) freeze at base styles. */</b>
+html[data-perf='low'] *,
+html[data-perf='low'] *::before,
+html[data-perf='low'] *::after {
+  animation-duration: var(--perf-anim-duration, 0.01ms) !important;
+  animation-iteration-count: var(--perf-anim-iteration, 1) !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+<b>/* 3. The escape hatch — index.css:166-177. Custom properties inherit, so
+      re-declaring them on an indicator root keeps FEEDBACK animations moving
+      (a frozen spinner reads as a hang). New functional animations must opt
+      out the same way or they will freeze on low tier. */</b>
+html[data-perf='low'] .MuiCircularProgress-root {
+  --perf-anim-duration: 1.4s;
+  --perf-anim-iteration: infinite;
+}
+html[data-perf='low'] .MuiLinearProgress-root {
+  --perf-anim-duration: 2.1s;
+  --perf-anim-iteration: infinite;
+}
+html[data-perf='low'] .MuiSkeleton-root {
+  --perf-anim-duration: 2s;
+  --perf-anim-iteration: infinite;
+}
+
+<b>/* 4. Opaque dialog fallback — index.css:183-186. Without blur the 12%-alpha
+      gradient becomes effectively transparent. Dark mode only. */</b>
+html[data-perf='low'][data-color-scheme='dark'] .glass-dialog .MuiDialog-paper {
+  background: #0f172a !important;
+  background-image: none !important;
+}</pre>
+
+    <h2 style="margin-top:16px;">Tier effects summary</h2>
+    <table class="fx">
+      <tr><th>Effect</th><th>high / medium</th><th>low</th></tr>
+      <tr><td>backdrop-filter (all glass)</td><td>as authored (blur 6&ndash;24)</td><td>stripped globally (:136-140)</td></tr>
+      <tr><td>CSS animations / transitions</td><td>as authored</td><td>0.01ms &times;1 — frozen/instant, unless escape hatch (:155-177)</td></tr>
+      <tr><td>.glass-dialog paper (dark)</td><td>12%-alpha cyan gradient + blur</td><td>opaque #0f172a (:183-186)</td></tr>
+      <tr><td>SiteBackground (nebula/aurora)</td><td>rendered; stars 25/20 (dark), motes 20/15 (light)</td><td>returns null — SiteBackground.tsx:27-29</td></tr>
+      <tr><td>scroll-behavior</td><td>as authored</td><td>auto (no smooth scroll)</td></tr>
+    </table>
+
+    <h2 style="margin-top:16px;">How the tier is decided — src/utils/detectPerfTier.ts</h2>
+    <p class="note"><b>Heuristic (sync, :20-33):</b> returns only 'low' | 'medium'. deviceMemory &le; 2 &rarr; low; cores &le; 2 &rarr; low; memory &le; 4 AND cores &le; 4 &rarr; low; otherwise medium ("don't know" neutral default). Runs before React mounts so low-end devices get low-tier CSS on first paint.</p>
+    <p class="note"><b>GPU benchmark (async, :35-78):</b> 'high' is reserved for a successful @pmndrs/detect-gpu BENCHMARK result. Result type gates trust: BLOCKLISTED &rarr; low; FALLBACK or WEBGL_UNSUPPORTED &rarr; defer to heuristic (FALLBACK's tier is a screen-size guess that misclassifies capable desktops). Benchmark tier &le; 1 &rarr; low; tier 2 &rarr; low on mobile, medium on desktop; tier 3 &rarr; high. The heuristic is downgrade-only: heuristic 'low' forces low, but never caps a benchmarked 'high' at medium. Catch path returns the heuristic — never 'high' unproven.</p>
+    <p class="note"><b>Reduced motion is NOT a tier input</b> (:5-12): OS reduced-motion is a separate signal handled by the motion layer — a reduced-motion user on a powerful desktop keeps every hardware-driven feature.</p>
+  </div>
+</div>
