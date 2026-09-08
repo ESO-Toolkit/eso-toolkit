@@ -4,20 +4,28 @@ Paste everything below the line into a fresh session.
 
 ---
 
-Continue the ESO fight-replay NPC model work on branch `t3code/complete-kyne-aegis-models`
-(worktree `C:/Users/brayd/.t3/worktrees/ESO-LOG-AG/t3code-1e91418c`, PR #1516).
+Continue the ESO fight-replay NPC model work.
 
-**Do not merge anything to main — the owner's standing instruction is that nothing merges until the
-whole job is done.** Keep committing and pushing to the branch.
+**PR #1516 was MERGED to main on 2026-09-08** (squash `f1734415`), so everything described below is
+now on `main` — start a fresh branch off it rather than reusing
+`t3code/complete-kyne-aegis-models`. The "nothing merges until the whole job is done" instruction
+that used to sit here has been served and no longer applies; ship in reviewable batches.
 
 ## Where it stands
 
-**30 assets shipped, 22 of 47 distinct trial bosses covered.** **Four complete trials**: Kyne's
-Aegis, Asylum Sanctorium, **Aetherian Archive** and **Sanctum Ophidia**. Rockgrove is complete except
-Flame-Herald Bahsei. Also shipped: six lesser enemies at a trash budget, four extracted-game assets,
-and three Route B assets.
+**30 GLBs and 36 catalog entries on main, covering 22 of 47 distinct trial bosses.** **Five complete
+trials**: Kyne's Aegis, Asylum Sanctorium, Aetherian Archive, Sanctum Ophidia and Cloudrest.
+Rockgrove is complete except Flame-Herald Bahsei. Also shipped: six lesser enemies at a trash budget,
+four extracted-game assets, three Route B assets, and the **first dungeon archetype** (`boneman`, 32
+aliases / 342 fight-appearances).
 
-Everything is green: 670 fight-replay tests, `npm run validate`.
+Everything is green: 683 fight-replay tests, 53 pipeline tests, `npm run validate`, production build.
+
+**The zero-byte reuses that are still available, and the ones that are not**, are recorded in the
+manifest. The rule that came out of it: a reuse is safe when the source post says the mesh serves
+*"generic X"*; it is not safe when the shipped body is a named, `_Boss` or recoloured variant. Bare
+`Stone Atronach`, `Troll` and `Gryphon` are asserted null by the catalog tests **on purpose** — do
+not change those assertions to land an alias.
 
 ### Added 2026-09-08
 
