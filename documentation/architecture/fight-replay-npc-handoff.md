@@ -72,9 +72,11 @@ Four things that change the plan, each recorded in the manifest and queue log:
 
 1. **Remaining buildable bosses, re-ranked after this session** — see `remaining-trial-bosses.md`,
    whose ranking now carries a correction banner. **Open the plate set before ranking anything.**
-   - **Ra Kotu** (`157-air-atronach-boss`, body names him, front/back pair verified by eye this
-     session). Route C; his `AirAtronach_B_Boss` is **not** in the extract and he is **not** a
-     Taleria alias — pale carved stone versus coral.
+   - ~~**Ra Kotu**~~ — **BUILT AND REJECTED 2026-09-08.** Reference is certain and the front/back
+     pair is clean, but the reconstruction produced a confetti atlas (38.8% blind, 44.4% fill) and
+     was rejected on it, *after* the renders had already looked fine. He is **camera-limited, not
+     interior-limited** — four cameras take blind 40.1% -> 18.8%, the largest gain measured on this
+     project — so **one profile capture unlocks him**. Also settled: he cannot ride Taleria's mesh.
    - **Archcustodian** (`129-dwarven-spider`, body names him, 11 plates). Wide low subject; the
      front/back pairing still needs an eyeball.
    - **Chimera** (`149-chimera-white` / `150-chimera-red`, 13 plates) — half of Sanity's Edge boss 2,
@@ -181,6 +183,14 @@ before each stage; log every job; confirm the process exited and VRAM released b
 
 Needs in-game capture — front + back, same pose, plain backdrop, **>=660px measured subject height**,
 no VFX, plus a head closeup:
+
+**Ra Kotu needs only ONE full-body PROFILE** (left or right, same pose, plain backdrop, >=660 px) —
+no front, no back, no closeup, because his front/back pair is already good. That is the cheapest ask
+on this list and the highest yield: it takes his blind area 40.1% -> 18.8%, straight into the shipped
+band. Do this one first.
+
+The rest need the full set — front + back, same pose, plain backdrop, **>=660px measured subject
+height**, no VFX, plus a head closeup:
 
 **Xoryn**, the three Sunspire dragons (the extracted mesh is the wrong creature — a skeletal Bone
 Dragon), The Yokedas, Lylanar and Turlassil, Exarchanic Yaseyla, Cavot Agnan, the Opulent Trio, the

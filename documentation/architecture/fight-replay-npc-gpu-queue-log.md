@@ -493,3 +493,45 @@ claiming horns and face looks at contact-sheet scale like a box claiming horns o
 lowest on this subject**, and its overlay shows two pairs of eyes and two tooth rows. Also new:
 `view-04` and `view-11` returned fits identical to three decimal places, which is how you find out
 two gallery frames are duplicates.
+
+---
+
+## Job — Ra Kotu (2026-09-08) — GPU reconstruction, **REJECTED**
+
+Built, measured, and not shipped. Recorded so nobody spends the GPU minute again, and because the
+measurement produced the single most actionable capture request on the board.
+
+- **Input:** `air-atronach-boss-references/view-01.jpg` / `view-03.jpg`, 1920x1080, cut to a shared
+  1569 px square, subject **996 x 950 px**. The post body names "Parel Nirus **Ra Kotu**", so the
+  reference is certain; this was never a reference problem.
+- **Reconstruction:** Hunyuan3D-2mv, 50 steps, octree 380, seed 12345. **1,644,516 faces in 62.0 s**
+  — nearly double the previous project high of 873,740, because the subject is a cluster of
+  unconnected levitating stones and marching cubes resolves every one. Decimation to budget is
+  **36.5x**, the steepest attempted here.
+- **Result:** 45,000 tris, 824 charts, 71.1% coverage, PSNR 38.3 dB, **neither-camera 38.8%**,
+  57.0% of covered texels below the grazing threshold, **44.4% neighbour fill**.
+- **Rejected on the flat atlas.** The five review renders and the replay-distance strip both read
+  acceptably — carved stone, spiral relief, blue eye glow — and on those alone this would have
+  shipped. The atlas says otherwise: it is almost entirely directional smear and sub-chart confetti,
+  with the eye glow strewn across dozens of charts and essentially no legible carved relief anywhere.
+  That is the Dwarven Colossus signature. **Fresh confirmation of the standing rule: judge a texture
+  by its flat UV atlas, never by renders.** This is the first time on this project that the rule has
+  overturned a decision that the renders had already won.
+- 38.8% blind also sits outside the shipped band (5.6%-31.5%).
+
+**Do not re-run this as a two-view build, and do not try more cameras on the reconstruction.** But
+**do not file it with the Colossus either — the diagnosis is the opposite one.** The Colossus was
+*interior*-limited: four cameras moved it 62.0% -> 53.4%, 2.0 points, the worst return measured.
+Ra Kotu is **camera-limited**: `measure-view-coverage` puts four cameras at **40.1% -> 18.8%** blind
+and grazing fill at 53.8% -> 34.1%. That **21.3-point** gain is the **largest measured on this
+project**, and 18.8% would put him comfortably inside the shipped band.
+
+**So Ra Kotu is unblocked by exactly one thing: a single full-body PROFILE capture** (left or right,
+same pose, plain backdrop, >=660 px subject). That is a far cheaper ask than the front/back/closeup
+set every other blocked boss needs, and it is the highest-yield item on the capture list.
+
+**Also settled: Ra Kotu cannot be built on Tideborn Taleria's mesh.** The standing note said the two
+share geometry and differ only in skin, making him "a second cheap build off the same mesh". They do
+not. Normalised, `AirAtronach_Coral_Boss` is **3.86 x 3.17 x 2.0** with the arms splayed far out to
+the sides; Ra Kotu's plates show a compact roughly 1:1 subject (996 x 950 px) with the arms hanging
+close to the torso. Different geometry, not a recolour. Neither an alias nor a Route B host.
