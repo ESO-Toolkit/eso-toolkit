@@ -9,7 +9,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom';
 
 import type { FightFragment } from '@/graphql/gql/graphql';
-import { useCurrentFight, useReportFightParams, useTrialChapters } from '@/hooks';
+import { useCurrentFight, useReportData, useReportFightParams, useTrialChapters } from '@/hooks';
 import { usePageTitle } from '@/hooks/useDocumentTitle';
 import { useAppDispatch } from '@/store/useAppDispatch';
 import { actorPositionsActions } from '@/store/worker_results/taskSlices';
@@ -19,6 +19,7 @@ import { useHostileBuffEvents } from '../../hooks/events/useHostileBuffEvents';
 import { useMarkerStats } from '../../hooks/useMarkerStats';
 import { useReplayPrefs } from '../../hooks/useReplayPrefs';
 import { useActorPositionsTask } from '../../hooks/workerTasks/useActorPositionsTask';
+import { withInheritedFightMaps } from '../../utils/inheritedFightMap';
 
 import { ChapterRail } from './components/ChapterRail';
 import { FightReplay3D, type TrialReplayNav } from './components/FightReplay3D';
@@ -87,6 +88,22 @@ export const FightReplay: React.FC = () => {
   const { reportId, fightId } = useReportFightParams();
   const { lookup, isActorPositionsLoading, actorPositionsError } = useActorPositionsTask();
   const { fight, isFightLoading } = useCurrentFight();
+  const { reportData } = useReportData();
+
+  /**
+   * The fight as the MAP layer sees it. ESO Logs attaches `maps` only to fights it recognises as an
+   * encounter, so a trash pull (`encounterID === 0`) arrives mapless and would render on a blank
+   * plane with no marker placement — inside a trial where the boss pulls either side name the very
+   * same map. `withInheritedFightMaps` borrows that map; everything downstream of it (floor
+   * texture, markers, drawn shapes, marker stats) then behaves exactly as it does on the boss pull.
+   *
+   * Deliberately NOT used for headings or labels: those keep naming the pull itself off `fight`,
+   * which is why this is a separate value rather than a reassignment.
+   */
+  const mapFight = useMemo(
+    () => withInheritedFightMaps(fight ?? null, reportData?.fights) ?? undefined,
+    [fight, reportData?.fights],
+  );
 
   usePageTitle('/report/:reportId/fight/:fightId/replay');
 
@@ -120,7 +137,7 @@ export const FightReplay: React.FC = () => {
     editShape,
     undo,
     redo,
-  } = useMapMarkersManager({ fight, onError: handleMarkersError });
+  } = useMapMarkersManager({ fight: mapFight, onError: handleMarkersError });
 
   // Marker edit mode: enables plain right-click placement, drag-to-move, and right-click editing
   // in the 3D arena (the Alt+right-click chords keep working regardless, for muscle memory).
@@ -540,7 +557,7 @@ export const FightReplay: React.FC = () => {
   }, [lookup, fight]);
 
   // Compute marker statistics
-  const markerStats = useMarkerStats(markersState ?? undefined, fight || ({} as FightFragment));
+  const markerStats = useMarkerStats(markersState ?? undefined, mapFight || ({} as FightFragment));
 
   // Determine if we should show the loading panel
   const allBuffEvents = useMemo(() => {
@@ -689,6 +706,7 @@ export const FightReplay: React.FC = () => {
     return (
       <FightReplay3D
         selectedFight={fight}
+        mapFight={mapFight}
         allBuffEvents={allBuffEvents}
         showActorNames={true}
         markersState={markersState}
@@ -1012,7 +1030,7 @@ export const FightReplay: React.FC = () => {
         <MapMarkersModal
           open={markersModalOpen}
           onClose={() => setMarkersModalOpen(false)}
-          fight={fight}
+          fight={mapFight ?? fight}
           markersState={markersState}
           onLoadMarkers={handleLoadMarkers}
           onClearMarkers={clearMarkers}
