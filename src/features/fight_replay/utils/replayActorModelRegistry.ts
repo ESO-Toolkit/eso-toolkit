@@ -537,12 +537,12 @@ export const STATIC_REPLAY_ACTOR_MODEL_ASSETS: readonly StaticReplayActorModelAs
 
   // --- Route B: extracted ESO geometry, colour projected from reference plates -----------------
   // Unlike every reconstruction above, the MESH here is ESO's own, lifted from the client; only the
-  // colour comes from screenshots. Both of these were previously filed unbuildable because two-view
+  // colour comes from screenshots. Each of these was previously filed unbuildable because two-view
   // reconstruction could not infer their geometry — exact geometry makes that objection moot. No GPU
   // is involved at all, since the reconstruction stage is skipped.
   //
   // The trade is in the texture: roughly half of each atlas is chart-local neighbour fill rather
-  // than observed colour, because neither gallery publishes a profile view. Honest at replay
+  // than observed colour, because none of these galleries publishes a profile view. Honest at replay
   // distance, not at close-up. See each README.
   {
     id: 'oaxiltso-overview-v1',
@@ -582,6 +582,30 @@ export const STATIC_REPLAY_ACTOR_MODEL_ASSETS: readonly StaticReplayActorModelAs
       designation: 'project-authorized-fan-prototype',
       sourceUrl: 'https://esomodelviewer.com/creatures/post/119-tideborn-taleria',
       attributionFile: 'public/models/fight-replay/npcs/README-tideborn-taleria-overview-v1.md',
+    },
+  },
+  {
+    // Completes Aetherian Archive. Deliberately NOT aliased to a bare 'storm atronach': the same
+    // mesh serves generic storm atronachs as trash across most of the game, at a much smaller
+    // size, and `transform` is per-asset — a trash tier would have to be its own entry pointing
+    // at this same `path`, the way `craglorn-troll-trash-overview-v1` reuses Stonebreaker.
+    id: 'lightning-storm-atronach-overview-v1',
+    path: 'models/fight-replay/npcs/lightning-storm-atronach-overview-v1.glb',
+    renderer: 'static-boss',
+    actorTypes: HOSTILE_ACTOR_TYPES,
+    aliases: ['lightning storm atronach'],
+    transform: {
+      orientEuler: [0, 0, 0],
+      scale: 1.25,
+      yOffset: 0,
+      yawOffset: 0,
+      modelHeight: 2,
+    },
+    provenance: {
+      designation: 'project-authorized-fan-prototype',
+      sourceUrl: 'https://esomodelviewer.com/creatures/post/154-storm-atronach',
+      attributionFile:
+        'public/models/fight-replay/npcs/README-lightning-storm-atronach-overview-v1.md',
     },
   },
 

@@ -1,0 +1,124 @@
+{
+  "slug": "lightning-storm-atronach",
+  "display_name": "Lightning Storm Atronach",
+  "aliases": [
+    "Lightning Storm Atronach"
+  ],
+  "encounter": {
+    "trial": "Aetherian Archive",
+    "encounter": "Lightning Storm Atronach",
+    "role": "boss",
+    "notes": "ROUTE B: geometry is the EXTRACTED game mesh StormAtronach_A_Basic, not a reconstruction. A cluster of levitating carved stones around a small face; there is no continuous silhouette, which is exactly the shape two-view reconstruction cannot infer."
+  },
+  "work_dir": "build/lightning-storm-atronach",
+  "reference": {
+    "page_url": "https://esomodelviewer.com/creatures/post/154-storm-atronach",
+    "directory": "storm-atronach-references",
+    "plates": {
+      "front": {
+        "file": "view-01.jpg",
+        "role": "full-body-front"
+      },
+      "back": {
+        "file": "view-03.jpg",
+        "role": "full-body-back"
+      }
+    },
+    "side_plates": {
+      "available": false,
+      "why": "The gallery publishes no full-body left or right profile. view-05, view-06 and view-08 are pushed-in three-quarter crops, not profiles of the whole subject. measure-view-coverage puts the cost of the missing pair at neither-camera 27.3% -> 20.8% and grazing fill 53.2% -> 38.6%, which is real and is accepted rather than synthesised."
+    },
+    "closeups": [
+      {
+        "file": "view-04.jpg",
+        "role": "head",
+        "view": "front",
+        "accepted": false,
+        "rejected_reason": "Registered twice. With --region head the shoulder detector fired at v=0.9378 - the crown rocks, not the face - so the matched band was the top 6% of the subject and the 7.79% width error describes a crown-to-crown fit that never saw the face. With --region whole it scored 20.51% and the overlay ghosts the head crop over the THIGHS. Same failure as Oaxiltso: the gallery's closeups are shot from a different camera position, and a single scale+translate cannot reconcile that."
+      },
+      {
+        "file": "view-05.jpg",
+        "role": "head",
+        "view": "front",
+        "accepted": false,
+        "rejected_reason": "23.90% at scale 0.540; the overlay lands on the legs and pelvis, offset left off the plate edge (col=-10.8)."
+      },
+      {
+        "file": "view-06.jpg",
+        "role": "shoulder",
+        "view": "front",
+        "accepted": false,
+        "rejected_reason": "14.46% at scale 0.340 - the LOWEST error of the three and the worst placement: the overlay puts the shoulder crop across the boots. A fourth confirmation that width error is not a reliability signal."
+      }
+    ],
+    "closeup_note": "All three candidates rejected on their overlays. The base front plate is 981 px tall and the verified face box spans v 0.775-0.945, so the face already occupies ~165 px of the base plate - roughly 2.7x the ~60 px a humanoid face gets - which is why this asset can carry its identity without a closeup."
+  },
+  "geometry": {
+    "source": "build/lightning-storm-atronach/lightning-storm-atronach-source.glb",
+    "decimate": false,
+    "target_triangles": 4425,
+    "max_triangles": 50000,
+    "provenance": "EXTRACTED game mesh StormAtronach_A_Basic.glb (feat/trial-boss-models), 4,425 tris, 96 welded shells. Arrived +Y up / +Z front / feet at y=0 in game units; passed through prepare-static-boss.py --normalize-height 2.0 before projection. No Hunyuan step and no GPU."
+  },
+  "atlas": {
+    "size": 1024,
+    "jpeg_quality": 92,
+    "roughness": 0.82,
+    "material_name": "lightning-storm-atronach-atlas"
+  },
+  "regions": {
+    "head_v_min": 0.775,
+    "head_feather": 0.1,
+    "boxes": [
+      {
+        "name": "face",
+        "box": [
+          0.42,
+          0.775,
+          0.45,
+          0.58,
+          0.945,
+          1.0
+        ],
+        "feather": 0.04,
+        "uv_scale": 3.5
+      }
+    ],
+    "note": "Single face box, VERIFIED twice before any projection time: on a membership render (_advice-crops/lightning-storm-atronach-boxcheck.jpg - red claims the brow, eyes, nose and jaw and stops at the shoulder rocks) and on the front plate itself (build/lightning-storm-atronach/facecheck.jpg). A scalar head_v_min cannot work on this shape: the automatic shoulder detector returns 0.9378 because the widest upper row is the levitating crown slab, which sits ABOVE the face - the Cloudrest-Shade failure mode. head_v_min 0.775 is retained only as the v-gate default and is hand-set to the box floor."
+  },
+  "uv_density": {
+    "head_scale": 1.0,
+    "head_v": 0.8,
+    "leg_scale": 1.0,
+    "leg_v": 0.45,
+    "ramp": 0.08,
+    "note": "Legacy scalar warp disabled; regions.boxes drives the density warp."
+  },
+  "projection": {
+    "supersample": 2,
+    "depth_size": 2048,
+    "pack_resolution": 2048,
+    "pack_padding": 4,
+    "blend_power": 3.0,
+    "silhouette_inset": 0.02,
+    "grazing_threshold": 0.35,
+    "dilate": 24,
+    "closeup_feather": 60,
+    "envelope_sigma": 3.0
+  },
+  "tone": {
+    "contrast": 1.08,
+    "saturation": 1.05
+  },
+  "unsharp": {
+    "sigma": 0.7,
+    "amount": 0.45,
+    "threshold": 0.01569
+  },
+  "output": {
+    "directory": "build/lightning-storm-atronach/out",
+    "suffix": "-overview-v1",
+    "max_bytes": 2500000
+  },
+  "rights": "The Elder Scrolls Online name, character design and related rights remain with ZeniMax Media/Bethesda Softworks. Reconstructed from published screenshots for an authorized fan prototype; not a claim that the IP is freely licensed."
+}

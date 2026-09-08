@@ -68,6 +68,14 @@ Extracted client assets (see the licensing posture above — **not reconstructio
 | `foundation-stone-atronach-overview-v1.glb` | Foundation Stone Atronach        | `static-boss` |  6,884 |  3,906 |         1 | 1024px JPEG |   519,364 | `public/models/bosses/StoneAtronach_B_Boss.glb` |
 | `cloudrest-gryphon-overview-v1.glb`         | Falarielle / Silaeda / Belanaril | `static-boss` | 37,104 | 27,650 |         1 | 1024px JPEG | 1,578,084 | `public/models/bosses/Gryphon_A_Boss.glb`       |
 
+Route B — extracted ESO geometry, colour projected from reference plates (no GPU at any stage):
+
+| Asset                                          | Actor                    | Renderer      |   Tris |  Verts | Materials | Texture     | GLB bytes | Mesh / colour reference                                                            |
+| ---------------------------------------------- | ------------------------ | ------------- | -----: | -----: | --------: | ----------- | --------: | ---------------------------------------------------------------------------------- |
+| `oaxiltso-overview-v1.glb`                     | Oaxiltso                 | `static-boss` |  8,130 |  6,831 |         1 | 1024px JPEG |   747,916 | `ArgonianBehemoth_A_Red_Basic` / [creature 83](https://esomodelviewer.com/creatures/post/83-oaxiltso)        |
+| `tideborn-taleria-overview-v1.glb`             | Tideborn Taleria         | `static-boss` | 19,862 | 20,438 |         1 | 1024px JPEG | 1,288,872 | `AirAtronach_Coral_Boss` / [creature 119](https://esomodelviewer.com/creatures/post/119-tideborn-taleria)    |
+| `lightning-storm-atronach-overview-v1.glb`     | Lightning Storm Atronach | `static-boss` |  4,425 |  4,991 |         1 | 1024px JPEG |   600,496 | `StormAtronach_A_Basic` / [creature 154](https://esomodelviewer.com/creatures/post/154-storm-atronach)       |
+
 ### Registry entries that ship no new bytes
 
 Two kinds of reuse exist, and they are not the same thing. Neither adds a row above, because neither
@@ -525,10 +533,28 @@ torso or arms. Verify the mesh is not a partial extraction before spending anyth
 
 | Encounter | Name                      | Status                                                                            |
 | --------- | ------------------------- | --------------------------------------------------------------------------------- |
-| `boss_1`  | Lightning Storm Atronach  | Blocked — greyscale mask only, and 96 shells makes it a poor projection candidate |
+| `boss_1`  | Lightning Storm Atronach  | **Shipped 2026-09-08** — Route B, extracted geometry with projected colour        |
 | `boss_2`  | Foundation Stone Atronach | **Shipped 2026-09-07** — extracted client asset, not a reconstruction             |
 | `boss_3`  | Varlariel                 | **Shipped** (reconstruction)                                                      |
 | `boss_4`  | The Mage                  | **Shipped** (reconstruction)                                                      |
+
+**Aetherian Archive is complete** — the fourth trial fully covered, after Kyne's Aegis, Asylum
+Sanctorium and (bar its mounts' alias check) Cloudrest.
+
+The `boss_1` row previously read *"Blocked — greyscale mask only, and 96 shells makes it a poor
+projection candidate"*. **Both halves of that were wrong**, and the pair is instructive:
+
+- *"Greyscale mask only"* was true of the **extractor's** texture for `StormAtronach_A_Basic`, which
+  rules out **Route A** (ship ESO's own diffuse). It says nothing about Route B, where the colour
+  comes from plates and the extracted asset supplies geometry only. The two routes were conflated.
+- *"96 shells makes it a poor projection candidate"* applied the shell-count heuristic that Tideborn
+  Taleria had **already disproved** (46 shells produced 1,748 charts; 8 shells produced 399). This
+  mesh's 96 shells produced **563** charts. Blind area is the number that predicts failure, and at
+  31.5% this sits inside the shipped band.
+
+The shape is in fact the strongest possible argument *for* Route B: 96 unconnected levitating stones
+have no continuous silhouette for two-view reconstruction to infer, which is exactly the failure mode
+exact geometry removes.
 
 ## Coverage status — Cloudrest
 

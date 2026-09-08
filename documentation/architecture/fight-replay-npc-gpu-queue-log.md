@@ -373,3 +373,39 @@ plate-cut died with an onnxruntime out-of-memory because another agent was concu
 31.7 GB). `onnxruntime` in this environment is **CPU-only**, so rembg is a 6-9 GB *system RAM*
 consumer, not a GPU one. **The single-worker rule covers the GPU but not the CPU stages, and the
 CPU stages are the memory-hungry ones.** Extend the rule accordingly.
+
+---
+
+## Job — Lightning Storm Atronach (2026-09-08) — **no GPU used**
+
+Route B. Logged here anyway so the record of attempts stays in one place: the point of this entry is
+that the expensive stage was **skipped**, not that it succeeded.
+
+- **Input:** config `tools/fight-replay-models/npcs/lightning-storm-atronach.json`; geometry
+  `StormAtronach_A_Basic.glb` off `feat/trial-boss-models` (4,425 tris, 96 welded shells, arrived
+  +Y up / +Z front / feet at y=0 in game units, normalised to height 2.0 by `prepare-static-boss.py`);
+  plates `storm-atronach-references/view-01.jpg` (front) and `view-03.jpg` (back) at 1920x1080, cut to
+  a shared 1059 px square, subject **981 x 816 px**.
+- **Reconstruction:** none. Hunyuan was not loaded, no CUDA context was created, VRAM was untouched.
+  Peak system RAM was ordinary CPU projection use; `rembg` ran on two plates only.
+- **Output:** `out/lightning-storm-atronach-overview-v1.glb` — 4,425 tris / 4,991 verts /
+  600,496 bytes (1.9 MB under the gate), 563 charts, 86.6% coverage, **PSNR 39.56 dB**, neither-camera
+  31.5%, grazing fill 54.9%. All checks passed; one warning (head run mismatch, 41% of slices).
+- **Accepted.** Completes **Aetherian Archive**.
+
+**The box check earned its keep for the third consecutive build**, in a new way. The first placement
+(`y0 = 0.72`) claimed the whole shoulder-rock yoke and the crown, not the face; the membership render
+showed it immediately and no downstream metric would have. The final box was then verified a second
+time by drawing it back onto the front plate, which is worth adopting generally — it costs one crop
+and it tests the box in the space the projection actually samples.
+
+**The automatic shoulder detector returned 0.9378 on this shape** (the levitating crown slab sits
+above the face — the Cloudrest Shade failure mode). That also silently broke `--region head`
+registration: it confined matching to the top 6% of the subject, so `view-04` scored a healthy-looking
+**7.79%** on a crown-to-crown fit that never saw the face. `register-npc-plates.py` has **no
+`--head-v-min` override**, so there is currently no way to hand-correct the band for a closeup
+registration. Worth adding; it is the only reason this asset has no head plate.
+
+All three closeups were rejected on their overlays. `view-06` scored the **lowest** error of the
+three (14.46%) and had the **worst** placement (across the boots) — the fourth independent
+confirmation that width error is not a reliability signal.
