@@ -19,11 +19,10 @@ type TestActor = Pick<ActorPosition, 'type'> & { name?: string };
 
 const actor = (type: ActorPosition['type'], name?: string): TestActor => ({ type, name });
 
-describe('resolveReplayActorModel needs no opt-in', () => {
-  it('resolves a shipped boss with no flag of any kind', () => {
-    // The `?npcModels=prototype` staging flag is gone. Performance is gated by the caller's
-    // `detailedFigures` (barebones) check, which skips the resolver entirely, so this must not
-    // grow a mode argument again.
+describe('resolveReplayActorModel takes no mode argument', () => {
+  it('resolves a shipped boss unconditionally', () => {
+    // Performance is gated by the caller's `detailedFigures` (barebones) check, which skips the
+    // resolver entirely, so this resolver must not grow a mode argument.
     expect(resolveReplayActorModel(actor('boss', 'Captain Vrol'))?.id).toBe(
       'captain-vrol-overview-v2',
     );
