@@ -12,11 +12,35 @@ whole job is done.** Keep committing and pushing to the branch.
 
 ## Where it stands
 
-**27 assets shipped, 19 of 47 distinct trial bosses covered.** Kyne's Aegis and Asylum Sanctorium
-are complete trials. Also shipped: six lesser enemies at a trash budget, four extracted-game assets,
-and the first two Route B assets.
+**30 assets shipped, 22 of 47 distinct trial bosses covered.** **Four complete trials**: Kyne's
+Aegis, Asylum Sanctorium, **Aetherian Archive** and **Sanctum Ophidia**. Rockgrove is complete except
+Flame-Herald Bahsei. Also shipped: six lesser enemies at a trash budget, four extracted-game assets,
+and three Route B assets.
 
-Everything is green: 670 fight-replay tests, `npm run validate`, production build.
+Everything is green: 670 fight-replay tests, `npm run validate`.
+
+### Added 2026-09-08
+
+- **Lightning Storm Atronach** (Route B) — completes Aetherian Archive.
+- **Ozara** (Route C) — completes Sanctum Ophidia.
+- **Xalvakka** (Route C) — Rockgrove now needs only Bahsei.
+
+Four things that change the plan, each recorded in the manifest and queue log:
+
+1. **Rakkhat and Count Ryelaz are blocked, not "the best build on the board".** All eight plates in
+   `7-dread-grievous-twilight` are pushed-in detail crops with no full-body front and no orthographic
+   back. The measured "front 672 px / back 699 px" that ranked them first is real but measures a
+   *cropped* subject, because the bbox script measures the visible blob. See rule 8 below.
+2. **The tail-coil deformer is cancelled.** It existed to rescue `Harvester_Monstrous_Boss`
+   (Xalvakka) and, after this session's diagnosis, `Lamia_A_Boss` (Ozara). Both shipped as Route C
+   reconstructions instead. **Reconstruction sidesteps a bind pose; deformation tries to correct
+   one.** A minute of GPU beat an open-ended piece of tooling.
+3. **Check the extracted supply before assigning Route C.** The Lightning Storm Atronach was filed
+   as Route C and is actually Route B — `StormAtronach_A_Basic` is in the extract, so the
+   96-floating-shell problem that would defeat reconstruction never arose.
+4. **Overfiend Kazpian is downgraded to uncertain.** `87-ruinach-boss` has a clean full-body pair,
+   but the page contradicts itself — its body calls Ruinachs four-armed while every plate shows a
+   two-armed horned brute on mesh `Harbinger_B_Boss` — and never names Kazpian.
 
 ## Read these first — they carry the real state
 
@@ -46,22 +70,28 @@ Everything is green: 670 fight-replay tests, `npm run validate`, production buil
 
 ## Next work, in leverage order
 
-1. **~10 bosses are buildable now** — see `remaining-trial-bosses.md`. Best: **Rakkhat + Count
-   Ryelaz from one build** (`GrievousTwilight_B_Boss`, 34 shells, 18.7% unobserved, plates already
-   harvested), then Ozara (`117-lamia-red`, 979/973px, certain), Ra Kotu (`157-air-atronach-boss`,
-   own plates — **not** a Taleria alias), Lightning Storm Atronach, Archcustodian, Overfiend Kazpian
-   (`87-ruinach-boss`, 1011/1000px).
+1. **Remaining buildable bosses, re-ranked after this session** — see `remaining-trial-bosses.md`,
+   whose ranking now carries a correction banner. **Open the plate set before ranking anything.**
+   - **Ra Kotu** (`157-air-atronach-boss`, body names him, front/back pair verified by eye this
+     session). Route C; his `AirAtronach_B_Boss` is **not** in the extract and he is **not** a
+     Taleria alias — pale carved stone versus coral.
+   - **Archcustodian** (`129-dwarven-spider`, body names him, 11 plates). Wide low subject; the
+     front/back pairing still needs an eyeball.
+   - **Chimera** (`149-chimera-white` / `150-chimera-red`, 13 plates) — half of Sanity's Edge boss 2,
+     independently buildable. Resolve white vs red against in-game footage first.
+   - **Overfiend Kazpian** — downgraded, see above. Do not build it without a picture of Kazpian.
+   - **Rakkhat / Count Ryelaz / Baron Rize** — blocked on plate framing, not geometry.
 2. **Skeleton / "Boneman" is the single highest-leverage build on the board** — the largest creature
    archetype in measured dungeon demand (62 names, 822 appearances), and it *does* have reference:
    `creatures-125/126/127-boneman-*` plus three bone-goliath posts. It was missed because the sweep
    searched "skeleton".
-3. **Two encounters may cost zero bytes**: Pinnacle Factotum and The Refabrication Committee reuse
-   the shipped Saint Llothis Factotum body (verified by eye — Llothis genuinely *is* a clockwork
-   Factotum). **Blocked only on verifying the ESO Logs actor strings** (`Reducer`/`Reclaimer`/
-   `Reactor`) against a real Halls of Fabrication log. Do not ship guessed aliases.
-4. **Xalvakka** needs a tail-coil deformer or a Route C rebuild — its plates are excellent and its
-   identity certain, but the mesh's bind pose leaves the tail dead straight, so normalised it is a
-   "pencil" (0.594 x 0.377 x 2.0) with the torso crushed into the top quarter.
+3. **Two encounters may cost zero bytes — now the single best-value item left**: Pinnacle Factotum
+   and The Refabrication Committee reuse the shipped Saint Llothis Factotum body (verified by eye —
+   Llothis genuinely *is* a clockwork Factotum). **Blocked only on verifying the ESO Logs actor
+   strings** (`Reducer`/`Reclaimer`/`Reactor`) against a real Halls of Fabrication log. Do not ship
+   guessed aliases.
+4. ~~**Xalvakka** needs a tail-coil deformer or a Route C rebuild.~~ **Done 2026-09-08** — Route C.
+   The deformer is cancelled; see the state section above.
 5. **Assembly General / Dwarven Colossus** needs geometry cleanup (weld across shells, drop interior
    faces), NOT more cameras — 4-view was tested and moved it only 62.0% -> 53.4%.
 
@@ -69,6 +99,19 @@ Everything is green: 670 fight-replay tests, `npm run validate`, production buil
 
 - **Judge a texture by its FLAT UV ATLAS, not by renders.** An early pass shipped smeared textures
   that looked fine rendered.
+- **Verify plate FRAMING, not just orientation.** A whole gallery can be detail crops, and the
+  measured subject height will not tell you — it measures the visible blob, so a tight crop scores
+  like a large subject. This cost the top-ranked build on the board (Rakkhat). Open the plates.
+- **When an extracted mesh is unusable for its POSE rather than its topology, reconstruct.** Do not
+  write a deformer. Two bosses were blocked on straight-tail bind poses and both took about a minute
+  of GPU each to solve the other way.
+- **Place a region box by colouring three adjacent bands at once**, not by nudging one box and
+  re-rendering. One membership render then says which band holds the face. On a small-headed subject
+  a box claiming horns *and* face looks, at contact-sheet scale, like a box claiming horns only.
+- **`register-npc-plates.py` has no `--head-v-min` override.** When the shoulder detector is wrong
+  (it returned 0.9378 on the Storm Atronach's crown and 0.6249 on Ozara's hips), `--region head`
+  silently matches the wrong band and reports a healthy error for it. Adding that flag is the only
+  reason the Storm Atronach has no head plate.
 - **Verify region-box placement with a membership render BEFORE spending GPU time.** This has caught
   a face-outside-the-box error on **four consecutive builds**, each invisible to region texels,
   coverage and PSNR.
