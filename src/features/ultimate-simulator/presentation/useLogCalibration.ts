@@ -18,6 +18,14 @@ import {
   GetResourceEventsDocument,
   HostilityType,
 } from '../../../graphql/gql/graphql';
+import {
+  EVENT_MAX_EVENTS_PER_STREAM,
+  EVENT_MAX_PAGES_PER_STREAM,
+} from '../../../store/events_data/constants';
+import {
+  assertCompleteEventPage,
+  deduplicateEventPages,
+} from '../../../store/events_data/utils/deduplicateEvents';
 import type { ResourceChangeEvent } from '../../../types/combatlogEvents';
 import { calibrateFromEvents, type CalibrationResult } from '../application/calibration';
 
@@ -70,9 +78,6 @@ export function parseReportCode(input: string): string {
   return codeMatch ? codeMatch[0] : trimmed;
 }
 
-/** Hard cap on resource-event pages per hostility scope (loop-runaway guard). */
-const MAX_EVENT_PAGES = 100;
-
 /**
  * Whether a paginator cursor is making forward progress. The events query pages
  * by `nextPageTimestamp`; a valid next cursor must be a finite number strictly
@@ -81,6 +86,46 @@ const MAX_EVENT_PAGES = 100;
  */
 export function isCursorAdvancing(prevStart: number, next: number | null | undefined): boolean {
   return typeof next === 'number' && Number.isFinite(next) && next > prevStart;
+}
+
+interface CalibrationEventPage {
+  data?: ResourceChangeEvent[] | null;
+  nextPageTimestamp?: number | null;
+}
+
+/** Collects one hostility scope without ever returning a truncated stream. */
+export async function collectCalibrationEventPages(
+  initialStartTime: number,
+  fetchPage: (startTime: number) => Promise<CalibrationEventPage | null | undefined>,
+): Promise<ResourceChangeEvent[]> {
+  const eventPages: ResourceChangeEvent[][] = [];
+  let nextPageTimestamp: number | null = null;
+  let pageCount = 0;
+  let eventCount = 0;
+
+  do {
+    if (pageCount >= EVENT_MAX_PAGES_PER_STREAM) {
+      throw new Error(`Resource event pagination exceeded ${EVENT_MAX_PAGES_PER_STREAM} pages`);
+    }
+    const requestedStartTime = nextPageTimestamp ?? initialStartTime;
+    const page = await fetchPage(requestedStartTime);
+    assertCompleteEventPage(page, 'Resource calibration');
+    const pageEvents = page.data;
+    eventPages.push(pageEvents);
+    pageCount += 1;
+    eventCount += pageEvents.length;
+    if (eventCount > EVENT_MAX_EVENTS_PER_STREAM) {
+      throw new Error(`Resource event pagination exceeded ${EVENT_MAX_EVENTS_PER_STREAM} events`);
+    }
+
+    const followingTimestamp = page.nextPageTimestamp ?? null;
+    if (followingTimestamp != null && !isCursorAdvancing(requestedStartTime, followingTimestamp)) {
+      throw new Error('Resource event pagination cursor did not advance');
+    }
+    nextPageTimestamp = followingTimestamp;
+  } while (nextPageTimestamp != null);
+
+  return deduplicateEventPages(eventPages);
 }
 
 export function useLogCalibration(): UseLogCalibration {
@@ -265,38 +310,36 @@ export function useLogCalibration(): UseLogCalibration {
         } | null;
       };
       for (const hostilityType of [HostilityType.Friendlies, HostilityType.Enemies]) {
-        let next: number | null = null;
-        let pages = 0;
-        do {
-          const startTime = next ?? window.start;
-          const res: EventsPage = await client.query({
-            query: GetResourceEventsDocument,
-            variables: {
-              code,
-              fightIds: [selectedFightId],
-              startTime,
-              endTime: window.end,
-              hostilityType,
-              limit: 100000,
-            },
-            // Match the existing resource-event fetcher: never cache these large
-            // pages in the Apollo singleton.
-            fetchPolicy: 'no-cache',
-          });
-          // Bail if a newer measurement/selection has superseded this one.
-          if (reqId !== measureReqId.current) return;
-          const page = res.reportData?.report?.events;
-          if (page?.data) all.push(...(page.data as ResourceChangeEvent[]));
-          const nextCursor = page?.nextPageTimestamp ?? null;
-          // Stop on a non-advancing cursor (repeated/backwards/malformed) or when
-          // the page cap is hit — either would otherwise spin forever.
-          if (!isCursorAdvancing(startTime, nextCursor)) break;
-          next = nextCursor;
-          pages += 1;
-          if (pages >= MAX_EVENT_PAGES) {
-            throw new Error('Fight has too many resource events to measure reliably.');
-          }
-        } while (next);
+        const hostilityEvents = await collectCalibrationEventPages(
+          window.start,
+          async (startTime) => {
+            const res: EventsPage = await client.query({
+              query: GetResourceEventsDocument,
+              variables: {
+                code,
+                fightIds: [selectedFightId],
+                startTime,
+                endTime: window.end,
+                hostilityType,
+                limit: 100000,
+              },
+              // Match the existing resource-event fetcher: never cache these large
+              // pages in the Apollo singleton.
+              fetchPolicy: 'no-cache',
+            });
+            // Bail if a newer measurement/selection has superseded this one.
+            if (reqId !== measureReqId.current) return;
+            const page = res.reportData?.report?.events;
+            return page == null
+              ? page
+              : {
+                  data: page.data as ResourceChangeEvent[] | undefined,
+                  nextPageTimestamp: page.nextPageTimestamp,
+                };
+          },
+        );
+        if (reqId !== measureReqId.current) return;
+        all.push(...hostilityEvents);
       }
 
       // Final staleness check before committing the result.

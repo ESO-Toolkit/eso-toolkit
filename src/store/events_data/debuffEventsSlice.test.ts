@@ -65,10 +65,16 @@ describe('debuffEventsSlice pagination hardening', () => {
     expect(client.query).toHaveBeenCalledTimes(1);
   });
 
-  it('rejects a pagination cursor that does not advance', async () => {
-    client.query.mockResolvedValueOnce(page([debuffEvent(1000)], fight.startTime));
+  it.each([
+    ['equal to the requested start', 1000, true],
+    ['NaN', Number.NaN, true],
+    ['infinite on an unrestricted first page', Number.POSITIVE_INFINITY, false],
+  ])('rejects a pagination cursor that is %s', async (_label, cursor, restrictToFightWindow) => {
+    client.query.mockResolvedValueOnce(page([debuffEvent(1000)], cursor));
 
-    await store.dispatch(fetchDebuffEvents({ reportCode: 'ABC123', fight, client }) as never);
+    await store.dispatch(
+      fetchDebuffEvents({ reportCode: 'ABC123', fight, client, restrictToFightWindow }) as never,
+    );
 
     expect(entry()?.status).toBe('failed');
     expect(entry()?.error).toBe('Debuff event pagination cursor did not advance');
