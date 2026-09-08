@@ -20,7 +20,7 @@ export interface UptimeTimelineSeries {
   };
 }
 
-interface BuildUptimeTimelineOptions {
+export interface BuildUptimeTimelineOptions {
   uptimes: BuffUptime[];
   lookup: BuffLookupData | null | undefined;
   fightStartTime: number | null | undefined;
@@ -43,7 +43,18 @@ export function buildUptimeTimelineSeries({
   fightEndTime,
   targetFilter,
 }: BuildUptimeTimelineOptions): UptimeTimelineSeries[] {
-  if (!lookup || !fightStartTime || !fightEndTime || fightEndTime <= fightStartTime) {
+  if (
+    !lookup ||
+    typeof fightStartTime !== 'number' ||
+    typeof fightEndTime !== 'number' ||
+    !Number.isFinite(fightStartTime) ||
+    !Number.isFinite(fightEndTime) ||
+    fightEndTime <= fightStartTime
+  ) {
+    return [];
+  }
+  const fightDurationMs = fightEndTime - fightStartTime;
+  if (!Number.isFinite(fightDurationMs) || fightDurationMs <= 0) {
     return [];
   }
 
@@ -77,7 +88,7 @@ export function buildUptimeTimelineSeries({
       return;
     }
 
-    const points = intervalsToTimelinePoints(merged, fightStartTime, fightEndTime);
+    const points = intervalsToTimelinePoints(merged, fightStartTime, fightDurationMs);
     if (points.length === 0) {
       return;
     }
@@ -115,6 +126,10 @@ function normalizeIntervals(
   const result: NormalizedInterval[] = [];
 
   for (const interval of intervals) {
+    if (!Number.isFinite(interval.start) || !Number.isFinite(interval.end)) {
+      continue;
+    }
+
     if (targetFilter && !targetFilter.has(interval.targetID)) {
       continue;
     }
@@ -164,15 +179,13 @@ function mergeIntervals(intervals: NormalizedInterval[]): NormalizedInterval[] {
 function intervalsToTimelinePoints(
   intervals: NormalizedInterval[],
   fightStartTime: number,
-  fightEndTime: number,
+  fightDurationMs: number,
 ): UptimeTimelinePoint[] {
   if (intervals.length === 0) {
     return [];
   }
 
   const points: UptimeTimelinePoint[] = [];
-  const fightDurationMs = fightEndTime - fightStartTime;
-
   points.push({ x: 0, y: 0 });
 
   intervals.forEach((interval) => {
@@ -191,6 +204,10 @@ function intervalsToTimelinePoints(
 }
 
 function appendPoint(points: UptimeTimelinePoint[], x: number, y: number): void {
+  if (!Number.isFinite(x) || !Number.isFinite(y)) {
+    return;
+  }
+
   const lastPoint = points[points.length - 1];
   const roundedX = Number(x.toFixed(3));
   const roundedY = Number(y.toFixed(5));
