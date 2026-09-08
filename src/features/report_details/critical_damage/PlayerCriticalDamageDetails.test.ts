@@ -124,10 +124,10 @@ describe('PlayerCriticalDamageDetails Integration', () => {
       expect(runningMaximum).toBe(traditionalMax);
       expect(runningAverage).toBeCloseTo(traditionalAverage, 2);
 
-      // Expected: t=0s: 50, t=1s: 60, t=2s: 60, t=3s: 50 (Minor Force gives +10)
-      // Average = (50+60+60+50)/4 = 55.0
+      // Removal timestamps are exclusive: t=0s: 50, t=1s: 60, t=2s: 50, t=3s: 50.
+      // Average = (50+60+50+50)/4 = 52.5
       expect(runningMaximum).toBe(60);
-      expect(runningAverage).toBeCloseTo(55.0, 2);
+      expect(runningAverage).toBeCloseTo(52.5, 2);
     });
 
     it('should calculate time at cap percentage correctly', () => {
@@ -188,11 +188,11 @@ describe('PlayerCriticalDamageDetails Integration', () => {
       const timeAtCapPercentage = dataPointCount > 0 ? (timeAtCapCount / dataPointCount) * 100 : 0;
 
       // Expected pattern based on buff timing:
-      // t=0: 120, t=1: 130 (Minor Force +10), t=2: 130, t=3: 130, t=4: 120
-      // 3 out of 5 data points are at or above cap (>=125) = 60%
-      expect(timeAtCapCount).toBe(3);
+      // t=0: 120, t=1: 130 (Minor Force +10), t=2: 130, t=3: 120, t=4: 120
+      // Removal timestamps are exclusive, so 2 of 5 points are at or above cap.
+      expect(timeAtCapCount).toBe(2);
       expect(dataPointCount).toBe(5);
-      expect(timeAtCapPercentage).toBeCloseTo(60, 1);
+      expect(timeAtCapPercentage).toBeCloseTo(40, 1);
     });
 
     it('should handle fight with no dynamic buffs', () => {
