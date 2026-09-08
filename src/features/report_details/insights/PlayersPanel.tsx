@@ -82,7 +82,7 @@ import {
   BLUE_CHAMPION_POINTS,
   GREEN_CHAMPION_POINTS,
 } from '../../../types/abilities';
-import { CombatantAura, CombatantInfoEvent } from '../../../types/combatlogEvents';
+import { CombatantAura } from '../../../types/combatlogEvents';
 import { PlayerGear } from '../../../types/playerDetails';
 import { type ClassAnalysisResult } from '../../../utils/classDetectionUtils';
 import { type BuildIssue } from '../../../utils/detectBuildIssues';
@@ -112,6 +112,7 @@ import {
 } from '../../../utils/potionDetectionUtils';
 import { type BarSwapAnalysisResult } from '../../parse_analysis/utils/parseAnalysisUtils';
 
+import { createPlayersPanelEventIndex } from './playerEventIndex';
 import { PlayersPanelView } from './PlayersPanelView';
 
 // Stable empty fallbacks for the combined analysis maps while the worker task
@@ -402,6 +403,16 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
     rolesByPlayerId,
   ]);
 
+  const playerEventIndex = React.useMemo(
+    () =>
+      createPlayersPanelEventIndex(
+        Object.values(playersById),
+        combatantInfoEvents,
+        friendlyBuffEvents,
+      ),
+    [playersById, combatantInfoEvents, friendlyBuffEvents],
+  );
+
   const companionReport = React.useMemo(
     () => buildMatchableReport(playersById, reportEntry),
     [playersById, reportEntry],
@@ -539,8 +550,6 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
       return [];
     }
 
-    const playerIds = new Set(Object.values(playersById).map((p) => p.id));
-
     const abilitiesByPlayer = new Map<number, Set<number>>();
 
     // Scan talent GUIDs (works when ESO Logs provides the transformed ID)
@@ -560,7 +569,7 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
     castEvents.forEach((event) => {
       if (
         event.type === 'cast' &&
-        playerIds.has(event.sourceID) &&
+        playerEventIndex.playerIds.has(event.sourceID) &&
         isScribingAbility(event.abilityGameID)
       ) {
         if (!abilitiesByPlayer.has(event.sourceID)) {
@@ -576,7 +585,7 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
         abilityIds: Array.from(abilityIds),
       }))
       .filter((entry) => entry.abilityIds.length > 0);
-  }, [playersById, castEvents]);
+  }, [playersById, castEvents, playerEventIndex]);
 
   const existingScribingAbilities = React.useMemo(() => {
     if (!scribingResult || fightIdNumber === null || scribingResult.fightId !== fightIdNumber) {
@@ -906,69 +915,47 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
     const mundusNameRegex =
       /^(?:Boon:|Bonus\s*\(2\):)?\s*The\s+(Warrior|Mage|Serpent|Thief|Lady|Steed|Lord|Apprentice|Ritual|Lover|Atronach|Shadow|Tower)\b/i;
 
-    // Initialize arrays for each player
-    if (hasPlayerEntries(playersById)) {
-      Object.values(playersById).forEach((actor) => {
-        if (actor?.id) {
-          const playerId = String(actor.id);
-          result[playerId] = [];
+    for (const playerIdNumber of playerEventIndex.playerIdsInOrder) {
+      const playerId = String(playerIdNumber);
+      result[playerId] = [];
 
-          // Gather ALL combatantinfo events for this player and union mundus auras across them
-          const combatantInfoEventsForPlayer = combatantInfoEvents.filter(
-            (event: CombatantInfoEvent): event is CombatantInfoEvent =>
-              event.type === 'combatantinfo' &&
-              'sourceID' in event &&
-              String(event.sourceID) === playerId,
-          );
-
-          if (combatantInfoEventsForPlayer.length > 0) {
-            const seen = new Set<number>();
-            for (const cie of combatantInfoEventsForPlayer) {
-              const auras = cie.auras || [];
-              for (const aura of auras as CombatantAura[]) {
-                const ability = abilitiesById[aura.ability];
-                const name = ability?.name || aura.name || '';
-                const isMundusById = mundusStoneIds.includes(aura.ability);
-                const isMundusByName = mundusNameRegex.test(name);
-                if (!isMundusById && !isMundusByName) continue;
-                if (seen.has(aura.ability)) continue;
-                seen.add(aura.ability);
-                const mundusName = name || `Unknown Mundus (${aura.ability})`;
-                const cleaned = mundusName.replace(/^(?:Boon:|Bonus\s*\(2\):)\s*/i, '').trim();
-                result[playerId].push({ name: cleaned, id: aura.ability });
-              }
-            }
-          }
-
-          // Fallback: If none found via combatantinfo, scan applybuff events for mundus on this player
-          if (result[playerId].length === 0) {
-            for (const ev of friendlyBuffEvents) {
-              if (ev.type === 'applybuff') {
-                const abilityId = ev.abilityGameID;
-                // mundus applies to self; match either source or target to this player
-                const appliesToPlayer =
-                  (ev.targetID != null && String(ev.targetID) === playerId) ||
-                  (ev.sourceID != null && String(ev.sourceID) === playerId);
-                if (typeof abilityId === 'number' && appliesToPlayer) {
-                  const ability = abilitiesById[abilityId];
-                  const name = ability?.name || '';
-                  const isMundus = mundusStoneIds.includes(abilityId) || mundusNameRegex.test(name);
-                  if (isMundus) {
-                    const mundusName = name || `Mundus (${abilityId})`;
-                    const cleaned = mundusName.replace(/^(?:Boon:|Bonus\s*\(2\):)\s*/i, '').trim();
-                    result[playerId].push({ name: cleaned, id: abilityId });
-                    break; // one mundus is sufficient
-                  }
-                }
-              }
-            }
-          }
+      // Union Mundus auras from every combatant-info snapshot for this player.
+      const seen = new Set<number>();
+      for (const cie of playerEventIndex.combatantInfoEventsByPlayerId.get(playerIdNumber) ?? []) {
+        const auras = cie.auras || [];
+        for (const aura of auras as CombatantAura[]) {
+          const ability = abilitiesById[aura.ability];
+          const name = ability?.name || aura.name || '';
+          const isMundusById = mundusStoneIds.includes(aura.ability);
+          const isMundusByName = mundusNameRegex.test(name);
+          if (!isMundusById && !isMundusByName) continue;
+          if (seen.has(aura.ability)) continue;
+          seen.add(aura.ability);
+          const mundusName = name || `Unknown Mundus (${aura.ability})`;
+          const cleaned = mundusName.replace(/^(?:Boon:|Bonus\s*\(2\):)\s*/i, '').trim();
+          result[playerId].push({ name: cleaned, id: aura.ability });
         }
-      });
+      }
+
+      // Fallback: if combatant-info did not identify a Mundus, use the first matching applybuff.
+      if (result[playerId].length === 0) {
+        for (const event of playerEventIndex.applyBuffEventsByPlayerId.get(playerIdNumber) ?? []) {
+          const abilityId = event.abilityGameID;
+          const ability = abilitiesById[abilityId];
+          const name = ability?.name || '';
+          const isMundus = mundusStoneIds.includes(abilityId) || mundusNameRegex.test(name);
+          if (!isMundus) continue;
+
+          const mundusName = name || `Mundus (${abilityId})`;
+          const cleaned = mundusName.replace(/^(?:Boon:|Bonus\s*\(2\):)\s*/i, '').trim();
+          result[playerId].push({ name: cleaned, id: abilityId });
+          break; // one mundus is sufficient
+        }
+      }
     }
 
     return result;
-  }, [combatantInfoEvents, abilitiesById, playersById, friendlyBuffEvents]);
+  }, [combatantInfoEvents, abilitiesById, playerEventIndex]);
 
   // Classify each player's potion usage from the live fight event stream (Path B detection).
   const potionResultsByPlayer = React.useMemo((): Record<string, PotionStreamResult> => {
@@ -987,46 +974,30 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
 
     if (!abilitiesById) return result;
 
-    // Initialize arrays for each player
-    if (hasPlayerEntries(playersById)) {
-      Object.values(playersById).forEach((actor) => {
-        if (actor?.id) {
-          const playerId = String(actor.id);
-          result[playerId] = [];
-          const seen = new Set<number>();
-          const addChampionPoint = (abilityId: number): void => {
-            if (seen.has(abilityId)) return;
-            const entry = buildChampionPointEntry(abilityId, abilitiesById);
-            if (!entry) return;
-            seen.add(abilityId);
-            result[playerId].push(entry);
-          };
+    for (const playerIdNumber of playerEventIndex.playerIdsInOrder) {
+      const playerId = String(playerIdNumber);
+      result[playerId] = [];
+      const seen = new Set<number>();
+      const addChampionPoint = (abilityId: number): void => {
+        if (seen.has(abilityId)) return;
+        const entry = buildChampionPointEntry(abilityId, abilitiesById);
+        if (!entry) return;
+        seen.add(abilityId);
+        result[playerId].push(entry);
+      };
 
-          // Gather ALL combatantinfo events for this player and union champion points across them
-          const combatantInfoEventsForPlayer =
-            combatantInfoEvents?.filter(
-              (event: CombatantInfoEvent): event is CombatantInfoEvent =>
-                event.type === 'combatantinfo' &&
-                'sourceID' in event &&
-                String(event.sourceID) === playerId,
-            ) ?? [];
-
-          if (combatantInfoEventsForPlayer.length > 0) {
-            for (const cie of combatantInfoEventsForPlayer) {
-              const auras = cie.auras || [];
-              for (const aura of auras as CombatantAura[]) {
-                addChampionPoint(aura.ability);
-              }
-            }
-          }
-
-          sortChampionPointEntries(result[playerId]);
+      for (const cie of playerEventIndex.combatantInfoEventsByPlayerId.get(playerIdNumber) ?? []) {
+        const auras = cie.auras || [];
+        for (const aura of auras as CombatantAura[]) {
+          addChampionPoint(aura.ability);
         }
-      });
+      }
+
+      sortChampionPointEntries(result[playerId]);
     }
 
     return result;
-  }, [combatantInfoEvents, abilitiesById, playersById]);
+  }, [abilitiesById, playerEventIndex]);
 
   const kalpaBuildEvidenceByPlayer = React.useMemo(() => {
     const result: Record<string, KalpaPlayerBuildEvidence> = {
@@ -1178,26 +1149,15 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
       return result;
     }
 
-    Object.values(playersById).forEach((actor) => {
-      if (!actor?.id) {
-        return;
-      }
-
-      const playerId = String(actor.id);
+    for (const playerIdNumber of playerEventIndex.playerIdsInOrder) {
+      const playerId = String(playerIdNumber);
       result[playerId] = [];
 
-      const latestCombatantInfo = combatantInfoEvents
-        .filter((event): event is CombatantInfoEvent => {
-          return (
-            event.type === 'combatantinfo' &&
-            'sourceID' in event &&
-            String(event.sourceID) === playerId
-          );
-        })
-        .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))[0];
+      const latestCombatantInfo =
+        playerEventIndex.latestCombatantInfoEventByPlayerId.get(playerIdNumber);
 
       if (!latestCombatantInfo?.auras) {
-        return;
+        continue;
       }
 
       latestCombatantInfo.auras.forEach((aura) => {
@@ -1212,10 +1172,10 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
       });
 
       result[playerId].sort((a, b) => a.name.localeCompare(b.name));
-    });
+    }
 
     return result;
-  }, [abilitiesById, combatantInfoEvents, playersById]);
+  }, [abilitiesById, combatantInfoEvents, playersById, playerEventIndex]);
 
   const playerGear = React.useMemo(() => {
     const result: Record<number, PlayerGearSetRecord[]> = {};
