@@ -201,12 +201,20 @@ const CombinedFilterDropdownComponent: React.FC<CombinedFilterDropdownProps> = (
       mx: 0.75,
       py: 0.5,
       px: 1,
+      minHeight: 44,
       transition: 'background-color 150ms ease',
+      '&:focus-visible': {
+        outline: `3px solid ${theme.palette.primary.main}`,
+        outlineOffset: -2,
+      },
       '&:hover': {
         background: isDarkMode ? 'rgba(56, 189, 248, 0.1)' : 'rgba(59, 130, 246, 0.06)',
       },
+      '@media (prefers-reduced-motion: reduce)': {
+        transition: 'none',
+      },
     }),
-    [isDarkMode],
+    [isDarkMode, theme.palette.primary.main],
   );
 
   const checkboxSx = React.useMemo(
@@ -260,7 +268,7 @@ const CombinedFilterDropdownComponent: React.FC<CombinedFilterDropdownProps> = (
           borderRadius: '10px',
           px: { xs: 1.5, md: 2 },
           py: { xs: 0.5, md: 0.875 },
-          minHeight: { xs: '36px', md: 'auto' },
+          minHeight: 44,
           width: { xs: '100%', md: 'auto' },
           justifyContent: { xs: 'space-between', md: 'flex-start' },
           position: 'relative',
@@ -274,6 +282,14 @@ const CombinedFilterDropdownComponent: React.FC<CombinedFilterDropdownProps> = (
             ? '0 2px 12px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(56, 189, 248, 0.1)'
             : '0 1px 8px rgba(59, 130, 246, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
           transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+          '&:focus-visible': {
+            outline: `3px solid ${theme.palette.primary.main}`,
+            outlineOffset: 2,
+          },
+          '@media (prefers-reduced-motion: reduce)': {
+            transition: 'none',
+            '& .MuiSvgIcon-root': { transition: 'none' },
+          },
           '&:hover': {
             background: isDarkMode
               ? 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.9) 50%, rgba(51, 65, 85, 0.8) 100%)'
@@ -329,6 +345,12 @@ const CombinedFilterDropdownComponent: React.FC<CombinedFilterDropdownProps> = (
         onClose={() => setAnchorEl(null)}
         {...dropdownMenuOrigins(menuUp)}
         sx={popoverSx}
+        slotProps={{
+          paper: {
+            role: 'dialog',
+            'aria-label': 'Fight filters',
+          },
+        }}
       >
         {/* Target Section */}
         {hasTargets && (

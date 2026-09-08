@@ -79,4 +79,24 @@ describe('HeaderBar', () => {
     const toolsButton = screen.getByRole('button', { name: /tools/i });
     expect(toolsButton).toBeInTheDocument();
   });
+
+  it('exposes menu relationships and a stateful mobile navigation control', () => {
+    render(
+      <MemoryRouter>
+        <HeaderBar />
+      </MemoryRouter>,
+    );
+
+    const toolsButton = screen.getByRole('button', { name: /tools/i });
+    expect(toolsButton).toHaveAttribute('aria-haspopup', 'menu');
+    expect(toolsButton).toHaveAttribute('aria-expanded', 'false');
+    expect(toolsButton).not.toHaveAttribute('aria-controls');
+
+    const menuButton = screen.getByRole('button', { name: 'Open navigation menu' });
+    menuButton.focus();
+    expect(menuButton).toHaveFocus();
+    expect(menuButton).toHaveAttribute('aria-haspopup', 'dialog');
+    expect(menuButton).toHaveAttribute('aria-expanded', 'false');
+    expect(menuButton).toHaveAttribute('aria-controls', 'mobile-nav-menu');
+  });
 });
