@@ -89,6 +89,8 @@ adds a GLB.
 | `the-serpent-overview-v1` (alias)  | `the-serpent-overview-v1.glb`     | The Serpent's Image                             | **Faithful** — same creature, same size |
 | `craglorn-troll-trash-overview-v1` | `stonebreaker-overview-v1.glb`    | Rockheaver Troll, Berserker Troll               | **Species match, wrong tier** — 0.85x   |
 | `hof-factotum-overview-v1`         | `saint-llothis-overview-v1.glb`   | Pinnacle Factotum, Reducer, Reclaimer, Reactor  | **Species match, same tier** — 1.25x    |
+| `storm-atronach-trash-overview-v1` | `lightning-storm-atronach-overview-v1.glb` | Storm Atronach (dungeons) | **Same mesh, lower tier** — 0.95x |
+| `ruined-factotum-trash-overview-v1`| `saint-llothis-overview-v1.glb`   | Ruined Factotum                                 | **Species match, lower tier** — 0.95x   |
 
 A pure alias (row 1) is added to an existing entry's `aliases`. A reuse that needs its own scale
 (rows 2-3) must be a **separate catalog entry pointing at the same `path`**, because `transform` is
@@ -636,13 +638,26 @@ to 20-50 names.
 Skeletons were missed by every earlier reference sweep because the model viewer files them under
 **"Boneman"**, not "skeleton".
 
-**A cheap follow-up is visible in the same data and is not yet done.** `Storm Atronach` (74
-fight-appearances across 11 dungeons) and `Frost Atronach` (68) are among the most frequent creature
-names in the corpus, and **both bodies are already on disk** — `lightning-storm-atronach-overview-v1`
-and `frost-atronach-overview-v1`. Following the `craglorn-troll-trash-overview-v1` precedent, a
-dungeon-tier Storm Atronach is a **separate catalog entry pointing at the same `path`** at the
-lesser-enemy scale, costing no new bytes. The frost atronach is already at trash scale and may only
-need aliases.
+**Two of those follow-ups are now done, and three were deliberately declined.**
+
+`storm-atronach-trash-overview-v1` covers the dungeon `Storm Atronach` — the 4th most frequent name
+in the whole corpus, **74 fight-appearances across 11 dungeons** — at the lesser-enemy scale, off the
+already-shipped Lightning Storm Atronach GLB. This is the strongest possible reuse: the model
+viewer's own body text says that mesh serves *"generic Storm Atronachs"*, so it is not a lookalike at
+all, it is the same asset at the right size. `ruined-factotum-trash-overview-v1` does the same for
+the HoF trash Factotum found while verifying the boss names. `Frost Atronach` (68) and `Crystal
+Atronach` (8) needed nothing — they were already aliased at trash scale.
+
+**Three candidates were rejected, and the reason is worth keeping.** Bare `Stone Atronach` (57
+appearances) and bare `Troll` (13) are **explicitly asserted to resolve to null** by the catalog
+tests, on the recorded grounds that a generic stone atronach is "a different, smaller creature" and
+that near-miss troll names must not borrow the Craglorn body. A tier-split entry looked like it
+answered that objection — but the objection says *different creature*, not merely *different size*,
+and both shipped bodies are `_Boss` mesh variants rather than the generic ones. Overriding a tested
+decision to make a new alias pass is exactly the wrong move, so they stay unclaimed. `Gryphon` (6)
+was dropped for the same boss-variant doubt. `Argonian Behemoth` (26) stays unclaimed because
+Oaxiltso is the **corrupted red** variant, and `Lamia`/`Harvester` because Ozara and Xalvakka are
+likewise specific colour variants.
 
 ## Coverage status — Rockgrove
 

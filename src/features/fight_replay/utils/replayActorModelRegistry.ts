@@ -775,6 +775,53 @@ export const STATIC_REPLAY_ACTOR_MODEL_ASSETS: readonly StaticReplayActorModelAs
     },
   },
   {
+    // ZERO NEW BYTES. Dungeon-tier Storm Atronach, reusing the Lightning Storm Atronach body at the
+    // lesser-enemy scale. `Storm Atronach` is the 4th most frequent name in the measured dungeon
+    // corpus — 74 fight-appearances across 11 dungeons — and the boss entry cannot serve it, because
+    // `transform` is per-asset and a boss-scaled add would be wrong. Same pattern as the Craglorn
+    // troll reuse below.
+    id: 'storm-atronach-trash-overview-v1',
+    path: 'models/fight-replay/npcs/lightning-storm-atronach-overview-v1.glb',
+    renderer: 'static-boss',
+    actorTypes: HOSTILE_ACTOR_TYPES,
+    aliases: ['storm atronach'],
+    transform: {
+      orientEuler: [0, 0, 0],
+      scale: 0.95,
+      yOffset: 0,
+      yawOffset: 0,
+      modelHeight: 2,
+    },
+    provenance: {
+      designation: 'project-authorized-fan-prototype',
+      sourceUrl: 'https://esomodelviewer.com/creatures/post/154-storm-atronach',
+      attributionFile:
+        'public/models/fight-replay/npcs/README-lightning-storm-atronach-overview-v1.md',
+    },
+  },
+  {
+    // ZERO NEW BYTES. `Ruined Factotum` is ordinary NPC trash in the Halls of Fabrication logs that
+    // were queried to verify the boss Factotum names — same species as the boss entry above, one
+    // tier down, so it gets its own entry rather than an alias.
+    id: 'ruined-factotum-trash-overview-v1',
+    path: 'models/fight-replay/npcs/saint-llothis-overview-v1.glb',
+    renderer: 'static-boss',
+    actorTypes: HOSTILE_ACTOR_TYPES,
+    aliases: ['ruined factotum'],
+    transform: {
+      orientEuler: [0, 0, 0],
+      scale: 0.95,
+      yOffset: 0,
+      yawOffset: 0,
+      modelHeight: 1.9943,
+    },
+    provenance: {
+      designation: 'project-authorized-fan-prototype',
+      sourceUrl: 'https://esomodelviewer.com/creatures/post/89-saint-llothis-the-pious',
+      attributionFile: 'public/models/fight-replay/npcs/README-saint-llothis-overview-v1.md',
+    },
+  },
+  {
     // Sanctum Ophidia's Rockheaver and Berserker Trolls, on the Craglorn troll body already
     // shipping as Stonebreaker. This one is a species match rather than a guess: the asset IS
     // ESO's `Troll_Craglorn_Boss` mesh with the game's own hand-authored atlas, and both trash

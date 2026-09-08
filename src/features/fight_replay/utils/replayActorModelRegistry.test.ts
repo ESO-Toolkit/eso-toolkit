@@ -126,6 +126,47 @@ describe('resolveReplayActorModel', () => {
     expect(resolveReplayActorModel(actor('enemy', 'Stone Atronach'), 'prototype')).toBeNull();
   });
 
+  it('separates the boss and dungeon tiers of the same body', () => {
+    // Same GLB, two entries, two scales. The dungeon `Storm Atronach` is the 4th most frequent name
+    // in the measured dungeon corpus (74 fight-appearances) and IS the same mesh — the model viewer
+    // says this body serves "generic Storm Atronachs" — so this is a tier split, not a lookalike.
+    const scaleOf = (name: string, type: 'boss' | 'enemy', expectedId: string) => {
+      const asset = resolveReplayActorModel(actor(type, name), 'prototype');
+      expect(asset?.id).toBe(expectedId);
+      if (!asset || asset.renderer !== 'static-boss')
+        throw new Error(`${name} is not a static boss`);
+      return asset;
+    };
+
+    const boss = scaleOf(
+      'Lightning Storm Atronach',
+      'boss',
+      'lightning-storm-atronach-overview-v1',
+    );
+    const trash = scaleOf('Storm Atronach', 'enemy', 'storm-atronach-trash-overview-v1');
+    expect(trash.path).toBe(boss.path);
+    expect(trash.transform.scale).toBeLessThan(boss.transform.scale);
+
+    // `Ruined Factotum` is verified HoF trash and shares the Saint Llothis body one tier down.
+    const factotumBoss = scaleOf('Pinnacle Factotum', 'boss', 'hof-factotum-overview-v1');
+    const factotumTrash = scaleOf('Ruined Factotum', 'enemy', 'ruined-factotum-trash-overview-v1');
+    expect(factotumTrash.path).toBe(factotumBoss.path);
+    expect(factotumTrash.transform.scale).toBeLessThan(factotumBoss.transform.scale);
+  });
+
+  it('covers the Refabrication Committee with the verified bare actor names', () => {
+    // Queried against four real Halls of Fabrication reports: the members are `Reducer`, not
+    // `Refabricated Reducer`. A guessed alias would fail silently to a capsule.
+    for (const name of ['Reducer', 'Reclaimer', 'Reactor']) {
+      expect(resolveReplayActorModel(actor('boss', name), 'prototype')?.id).toBe(
+        'hof-factotum-overview-v1',
+      );
+    }
+    // The refabricated ADDS are a different body and must not borrow it.
+    expect(resolveReplayActorModel(actor('enemy', 'Refabricated Sphere'), 'prototype')).toBeNull();
+    expect(resolveReplayActorModel(actor('enemy', 'Refabricated Spider'), 'prototype')).toBeNull();
+  });
+
   it('falls back to the capsule for unrecognized hostiles instead of substituting another model', () => {
     expect(resolveReplayActorModel(actor('enemy', 'Unmodelled Trash Mob'), 'prototype')).toBeNull();
     // Kazpian has no reference imagery anywhere, so he is the durable stand-in for an unmodelled
