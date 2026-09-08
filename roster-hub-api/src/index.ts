@@ -70,6 +70,7 @@ import { handleGraphqlProxy } from './graphql-proxy';
 import { getReportBuildEvidence, putReportBuildEvidence } from './report-build-evidence';
 import type { Env, RecommendedAddonEntry, RecommendedAddons } from './types';
 import { getDpsParseCombatant, listDpsEncounters, listDpsParses } from './db/dps-parse-queries';
+import { ensureDpsParsesSchema } from './db/dps-parse-schema';
 import { syncDpsParses } from './leaderboard-sync/dps-parse-sync';
 
 const app = new Hono<{ Bindings: Env }>();
@@ -2357,6 +2358,7 @@ export async function notifyDiscordSync(env: Env, rosterId: string): Promise<boo
 
 /** Which encounters have data — feeds the trial/boss picker. */
 app.get('/dps-leaderboard/encounters', async (c) => {
+  await ensureDpsParsesSchema(c.env.DB);
   const encounters = await listDpsEncounters(c.env.DB);
   return c.json({ encounters });
 });
@@ -2382,6 +2384,8 @@ app.get('/dps-leaderboard/parses', async (c) => {
     return c.json({ error: 'Provide at least one of: encounter, class' }, 400);
   }
 
+  await ensureDpsParsesSchema(c.env.DB);
+
   const sortParam = c.req.query('sort');
   const result = await listDpsParses(c.env.DB, {
     encounterId,
@@ -2406,6 +2410,7 @@ app.get('/dps-leaderboard/parses', async (c) => {
  * opens an archetype in the Build Editor.
  */
 app.get('/dps-leaderboard/parses/:parseId/build', async (c) => {
+  await ensureDpsParsesSchema(c.env.DB);
   const build = await getDpsParseCombatant(c.env.DB, c.req.param('parseId'));
   if (!build) return c.json({ error: 'Parse not found' }, 404);
   return c.json(build);
