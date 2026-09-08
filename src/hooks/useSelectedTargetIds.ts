@@ -1,15 +1,15 @@
 import * as React from 'react';
 import { useSelector } from 'react-redux';
 
-import type { ReportActorFragment } from '../graphql/gql/graphql';
 import type { ReportFightContextInput } from '../store/contextTypes';
 import { selectSelectedTargetIds } from '../store/ui/uiSelectors';
 
+import { resolveTargetScopes } from './targetScopes';
 import { useFightForContext } from './useFightForContext';
 import { useReportMasterData } from './useReportMasterData';
 import { useResolvedReportFightContext } from './useResolvedReportFightContext';
 
-// Sentinel value for "select all targets"
+// Legacy sentinel for the authoritative "All Bosses" aggregate scope.
 export const ALL_TARGETS_SENTINEL = -1;
 // Sentinel value for "select all enemies" (including non-bosses)
 export const ALL_ENEMIES_SENTINEL = -2;
@@ -24,59 +24,10 @@ export function useSelectedTargetIds(options?: UseSelectedTargetIdsOptions): Set
   const fight = useFightForContext(resolvedContext);
   const { reportMasterData } = useReportMasterData({ context: resolvedContext });
 
-  const allTargets = React.useMemo(() => {
-    if (!fight?.enemyNPCs) {
-      return [];
-    }
-
-    return fight.enemyNPCs
-      .filter((npc): npc is { id: number } => npc?.id != null)
-      .map((npc) => npc.id);
-  }, [fight?.enemyNPCs]);
-
-  // Filter enemies: for duplicate names, keep only Boss subtype; for unique names, keep all
-  const bossTargets = React.useMemo(() => {
-    if (!fight?.enemyNPCs || !reportMasterData?.actorsById) {
-      return [];
-    }
-
-    const validEnemies = fight.enemyNPCs
-      .filter((npc): npc is { id: number } => npc?.id != null)
-      .map((npc) => ({
-        id: npc.id,
-        actor: reportMasterData.actorsById[npc.id],
-      }))
-      .filter((enemy) => enemy.actor && enemy.actor.name);
-
-    const enemyGroups = validEnemies.reduce(
-      (acc, enemy) => {
-        const name = enemy.actor.name;
-        if (name && !acc[name]) {
-          acc[name] = [];
-        }
-        if (name) {
-          acc[name].push(enemy);
-        }
-        return acc;
-      },
-      {} as Record<string, Array<{ id: number; actor: ReportActorFragment }>>,
-    );
-
-    const filteredEnemies = validEnemies.filter((enemy) => {
-      const name = enemy.actor.name;
-      if (!name) return false;
-
-      const sameNameEnemies = enemyGroups[name];
-
-      if (sameNameEnemies && sameNameEnemies.length === 1) {
-        return true; // Unique name
-      }
-
-      return enemy.actor.subType === 'Boss'; // Multiple names - only Boss subtype
-    });
-
-    return filteredEnemies.map((enemy) => enemy.id);
-  }, [fight?.enemyNPCs, reportMasterData?.actorsById]);
+  const targetScopes = React.useMemo(
+    () => resolveTargetScopes(fight?.enemyNPCs, reportMasterData?.actorsById),
+    [fight?.enemyNPCs, reportMasterData?.actorsById],
+  );
 
   const selectedTargetsSet = React.useMemo(() => {
     const filteredIds = selectedTargetIds.filter(
@@ -97,8 +48,11 @@ export function useSelectedTargetIds(options?: UseSelectedTargetIdsOptions): Set
     return selectedTargetIds.length === 0;
   }, [selectedTargetIds]);
 
-  const allTargetsSet = React.useMemo(() => new Set(allTargets), [allTargets]);
-  const bossTargetsSet = React.useMemo(() => new Set(bossTargets), [bossTargets]);
+  const allTargetsSet = React.useMemo(
+    () => new Set(targetScopes.allEnemyIds),
+    [targetScopes.allEnemyIds],
+  );
+  const bossTargetsSet = React.useMemo(() => new Set(targetScopes.bossIds), [targetScopes.bossIds]);
 
   return React.useMemo<Set<number>>(() => {
     if (hasAllEnemiesSelected) {
@@ -106,7 +60,7 @@ export function useSelectedTargetIds(options?: UseSelectedTargetIdsOptions): Set
     }
 
     if (hasAllTargetsSelected || isEmptySelection) {
-      return bossTargetsSet.size > 0 ? bossTargetsSet : allTargetsSet;
+      return bossTargetsSet;
     }
 
     return selectedTargetsSet;

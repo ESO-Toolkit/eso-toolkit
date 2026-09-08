@@ -9,7 +9,7 @@ import { TabId } from '../utils/getSkeletonForTab';
 
 import { useReportData } from './useReportData';
 import { useReportMasterData } from './useReportMasterData';
-import { useSelectedTargetIds } from './useSelectedTargetIds';
+import { ALL_ENEMIES_SENTINEL, useSelectedTargetIds } from './useSelectedTargetIds';
 
 // Mock the dependencies
 const mockUseReportData = useReportData as jest.MockedFunction<typeof useReportData>;
@@ -225,7 +225,13 @@ const mockMasterData = {
 };
 
 // Create mock store
-const createMockStore = (selectedTargetIds: number[] = [], customState?: Partial<any>): Store => {
+const createMockStore = (
+  selectedTargetIds: number[] = [],
+  fightOverride?: FightFragment,
+  customState?: Partial<any>,
+): Store => {
+  const fights = fightOverride ? [...mockReportData.fights, fightOverride] : mockReportData.fights;
+  const fightsById = Object.fromEntries(fights.map((fight) => [fight.id, fight]));
   const initialState = {
     ui: {
       darkMode: false,
@@ -253,16 +259,11 @@ const createMockStore = (selectedTargetIds: number[] = [], customState?: Partial
     report: {
       entries: {
         'test-report::__all__': {
-          data: mockReportData,
+          data: { ...mockReportData, fights },
           status: 'succeeded' as const,
           error: null,
-          fightsById: {
-            1: mockFightWithBosses,
-            2: mockFightWithoutEnemies,
-            3: mockFightWithNullEnemies,
-            10: mockFightWithDuplicates,
-          },
-          fightIds: [1, 2, 3, 10],
+          fightsById,
+          fightIds: fights.map((fight) => fight.id),
           cacheMetadata: { lastFetchedTimestamp: Date.now() },
           currentRequest: null,
         },
@@ -302,6 +303,7 @@ interface TestWrapperProps {
   reportId?: string | null;
   fightId?: string | null;
   selectedTargetIds?: number[];
+  fightOverride?: FightFragment;
 }
 
 const TestWrapper: React.FC<TestWrapperProps> = ({
@@ -309,8 +311,9 @@ const TestWrapper: React.FC<TestWrapperProps> = ({
   reportId = 'test-report',
   fightId = '1',
   selectedTargetIds = [],
+  fightOverride,
 }) => {
-  const store = createMockStore(selectedTargetIds);
+  const store = createMockStore(selectedTargetIds, fightOverride);
 
   const contextValue = {
     reportId,
@@ -334,7 +337,7 @@ describe('useSelectedTargetIds', () => {
     jest.clearAllMocks();
   });
 
-  it('should filter duplicate names and keep only Boss subtype for Lokkestiiz scenario', () => {
+  it('should use only authoritative Boss actors for the All Bosses scope', () => {
     mockUseReportData.mockReturnValue({
       reportData: {
         ...mockReportData,
@@ -356,13 +359,7 @@ describe('useSelectedTargetIds', () => {
       ),
     });
 
-    // Should return:
-    // - Lokkestiiz Boss (500) - only Boss subtype among duplicates
-    // - Frost Atronach (503) - unique name, so kept
-    // Should NOT return:
-    // - Lokkestiiz Fake 1 (501) - duplicate name with NPC subtype
-    // - Lokkestiiz Fake 2 (502) - duplicate name with NPC subtype
-    expect(Array.from(result.current).sort()).toEqual([500, 503]);
+    expect(Array.from(result.current)).toEqual([500]);
   });
 
   it('should return selected target ID when one is explicitly selected', () => {
@@ -406,9 +403,7 @@ describe('useSelectedTargetIds', () => {
       ),
     });
 
-    // Should return all enemies since each has unique names (no duplicate filtering applied)
-    // Boss NPCs (100, 200) and Regular NPC (300) all have unique names
-    expect(Array.from(result.current).sort()).toEqual([100, 200, 300]);
+    expect(Array.from(result.current).sort()).toEqual([100, 200]);
   });
 
   it('should return empty set when no fight is found', () => {
@@ -477,9 +472,7 @@ describe('useSelectedTargetIds', () => {
     expect(Array.from(result.current)).toEqual([]);
   });
 
-  it.skip('should return empty set when no report data is available', () => {
-    // SKIP: This test needs refactoring to work with keyed Redux cache
-    // The hook reads from Redux store directly, not from mocked hooks
+  it('should return empty set when no report data is available', () => {
     mockUseReportData.mockReturnValue({
       reportData: null,
       isReportLoading: false,
@@ -492,7 +485,7 @@ describe('useSelectedTargetIds', () => {
 
     const { result } = renderHook(() => useSelectedTargetIds(), {
       wrapper: ({ children }) => (
-        <TestWrapper fightId="1" selectedTargetIds={[]}>
+        <TestWrapper reportId={null} fightId={null} selectedTargetIds={[]}>
           {children}
         </TestWrapper>
       ),
@@ -501,7 +494,7 @@ describe('useSelectedTargetIds', () => {
     expect(Array.from(result.current)).toEqual([]);
   });
 
-  it('should return all enemy NPCs when no bosses are present', () => {
+  it('should not infer bosses when authoritative actor metadata is unavailable', () => {
     mockUseReportData.mockReturnValue({
       reportData: mockReportData,
       isReportLoading: false,
@@ -532,11 +525,10 @@ describe('useSelectedTargetIds', () => {
       ),
     });
 
-    expect(Array.from(result.current).sort()).toEqual([100, 200, 300]);
+    expect(Array.from(result.current)).toEqual([]);
   });
 
-  it.skip('should return all enemy NPCs when fight has only non-boss NPCs', () => {
-    // SKIP: Test needs custom Redux store with fight ID 4 in entries
+  it('should not treat non-boss NPCs as the All Bosses scope', () => {
     // Create fight with only non-boss NPCs
     const fightWithNonBosses: FightFragment = {
       ...mockFightWithBosses,
@@ -564,18 +556,16 @@ describe('useSelectedTargetIds', () => {
 
     const { result } = renderHook(() => useSelectedTargetIds(), {
       wrapper: ({ children }) => (
-        <TestWrapper fightId="4" selectedTargetIds={[]}>
+        <TestWrapper fightId="4" selectedTargetIds={[]} fightOverride={fightWithNonBosses}>
           {children}
         </TestWrapper>
       ),
     });
 
-    // When no bosses are present, should return all enemy NPCs
-    expect(Array.from(result.current)).toEqual([300]);
+    expect(Array.from(result.current)).toEqual([]);
   });
 
-  it.skip('should handle NPCs with null IDs', () => {
-    // SKIP: Test needs custom Redux store with fight ID 5 in entries
+  it('should handle NPCs with null IDs', () => {
     const fightWithNullIds: FightFragment = {
       ...mockFightWithBosses,
       id: 5,
@@ -603,7 +593,7 @@ describe('useSelectedTargetIds', () => {
 
     const { result } = renderHook(() => useSelectedTargetIds(), {
       wrapper: ({ children }) => (
-        <TestWrapper fightId="5" selectedTargetIds={[]}>
+        <TestWrapper fightId="5" selectedTargetIds={[]} fightOverride={fightWithNullIds}>
           {children}
         </TestWrapper>
       ),
@@ -613,8 +603,7 @@ describe('useSelectedTargetIds', () => {
     expect(Array.from(result.current)).toEqual([100]);
   });
 
-  it.skip('should handle actors that do not exist in master data', () => {
-    // SKIP: Test needs custom Redux store with fight ID 6 in entries
+  it('should handle actors that do not exist in master data', () => {
     const fightWithMissingActors: FightFragment = {
       ...mockFightWithBosses,
       id: 6,
@@ -642,7 +631,7 @@ describe('useSelectedTargetIds', () => {
 
     const { result } = renderHook(() => useSelectedTargetIds(), {
       wrapper: ({ children }) => (
-        <TestWrapper fightId="6" selectedTargetIds={[]}>
+        <TestWrapper fightId="6" selectedTargetIds={[]} fightOverride={fightWithMissingActors}>
           {children}
         </TestWrapper>
       ),
@@ -650,6 +639,39 @@ describe('useSelectedTargetIds', () => {
 
     // Should only include the actor that exists and is a boss
     expect(Array.from(result.current)).toEqual([100]);
+  });
+
+  it('resolves All Enemies from fight membership across mixed and missing actor metadata', () => {
+    mockUseReportMasterData.mockReturnValue({
+      reportMasterData: mockMasterData,
+      isMasterDataLoading: false,
+    });
+
+    const mixedFight: FightFragment = {
+      ...mockFightWithBosses,
+      id: 7,
+      enemyNPCs: [
+        { __typename: 'ReportFightNPC', id: 100, gameID: 1001, groupCount: 1, instanceCount: 1 },
+        { __typename: 'ReportFightNPC', id: 300, gameID: 3001, groupCount: 1, instanceCount: 1 },
+        { __typename: 'ReportFightNPC', id: 400, gameID: 4001, groupCount: 1, instanceCount: 1 },
+        { __typename: 'ReportFightNPC', id: 999, gameID: 9999, groupCount: 1, instanceCount: 1 },
+        { __typename: 'ReportFightNPC', id: 300, gameID: 3001, groupCount: 1, instanceCount: 1 },
+      ],
+    };
+
+    const { result } = renderHook(() => useSelectedTargetIds(), {
+      wrapper: ({ children }) => (
+        <TestWrapper
+          fightId="7"
+          selectedTargetIds={[ALL_ENEMIES_SENTINEL]}
+          fightOverride={mixedFight}
+        >
+          {children}
+        </TestWrapper>
+      ),
+    });
+
+    expect(Array.from(result.current)).toEqual([100, 300, 400, 999]);
   });
 
   it('should update when fight ID changes', () => {
@@ -671,8 +693,7 @@ describe('useSelectedTargetIds', () => {
       ),
     });
 
-    // Initial result - fight with all unique-named enemies
-    expect(Array.from(result.current).sort()).toEqual([100, 200, 300]);
+    expect(Array.from(result.current).sort()).toEqual([100, 200]);
 
     // Rerender with different fight ID - fight without enemies
     rerender();
@@ -743,7 +764,7 @@ describe('useSelectedTargetIds', () => {
       ),
     });
 
-    expect(Array.from(result.current).sort()).toEqual([100, 200, 300]);
+    expect(Array.from(result.current)).toEqual([]);
   });
 
   it('should return stable reference when params do not change', () => {
@@ -766,14 +787,14 @@ describe('useSelectedTargetIds', () => {
     });
 
     const firstResult = result.current;
-    expect(Array.from(firstResult).sort()).toEqual([100, 200, 300]);
+    expect(Array.from(firstResult).sort()).toEqual([100, 200]);
 
     // Re-render without changing any dependencies
     rerender();
 
     const secondResult = result.current;
     expect(secondResult).toBe(firstResult); // Should be the same reference
-    expect(Array.from(secondResult).sort()).toEqual([100, 200, 300]);
+    expect(Array.from(secondResult).sort()).toEqual([100, 200]);
   });
 
   it('should return stable reference for selected target when params do not change', () => {
