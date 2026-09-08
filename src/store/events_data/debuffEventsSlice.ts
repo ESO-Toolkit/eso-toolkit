@@ -25,6 +25,7 @@ import {
   EVENT_MAX_PAGES_PER_STREAM,
   EVENT_PAGE_LIMIT,
 } from './constants';
+import { assertCompleteEventPage, deduplicateEventPages } from './utils/deduplicateEvents';
 import {
   createCurrentRequest,
   hasFreshCacheForMode,
@@ -96,12 +97,13 @@ export const fetchDebuffEvents = createAsyncThunk<
   async ({ reportCode, fight, client, restrictToFightWindow = true }, { signal }) => {
     // Fetch both friendly and enemy debuff events
     const hostilityTypes = [HostilityType.Friendlies, HostilityType.Enemies];
-    const eventChunks: LogEvent[][] = [];
+    const eventStreams: LogEvent[][] = [];
 
     const initialStartTime = restrictToFightWindow ? fight.startTime : undefined;
     const finalEndTime = restrictToFightWindow ? (fight.endTime ?? undefined) : undefined;
 
     for (const hostilityType of hostilityTypes) {
+      const eventPages: LogEvent[][] = [];
       let totalEvents = 0;
       let pageCount = 0;
       let nextPageTimestamp: number | null = null;
@@ -129,29 +131,32 @@ export const fetchDebuffEvents = createAsyncThunk<
         pageCount += 1;
 
         const page = response.reportData?.report?.events;
-        if (page?.data?.length) {
+        assertCompleteEventPage(page, 'Debuff');
+        if (page.data.length) {
           totalEvents += page.data.length;
           if (totalEvents > EVENT_MAX_EVENTS_PER_STREAM) {
             throw new Error(
               `Debuff event pagination exceeded ${EVENT_MAX_EVENTS_PER_STREAM} events`,
             );
           }
-          eventChunks.push(page.data);
+          eventPages.push(page.data);
         }
-        const followingTimestamp = page?.nextPageTimestamp ?? null;
+        const followingTimestamp = page.nextPageTimestamp ?? null;
         if (
           followingTimestamp != null &&
-          requestedStartTime != null &&
-          followingTimestamp <= requestedStartTime
+          (!Number.isFinite(followingTimestamp) ||
+            (requestedStartTime != null && followingTimestamp <= requestedStartTime))
         ) {
           throw new Error('Debuff event pagination cursor did not advance');
         }
         nextPageTimestamp = followingTimestamp;
       } while (nextPageTimestamp != null);
+
+      eventStreams.push(deduplicateEventPages(eventPages));
     }
 
     // Filter to only debuff events
-    const debuffEvents = eventChunks
+    const debuffEvents = eventStreams
       .flat()
       .filter(
         (event) =>

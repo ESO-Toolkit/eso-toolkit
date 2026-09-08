@@ -25,6 +25,7 @@ import {
   EVENT_MAX_PAGES_PER_STREAM,
   EVENT_PAGE_LIMIT,
 } from './constants';
+import { assertCompleteEventPage, deduplicateEventPages } from './utils/deduplicateEvents';
 import {
   createCurrentRequest,
   hasFreshCacheForMode,
@@ -106,13 +107,14 @@ export const fetchDamageEvents = createAsyncThunk<
 
     // Fetch both friendly and enemy damage events
     const hostilityTypes = [HostilityType.Friendlies, HostilityType.Enemies];
-    const eventChunks: LogEvent[][] = [];
+    const eventStreams: DamageEvent[][] = [];
 
     const initialStartTime = restrictToFightWindow ? fight.startTime : undefined;
     const finalEndTime = restrictToFightWindow ? (fight.endTime ?? undefined) : undefined;
 
     try {
       for (const hostilityType of hostilityTypes) {
+        const eventPages: LogEvent[][] = [];
         let nextPageTimestamp: number | null = null;
         let pageCount = 0;
         let streamEventCount = 0;
@@ -140,14 +142,15 @@ export const fetchDamageEvents = createAsyncThunk<
           pageCount += 1;
 
           const page = response.reportData?.report?.events;
-          if (page?.data?.length) {
+          assertCompleteEventPage(page, 'Damage');
+          if (page.data.length) {
             streamEventCount += page.data.length;
             if (streamEventCount > EVENT_MAX_EVENTS_PER_STREAM) {
               throw new Error(
                 `Damage event pagination exceeded ${EVENT_MAX_EVENTS_PER_STREAM} events`,
               );
             }
-            eventChunks.push(page.data);
+            eventPages.push(page.data);
             logger.info(`Fetched damage events page ${pageCount} for ${hostilityType}`, {
               reportCode,
               fightId: fight.id,
@@ -158,16 +161,18 @@ export const fetchDamageEvents = createAsyncThunk<
             });
           }
 
-          const followingTimestamp = page?.nextPageTimestamp ?? null;
+          const followingTimestamp = page.nextPageTimestamp ?? null;
           if (
             followingTimestamp != null &&
-            requestedStartTime != null &&
-            followingTimestamp <= requestedStartTime
+            (!Number.isFinite(followingTimestamp) ||
+              (requestedStartTime != null && followingTimestamp <= requestedStartTime))
           ) {
             throw new Error('Damage event pagination cursor did not advance');
           }
           nextPageTimestamp = followingTimestamp;
         } while (nextPageTimestamp != null);
+
+        eventStreams.push(deduplicateEventPages(eventPages as DamageEvent[][]));
       }
     } catch (error) {
       return rejectWithValue(
@@ -175,7 +180,7 @@ export const fetchDamageEvents = createAsyncThunk<
       );
     }
 
-    const allEvents = eventChunks.flat();
+    const allEvents = eventStreams.flat();
 
     logger.info('Damage events fetch completed', {
       reportCode,

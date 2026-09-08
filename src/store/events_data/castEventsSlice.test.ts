@@ -304,30 +304,42 @@ describe('castEventsSlice', () => {
         expect(entry?.error).toBe('Failed to fetch cast events');
       });
 
-      it('should reject a pagination cursor that does not advance', async () => {
-        mockClient.query.mockResolvedValueOnce({
-          reportData: {
-            report: {
-              events: {
-                data: mockCastEvents,
-                nextPageTimestamp: mockFight.startTime,
+      it.each([
+        ['equal to the requested start', 1000, true],
+        ['NaN', Number.NaN, true],
+        ['infinite on an unrestricted first page', Number.POSITIVE_INFINITY, false],
+      ])(
+        'should reject a pagination cursor that is %s',
+        async (_label, cursor, restrictToFightWindow) => {
+          mockClient.query.mockResolvedValueOnce({
+            reportData: {
+              report: {
+                events: {
+                  data: mockCastEvents,
+                  nextPageTimestamp: cursor,
+                },
               },
             },
-          },
-        });
+          });
 
-        await store.dispatch(
-          fetchCastEvents({ reportCode: 'ABC123', fight: mockFight, client: mockClient }) as any,
-        );
+          await store.dispatch(
+            fetchCastEvents({
+              reportCode: 'ABC123',
+              fight: mockFight,
+              client: mockClient,
+              restrictToFightWindow,
+            }) as any,
+          );
 
-        const state = store.getState() as { events: { casts: CastEventsState } };
-        const { key } = resolveCacheKey({ reportCode: 'ABC123', fightId: Number(mockFight.id) });
-        expect(state.events.casts.entries[key]?.status).toBe('failed');
-        expect(state.events.casts.entries[key]?.error).toBe(
-          'Cast event pagination cursor did not advance',
-        );
-        expect(mockClient.query).toHaveBeenCalledTimes(1);
-      });
+          const state = store.getState() as { events: { casts: CastEventsState } };
+          const { key } = resolveCacheKey({ reportCode: 'ABC123', fightId: Number(mockFight.id) });
+          expect(state.events.casts.entries[key]?.status).toBe('failed');
+          expect(state.events.casts.entries[key]?.error).toBe(
+            'Cast event pagination cursor did not advance',
+          );
+          expect(mockClient.query).toHaveBeenCalledTimes(1);
+        },
+      );
 
       it('should forward thunk cancellation to the in-flight request', async () => {
         let requestSignal: AbortSignal | undefined;
