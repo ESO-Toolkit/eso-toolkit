@@ -2,6 +2,7 @@ import ClearIcon from '@mui/icons-material/Clear';
 import SearchIcon from '@mui/icons-material/Search';
 import TimelineIcon from '@mui/icons-material/Timeline';
 import {
+  Alert,
   Box,
   Typography,
   List,
@@ -26,6 +27,7 @@ interface StatusEffectUptimesViewProps {
   fightId: string | null;
   onOpenTimeline?: () => void;
   canOpenTimeline?: boolean;
+  unavailableMessage?: string;
 }
 
 export const StatusEffectUptimesView: React.FC<StatusEffectUptimesViewProps> = ({
@@ -36,6 +38,7 @@ export const StatusEffectUptimesView: React.FC<StatusEffectUptimesViewProps> = (
   fightId,
   onOpenTimeline,
   canOpenTimeline = false,
+  unavailableMessage,
 }) => {
   const descriptionId = React.useId();
   const [nameFilter, setNameFilter] = React.useState('');
@@ -143,7 +146,13 @@ export const StatusEffectUptimesView: React.FC<StatusEffectUptimesViewProps> = (
         {selectedTargetId && '. Click on a status effect to view in ESO Logs'}.
       </Typography>
 
-      {statusEffectUptimes && statusEffectUptimes.length > 0 && (
+      {unavailableMessage && (
+        <Alert severity="warning" sx={{ mb: 2 }}>
+          {unavailableMessage}
+        </Alert>
+      )}
+
+      {!unavailableMessage && statusEffectUptimes && statusEffectUptimes.length > 0 && (
         <TextField
           size="small"
           fullWidth
@@ -176,7 +185,8 @@ export const StatusEffectUptimesView: React.FC<StatusEffectUptimesViewProps> = (
         />
       )}
 
-      {filteredStatusEffectUptimes && filteredStatusEffectUptimes.length > 0 ? (
+      {unavailableMessage ? null : filteredStatusEffectUptimes &&
+        filteredStatusEffectUptimes.length > 0 ? (
         <Box sx={{ maxHeight: 400, overflowY: 'auto' }}>
           <List disablePadding>
             {filteredStatusEffectUptimes.map((statusEffect) => {

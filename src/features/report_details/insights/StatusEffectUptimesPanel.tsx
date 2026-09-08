@@ -14,6 +14,10 @@ import { ALL_TARGETS_SENTINEL } from '../../../hooks/useSelectedTargetIds';
 import { useSelectedReportAndFight } from '../../../ReportFightContext';
 import { selectSelectedFriendlyPlayerId } from '../../../store/ui/uiSelectors';
 import type { BuffLookupData } from '../../../utils/BuffLookupUtils';
+import type {
+  StatusEffectUptimesByTarget,
+  StatusEffectUptimesResult,
+} from '../../../workers/calculations/CalculateStatusEffectUptimes';
 
 import { BuffUptime } from './BuffUptimeProgressBar';
 import { EffectUptimeTimelineModal } from './EffectUptimeTimelineModal';
@@ -23,6 +27,36 @@ import { buildUptimeTimelineSeries } from './utils/buildUptimeTimeline';
 interface StatusEffectUptimesPanelProps {
   fight: FightFragment;
   selectedPlayerId?: number | null; // Optional: if provided, show per-player uptimes with group average deltas
+}
+
+export function getStatusEffectUptimesForPanel(
+  result: StatusEffectUptimesResult | null | undefined,
+): StatusEffectUptimesByTarget[] | null {
+  return result?.status === 'ok' ? result.data : null;
+}
+
+export function isStatusEffectUptimesResultPending(
+  result: StatusEffectUptimesResult | null | undefined,
+): boolean {
+  return result === undefined || result === null;
+}
+
+export function getStatusEffectUptimesUnavailableMessage(
+  result: StatusEffectUptimesResult | null | undefined,
+): string | undefined {
+  if (result?.status !== 'no-data') {
+    return undefined;
+  }
+
+  switch (result.reason) {
+    case 'missing-fight-start':
+    case 'missing-fight-end':
+      return 'Status effect uptimes are unavailable because this fight is missing timing data.';
+    case 'non-finite-fight-start':
+    case 'non-finite-fight-end':
+    case 'invalid-fight-window':
+      return 'Status effect uptimes are unavailable because this fight has invalid timing data.';
+  }
 }
 
 export const StatusEffectUptimesPanel: React.FC<StatusEffectUptimesPanelProps> = ({
@@ -51,9 +85,15 @@ export const StatusEffectUptimesPanel: React.FC<StatusEffectUptimesPanelProps> =
 
   // Use the worker-based selector for status effect uptimes (now returns target-segmented data)
   const { statusEffectUptimesData, isStatusEffectUptimesLoading } = useStatusEffectUptimesTask();
+  const statusEffectUptimes = getStatusEffectUptimesForPanel(statusEffectUptimesData);
+  const unavailableMessage = getStatusEffectUptimesUnavailableMessage(statusEffectUptimesData);
 
   const fightStartTime = fight?.startTime;
   const fightEndTime = fight?.endTime;
+  const hasValidFightWindow =
+    Number.isFinite(fightStartTime) &&
+    Number.isFinite(fightEndTime) &&
+    fightEndTime > fightStartTime;
 
   const realTargetFilter = React.useMemo(() => {
     if (selectedTargetIds.size === 0 || selectedTargetIds.has(ALL_TARGETS_SENTINEL)) {
@@ -97,12 +137,12 @@ export const StatusEffectUptimesPanel: React.FC<StatusEffectUptimesPanelProps> =
 
   // Filter and average the target-segmented data based on selected targets
   const filteredStatusEffectUptimes = React.useMemo<BuffUptime[]>(() => {
-    if (!statusEffectUptimesData || selectedTargetIds.size === 0) {
+    if (!statusEffectUptimes || selectedTargetIds.size === 0) {
       return [];
     }
 
     // Cache fight duration calculation
-    const fightDuration = fightEndTime && fightStartTime ? fightEndTime - fightStartTime : 1;
+    const fightDuration = hasValidFightWindow ? fightEndTime - fightStartTime : 1;
 
     // If "All Targets" is selected, include all available targets
     const shouldIncludeAllTargets = selectedTargetIds.has(ALL_TARGETS_SENTINEL);
@@ -117,7 +157,7 @@ export const StatusEffectUptimesPanel: React.FC<StatusEffectUptimesPanelProps> =
 
     const results: BuffUptime[] = [];
 
-    statusEffectUptimesData.forEach((uptimeData) => {
+    statusEffectUptimes.forEach((uptimeData) => {
       // Use allPlayers data (aggregated across all players)
       const targetData = uptimeData.allPlayers || uptimeData.targetData || {};
       const baseData = {
@@ -181,7 +221,7 @@ export const StatusEffectUptimesPanel: React.FC<StatusEffectUptimesPanelProps> =
     });
 
     return results;
-  }, [statusEffectUptimesData, selectedTargetIds, fightStartTime, fightEndTime]);
+  }, [statusEffectUptimes, selectedTargetIds, fightStartTime, fightEndTime, hasValidFightWindow]);
 
   // Recalculate uptimes when a specific player is selected - now O(1) lookup!
   const playerFilteredStatusEffectUptimes = React.useMemo<BuffUptime[]>(() => {
@@ -190,12 +230,12 @@ export const StatusEffectUptimesPanel: React.FC<StatusEffectUptimesPanelProps> =
     const playerIdToFilter = selectedFriendlyPlayerId;
 
     // If no player selected, return the original data
-    if (playerIdToFilter == null || !statusEffectUptimesData) {
+    if (playerIdToFilter == null || !statusEffectUptimes) {
       return filteredStatusEffectUptimes;
     }
 
     // If no fight time bounds, can't calculate
-    if (!fightStartTime || !fightEndTime) {
+    if (!hasValidFightWindow) {
       return filteredStatusEffectUptimes;
     }
 
@@ -209,8 +249,8 @@ export const StatusEffectUptimesPanel: React.FC<StatusEffectUptimesPanelProps> =
 
     // For each status effect, use O(1) lookup to get player-specific data
     filteredStatusEffectUptimes.forEach((originalUptime) => {
-      // Find the corresponding entry in statusEffectUptimesData
-      const uptimeData = statusEffectUptimesData.find(
+      // Find the corresponding entry in statusEffectUptimes
+      const uptimeData = statusEffectUptimes.find(
         (data) => data.abilityGameID === originalUptime.abilityGameID,
       );
       if (!uptimeData || !uptimeData.byPlayer) {
@@ -277,10 +317,11 @@ export const StatusEffectUptimesPanel: React.FC<StatusEffectUptimesPanelProps> =
   }, [
     filteredStatusEffectUptimes,
     selectedFriendlyPlayerId,
-    statusEffectUptimesData,
+    statusEffectUptimes,
     selectedTargetIds,
     fightStartTime,
     fightEndTime,
+    hasValidFightWindow,
   ]);
 
   // Enhance the results with ability names from master data
@@ -306,7 +347,7 @@ export const StatusEffectUptimesPanel: React.FC<StatusEffectUptimesPanelProps> =
 
     // If a player is selected, add group average for comparison
     // Calculate the AVERAGE of individual player uptimes (not the combined/overlapping total)
-    if (usePlayerData && statusEffectUptimesData && fightStartTime && fightEndTime) {
+    if (usePlayerData && statusEffectUptimes && hasValidFightWindow) {
       const fightDuration = fightEndTime - fightStartTime;
       const shouldIncludeAllTargets = selectedTargetIds.has(ALL_TARGETS_SENTINEL);
       const selectedTargetsArray = shouldIncludeAllTargets
@@ -316,7 +357,7 @@ export const StatusEffectUptimesPanel: React.FC<StatusEffectUptimesPanelProps> =
       const groupAverageMap = new Map<string, number>();
 
       // For each status effect, calculate the average of individual player uptimes
-      statusEffectUptimesData.forEach((uptimeData) => {
+      statusEffectUptimes.forEach((uptimeData) => {
         if (!uptimeData.byPlayer) {
           return;
         }
@@ -395,7 +436,8 @@ export const StatusEffectUptimesPanel: React.FC<StatusEffectUptimesPanelProps> =
     fightEndTime,
     fightStartTime,
     selectedTargetIds,
-    statusEffectUptimesData,
+    statusEffectUptimes,
+    hasValidFightWindow,
   ]);
 
   // Enhanced loading check: ensure ALL required data is available and processing is complete
@@ -416,12 +458,13 @@ export const StatusEffectUptimesPanel: React.FC<StatusEffectUptimesPanelProps> =
     }
 
     // Still loading if status effect task hasn't completed yet
-    // Note: statusEffectUptimesData can be null, undefined, or [] depending on state
-    if (statusEffectUptimesData === undefined || statusEffectUptimesData === null) {
+    // An absent task result is loading; an `ok` empty array and a typed no-data
+    // result are both completed states; typed no-data renders its reason.
+    if (isStatusEffectUptimesResultPending(statusEffectUptimesData)) {
       return true;
     }
 
-    // Data is ready - statusEffectUptimesData is either [] (no effects) or contains effects
+    // Data is ready - the completed task can have no effects or an invalid window.
     return false;
   }, [
     isMasterDataLoading,
@@ -433,7 +476,7 @@ export const StatusEffectUptimesPanel: React.FC<StatusEffectUptimesPanelProps> =
   ]);
 
   const prefetchedSeries = React.useMemo(() => {
-    if (!mergedStatusEffectLookup || !fightStartTime || !fightEndTime) {
+    if (!mergedStatusEffectLookup || !hasValidFightWindow) {
       return [];
     }
 
@@ -454,6 +497,7 @@ export const StatusEffectUptimesPanel: React.FC<StatusEffectUptimesPanelProps> =
     fightEndTime,
     enhancedStatusEffectUptimes,
     realTargetFilter,
+    hasValidFightWindow,
   ]);
 
   const canOpenTimeline = prefetchedSeries.length > 0;
@@ -481,6 +525,7 @@ export const StatusEffectUptimesPanel: React.FC<StatusEffectUptimesPanelProps> =
         fightId={fightId}
         onOpenTimeline={canOpenTimeline ? () => setIsTimelineOpen(true) : undefined}
         canOpenTimeline={canOpenTimeline}
+        unavailableMessage={unavailableMessage}
       />
       <EffectUptimeTimelineModal
         open={isTimelineOpen}
