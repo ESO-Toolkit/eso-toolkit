@@ -4,6 +4,7 @@ import { FightFragment } from '../../../graphql/gql/graphql';
 import { useDamageEvents, useReportMasterData } from '../../../hooks';
 import { useSelectedTargetIds } from '../../../hooks/useSelectedTargetIds';
 import { DamageTypeFlags } from '../../../types/abilities';
+import { HitType } from '../../../types/combatlogEvents';
 
 import { DamageTypeBreakdownView } from './DamageTypeBreakdownView';
 import { categorizeDamageEvents, type DamageCategoryKey } from './damageTypeCategorization';
@@ -18,8 +19,11 @@ interface DamageTypeBreakdown {
   displayName: string;
   totalDamage: number;
   hitCount: number;
+  eligibleHitCount: number;
   criticalHits: number;
-  criticalRate: number;
+  criticalRate: number | null;
+  criticalDamage: number;
+  criticalDamageShare: number | null;
   averageDamage: number;
 }
 
@@ -55,29 +59,67 @@ export const DamageTypeBreakdownPanel: React.FC<DamageTypeBreakdownPanelProps> =
       return { damageTypeBreakdown: [], totalDamage: 0 };
     }
 
+    const isSelectedEvent = (event: (typeof damageEvents)[number]): boolean => {
+      if (selectedTargetIds.size > 0 && !selectedTargetIds.has(event.targetID)) return false;
+      if (selectedPlayerId != null && event.sourceID !== selectedPlayerId) return false;
+      return true;
+    };
     const categorized = categorizeDamageEvents(damageEvents, reportMasterData.abilitiesById, {
-      includeEvent: (event) => {
-        // Only include events where the target is in selectedTargets
-        if (selectedTargetIds.size > 0 && !selectedTargetIds.has(event.targetID)) return false;
-        // Only include events from the selected player when one is chosen
-        if (selectedPlayerId != null && event.sourceID !== selectedPlayerId) return false;
-        return true;
-      },
+      includeEvent: isSelectedEvent,
     });
+    const eligibleCategorized = categorizeDamageEvents(
+      damageEvents,
+      reportMasterData.abilitiesById,
+      {
+        includeEvent: (event) =>
+          isSelectedEvent(event) &&
+          (event.hitType === HitType.Normal || event.hitType === HitType.Critical),
+      },
+    );
+    const criticalCategorized = categorizeDamageEvents(
+      damageEvents,
+      reportMasterData.abilitiesById,
+      {
+        includeEvent: (event) => isSelectedEvent(event) && event.hitType === HitType.Critical,
+      },
+    );
+    const unknownHitTypeCategorized = categorizeDamageEvents(
+      damageEvents,
+      reportMasterData.abilitiesById,
+      {
+        includeEvent: (event) =>
+          isSelectedEvent(event) &&
+          event.hitType !== HitType.Normal &&
+          event.hitType !== HitType.Critical,
+      },
+    );
 
     const breakdown: DamageTypeBreakdown[] = CATEGORY_META.filter(
       (meta) => categorized[meta.key].totalDamage > 0,
     ).map((meta) => {
       const bucket = categorized[meta.key];
-      const criticalRate = bucket.hitCount > 0 ? (bucket.criticalHits / bucket.hitCount) * 100 : 0;
+      const eligibleBucket = eligibleCategorized[meta.key];
+      const criticalBucket = criticalCategorized[meta.key];
+      const hasUnknownHitType = unknownHitTypeCategorized[meta.key].hitCount > 0;
+      const criticalRate =
+        eligibleBucket.hitCount > 0
+          ? (criticalBucket.hitCount / eligibleBucket.hitCount) * 100
+          : null;
+      const criticalDamageShare =
+        bucket.totalDamage > 0 && !hasUnknownHitType
+          ? (criticalBucket.totalDamage / bucket.totalDamage) * 100
+          : null;
       const averageDamage = bucket.hitCount > 0 ? bucket.totalDamage / bucket.hitCount : 0;
       return {
         damageType: meta.damageType,
         displayName: meta.displayName,
         totalDamage: bucket.totalDamage,
         hitCount: Math.round(bucket.hitCount),
-        criticalHits: Math.round(bucket.criticalHits),
+        eligibleHitCount: Math.round(eligibleBucket.hitCount),
+        criticalHits: Math.round(criticalBucket.hitCount),
         criticalRate,
+        criticalDamage: criticalBucket.totalDamage,
+        criticalDamageShare,
         averageDamage,
       };
     });
