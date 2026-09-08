@@ -1,3 +1,4 @@
+import { resolveZoneScaleData } from '../features/fight_replay/utils/mapTransform';
 import { FightFragment } from '../graphql/gql/graphql';
 
 import { resolveInheritedFightMaps, withInheritedFightMaps } from './inheritedFightMap';
@@ -156,5 +157,26 @@ describe('withInheritedFightMaps', () => {
     expect(result).not.toBe(trash);
     expect(result?.maps).toEqual([LUCENT_MAP]);
     expect(trash.maps).toBeUndefined();
+  });
+});
+
+describe('marker layer integration', () => {
+  it('lets a trash pull resolve zone scale data, which markers and shapes gate on', () => {
+    // Every marker/shape consumer (MapMarkers, MorMarkers, useMarkerStats,
+    // useMapMarkersManager) bails when the fight has no maps, so a trash pull could show no
+    // markers at all. The inherited map is what unblocks them — pinned here on real Lucent
+    // Citadel ids (zone 1478 / map 2552) so a data change can't silently break the contract.
+    const trash = makeFight({ id: 33, gameZone: { id: 1478, name: 'Lucent Citadel' } });
+    const boss = makeFight({
+      id: 34,
+      encounterID: 60,
+      gameZone: { id: 1478, name: 'Lucent Citadel' },
+      maps: [LUCENT_MAP],
+    });
+
+    expect(resolveZoneScaleData(trash, 1478)).toBeNull();
+
+    const withMaps = withInheritedFightMaps(trash, [trash, boss]);
+    expect(resolveZoneScaleData(withMaps!, 1478)?.mapId).toBe(2552);
   });
 });

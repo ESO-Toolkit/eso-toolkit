@@ -13,7 +13,6 @@ import { useScrubbingMode } from '@/hooks/useScrubbingMode';
 import { FightFragment } from '../../../graphql/gql/graphql';
 import { usePerfTier } from '../../../hooks/usePerfTier';
 import { usePhaseBasedMap } from '../../../hooks/usePhaseBasedMap';
-import { useReportData } from '../../../hooks/useReportData';
 import { useReplayPrefs, type ReplayQualityPreset } from '../../../hooks/useReplayPrefs';
 import { useTimelineMarkers } from '../../../hooks/useTimelineMarkers';
 import { BuffEvent } from '../../../types/combatlogEvents';
@@ -120,6 +119,14 @@ export interface TrialReplayNav {
 
 interface FightReplay3DProps {
   selectedFight: FightFragment;
+  /**
+   * The same fight as seen by the MAP layer: identical to `selectedFight` except on a pull ESO Logs
+   * ships no `maps` for (any trash pull), where it carries the map borrowed from a sibling fight so
+   * the floor and the markers resolve — see `withInheritedFightMaps`. Only the map/marker plumbing
+   * reads it; titles and badges stay on `selectedFight` so they keep naming the pull itself.
+   * Defaults to `selectedFight`.
+   */
+  mapFight?: FightFragment;
   allBuffEvents: BuffEvent[];
   showActorNames?: boolean;
   markersState?: MapMarkersState | null;
@@ -165,6 +172,7 @@ interface FightReplay3DProps {
 
 export const FightReplay3D: React.FC<FightReplay3DProps> = ({
   selectedFight,
+  mapFight,
   allBuffEvents,
   showActorNames = true,
   markersState,
@@ -359,14 +367,13 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
     };
   }, [selectedFight.name, selectedFight.difficulty, selectedFight.kill]);
 
-  // Map timeline for debug information and phase-aware map changes. The report's other fights are
-  // supplied so a trash pull — which ESO Logs ships with no `maps` at all — can inherit the floor
-  // map from a boss fight in the same zone instead of rendering a blank plane.
-  const { reportData } = useReportData();
+  // The fight the map layer works from — `selectedFight` unless it needed to borrow a map.
+  const effectiveMapFight = mapFight ?? selectedFight;
+
+  // Map timeline for debug information and phase-aware map changes
   const { mapTimeline } = usePhaseBasedMap({
-    fight: selectedFight || null,
+    fight: effectiveMapFight || null,
     buffEvents: allBuffEvents.length > 0 ? allBuffEvents : null,
-    reportFights: reportData?.fights ?? null,
   });
 
   // Parse URL parameters for timestamp initialization
@@ -1464,7 +1471,7 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
             onUndoMarkers={onUndoMarkers}
             canRedoMarkers={canRedoMarkers}
             onRedoMarkers={onRedoMarkers}
-            fight={selectedFight}
+            fight={effectiveMapFight}
             selectedPlayerIds={selectedPlayerIds}
             onPlayerSelectionChange={setSelectedPlayerIds}
             showPlayerPathsHUD={showPlayerPathsHUD}
