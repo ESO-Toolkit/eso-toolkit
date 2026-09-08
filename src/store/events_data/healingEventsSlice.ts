@@ -19,7 +19,13 @@ import {
   trimCache,
 } from '../utils/keyedCacheState';
 
-import { EVENT_CACHE_MAX_ENTRIES, EVENT_PAGE_LIMIT } from './constants';
+import {
+  EVENT_CACHE_MAX_ENTRIES,
+  EVENT_MAX_EVENTS_PER_STREAM,
+  EVENT_MAX_PAGES_PER_STREAM,
+  EVENT_PAGE_LIMIT,
+} from './constants';
+import { assertCompleteEventPage, deduplicateEventPages } from './utils/deduplicateEvents';
 import { createCurrentRequest, isStaleResponse } from './utils/requestTracking';
 
 const logger = new Logger({ level: LogLevel.INFO, contextPrefix: 'HealingEvents' });
@@ -67,52 +73,93 @@ const initialState: HealingEventsState = {
   accessOrder: [],
 };
 
+const hasFreshCache = (entry: HealingEventsEntry | undefined): boolean => {
+  const lastFetchedTimestamp = entry?.cacheMetadata.lastFetchedTimestamp;
+  return (
+    entry?.status === 'succeeded' &&
+    typeof lastFetchedTimestamp === 'number' &&
+    Date.now() - lastFetchedTimestamp < DATA_FETCH_CACHE_TIMEOUT
+  );
+};
+
 export const fetchHealingEvents = createAsyncThunk(
   'healingEvents/fetchHealingEvents',
-  async ({
-    reportCode,
-    fight,
-    client,
-  }: {
-    reportCode: string;
-    fight: FightFragment;
-    client: EsoLogsClient;
-  }) => {
+  async (
+    {
+      reportCode,
+      fight,
+      client,
+    }: {
+      reportCode: string;
+      fight: FightFragment;
+      client: EsoLogsClient;
+    },
+    { signal },
+  ) => {
     // Fetch both friendly and enemy healing events
     const hostilityTypes = [HostilityType.Friendlies, HostilityType.Enemies];
-    let allEvents: LogEvent[] = [];
+    const eventStreams: LogEvent[][] = [];
 
     for (const hostilityType of hostilityTypes) {
+      const eventPages: LogEvent[][] = [];
+      let totalEvents = 0;
+      let pageCount = 0;
       let nextPageTimestamp: number | null = null;
 
       do {
+        signal.throwIfAborted();
+        if (pageCount >= EVENT_MAX_PAGES_PER_STREAM) {
+          throw new Error(`Healing event pagination exceeded ${EVENT_MAX_PAGES_PER_STREAM} pages`);
+        }
+
+        const requestedStartTime = nextPageTimestamp ?? fight.startTime;
         const response: GetHealingEventsQuery = await client.query({
           query: GetHealingEventsDocument,
           fetchPolicy: 'no-cache',
+          context: { fetchOptions: { signal } },
           variables: {
             code: reportCode,
             fightIds: [Number(fight.id)],
-            startTime: nextPageTimestamp ?? fight.startTime,
+            startTime: requestedStartTime,
             endTime: fight.endTime,
             hostilityType: hostilityType,
             limit: EVENT_PAGE_LIMIT,
           },
         });
+        pageCount += 1;
 
         const page = response.reportData?.report?.events;
-        if (page?.data) {
-          allEvents = allEvents.concat(page.data);
+        assertCompleteEventPage(page, 'Healing');
+        if (page.data.length) {
+          totalEvents += page.data.length;
+          if (totalEvents > EVENT_MAX_EVENTS_PER_STREAM) {
+            throw new Error(
+              `Healing event pagination exceeded ${EVENT_MAX_EVENTS_PER_STREAM} events`,
+            );
+          }
+          eventPages.push(page.data);
           logger.info(`Fetched healing events page for ${hostilityType}`, {
             reportCode,
             fightId: Number(fight.id),
             hostilityType,
             eventsInPage: page.data.length,
-            totalEvents: allEvents.length,
+            totalEvents: eventPages.reduce((total, events) => total + events.length, 0),
           });
         }
-        nextPageTimestamp = page?.nextPageTimestamp ?? null;
-      } while (nextPageTimestamp);
+        const followingTimestamp = page.nextPageTimestamp ?? null;
+        if (
+          followingTimestamp != null &&
+          (!Number.isFinite(followingTimestamp) || followingTimestamp <= requestedStartTime)
+        ) {
+          throw new Error('Healing event pagination cursor did not advance');
+        }
+        nextPageTimestamp = followingTimestamp;
+      } while (nextPageTimestamp != null);
+
+      eventStreams.push(deduplicateEventPages(eventPages));
     }
+
+    const allEvents = eventStreams.flat() as HealEvent[];
 
     logger.info('Healing events fetch completed', {
       reportCode,
@@ -120,7 +167,7 @@ export const fetchHealingEvents = createAsyncThunk(
       totalEvents: allEvents.length,
     });
 
-    return allEvents as HealEvent[];
+    return allEvents;
   },
   {
     condition: ({ reportCode, fight }, { getState }) => {
@@ -128,13 +175,8 @@ export const fetchHealingEvents = createAsyncThunk(
       const { key } = resolveCacheKey({ reportCode, fightId: Number(fight.id) });
       const entry = state.entries[key];
 
-      const lastFetchedTimestamp = entry?.cacheMetadata.lastFetchedTimestamp;
-      const isCached = Boolean(entry?.events.length);
-      const isFresh =
-        typeof lastFetchedTimestamp === 'number' &&
-        Date.now() - lastFetchedTimestamp < DATA_FETCH_CACHE_TIMEOUT;
-
-      if (isCached && isFresh) {
+      if (hasFreshCache(entry)) {
+        const lastFetchedTimestamp = entry?.cacheMetadata.lastFetchedTimestamp;
         logger.info('Using cached healing events', {
           reportCode,
           fightId: Number(fight.id),
@@ -154,6 +196,7 @@ export const fetchHealingEvents = createAsyncThunk(
 
       return true; // Allow thunk execution
     },
+    dispatchConditionRejection: true,
   },
 );
 
@@ -241,6 +284,15 @@ const healingEventsSlice = createSlice({
           fightId: Number(action.meta.arg.fight.id),
         });
         const entry = ensureEntry(state, key);
+        if (action.meta.condition) {
+          if (hasFreshCache(entry)) {
+            entry.status = 'succeeded';
+            entry.error = null;
+            entry.currentRequest = null;
+            touchAccessOrder(state, key);
+          }
+          return;
+        }
         if (
           isStaleResponse(
             entry.currentRequest,
