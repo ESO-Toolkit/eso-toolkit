@@ -40,7 +40,7 @@ At the intended 32-64 px replay size this reads correctly. It would not survive 
 ## Chart count exceeded the asset we rejected — and it was still right to ship
 
 This atlas has **1,748 charts**, more than the Dwarven Colossus's 1,406, which is one of the two
-numbers the build was told to stop on. It did not stop, and the reasoning is worth keeping:
+numbers the build was told to stop on. It did not stop, and the reasoning is as follows:
 
 **Chart count was never what condemned the Colossus. Blind area was.** The Colossus had **62%** of
 texels facing neither camera; this has **26.6%**. High chart counts cost packing efficiency and
@@ -59,7 +59,7 @@ Every other asset is scaled to a target *height*. This one is not: normalised, T
 player-widths**. The registry uses **1.0**, keeping her 2.0 tall and 3.86 wide. A judgment call, as
 usual, with no published dimension to check against.
 
-## What this does NOT cover — two claims I made earlier that are wrong
+## What this does NOT cover — two earlier claims that are wrong
 
 - **Ra Kotu is not a free alias of this asset.** Geometry is very likely shared, but the *skins are
   completely different*: Ra Kotu is pale carved stone with spiral relief, Taleria is coral, moss and

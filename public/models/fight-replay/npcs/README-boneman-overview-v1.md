@@ -9,16 +9,16 @@
 
 ## Why this asset exists
 
-Every other asset in this catalog is built for one boss. This one is built for an **archetype**, and
-it is the first of its kind here.
+Every other asset in this catalog is built for one boss. This one is built for an **archetype**.
 
 The replay has no trial gate — it opens for any boss fight — so **100% of dungeon NPCs render as
 capsules today**. A 250-report sample of real dungeon logs measured 1,435 distinct enemy names, and
 skeletons are the **largest creature archetype in it**: 62 names and 822 fight-appearances by the
-report's own keyword bucket, 6.8% of everything on screen. Nothing else buys as much from one build.
+report's own keyword bucket, 6.8% of all enemy appearances. No other archetype covers as many
+names from a single build.
 
-It was missed by earlier reference sweeps for a mundane reason worth remembering: the model viewer
-files this family under **"Boneman"**, so a search for "skeleton" returned nothing.
+Earlier reference sweeps missed this family because the model viewer files it under **"Boneman"**;
+a search for "skeleton" returns nothing.
 
 ## The aliases are measured, and deliberately conservative
 
@@ -46,23 +46,22 @@ in the list. They want their own asset.
 
 Lesser-enemy budget: ~5,000 triangles and a 512px atlas, because skeletons appear dozens at a time.
 
-**The worry going in was that a skeleton is mostly holes** — thin bones and gaps that two-view
-reconstruction would fuse into a smooth mannequin. It did not. The clay render resolves individual
+**A skeleton is mostly holes** — thin bones and gaps that two-view reconstruction was expected to
+fuse into a smooth mannequin. It did not. The clay render resolves individual
 ribs, the pelvis, a segmented spine, separated fore- and upper-arm bones and articulated hands.
 
 **Screened before spending projection time**: 23.1% blind on two cameras, comfortably inside the
-shipped band of 5.6-31.5%. An upright A-pose humanoid is the shape two cameras cover best, which is
-exactly why this build succeeded on the same day that a floating rock cluster (Ra Kotu, 38.8%) was
-rejected. Final measured blind area 24.3%, within 1.2 points of the screen.
+shipped band of 5.6-31.5%. An upright A-pose humanoid is the shape two cameras cover best; by
+contrast a floating rock cluster (Ra Kotu, 38.8%) was rejected on the same measurement. Final
+measured blind area 24.3%, within 1.2 points of the screen.
 
-**No warnings.** The head-band run-structure detector did not fire at all — the only asset in this
-batch of which that is true.
+**No warnings.** The head-band run-structure detector did not fire at all.
 
-## The skull closeup was accepted — the first in a long time
+## The skull closeup was accepted
 
-`view-04` is registered and used, which is unusual: **15 consecutive closeup candidates were rejected
-across the three bosses built earlier the same day.** It was only possible because the head band can
-now be hand-set.
+`view-04` is registered and used. Accepted closeups are rare on this project — 15 consecutive
+candidates were rejected across the three preceding builds — and this one registered only because
+the head band can be hand-set.
 
 The automatic shoulder detector returns **0.7043** on this subject — the **ribcage**. That is a new
 failure mode for the detector, distinct from the three already recorded (head ornaments, robe cones,

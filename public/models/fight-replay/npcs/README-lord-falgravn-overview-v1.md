@@ -53,7 +53,7 @@ segments at x 0.39-0.418 and 0.582-0.610, cleanly disjoint from the head column 
 Placement was **verified visually on a membership render before spending projection time**
 (`build/lord-falgravn/box-check/sheet.png`): red claims the horns, cranium, face and neck; blue and
 green claim only the two membranes and their wing arms; torso, arms, loincloth and legs unclaimed.
-That check earned its keep immediately — the first placement, `y0 = 0.805`, took the horns and
+That check caught a defect immediately — the first placement, `y0 = 0.805`, took the horns and
 cranium but **left the whole face outside the box**, and no downstream metric would have reported it.
 Re-measuring the neck pinch (the column narrows to x 0.463-0.537 at y 0.77) put the floor at 0.775.
 

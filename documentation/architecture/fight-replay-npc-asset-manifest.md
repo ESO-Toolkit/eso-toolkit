@@ -15,10 +15,6 @@ anything.
 1. **CC0** — the player figure (`coolstickman-walk.glb`) only. Genuinely open.
 2. **Project-authorized fan reconstruction** — every asset built by the screenshot pipeline. Modelled
    from published reference screenshots, not extracted. Not CC0, not officially licensed.
-   **Renders by default since 2026-09-08**; the `?npcModels=prototype` opt-in that used to gate it
-   was removed at the owner's instruction. Note what that flag did and did not do: it gated
-   *rendering*, never *distribution* — every GLB has always been fetchable from the public site — so
-   its removal changes visibility, not exposure.
 3. **Extracted ESO client assets — NEW, and materially different.** `stonebreaker`,
    `possessed-mantikora`, `foundation-stone-atronach` and `cloudrest-gryphon` are **ESO's own mesh
    and ESO's own hand-authored diffuse atlas, shipped verbatim**. Nothing about them was modelled or
@@ -156,8 +152,8 @@ no reference plate, and are recorded as such.
 **Frost and Crystal Atronach share one geometry generation but ship as two GLBs**, because they
 differ in hue rather than value and no multiply tint can turn ice into iridescent glass.
 
-Two further mini bosses, **Haj Mota and Bow Breaker, were not built** and the reason is an input
-defect worth recording: their galleries are **mirror arcs of only ~90 degrees**, proven by a
+Two further mini bosses, **Haj Mota and Bow Breaker, were not built** because of an input
+defect: their galleries are **mirror arcs of only ~90 degrees**, proven by a
 silhouette mirror test (IoU 0.859 between one set's back plate and the other's mirrored). Neither
 set contains a 180-degree-opposed pair, so both reconstruction and two-camera projection would paint
 head colour onto the tail.
@@ -221,7 +217,7 @@ narrowly beating Olms' 6.9% for the same reason (broad flat wings face the refer
 squarely). **Kyne's Aegis is now complete for bosses.**
 
 This encounter was recorded here as _blocked — no adequate reference imagery exists_ for several
-rounds. **That was wrong, and the reason is worth keeping.** esomodelviewer does have him: the page
+rounds. **That was wrong.** esomodelviewer does have him: the page
 is titled **"Vampire Lord"** (`creatures/post/32-vampire-lord`), and a title-only sweep never matched
 it. The page's _body text_ states the mesh serves generic Gray Host Vampire Lords **and Lord
 Falgravn**, which was cross-checked against the UESP in-game shot — horned head plate, swept membrane
@@ -275,7 +271,7 @@ no reference existed.
 
 ### Lesser enemies — findings and the blocker
 
-Reference research corrected two premises worth recording.
+Reference research corrected two premises.
 
 **The three knights are one creature, not three.** UESP gives Blood Knight, Crimson Knight, and
 Bitter Knight all the same Species: **Bloodknight**, all located in Kyne's Aegis, and esomodelviewer
@@ -520,7 +516,7 @@ Consequences worth carrying forward:
   extracted meshes on them when a matching game diffuse exists.
 - **Metadata is not proof — open the atlas.** The audit tagged Falgravn's `VampireLord_Lurker` mesh
   as carrying a committed diffuse. It does, and it is a 512x512 tiling moss/bark detail map with no
-  charts at all. Wiring it up would have shipped a mossy Falgravn. Every atlas in this batch was
+  charts at all. Wiring it up would have shipped a mossy Falgravn. Every atlas was
   opened and looked at before shipping.
 - **The highest-leverage follow-up is locating the remaining game DDS diffuses.** The extractor's
   `trial_boss_complete.json` records diffuse `file_index` values for 22 of 30 creature models, and
@@ -582,7 +578,7 @@ the body occupies the top fifth of it. This is the identical failure that blocks
 `Harvester_Monstrous_Boss`.
 
 **That observation briefly looked like a case for building a tail-coil deformer, and then killed it
-instead.** Both bosses the deformer would have unlocked shipped the same day as ordinary Route C
+instead.** Both bosses the deformer would have unlocked ship as ordinary Route C
 reconstructions, because **reconstructing from plates sidesteps bind pose entirely rather than
 correcting it**. The deformer is worth zero bosses now and should be dropped from the plan. The
 general lesson is worth more than either asset: when an extracted mesh is unusable because of its
@@ -605,7 +601,7 @@ the **largest face allocation measured on this project at ~277x277 texels**.
 Sanctorium and (bar its mounts' alias check) Cloudrest.
 
 The `boss_1` row previously read *"Blocked — greyscale mask only, and 96 shells makes it a poor
-projection candidate"*. **Both halves of that were wrong**, and the pair is instructive:
+projection candidate"*. **Both halves of that were wrong:**
 
 - *"Greyscale mask only"* was true of the **extractor's** texture for `StormAtronach_A_Basic`, which
   rules out **Route A** (ship ESO's own diffuse). It says nothing about Route B, where the colour
@@ -651,7 +647,7 @@ all, it is the same asset at the right size. `ruined-factotum-trash-overview-v1`
 the HoF trash Factotum found while verifying the boss names. `Frost Atronach` (68) and `Crystal
 Atronach` (8) needed nothing — they were already aliased at trash scale.
 
-**Three candidates were rejected, and the reason is worth keeping.** Bare `Stone Atronach` (57
+**Three candidates were rejected.** Bare `Stone Atronach` (57
 appearances) and bare `Troll` (13) are **explicitly asserted to resolve to null** by the catalog
 tests, on the recorded grounds that a generic stone atronach is "a different, smaller creature" and
 that near-miss troll names must not borrow the Craglorn body. A tier-split entry looked like it
@@ -834,7 +830,7 @@ Analysis only, no rebuild (`build/lord-falgravn/wing-analysis.py`).
   **0.135** — only 2.4-2.8% of them clear the 0.35 grazing threshold — against |cos| 0.683 for
   front/back. Raw blend weight 0.083 versus 0.522. The wings are membranes whose normals already
   point at the cameras we have; the defect is in the `u` parameterisation, not in coverage.
-- **A top camera does not help either**, which was worth checking and is not what I expected. Slicing
+- **A top camera does not help either.** Slicing
   on depth instead of height makes the envelope _more_ volatile on this subject, 1.71% mean against
   0.67%, because the wing is thin in z. So the conclusion in the Falgravn section stands unchanged: a
   **registered wing closeup** is the fix, and nothing about camera count changes that.

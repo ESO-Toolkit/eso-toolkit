@@ -9,7 +9,7 @@
 
 Completes **Sanctum Ophidia**.
 
-## Reference — a page swap, not just a confidence upgrade
+## Reference
 
 The catalog previously pointed Ozara at `115-lamia-golden` and marked it _uncertain_. A sweep of post
 **body text** for the extractor's species names, rather than boss names, found `117-lamia-red`, whose
@@ -27,21 +27,20 @@ subject at **985 x 770 px**.
 extraction** because its bbox is 1.14 x 4.08 x 0.46. A clay render settles it: the extraction is
 **complete** — torso, arms, head and crest are all present — but the serpent tail is in a
 **straight-down bind pose**, so the model is a pencil with the torso crushed into its top fifth. That
-is the same failure that blocks Xalvakka's `Harvester_Monstrous_Boss`, which makes a tail-coil
-deformer worth **two** bosses rather than one.
+is the same failure that blocks Xalvakka's `Harvester_Monstrous_Boss`. Both are resolved by
+reconstruction rather than by a deformer.
 
-## The reconstruction risk, and how it resolved
+## Reconstruction risk
 
 The two plates agree on the torso, arms and head but **not on the tail**: the front plate coils it
-compactly at the base while the back plate sweeps it far out to frame left. The tail is most of this
-silhouette, so this was the one thing that could sink the reconstruction, and it was recorded in the
-queue log as a stated risk **before** the GPU ran rather than explained afterwards.
+compactly at the base while the back plate sweeps it out to frame left. The tail is most of this
+silhouette, and was recorded in the queue log as the principal risk before reconstruction ran.
 
-Hunyuan3D-2mv reconciled the two into a single coherent sweeping tail rather than a blob
-(`build/ozara/clay-draft-sheet.jpg`), and the draft was accepted on that clay render — per the
-standing rule that geometry is judged untextured before anything is blamed on the texture.
+Hunyuan3D-2mv resolved the two into a single coherent sweeping tail rather than a blob
+(`build/ozara/clay-draft-sheet.jpg`), and the draft was accepted on that clay render, per the
+standing rule that geometry is judged untextured before a defect is attributed to the texture.
 
-## Numbers, and why they are the best of this batch
+## Projection measurements
 
 - **14.7% of texels face neither camera.** Only Falgravn (5.6%) and Saint Olms (6.9%) are lower, and
   this is less than half the Route B assets (Oaxiltso 31.4%, Lightning Storm Atronach 31.5%).
@@ -67,7 +66,7 @@ shot from a far nearer camera than its base plates, so no candidate falls inside
 seeded scale window. `view-06` (a tight crest crop) likewise has no silhouette to lock to. `view-05`
 scored 50.80% and landed off the subject entirely; `view-08` scored 12.59% and landed beside the arm.
 
-`view-07` is the interesting one. At **5.74% it is the lowest error measured on this subject**, and
+`view-07` is the significant rejection. At **5.74% it is the lowest error measured on this subject**, and
 its overlay carries no gross doubling — but the ghost hands sit about half a hand-width up-left of
 the real hands, so the fit is wrong at precisely the feature it would smear. Rejected on the overlay,
 per the standing rule. The head does not suffer for it: the box spans v 0.80-1.0 of a 985 px subject,
@@ -75,8 +74,8 @@ so the face and crest already occupy roughly 197 px of the base plate.
 
 ## Honest limitations
 
-- **The head run-structure warning fires** on 19 of 64 slices (30%) — the lowest rate of any asset
-  built in this batch, but non-zero. The horns and frills break the silhouette into several runs that
+- **The head run-structure warning fires** on 19 of 64 slices (30%) — the lowest rate measured on
+  any asset here, but non-zero. The horns and frills break the silhouette into several runs that
   the mesh row and plate row do not always resolve identically.
 - **No profile plate exists**, so this ran on two cameras. `view-02` is a three-quarter front,
   `view-09` a pushed-in rear-quarter torso crop and `view-10` a tail-only crop. Accepted rather than

@@ -42,7 +42,7 @@ Falgravn 685, Vrol 717).
 
 ## Numbers that are worse than the shipped assets — stated plainly
 
-Three of these are noticeably worse than Olms and Falgravn and I do not want them buried:
+Three of these are noticeably worse than Olms and Falgravn:
 
 - **PSNR 35.26 dB** against Falgravn's 39.87 and Olms's 39.0. About 4 dB down. The atlas is a
   high-frequency crystal mosaic rather than the flat colour blocks JPEG handles well, so q92 has

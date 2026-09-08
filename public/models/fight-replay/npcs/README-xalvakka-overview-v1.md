@@ -16,23 +16,22 @@ as *uncertain* with the note "Dagonic variant is 1920px but is a different skin"
 Eleven plates at 1920x1080. `view-01` (front) and `view-03` (back) cut to a shared 1057 px square,
 subject **994 x 585 px**.
 
-## Why this is a reconstruction rather than Route B — and why the deformer plan is now dead
+## Why this is a reconstruction rather than Route B
 
-`Harvester_Monstrous_Boss` is in the extracted supply and is superb geometry on paper: **8 welded
-shells, 23.2% unobserved**, the best geometry-with-plates in the whole supply. It was the top-ranked
-Route B candidate on the board.
+`Harvester_Monstrous_Boss` is in the extracted supply and is excellent geometry on paper: **8 welded
+shells, 23.2% unobserved**, the best geometry-with-plates in the supply, and previously the
+highest-ranked Route B candidate.
 
 It is unusable, for the same reason `Lamia_A_Boss` is unusable for Ozara: the tail is in a
 **straight-down bind pose**. Normalised, it measures 0.594 x 0.377 x 2.0 — a pencil with the torso
 crushed into its top quarter (and `ymin = -3.91`, the origin sitting at the torso).
 
-The standing plan was to write a **tail-coil deformer** to rescue it. **That plan is now unnecessary
-and should be dropped.** Both bosses it would have unlocked — Ozara and Xalvakka — shipped as
-ordinary Route C reconstructions on the same day, because reconstructing from plates sidesteps bind
-pose entirely rather than trying to correct it. Reconstruction is the cheaper answer to a bind-pose
-problem than deformation, and that generalises past these two.
+A **tail-coil deformer** was previously planned to correct this. It is unnecessary: both bosses it
+would have unlocked, Ozara and Xalvakka, ship as Route C reconstructions instead. Reconstructing
+from plates sidesteps a bind pose entirely rather than correcting it, and is the cheaper answer to a
+bind-pose problem in general.
 
-## The cleanest opposed pair used on this project
+## Plate quality
 
 Unlike Ozara, whose two plates disagreed about the tail, these agree on **everything**: the coil is
 in the same configuration in both views, the four arms are at the same angles, and the subject
@@ -42,18 +41,19 @@ heights match. The reconstruction reflects that — the head run-structure warni
 Hunyuan3D-2mv produced 663,362 faces in **60.9 s**, and the clay render was accepted on sight: four
 arms, horned skull, plated abdomen and the spined dorsal ridge all resolved.
 
-## The head box, and a diagnosis technique worth reusing
+## The head box
 
 Two placements were rejected before the third was accepted. Rather than nudge one box and re-render
 each time, **three adjacent bands were coloured at once** — 0.78-0.83, 0.83-0.88, 0.88-1.0 — so a
 single render says directly which band holds the face. It is **v 0.83-0.88**; the horns are
 0.88-1.0 and the collar 0.78-0.83.
 
-That render also corrected a misreading of my own: the first two boxes **did** contain the face. This
+That render also corrected an earlier misreading: the first two boxes **did** contain the face. This
 subject's face is small enough that at contact-sheet scale a box claiming horns *and* face looks like
 it claims only horns. The banded probe removes the ambiguity in one pass.
 
-The shoulder detector works on this subject for once, suggesting 0.8034 against the hand-set 0.815.
+The automatic shoulder detector is accurate on this subject, returning 0.8034 against the hand-set
+0.815.
 
 ## All six closeups were rejected
 
