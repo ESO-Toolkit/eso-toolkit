@@ -55,8 +55,8 @@ addResponsiveAssertions('Responsive Analyzer summary — iPhone 12', {
   width: devices['iPhone 12'].viewport.width,
   height: devices['iPhone 12'].viewport.height,
 });
-addResponsiveAssertions('Responsive Analyzer summary — iPad Pro', {
-  width: devices['iPad Pro'].viewport.width,
-  height: devices['iPad Pro'].viewport.height,
+addResponsiveAssertions('Responsive Analyzer summary — iPad Pro 11', {
+  width: devices['iPad Pro 11'].viewport.width,
+  height: devices['iPad Pro 11'].viewport.height,
 });
 addResponsiveAssertions('Responsive Analyzer summary — desktop', { width: 1280, height: 720 });
