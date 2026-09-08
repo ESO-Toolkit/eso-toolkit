@@ -98,11 +98,14 @@ Four things that change the plan, each recorded in the manifest and queue log:
    archetype in measured dungeon demand (62 names, 822 appearances), and it *does* have reference:
    `creatures-125/126/127-boneman-*` plus three bone-goliath posts. It was missed because the sweep
    searched "skeleton".
-3. **Two encounters may cost zero bytes — now the single best-value item left**: Pinnacle Factotum
-   and The Refabrication Committee reuse the shipped Saint Llothis Factotum body (verified by eye —
-   Llothis genuinely *is* a clockwork Factotum). **Blocked only on verifying the ESO Logs actor
-   strings** (`Reducer`/`Reclaimer`/`Reactor`) against a real Halls of Fabrication log. Do not ship
-   guessed aliases.
+3. ~~**Two encounters may cost zero bytes**: Pinnacle Factotum and The Refabrication Committee.~~
+   **DONE 2026-09-08** as `hof-factotum-overview-v1`. The actor strings were verified, not guessed,
+   by querying the site's own GraphQL proxy against four real Halls of Fabrication reports: all four
+   are `subType: Boss` and the Committee members are **bare** (`Reducer`, not `Refabricated
+   Reducer`). **The proxy is queryable from this repo with no API key** — see the manifest's method
+   note — which retires "needs a real log" as a blocker for any future actor-name question. It also
+   confirmed `Hunter-Killer Positrox`/`Negatrix` hyphenation and turned up `Ruined Factotum` as a
+   free trash alias, still unclaimed.
 4. ~~**Xalvakka** needs a tail-coil deformer or a Route C rebuild.~~ **Done 2026-09-08** — Route C.
    The deformer is cancelled; see the state section above.
 5. **Assembly General / Dwarven Colossus** needs geometry cleanup (weld across shells, drop interior

@@ -84,10 +84,11 @@ Route B — extracted ESO geometry, colour projected from reference plates (no G
 Two kinds of reuse exist, and they are not the same thing. Neither adds a row above, because neither
 adds a GLB.
 
-| Registry entry                     | GLB it reuses                  | Serves                            | Kind                                    |
-| ---------------------------------- | ------------------------------ | --------------------------------- | --------------------------------------- |
-| `the-serpent-overview-v1` (alias)  | `the-serpent-overview-v1.glb`  | The Serpent's Image               | **Faithful** — same creature, same size |
-| `craglorn-troll-trash-overview-v1` | `stonebreaker-overview-v1.glb` | Rockheaver Troll, Berserker Troll | **Species match, wrong tier** — 0.85x   |
+| Registry entry                     | GLB it reuses                     | Serves                                          | Kind                                    |
+| ---------------------------------- | --------------------------------- | ----------------------------------------------- | --------------------------------------- |
+| `the-serpent-overview-v1` (alias)  | `the-serpent-overview-v1.glb`     | The Serpent's Image                             | **Faithful** — same creature, same size |
+| `craglorn-troll-trash-overview-v1` | `stonebreaker-overview-v1.glb`    | Rockheaver Troll, Berserker Troll               | **Species match, wrong tier** — 0.85x   |
+| `hof-factotum-overview-v1`         | `saint-llothis-overview-v1.glb`   | Pinnacle Factotum, Reducer, Reclaimer, Reactor  | **Species match, same tier** — 1.25x    |
 
 A pure alias (row 1) is added to an existing entry's `aliases`. A reuse that needs its own scale
 (rows 2-3) must be a **separate catalog entry pointing at the same `path`**, because `transform` is
@@ -96,6 +97,41 @@ is the only way to render a lesser enemy at a size that differs from the boss wh
 `resolveReplayModelUrl`, the catalog-integrity tests, and the instancing plan all handle shared
 paths; the tests additionally assert every catalog `path` exists on disk, so an entry can never be
 added ahead of the GLB it names.
+
+### Two Halls of Fabrication encounters, for zero new bytes
+
+`hof-factotum-overview-v1` covers **Pinnacle Factotum** and all three members of **The Refabrication
+Committee** by pointing at the shipped Saint Llothis body. Llothis genuinely is a clockwork Factotum,
+and so are these four.
+
+**The only thing that ever blocked this was the actor strings, and they are now verified rather than
+guessed.** The prior assessment could not tell whether ESO Logs prefixes the Committee members (e.g.
+`Refabricated Reactor`), and shipping a guessed alias fails silently — it simply never matches.
+Queried through the site's own client-credentials GraphQL proxy against **four recent Halls of
+Fabrication reports** (ESO Logs zone **6**), all four appear with `subType: Boss` and the Committee
+members are **bare**:
+
+| Encounter | Verified ESO Logs actor names |
+| --- | --- |
+| Pinnacle Factotum | `Pinnacle Factotum` |
+| The Refabrication Committee | `Reducer`, `Reclaimer`, `Reactor` |
+
+The same query settled three other open questions in this document at no extra cost:
+
+- **`Hunter-Killer Positrox` and `Hunter-Killer Negatrix`** — the hyphenation was previously marked
+  *inferred*. Both appear verbatim, `subType: Boss`. (Still unbuildable: no mesh, no plates.)
+- **`Archcustodian`** and **`Assembly General`** confirmed verbatim.
+- **`Ruined Factotum`** exists as ordinary `NPC` trash in the same logs. It is a fifth free alias, but
+  deliberately **not** added to this entry: it belongs at the lesser-enemy scale, which per the rule
+  above means its own entry rather than an alias here.
+
+**Method note, because it is reusable.** The proxy pins persisted queries by SHA-256, so a document
+has to be byte-canonical to be accepted. The reliable way to build one is to print the codegen'd
+`*Document` AST out of `src/graphql/gql/graphql.ts` with `graphql-js`, then hash it with
+`normalizeGraphqlDocument` and check it against `public/graphql-manifest.json` **before** sending.
+Reassembling a query from the `.graphql` sources and its fragments does *not* reproduce the hash.
+Note also that this spends the site's shared OAuth budget: this verification cost roughly a dozen
+read-only calls, paced.
 
 ### Lesser-enemy budget
 

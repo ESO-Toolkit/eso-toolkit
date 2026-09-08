@@ -148,6 +148,37 @@ export const STATIC_REPLAY_ACTOR_MODEL_ASSETS: readonly StaticReplayActorModelAs
     },
   },
   {
+    // TWO Halls of Fabrication boss encounters for ZERO new bytes, reusing the Saint Llothis body.
+    // Llothis genuinely is a clockwork Factotum, and so are these four; `creatures/post/176-imperfect`
+    // confirms the family reading. A separate entry rather than extra aliases on Llothis, because
+    // these are different characters wearing the same species body — the provenance below has to say
+    // so, and `transform` is per-asset if they ever need their own scale.
+    //
+    // The four actor strings were the ONLY thing blocking this, and they are now VERIFIED rather
+    // than guessed: queried through the site's own client-credentials GraphQL proxy against four
+    // recent Halls of Fabrication reports (ESO Logs zone 6). All four appear with subType `Boss`,
+    // and the Committee members are BARE — `Reducer`, not `Refabricated Reducer`, which was the open
+    // question. `Ruined Factotum` also exists in the same logs as ordinary NPC trash; it is left
+    // unaliased here because it belongs at the lesser-enemy scale, not this one.
+    id: 'hof-factotum-overview-v1',
+    path: 'models/fight-replay/npcs/saint-llothis-overview-v1.glb',
+    renderer: 'static-boss',
+    actorTypes: HOSTILE_ACTOR_TYPES,
+    aliases: ['pinnacle factotum', 'reducer', 'reclaimer', 'reactor'],
+    transform: {
+      orientEuler: [0, 0, 0],
+      scale: 1.25,
+      yOffset: 0,
+      yawOffset: 0,
+      modelHeight: 1.9943,
+    },
+    provenance: {
+      designation: 'project-authorized-fan-prototype',
+      sourceUrl: 'https://esomodelviewer.com/creatures/post/89-saint-llothis-the-pious',
+      attributionFile: 'public/models/fight-replay/npcs/README-saint-llothis-overview-v1.md',
+    },
+  },
+  {
     id: 'saint-felms-overview-v1',
     path: 'models/fight-replay/npcs/saint-felms-overview-v1.glb',
     renderer: 'static-boss',
