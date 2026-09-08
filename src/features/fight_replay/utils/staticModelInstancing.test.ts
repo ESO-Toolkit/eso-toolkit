@@ -6,7 +6,6 @@ import type {
 import {
   COOL_STICKMAN_ASSET,
   NEUTRAL_MODEL_TINT,
-  type NpcModelPreviewMode,
   type StaticReplayActorModelAsset,
   normalizeActorName,
   resolveReplayActorModel,
@@ -82,9 +81,8 @@ const UNTINTED: StaticReplayActorModelAsset = {
 const CATALOG = [BLOODKNIGHT, RAIDER, UNTINTED];
 
 beforeEach(() => {
-  mockResolve.mockImplementation((actor, mode: NpcModelPreviewMode) => {
+  mockResolve.mockImplementation((actor) => {
     if (actor.type === 'player') return COOL_STICKMAN_ASSET;
-    if (mode !== 'prototype') return null;
     const name = normalizeActorName(actor.name);
     return (
       CATALOG.find(
@@ -124,17 +122,11 @@ function makeLookup(frames: Array<Record<number, ActorPosition>>): TimestampPosi
 
 describe('getStaticModelForActor', () => {
   it('returns the registry asset for a modelled hostile', () => {
-    expect(getStaticModelForActor({ type: 'enemy', name: 'Blood Knight' }, 'prototype')).toBe(
-      BLOODKNIGHT,
-    );
+    expect(getStaticModelForActor({ type: 'enemy', name: 'Blood Knight' })).toBe(BLOODKNIGHT);
   });
 
   it('never lets the player flipbook leak into the model path', () => {
-    expect(getStaticModelForActor({ type: 'player', name: 'Someone' }, 'prototype')).toBeNull();
-  });
-
-  it('returns null without the prototype opt-in', () => {
-    expect(getStaticModelForActor({ type: 'enemy', name: 'Blood Knight' }, 'off')).toBeNull();
+    expect(getStaticModelForActor({ type: 'player', name: 'Someone' })).toBeNull();
   });
 });
 
@@ -146,7 +138,7 @@ describe('buildStaticModelInstancingPlan', () => {
     const second = actorAt('enemy', 'Half-Giant Raider #2');
     const lookup = makeLookup([{ 10: first, 11: second }]);
 
-    const plan = buildStaticModelInstancingPlan(lookup, [10, 11], 'prototype');
+    const plan = buildStaticModelInstancingPlan(lookup, [10, 11]);
 
     expect(plan.assets).toEqual([RAIDER]);
     expect(plan.byActorId.get(10)?.slot).toBe(0);
@@ -165,7 +157,7 @@ describe('buildStaticModelInstancingPlan', () => {
       },
     ]);
 
-    const plan = buildStaticModelInstancingPlan(lookup, [10, 11, 12], 'prototype');
+    const plan = buildStaticModelInstancingPlan(lookup, [10, 11, 12]);
 
     expect(plan.assets).toHaveLength(1);
     expect(plan.actorIdsByAssetId.get(BLOODKNIGHT.id)).toEqual([10, 11, 12]);
@@ -177,7 +169,7 @@ describe('buildStaticModelInstancingPlan', () => {
   it('resolves the tint through the same name normalization as the lookup', () => {
     const lookup = makeLookup([{ 10: actorAt('enemy', '  CRIMSON   Knight #4 ') }]);
 
-    const plan = buildStaticModelInstancingPlan(lookup, [10], 'prototype');
+    const plan = buildStaticModelInstancingPlan(lookup, [10]);
 
     expect(plan.byActorId.get(10)?.tint).toEqual([1.2, 0.55, 0.55]);
   });
@@ -187,7 +179,7 @@ describe('buildStaticModelInstancingPlan', () => {
       { 10: actorAt('enemy', 'Half-Giant Raider'), 11: actorAt('boss', 'Captain Fixture') },
     ]);
 
-    const plan = buildStaticModelInstancingPlan(lookup, [10, 11], 'prototype');
+    const plan = buildStaticModelInstancingPlan(lookup, [10, 11]);
 
     expect(plan.byActorId.get(10)?.tint).toEqual([0.9, 0.95, 1]);
     expect(plan.byActorId.get(11)?.tint).toEqual(NEUTRAL_MODEL_TINT);
@@ -203,7 +195,7 @@ describe('buildStaticModelInstancingPlan', () => {
       },
     ]);
 
-    const plan = buildStaticModelInstancingPlan(lookup, [10, 11, 12, 13], 'prototype');
+    const plan = buildStaticModelInstancingPlan(lookup, [10, 11, 12, 13]);
 
     expect(plan.assets.map((asset) => asset.id)).toEqual([UNTINTED.id, RAIDER.id, BLOODKNIGHT.id]);
     expect(plan.actorIdsByAssetId.get(UNTINTED.id)).toEqual([10]);
@@ -227,7 +219,7 @@ describe('buildStaticModelInstancingPlan', () => {
       },
     ]);
 
-    const plan = buildStaticModelInstancingPlan(lookup, [10, 11, 12, 13, 14], 'prototype');
+    const plan = buildStaticModelInstancingPlan(lookup, [10, 11, 12, 13, 14]);
 
     expect(plan.assets).toEqual([BLOODKNIGHT]);
     expect(plan.byActorId.has(10)).toBe(false);
@@ -237,18 +229,12 @@ describe('buildStaticModelInstancingPlan', () => {
     expect(plan.byActorId.get(14)?.asset).toBe(BLOODKNIGHT);
   });
 
-  it('returns the empty plan without the prototype opt-in', () => {
-    const lookup = makeLookup([{ 10: actorAt('enemy', 'Blood Knight') }]);
-
-    expect(buildStaticModelInstancingPlan(lookup, [10], 'off')).toBe(EMPTY_STATIC_MODEL_PLAN);
-  });
-
   it('returns the empty plan for a missing lookup, no actors, or no matches', () => {
     const lookup = makeLookup([{ 10: actorAt('enemy', 'Unmodelled Trash Mob') }]);
 
-    expect(buildStaticModelInstancingPlan(null, [10], 'prototype')).toBe(EMPTY_STATIC_MODEL_PLAN);
-    expect(buildStaticModelInstancingPlan(lookup, [], 'prototype')).toBe(EMPTY_STATIC_MODEL_PLAN);
-    expect(buildStaticModelInstancingPlan(lookup, [10], 'prototype')).toBe(EMPTY_STATIC_MODEL_PLAN);
+    expect(buildStaticModelInstancingPlan(null, [10])).toBe(EMPTY_STATIC_MODEL_PLAN);
+    expect(buildStaticModelInstancingPlan(lookup, [])).toBe(EMPTY_STATIC_MODEL_PLAN);
+    expect(buildStaticModelInstancingPlan(lookup, [10])).toBe(EMPTY_STATIC_MODEL_PLAN);
   });
 
   it('still finds an actor that only appears late in the fight', () => {
@@ -261,7 +247,7 @@ describe('buildStaticModelInstancingPlan', () => {
     }));
     frames[39] = { 10: player, 11: knight };
 
-    const plan = buildStaticModelInstancingPlan(makeLookup(frames), [10, 11], 'prototype');
+    const plan = buildStaticModelInstancingPlan(makeLookup(frames), [10, 11]);
 
     expect(plan.byActorId.get(11)?.asset).toBe(BLOODKNIGHT);
   });
@@ -270,7 +256,7 @@ describe('buildStaticModelInstancingPlan', () => {
     const knight = actorAt('enemy', 'Blood Knight');
     const frames = Array.from({ length: 500 }, () => ({ 10: knight }));
 
-    buildStaticModelInstancingPlan(makeLookup(frames), [10], 'prototype');
+    buildStaticModelInstancingPlan(makeLookup(frames), [10]);
 
     // One sample per distinct actor, not one per timestamp.
     expect(mockResolve).toHaveBeenCalledTimes(1);
@@ -280,7 +266,7 @@ describe('buildStaticModelInstancingPlan', () => {
     const knight = actorAt('enemy', 'Blood Knight');
     const lookup = makeLookup([{ 10: knight }, { 10: knight }, { 10: knight }]);
 
-    const plan = buildStaticModelInstancingPlan(lookup, [10], 'prototype');
+    const plan = buildStaticModelInstancingPlan(lookup, [10]);
 
     expect(plan.actorIdsByAssetId.get(BLOODKNIGHT.id)).toEqual([10]);
   });
@@ -290,7 +276,7 @@ describe('buildStaticModelInstancingPlan', () => {
       { 10: actorAt('enemy', 'Blood Knight'), 11: actorAt('enemy', 'Blood Knight') },
     ]);
 
-    const plan = buildStaticModelInstancingPlan(lookup, [10], 'prototype');
+    const plan = buildStaticModelInstancingPlan(lookup, [10]);
 
     expect(plan.actorIdsByAssetId.get(BLOODKNIGHT.id)).toEqual([10]);
     expect(plan.byActorId.has(11)).toBe(false);

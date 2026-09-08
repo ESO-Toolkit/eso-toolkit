@@ -5,7 +5,6 @@ import type {
 
 import {
   NEUTRAL_MODEL_TINT,
-  type NpcModelPreviewMode,
   type StaticReplayActorModelAsset,
   type StaticReplayActorModelTint,
   resolveReplayActorModel,
@@ -61,9 +60,8 @@ export const EMPTY_STATIC_MODEL_PLAN: StaticModelInstancingPlan = {
  */
 export function getStaticModelForActor(
   actor: Pick<ActorPosition, 'type'> & { name?: string },
-  npcPreviewMode: NpcModelPreviewMode,
 ): StaticReplayActorModelAsset | null {
-  const asset = resolveReplayActorModel(actor, npcPreviewMode);
+  const asset = resolveReplayActorModel(actor);
   return asset?.renderer === 'static-boss' ? asset : null;
 }
 
@@ -84,7 +82,6 @@ export function getStaticModelForActor(
 export function buildStaticModelInstancingPlan(
   lookup: TimestampPositionLookup | null,
   actorIds: readonly number[],
-  npcPreviewMode: NpcModelPreviewMode,
 ): StaticModelInstancingPlan {
   const positions = lookup?.positionsByTimestamp;
   if (!positions || actorIds.length === 0) return EMPTY_STATIC_MODEL_PLAN;
@@ -103,7 +100,7 @@ export function buildStaticModelInstancingPlan(
       if (seen.has(actorId) || !wanted.has(actorId)) continue;
       seen.add(actorId);
       const actor = atTs[actorId];
-      const asset = getStaticModelForActor(actor, npcPreviewMode);
+      const asset = getStaticModelForActor(actor);
       if (!asset) continue;
       let slots = actorIdsByAssetId.get(asset.id);
       if (!slots) {

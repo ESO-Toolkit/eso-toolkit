@@ -18,8 +18,8 @@ project; the only changes are a uniform scale, a recentre, and a container re-ex
 `designation: 'project-authorized-fan-prototype'` only because that is the sole value the
 `StaticReplayActorModelAsset` type admits; widening that union would change a runtime contract
 every consumer and test depends on. Do not read that designation as a rights determination for
-this asset. The repository owner needs to make an explicit call on shipping extracted client
-assets before this leaves the `?npcModels=prototype` opt-in.
+this asset. The rights position is uncleared: this is ESO's own mesh and texture
+shipped verbatim, and it must not be reused outside this project without a separate review.
 
 ## Why this route was taken
 

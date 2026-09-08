@@ -13,7 +13,7 @@ an extracted game mesh and is not CC0. See the asset's adjacent provenance file 
 tooling, measurements, and redistribution status.
 
 The initial mesh is deliberately unrigged. It lazy-loads only for an exact Yandir boss-name match
-and only with `?npcModels=prototype`. Loading or parsing failure must leave the capsule visible.
+Loading or parsing failure must leave the capsule visible.
 Selection, name, glyph, rings, health state, and the replay's dead treatment remain owned by the
 existing actor renderer.
 
@@ -43,7 +43,7 @@ the prototype query flag.
 
 The initial live verification target is public report `L7T1zdcCfWNRbQwm`, fight 6 (Yandir the
 Butcher / Sea Adder). Geometry, grounding, and combat-log placement were verified there with
-`?npcModels=prototype`. The shipped v2 asset was then checked in the in-repo `/replay-models` viewer:
+the replay. The shipped v2 asset was then checked in the in-repo `/replay-models` viewer:
 45,000 triangles, 28,854 UV-split vertices, one mesh/material/draw call, a 1024 px embedded JPEG, and
 1,715,468 bytes. The virtualized preview is not suitable for a final FPS comparison. Recheck scale,
 facing, selection, and death treatment in the full replay when its report-data backend is healthy.

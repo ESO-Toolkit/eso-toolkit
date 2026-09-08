@@ -48,7 +48,7 @@ The mesh arrived already +Y up, +Z front, feet at y=0, needing only a x0.501 sca
 colour variant: *"Bahsei corrupted him ... resulting in his scales becoming red"*, which matches the
 `_Red_` mesh exactly.
 
-## All three closeups were rejected, and one of them is instructive
+## All three closeups were rejected, and one of them is worth noting
 
 `view-04` measured a **healthy 4.96% head-region error** — and the overlay shows **three eyes**, a
 doubled crown-spike row and a doubled jaw. This is the third time on this project that the closeup

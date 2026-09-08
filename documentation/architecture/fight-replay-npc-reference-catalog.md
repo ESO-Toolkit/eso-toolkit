@@ -283,10 +283,60 @@ trials.
 6. **No mesh statistics anywhere.** Do not plan around listed triangle or vertex counts — the site does not publish them. Plate count and plate resolution are the only supply metrics.
 7. **A gallery can be entirely detail crops, and the plate-height metric will not tell you.** The
    `7-dread-grievous-twilight` set measured a healthy "front 672 px / back 699 px" — above this
-   project's 660 px bar — and was ranked the top build on the board on that basis. Looking at the
+   project's 660 px bar — and was ranked the highest-priority build on that basis. Inspecting the
    images, **none of the eight is a full body**: they are pushed-in crops of the head, torso, legs and
    wings, two of them holding a weapon that is not part of the mesh. The subject-height script
    measures the visible blob, so a tight crop scores like a large subject. Same class of error as
    judging a registration by its width error. **Open the plates.** Verifying orientation is not
    enough — verify _framing_.
 8. **Reproducing the sweep.** Listings are `https://esomodelviewer.com/characters/?page=N` (N=1..18) and `https://esomodelviewer.com/creatures/?page=N` (N=1..8); items are `<a href="/characters/post/{id}-{slug}">{Display Name}</a>`. A trailing slash is required (`/characters` 301s to `/characters/`).
+
+---
+
+## 7. Reference capture requirements
+
+The encounters below cannot be built from published sources. Each entry states the minimum capture
+that would unblock it. Requirements are stated as an upper bound on what is missing: a source sweep
+has been wrong three times, in each case because the search method changed rather than because the
+search was repeated.
+
+### 7.1 Profile plate only
+
+These three have a usable front/back pair already. A single full-body profile (left or right, same
+pose, plain backdrop, subject height >= 660 px) is the whole remaining requirement, and it is the
+highest-yield capture on this list. `measure-view-coverage` quantifies the gain:
+
+| Subject       | Two-camera blind area | With profiles | Gain         |
+| ------------- | --------------------: | ------------: | -----------: |
+| Ra Kotu       |                 40.1% |         18.8% | 21.3 points  |
+| Chimera       |                 37.7% |         21.6% | 16.1 points  |
+| Archcustodian |                 40.4% |         26.0% | 14.4 points  |
+
+Ra Kotu has the largest gain and lands inside the shipped band of 5.6-31.5%.
+
+### 7.2 Full plate set
+
+Front and back in the same pose, plain backdrop, subject height >= 660 px, no combat effects, plus a
+head closeup:
+
+Xoryn; the three Sunspire dragons (the extracted mesh is a different creature, a skeletal Bone
+Dragon); The Yokedas; Lylanar and Turlassil; Exarchanic Yaseyla; Cavot Agnan; the Opulent Trio; the
+Hunter Killers; Flame-Herald Bahsei's base Naga form; Archwizard Twelvane. For dungeon archetype
+coverage: zombie, scamp, banekin and gargoyle, all of which carry measured dungeon demand.
+
+### 7.3 Texture capture, not a screenshot
+
+Ansuul the Tormentor (`VaerminaGloamKnight_A_Basic`) and Hall of Fleshcraft (`Voriplasm_A_Basic`)
+have excellent extracted geometry and no colour source of any kind. A photograph taken in a dark
+arena cannot produce a usable atlas; these require the diffuse texture itself.
+
+## 8. Dungeon scope
+
+The replay applies no trial gate, so it opens for any boss fight and every dungeon NPC currently
+renders as a capsule. A 250-report sample measured 1,435 distinct enemy names across all 58 dungeons.
+
+Name-complete coverage is not a goal. The measured recommendation is archetype-first: roughly 20-30
+species assets, each aliased to 20-50 names. Two categories are excluded by policy rather than by
+effort — 221 names (14.9%) are ordinary humanoids, for which the existing capsule is already the
+correct abstraction, and 53 names are not creatures at all (`Ice Barrier` is the most frequent single
+name in the corpus).

@@ -5,8 +5,8 @@ the failure modes that cost us real time. This is the operational document; the
 [asset manifest](./fight-replay-npc-asset-manifest.md) records what shipped, and the
 [GPU queue log](./fight-replay-npc-gpu-queue-log.md) records each attempt.
 
-Read this before building a new NPC. Most of it is hard-won: every "do not" below is something that
-already went wrong once.
+Read this before building a new NPC. Every "do not" below corresponds to a defect that has already
+occurred in this pipeline.
 
 ## The shape of the problem
 
@@ -241,7 +241,7 @@ two scoring alternatives (mass transport, raw slice counts) that were measured a
 
 ### Width error is not a reliability signal — the overlay is
 
-Four independent confirmations now, and the strongest is worth stating: **Shade of Siroria's head
+Four independent confirmations. The strongest: **Shade of Siroria's head
 plate scored 0.75% width error — the lowest measured anywhere in this project — and its overlay was
 grossly oversized.** In the same batch a head plate at 6.80% was rejected and a torso plate at 10.61%
 was accepted, purely on the overlays.

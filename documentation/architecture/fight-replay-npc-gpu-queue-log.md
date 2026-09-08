@@ -336,7 +336,7 @@ First coverage of **Lucent Citadel**, a trial that previously had nothing.
   73.4% coverage, PSNR 35.26 dB. All checks passed; one warning, recorded below.
 - **Accepted**, with the caveats below stated rather than smoothed over.
 
-**Three numbers are worse than the shipped set, and each has a cause worth keeping:**
+**Three numbers are worse than the shipped set, and each has a known cause:**
 
 1. **PSNR 35.26 dB** against Falgravn's 39.87 and Olms' 39.0. This is not a projection failure —
    the atlas is a high-frequency crystal mosaic, which is the content JPEG handles worst. The flat
@@ -357,7 +357,7 @@ Siroria lesson, that a good width metric is not evidence of correct registration
 head has no face to lose, and at replay distance all five angles read correctly. A straight-on
 orthographic head plate is the single highest-value follow-up for this asset.
 
-**The box check earned its keep for the second consecutive build.** The first placement
+**The box check caught a defect for the second consecutive build.** The first placement
 (`y0=0.885`) claimed the crown and crest and left the entire face outside the box — invisible to
 every downstream metric. Caught on the membership render before any projection time was spent.
 
@@ -393,7 +393,7 @@ that the expensive stage was **skipped**, not that it succeeded.
   31.5%, grazing fill 54.9%. All checks passed; one warning (head run mismatch, 41% of slices).
 - **Accepted.** Completes **Aetherian Archive**.
 
-**The box check earned its keep for the third consecutive build**, in a new way. The first placement
+**The box check caught a defect for the third consecutive build**, in a new form. The first placement
 (`y0 = 0.72`) claimed the whole shoulder-rock yoke and the crown, not the face; the membership render
 showed it immediately and no downstream metric would have. The final box was then verified a second
 time by drawing it back onto the front plate, which is worth adopting generally — it costs one crop
@@ -442,7 +442,7 @@ tail-coil deformer worth **two** bosses rather than one, which changes its value
 - **Output:** `out/ozara-overview-v1.glb` — 45,000 tris / 27,743 verts / 1,642,884 bytes (857 KB
   under the gate), 353 charts, 67.2% coverage, **PSNR 37.7 dB**, neither-camera **14.7%**, grazing
   fill 35.1%, head region **76,936 front-facing texels (~277²)**. All checks passed; one warning
-  (head run mismatch, 30% of slices — the lowest rate in this batch).
+  (head run mismatch, 30% of slices — the lowest rate measured on any asset here).
 - **Accepted.** Completes **Sanctum Ophidia**.
 
 **A new head-box trap, distinct from the shoulder-detector one.** `head_v_min` failed here not
@@ -478,7 +478,7 @@ VRAM confirmed back at the 2.33 GB desktop baseline after the Ozara job exited b
   52,228 front-facing texels (~228²). All checks passed; one warning.
 - **Accepted.** Rockgrove is now complete except Flame-Herald Bahsei.
 
-**The tail-coil deformer is cancelled.** It was on the board to rescue `Harvester_Monstrous_Boss`
+**The tail-coil deformer is cancelled.** It was planned to rescue `Harvester_Monstrous_Boss`
 and, after the Ozara diagnosis, `Lamia_A_Boss` too. Both bosses shipped today as Route C
 reconstructions instead. Reconstructing from plates sidesteps a bind pose rather than correcting it,
 and it costs about a minute of GPU against an unknown amount of deformer work.
@@ -499,7 +499,7 @@ two gallery frames are duplicates.
 ## Job — Ra Kotu (2026-09-08) — GPU reconstruction, **REJECTED**
 
 Built, measured, and not shipped. Recorded so nobody spends the GPU minute again, and because the
-measurement produced the single most actionable capture request on the board.
+measurement produced the most actionable outstanding capture request.
 
 - **Input:** `air-atronach-boss-references/view-01.jpg` / `view-03.jpg`, 1920x1080, cut to a shared
   1569 px square, subject **996 x 950 px**. The post body names "Parel Nirus **Ra Kotu**", so the
@@ -589,12 +589,11 @@ for one encounter.
   **24.3%** — the screen was within **1.2 points**, its second consecutive accurate call.
 - **Output:** `out/boneman-overview-v1.glb` — 4,997 tris / 4,317 verts / **287,232 bytes**, 223
   charts, 76.7% coverage, PSNR 37.85 dB, 45.3% neighbour fill. All checks passed, **no warnings** —
-  the head run-structure detector did not fire at all, the only asset in this batch of which that is
-  true.
+  the head run-structure detector did not fire at all.
 - **Accepted.**
 
-**The worry going in was wrong, and worth recording as wrong.** A skeleton is mostly holes, and the
-expectation was that two-view reconstruction would fuse the ribs and gaps into a smooth mannequin. It
+**The expected failure did not occur.** A skeleton is mostly holes, and two-view reconstruction was
+expected to fuse the ribs and gaps into a smooth mannequin. It
 resolved individual ribs, the pelvis, a segmented spine, separated arm bones and articulated hands.
 Marching cubes handles a concave, perforated subject better than the intuition suggests, at least
 when the silhouette is unambiguous.
@@ -606,7 +605,7 @@ recorded are head ornaments, robe cones and wingspans; add this one. Hand-set to
 
 **That produced the first accepted closeup since the Saints.** `view-04` registers cleanly on the
 skull — one skull, one pair of eye sockets, one tooth row, no doubling — after **15 consecutive
-rejections** across the three bosses built earlier the same day. It would not have been possible
+rejections** across the three preceding boss builds. It would not have been possible
 before `--head-v-min` existed, which retires the "the band might have been the problem" ambiguity for
 good.
 
