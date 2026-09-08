@@ -58,6 +58,7 @@ separate rights review.
 | `ash-titan-overview-v1.glb`              | Ash Titan                       | `static-boss`             |  5,000 |      — |         1 | 512px JPEG  |   330,820 | [creature 112](https://esomodelviewer.com/creatures/post/112-ash-titan)             |
 | `fire-behemoth-overview-v1.glb`          | Fire Behemoth                   | `static-boss`             |  5,000 |      — |         1 | 512px JPEG  |   324,864 | [creature 65](https://esomodelviewer.com/creatures/post/65-fire-behemoth)           |
 | `lord-falgravn-overview-v1.glb`          | Lord Falgravn                   | `static-boss`             | 70,000 | 44,724 |         1 | 1024px JPEG | 2,259,112 | [creature 32](https://esomodelviewer.com/creatures/post/32-vampire-lord)            |
+| `ozara-overview-v1.glb`                  | Ozara                           | `static-boss`             | 45,000 | 27,743 |         1 | 1024px JPEG | 1,642,884 | [creature 117](https://esomodelviewer.com/creatures/post/117-lamia-red)             |
 
 Extracted client assets (see the licensing posture above — **not reconstructions**):
 
@@ -494,8 +495,11 @@ Consequences worth carrying forward:
 | --------- | ------------------- | --------------------------------------------------------------------- |
 | `boss_1`  | Possessed Mantikora | **Shipped 2026-09-07** — extracted client asset, not a reconstruction |
 | `boss_2`  | Stonebreaker        | **Shipped 2026-09-07** — extracted client asset, not a reconstruction |
-| `boss_3`  | Ozara               | Blocked — greyscale mask only, plates uncertain (see below)           |
+| `boss_3`  | Ozara               | **Shipped 2026-09-08** — reconstruction; completes this trial          |
 | `boss_4`  | The Serpent         | **Shipped** (reconstruction, hand-registered mask)                    |
+
+**Sanctum Ophidia is complete** — the fifth fully covered trial, and the first completed by a
+mixture of routes: two extracted client assets, two screenshot reconstructions.
 
 | Lesser enemy             | Name                | Status                                                                 |
 | ------------------------ | ------------------- | ---------------------------------------------------------------------- |
@@ -524,10 +528,21 @@ body without stealing the boss' slot — which is exactly what would have happen
 have built him at any quality. The extracted mesh was the only route to this encounter that will
 ever exist, and it cost no GPU time at all.
 
-Ozara's `Lamia_A_Boss` mesh carries a greyscale mask only (ESO tints it at runtime) and its plates
-are tagged "uncertain". Its 2 shells and 7.6% unobserved area look like the easiest projection win
-in the supply, but its bbox is 1.14 x 4.08 x **0.46** — a near-planar vertical spike with no visible
-torso or arms. Verify the mesh is not a partial extraction before spending anything on it.
+Ozara **shipped 2026-09-08 as a reconstruction**, and the question this paragraph used to pose is
+now answered. It said of `Lamia_A_Boss`: *"its bbox is 1.14 x 4.08 x 0.46 — a near-planar vertical
+spike with no visible torso or arms. Verify the mesh is not a partial extraction before spending
+anything on it."*
+
+**It is not a partial extraction.** A clay render shows the torso, arms, head and crest all present;
+the serpent tail is simply in a **straight-down bind pose**, which stretches the bounding box until
+the body occupies the top fifth of it. This is the identical failure that blocks Xalvakka's
+`Harvester_Monstrous_Boss`, and it means a **tail-coil deformer is worth two bosses, not one** — a
+materially better case for building one than the single-boss framing this document previously
+carried.
+
+The reconstruction that shipped instead is the strongest of the batch on every projection number:
+**14.7% neither-camera** (only Falgravn and Olms are lower), 35.1% neighbour fill, 353 charts, and
+the **largest face allocation measured on this project at ~277x277 texels**.
 
 ## Coverage status — Aetherian Archive
 

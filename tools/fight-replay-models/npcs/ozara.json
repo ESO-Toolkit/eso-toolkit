@@ -1,0 +1,150 @@
+{
+  "slug": "ozara",
+  "display_name": "Ozara",
+  "aliases": [
+    "Ozara"
+  ],
+  "encounter": {
+    "trial": "Sanctum Ophidia",
+    "encounter": "Ozara",
+    "role": "boss",
+    "notes": "ROUTE C. The extracted Lamia_A_Boss mesh is NOT usable: its serpent tail is in a straight-down bind pose, so normalised it measures 1.14 x 4.08 x 0.46 - a pencil with the torso crushed into the top fifth. It is a complete extraction, not a partial one; the manifest's 'verify it is not a partial extraction' note is answered here. Same failure as Xalvakka."
+  },
+  "work_dir": "build/ozara",
+  "reference": {
+    "page_url": "https://esomodelviewer.com/creatures/post/117-lamia-red",
+    "directory": "ozara-lamia-red-references",
+    "plates": {
+      "front": {
+        "file": "view-01.jpg",
+        "role": "full-body-front"
+      },
+      "back": {
+        "file": "view-03.jpg",
+        "role": "full-body-back"
+      }
+    },
+    "side_plates": {
+      "available": false,
+      "why": "The gallery publishes no full-body left or right profile. view-02 is a three-quarter front, view-09 a pushed-in rear-quarter torso crop and view-10 a tail-only crop; none is a profile of the whole subject. Accepted rather than synthesised."
+    },
+    "closeups": [
+      {
+        "file": "view-04.jpg",
+        "role": "head",
+        "view": "front",
+        "region": "head",
+        "accepted": false,
+        "rejected_reason": "NO VIABLE FIT - the registrar's seeded scale window contains no candidate. This gallery's head closeups are shot from a much nearer camera than the base plates."
+      },
+      {
+        "file": "view-11.jpg",
+        "role": "head",
+        "view": "front",
+        "region": "head",
+        "accepted": false,
+        "rejected_reason": "NO VIABLE FIT, same cause as view-04."
+      },
+      {
+        "file": "view-05.jpg",
+        "role": "head",
+        "view": "front",
+        "region": "head",
+        "accepted": false,
+        "rejected_reason": "50.80% at scale 1.295 with col=-186.4; the overlay is a large blob hanging off the right of the subject entirely."
+      },
+      {
+        "file": "view-06.jpg",
+        "role": "crest",
+        "view": "back",
+        "region": "head",
+        "accepted": false,
+        "rejected_reason": "NO VIABLE FIT. It is a very tight crop of the crest alone, with no silhouette the registrar can lock to."
+      },
+      {
+        "file": "view-07.jpg",
+        "role": "torso",
+        "view": "front",
+        "accepted": false,
+        "rejected_reason": "5.74% - the LOWEST error measured on this subject, and rejected anyway. The overlay carries no gross doubling, but the ghost hands sit about half a hand-width up-left of the real hands, so the fit is off by a real amount at exactly the feature that would be smeared. Judged on the overlay, not the metric; a soft torso beats a doubled one, and the base plate already covers the torso squarely."
+      },
+      {
+        "file": "view-08.jpg",
+        "role": "torso",
+        "view": "back",
+        "accepted": false,
+        "rejected_reason": "12.59% at scale 0.300; the overlay is a small patch beside the right arm, nowhere near the back."
+      }
+    ],
+    "closeup_note": "All six candidates rejected. Two returned NO VIABLE FIT outright and two landed off the subject. The head is not starved by this: the box spans v 0.80-1.0 of a 985 px subject, so the face and crest already occupy roughly 197 px of the base plate."
+  },
+  "geometry": {
+    "source": "build/ozara/ozara-draft.glb",
+    "decimate": true,
+    "target_triangles": 45000,
+    "max_triangles": 47000,
+    "provenance": "Tencent Hunyuan3D-2mv (fp16, 50 steps, octree 380, seed 12345) from the letterboxed view-01/view-03 plates (1253px square). Draft: 495,594 faces, 68.0s. Reconstruction was the risk on this subject - the two plates agree on the torso, arms and head but NOT on the tail, which the front plate coils at the base while the back plate sweeps it out to frame left. The clay render (build/ozara/clay-draft-sheet.jpg) shows the model reconciled them into one coherent sweeping tail rather than a blob, so the draft was accepted.",
+    "budget_note": "45,000 - the standard boss band. This is a smooth-skinned subject with no spike geometry, so the 11.0x decimation from 495,594 costs far less here than it did on the Shattered Shard."
+  },
+  "atlas": {
+    "size": 1024,
+    "jpeg_quality": 92,
+    "roughness": 0.72,
+    "material_name": "ozara-atlas"
+  },
+  "uv_density": {
+    "head_scale": 1.0,
+    "head_v": 0.8,
+    "leg_scale": 1.0,
+    "leg_v": 0.45,
+    "ramp": 0.08,
+    "note": "Legacy scalar warp disabled; regions.boxes drives the density warp instead."
+  },
+  "projection": {
+    "supersample": 2,
+    "depth_size": 2048,
+    "pack_resolution": 2048,
+    "pack_padding": 4,
+    "blend_power": 3.0,
+    "silhouette_inset": 0.02,
+    "grazing_threshold": 0.35,
+    "dilate": 24,
+    "closeup_feather": 60,
+    "envelope_sigma": 3.0
+  },
+  "tone": {
+    "contrast": 1.08,
+    "saturation": 1.1
+  },
+  "unsharp": {
+    "sigma": 0.7,
+    "amount": 0.45,
+    "threshold": 0.01569
+  },
+  "output": {
+    "directory": "build/ozara/out",
+    "suffix": "-overview-v1",
+    "max_bytes": 2500000
+  },
+  "rights": "The Elder Scrolls Online name, character design and related rights remain with ZeniMax Media/Bethesda Softworks. Reconstructed from published screenshots for an authorized fan prototype; not a claim that the IP is freely licensed.",
+  "regions": {
+    "head_v_min": 0.8,
+    "head_feather": 0.1,
+    "boxes": [
+      {
+        "name": "head",
+        "box": [
+          0.34,
+          0.8,
+          0.85,
+          0.56,
+          1.0,
+          1.0
+        ],
+        "feather": 0.04,
+        "uv_scale": 3.0
+      }
+    ],
+    "note": "Box verified on a membership render (_advice-crops/ozara-boxcheck.jpg) before any projection: red claims the muzzle, frills, crest and both horns and stops at the neck; shoulders, arms, torso and tail unclaimed. The z floor of 0.85 deliberately keeps the boost on the FRONT of the head. A scalar head_v_min is unusable on this subject for a reason specific to it: normalised x and z are dominated by the TAIL, which sweeps the bbox out to 1.505 x 1.984 x 1.927 while the whole body sits inside x 0.25-0.62, z 0.79-0.94. The detector's own suggestion was 0.6249, which is the hips."
+  }
+}

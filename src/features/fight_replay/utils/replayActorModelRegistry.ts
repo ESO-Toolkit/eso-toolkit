@@ -534,6 +534,27 @@ export const STATIC_REPLAY_ACTOR_MODEL_ASSETS: readonly StaticReplayActorModelAs
       attributionFile: 'public/models/fight-replay/npcs/README-fire-behemoth-overview-v1.md',
     },
   },
+  {
+    // Completes Sanctum Ophidia. Not aliased to a bare 'lamia': the same red mesh serves generic
+    // lamias and six other named uniques, all of them smaller than the boss.
+    id: 'ozara-overview-v1',
+    path: 'models/fight-replay/npcs/ozara-overview-v1.glb',
+    renderer: 'static-boss',
+    actorTypes: HOSTILE_ACTOR_TYPES,
+    aliases: ['ozara'],
+    transform: {
+      orientEuler: [0, 0, 0],
+      scale: 1.25,
+      yOffset: 0,
+      yawOffset: 0,
+      modelHeight: 2,
+    },
+    provenance: {
+      designation: 'project-authorized-fan-prototype',
+      sourceUrl: 'https://esomodelviewer.com/creatures/post/117-lamia-red',
+      attributionFile: 'public/models/fight-replay/npcs/README-ozara-overview-v1.md',
+    },
+  },
 
   // --- Route B: extracted ESO geometry, colour projected from reference plates -----------------
   // Unlike every reconstruction above, the MESH here is ESO's own, lifted from the client; only the

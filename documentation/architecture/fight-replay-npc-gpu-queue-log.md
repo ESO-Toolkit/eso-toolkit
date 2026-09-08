@@ -409,3 +409,52 @@ registration. Worth adding; it is the only reason this asset has no head plate.
 All three closeups were rejected on their overlays. `view-06` scored the **lowest** error of the
 three (14.46%) and had the **worst** placement (across the boots) — the fourth independent
 confirmation that width error is not a reliability signal.
+
+---
+
+## Job — Ozara (2026-09-08) — GPU reconstruction
+
+Queued as the sole heavy worker. Free system RAM before start **15.9 GB of 31.7**; VRAM 2.9 GB of
+16.4 in use by the desktop. Route C, because the extracted `Lamia_A_Boss` cannot be used.
+
+**Why the extracted mesh is out, and a correction to the manifest.** The manifest suspected
+`Lamia_A_Boss` of being a *partial extraction* on the basis of its bbox (1.14 x 4.08 x 0.46) and told
+the next session to verify that before spending anything. It was verified, on a clay render, and the
+suspicion is wrong: the extraction is **complete** — torso, arms, head and crest are all present —
+but the serpent tail is in a **straight-down bind pose**, so the model is a pencil with the torso
+crushed into its top fifth. Identical failure to Xalvakka's `Harvester_Monstrous_Boss`. That makes a
+tail-coil deformer worth **two** bosses rather than one, which changes its value considerably.
+
+- **Input:** `ozara-lamia-red-references/view-01.jpg` (front) and `view-03.jpg` (back), 1920x1080,
+  cut to a shared 1253 px square, subject **985 x 770 px**. Letterboxed rather than clamped.
+- **Reference risk, recorded before the run:** the torso, arms and head correspond well between the
+  two plates and the subject heights match to 6 px (979 / 973), but the **tail does not** — the front
+  plate shows it coiled compactly at the base while the back plate shows it sweeping far out to frame
+  left. The tail is most of this silhouette, so this is the one thing that can sink the
+  reconstruction. Judged worth 90 s of GPU to find out rather than more analysis.
+
+- **Reconstruction:** Hunyuan3D-2mv, fp16, 50 steps, octree 380, seed 12345. **495,594 faces in
+  68.0 s.** Process exited cleanly; VRAM returned to 2.87 GB (desktop baseline) before the next
+  stage. Peak free RAM never fell below the safe band — only two plates went through `rembg`.
+- **The stated risk did not materialise.** Judged on the clay render before any texture work, per the
+  standing rule: the model reconciled the two disagreeing tails into one coherent sweeping tail
+  rather than a blob. Draft accepted.
+- **Output:** `out/ozara-overview-v1.glb` — 45,000 tris / 27,743 verts / 1,642,884 bytes (857 KB
+  under the gate), 353 charts, 67.2% coverage, **PSNR 37.7 dB**, neither-camera **14.7%**, grazing
+  fill 35.1%, head region **76,936 front-facing texels (~277²)**. All checks passed; one warning
+  (head run mismatch, 30% of slices — the lowest rate in this batch).
+- **Accepted.** Completes **Sanctum Ophidia**.
+
+**A new head-box trap, distinct from the shoulder-detector one.** `head_v_min` failed here not
+because of a crest or a wingspan but because the **tail** dominates the normalised bounding box: it
+sweeps the bbox to 1.505 x 1.984 x 1.927 while the entire body sits inside x 0.25-0.62, z 0.79-0.94.
+The detector suggested **0.6249**, which is the hips. Any subject with a long limb, tail or wing well
+away from the body will do this, and no scalar can survive it — reach for `regions.boxes`
+immediately rather than testing the detector first.
+
+**All six closeups rejected, and two of them in a way not seen before:** `view-04` and `view-11`
+returned **NO VIABLE FIT** — no candidate scale inside the registrar's seeded window at all, because
+this gallery's head closeups sit at a far nearer camera than its base plates. That is a cleaner
+failure than a confident wrong answer and is worth preferring. `view-07` scored **5.74%, the lowest
+error on this subject**, and was still rejected: its ghost hands sit half a hand-width up-left of the
+real hands.
