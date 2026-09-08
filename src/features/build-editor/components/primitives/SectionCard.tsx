@@ -5,7 +5,7 @@
  */
 
 import { CheckCircleOutlined, ExpandMore as ExpandMoreIcon } from '@mui/icons-material';
-import { Box, Collapse, IconButton, Typography, useMediaQuery } from '@mui/material';
+import { Box, Collapse, Typography, useMediaQuery } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import React, { useState } from 'react';
 
@@ -24,13 +24,21 @@ interface SectionCardProps {
   variant?: GlassPanelVariant;
   /** Whether the section starts expanded. Defaults to true. Pass false to start collapsed on mobile. */
   defaultExpanded?: boolean;
-  /**
-   * Optional control rendered at the right edge of the header (e.g. a
-   * "Copy from setup" menu). Clicks inside it are isolated so they never
-   * toggle the mobile collapse.
-   */
+  /** Optional control rendered at the right edge of the header. */
   headerAction?: React.ReactNode;
 }
+
+const visuallyHiddenSx = {
+  position: 'absolute',
+  width: 1,
+  height: 1,
+  p: 0,
+  m: -1,
+  overflow: 'hidden',
+  clip: 'rect(0 0 0 0)',
+  whiteSpace: 'nowrap',
+  border: 0,
+} as const;
 
 export const SectionCard = React.memo<SectionCardProps>(function SectionCard({
   id,
@@ -48,6 +56,8 @@ export const SectionCard = React.memo<SectionCardProps>(function SectionCard({
   const isDark = theme.palette.mode === 'dark';
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [expanded, setExpanded] = useState(defaultExpanded);
+  const accessibleTitle =
+    complete === undefined ? title : `${title} (${complete ? 'complete' : 'incomplete'})`;
 
   return (
     <GlassPanel
@@ -60,35 +70,17 @@ export const SectionCard = React.memo<SectionCardProps>(function SectionCard({
         overflow: 'hidden',
         display: 'flex',
         flexDirection: 'column',
-        // H3: offset scroll target so nav tap lands below the sticky header
         scrollMarginTop: isMobile ? '12px' : undefined,
       }}
     >
-      {/* Header */}
       <Box
-        onClick={isMobile ? () => setExpanded((p) => !p) : undefined}
-        role={isMobile ? 'button' : undefined}
-        aria-expanded={isMobile ? expanded : undefined}
-        aria-controls={isMobile ? `section-${id}-content` : undefined}
-        tabIndex={isMobile ? 0 : undefined}
-        onKeyDown={
-          isMobile
-            ? (e: React.KeyboardEvent) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  setExpanded((p) => !p);
-                }
-              }
-            : undefined
-        }
+        data-build-section-header
         sx={{
           display: 'flex',
           alignItems: 'center',
           gap: 1,
           px: 2,
-          py: 1.5,
-          cursor: isMobile ? 'pointer' : 'default',
-          // Accent-tinted bottom border + subtle header gradient fill for primary
+          py: { xs: 0.5, md: 1.5 },
           borderBottom:
             variant === 'primary'
               ? `1px solid rgba(var(--be-accent-rgb, 56, 189, 248), 0.18)`
@@ -101,99 +93,137 @@ export const SectionCard = React.memo<SectionCardProps>(function SectionCard({
           userSelect: 'none',
         }}
       >
-        {icon && (
-          <Box
-            sx={{
-              color: 'var(--be-accent, inherit)',
-              display: 'flex',
-              fontSize: 20,
-              opacity: variant === 'primary' ? 1 : 0.85,
-              filter:
-                variant === 'primary'
-                  ? 'drop-shadow(0 0 4px rgba(var(--be-accent-rgb, 56, 189, 248), 0.40))'
-                  : 'none',
-            }}
-          >
-            {icon}
+        {isMobile && (
+          <Box component="h2" id={`section-${id}-heading`} sx={visuallyHiddenSx}>
+            {accessibleTitle}
           </Box>
         )}
-        <Typography
-          variant="subtitle1"
-          component="h2"
+        <Box
+          component={isMobile ? 'button' : 'div'}
+          type={isMobile ? 'button' : undefined}
+          data-build-section-toggle
+          data-build-section-focus-target={isMobile ? true : undefined}
+          onClick={isMobile ? () => setExpanded((previous) => !previous) : undefined}
+          aria-labelledby={isMobile ? `section-${id}-heading` : undefined}
+          aria-expanded={isMobile ? expanded : undefined}
+          aria-controls={isMobile ? `section-${id}-content` : undefined}
           sx={{
-            fontWeight: 700,
-            fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
-            letterSpacing: 0.2,
-            fontSize: { xs: 13, md: 14 },
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
             flex: 1,
-            // Gradient text for primary tier — class accent bleeds into the title
-            ...(variant === 'primary' && {
-              background:
-                'linear-gradient(90deg, var(--be-accent, #38bdf8) 0%, rgba(var(--be-accent-rgb, 56, 189, 248), 0.60) 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-            }),
+            minWidth: 0,
+            minHeight: isMobile ? 44 : undefined,
+            p: 0,
+            border: 0,
+            background: 'transparent',
+            color: 'inherit',
+            font: 'inherit',
+            textAlign: 'left',
+            cursor: isMobile ? 'pointer' : 'default',
+            '&:focus-visible': {
+              outline: `2px solid var(--be-accent, ${theme.palette.primary.main})`,
+              outlineOffset: 4,
+              borderRadius: 1,
+            },
           }}
         >
-          {title}
-        </Typography>
+          {icon && (
+            <Box
+              aria-hidden="true"
+              sx={{
+                color: 'var(--be-accent, inherit)',
+                display: 'flex',
+                fontSize: 20,
+                opacity: variant === 'primary' ? 1 : 0.85,
+                filter:
+                  variant === 'primary'
+                    ? 'drop-shadow(0 0 4px rgba(var(--be-accent-rgb, 56, 189, 248), 0.40))'
+                    : 'none',
+              }}
+            >
+              {icon}
+            </Box>
+          )}
+          <Typography
+            variant="subtitle1"
+            component={isMobile ? 'span' : 'h2'}
+            aria-hidden={isMobile ? 'true' : undefined}
+            data-build-section-focus-target={!isMobile ? true : undefined}
+            tabIndex={!isMobile ? -1 : undefined}
+            sx={{
+              fontWeight: 700,
+              fontFamily: 'Space Grotesk Variable, Inter Variable, system-ui',
+              letterSpacing: 0.2,
+              fontSize: { xs: 13, md: 14 },
+              flex: 1,
+              '&:focus': { outline: 'none' },
+              '&:focus-visible': {
+                outline: `2px solid var(--be-accent, ${theme.palette.primary.main})`,
+                outlineOffset: 4,
+                borderRadius: 1,
+              },
+              ...(variant === 'primary' && {
+                background:
+                  'linear-gradient(90deg, var(--be-accent, #38bdf8) 0%, rgba(var(--be-accent-rgb, 56, 189, 248), 0.60) 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+              }),
+            }}
+          >
+            {title}
+            {!isMobile && complete !== undefined && (
+              <Box component="span" sx={visuallyHiddenSx}>
+                {` (${complete ? 'complete' : 'incomplete'})`}
+              </Box>
+            )}
+          </Typography>
 
-        {/* Optional header control (e.g. copy-from-setup). Isolate clicks/keys
-            so they never bubble to the mobile collapse toggle. */}
+          {complete && (
+            <CheckCircleOutlined
+              aria-hidden="true"
+              sx={{
+                fontSize: 16,
+                color: 'var(--be-accent, #22c55e)',
+                opacity: 0.85,
+                flexShrink: 0,
+                transition: 'opacity 0.3s',
+              }}
+            />
+          )}
+          {complete === false && (
+            <Box
+              aria-hidden="true"
+              sx={{
+                width: 6,
+                height: 6,
+                borderRadius: '50%',
+                background: isDark ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.14)',
+                flexShrink: 0,
+              }}
+            />
+          )}
+
+          {isMobile && (
+            <ExpandMoreIcon
+              aria-hidden="true"
+              fontSize="small"
+              sx={{
+                transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)',
+                transition: 'transform 0.25s',
+                flexShrink: 0,
+              }}
+            />
+          )}
+        </Box>
+
+        {/* Keep actions outside the collapse button to avoid nested controls. */}
         {headerAction && (
-          <Box
-            onClick={(e: React.MouseEvent) => e.stopPropagation()}
-            onKeyDown={(e: React.KeyboardEvent) => e.stopPropagation()}
-            sx={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}
-          >
-            {headerAction}
-          </Box>
-        )}
-
-        {/* Completion indicator — checkmark when done, nothing when not */}
-        {complete && (
-          <CheckCircleOutlined
-            aria-label={`${title} section complete`}
-            sx={{
-              fontSize: 16,
-              color: 'var(--be-accent, #22c55e)',
-              opacity: 0.85,
-              flexShrink: 0,
-              transition: 'opacity 0.3s',
-            }}
-          />
-        )}
-        {complete === false && (
-          <Box
-            role="img"
-            aria-label={`${title} section incomplete`}
-            sx={{
-              width: 6,
-              height: 6,
-              borderRadius: '50%',
-              background: isDark ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.14)',
-              flexShrink: 0,
-            }}
-          />
-        )}
-
-        {/* Mobile expand/collapse */}
-        {isMobile && (
-          <IconButton
-            size="small"
-            aria-label={expanded ? 'Collapse section' : 'Expand section'}
-            sx={{
-              transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)',
-              transition: 'transform 0.25s',
-            }}
-          >
-            <ExpandMoreIcon fontSize="small" />
-          </IconButton>
+          <Box sx={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>{headerAction}</Box>
         )}
       </Box>
 
-      {/* Content */}
       {isMobile ? (
         <Collapse in={expanded} unmountOnExit>
           <Box id={`section-${id}-content`} sx={{ p: 2 }}>

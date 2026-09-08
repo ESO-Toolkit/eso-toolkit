@@ -292,9 +292,8 @@ const PickerDialogRoot: React.FC<PickerDialogProps> = ({
             backdropFilter: 'blur(10px)',
             WebkitBackdropFilter: 'blur(10px)',
             background: isDark
-              ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(0, 225, 255, 0.12) 100%)'
+              ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.08) 0%, rgba(0, 225, 255, 0.04) 100%), rgba(15, 23, 42, 0.96)'
               : 'linear-gradient(135deg, rgba(255,255,255,0.98), rgba(248,250,252,0.98))',
-            backgroundColor: 'transparent',
             border: isMobile
               ? 'none'
               : isDark

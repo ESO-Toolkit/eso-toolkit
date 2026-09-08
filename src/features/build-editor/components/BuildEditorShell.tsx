@@ -41,7 +41,11 @@ const ShellInner: React.FC = () => {
               'radial-gradient(ellipse at 85% 10%, rgba(var(--be-accent-rgb, 56, 189, 248), 0.04) 0%, transparent 35%)',
             ].join(', '),
         overflow: 'clip',
-        minHeight: 600,
+        height: {
+          xs: 'calc(100dvh - 64px)',
+          sm: 'calc(100dvh - 96px)',
+        },
+        minHeight: { xs: 480, md: 600 },
         // Class-colored accent line at the top edge
         '&::before': {
           content: '""',
@@ -70,6 +74,7 @@ const ShellInner: React.FC = () => {
         },
       }}
       data-class={esoClass}
+      data-build-editor-shell
     >
       <BuildEditorLayout />
     </Box>

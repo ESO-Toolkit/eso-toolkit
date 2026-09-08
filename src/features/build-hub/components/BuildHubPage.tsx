@@ -186,6 +186,7 @@ export const BuildHubPage: React.FC = () => {
               size="small"
               component={RouterLink}
               to="/build-editor"
+              state={{ newBuild: true }}
               sx={{
                 background: 'linear-gradient(135deg, #22d3ee 0%, #06b6d4 100%)',
                 color: '#fff',

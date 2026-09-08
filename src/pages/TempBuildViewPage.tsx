@@ -83,7 +83,7 @@ export const TempBuildViewPage: React.FC = () => {
         <Box sx={{ display: 'flex', gap: 1.5, justifyContent: 'center', flexWrap: 'wrap' }}>
           <Button
             variant="contained"
-            onClick={() => navigate('/build-editor')}
+            onClick={() => navigate('/build-editor', { state: { newBuild: true } })}
             sx={{
               borderRadius: '10px',
               textTransform: 'none',

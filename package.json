@@ -101,6 +101,7 @@
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-storybook": "^10.5.8",
+    "fake-indexeddb": "6.2.5",
     "glob": "^11.1.0",
     "identity-obj-proxy": "^3.0.0",
     "jest": "^30.4.2",

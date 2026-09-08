@@ -27,19 +27,27 @@ import {
 } from '@mui/material';
 import type { SxProps, Theme } from '@mui/material/styles';
 import { alpha, styled } from '@mui/material/styles';
+import { useSnackbar } from 'notistack';
 import React from 'react';
 import { useLocation } from 'react-router-dom';
 
 import esoLogo from '../assets/eso-toolkit-logo-icon.svg';
 import { clearStoredTokens, setFallbackDestination, startPKCEAuth } from '../features/auth/auth';
 import { useAuth } from '../features/auth/AuthContext';
+import { resetBuild } from '../features/build-editor/store/buildEditorSlice';
 import { useCurrentUserAvatar } from '../hooks/useCurrentUserAvatar';
 import { usePersistentDarkMode } from '../hooks/usePersistentDarkMode';
 import {
   useViewTransitionNavigate,
   type ViewTransitionType,
 } from '../hooks/useViewTransitionNavigate';
+import { clearSavedBuilds } from '../store/saved_builds';
+import {
+  beginBuildStorageCleanup,
+  clearBuildStorage,
+} from '../store/saved_builds/savedBuildStorage';
 import { persistor } from '../store/storeWithHistory';
+import { useAppDispatch } from '../store/useAppDispatch';
 import { clearUserContext } from '../utils/errorTracking';
 import { preloadHubRoutes } from '../utils/hubRoutePreload';
 
@@ -502,12 +510,15 @@ export const HeaderBar: React.FC = () => {
     useAuth();
   const hasRequestedUser = React.useRef(false);
   const navigate = useViewTransitionNavigate();
+  const dispatch = useAppDispatch();
+  const { enqueueSnackbar } = useSnackbar();
   const location = useLocation();
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const { darkMode, toggleDarkMode } = usePersistentDarkMode();
   const [scrolled, setScrolled] = React.useState(false);
   const [mobileOpen, setMobileOpen] = React.useState(false);
+  const [isLoggingOut, setIsLoggingOut] = React.useState(false);
   const [toolsAnchorEl, setToolsAnchorEl] = React.useState<null | HTMLElement>(null);
   const [reportsAnchorEl, setReportsAnchorEl] = React.useState<null | HTMLElement>(null);
   const [profileAnchorEl, setProfileAnchorEl] = React.useState<null | HTMLElement>(null);
@@ -650,18 +661,30 @@ export const HeaderBar: React.FC = () => {
     setMobileOpen(false);
   }, [location]);
 
-  const handleLogout = React.useCallback((): void => {
+  const handleLogout = React.useCallback(async (): Promise<void> => {
+    if (isLoggingOut) return;
+    setIsLoggingOut(true);
+    beginBuildStorageCleanup();
     // Drop both tokens — leaving the long-lived refresh_token behind lets a
     // 401-triggered refresh silently re-mint a session after logout.
     clearStoredTokens();
     clearUserContext();
+    // Purging persisted state does not clear the live Redux store.
+    dispatch(clearSavedBuilds());
+    dispatch(resetBuild());
+    rebindAccessToken();
     // Purge account-bound persisted state (loadouts/builds) so it can't outlive
     // the session on a shared machine.
-    void persistor.purge();
-    rebindAccessToken();
-    navigate('/', { vtType: 'down' });
+    const cleanupResults = await Promise.allSettled([persistor.purge(), clearBuildStorage()]);
+    if (cleanupResults.some((result) => result.status === 'rejected')) {
+      enqueueSnackbar('Signed out. Local build cleanup will retry automatically.', {
+        variant: 'warning',
+      });
+    }
     setMobileOpen(false);
-  }, [rebindAccessToken, navigate]);
+    setIsLoggingOut(false);
+    navigate('/', { vtType: 'down' });
+  }, [dispatch, enqueueSnackbar, isLoggingOut, rebindAccessToken, navigate]);
 
   const handleDrawerToggle = (): void => {
     setMobileOpen(!mobileOpen);
@@ -1442,9 +1465,10 @@ export const HeaderBar: React.FC = () => {
           }}
         >
           <ButtonBase
+            disabled={isLoggingOut}
             onClick={() => {
-              handleLogout();
               handleProfileMenuClose();
+              void handleLogout();
             }}
             sx={{
               display: 'flex',
@@ -1886,9 +1910,10 @@ export const HeaderBar: React.FC = () => {
         <Box sx={{ px: 2, pt: 1, pb: 1, position: 'relative', zIndex: 1 }}>
           {isLoggedIn ? (
             <Button
+              disabled={isLoggingOut}
               onClick={() => {
-                handleLogout();
                 setMobileOpen(false);
+                void handleLogout();
               }}
               startIcon={<Logout sx={{ fontSize: 18 }} />}
               fullWidth

@@ -18,8 +18,11 @@ export interface GuideFetchResult extends ExtractedGuide {
 }
 
 /** Fetch a guide page by URL via the worker proxy and extract its build text. */
-export async function fetchGuideByUrl(url: string): Promise<GuideFetchResult> {
-  const res = await fetch(`${BASE_URL}/fetch-guide?url=${encodeURIComponent(url)}`);
+export async function fetchGuideByUrl(
+  url: string,
+  signal?: AbortSignal,
+): Promise<GuideFetchResult> {
+  const res = await fetch(`${BASE_URL}/fetch-guide?url=${encodeURIComponent(url)}`, { signal });
   if (!res.ok) {
     const body = (await res.json().catch(() => ({}))) as { error?: string };
     throw new Error(body.error ?? `Couldn't fetch that link (${res.status}).`);

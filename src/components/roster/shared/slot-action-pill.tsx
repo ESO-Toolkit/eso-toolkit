@@ -28,6 +28,11 @@ import { useNavigate } from 'react-router-dom';
 
 import type { Build } from '../../../features/build-editor/types/build.types';
 import { saveBuild } from '../../../store/saved_builds/savedBuildsSlice';
+import {
+  acquireBuildStorageSessionGeneration,
+  assertBuildStorageSessionCurrent,
+  putSavedBuildRecord,
+} from '../../../store/saved_builds/savedBuildStorage';
 import type { BuildReference } from '../../../types/roster';
 import { encodeBuildToURL } from '../../../utils/buildEncoding';
 
@@ -52,6 +57,7 @@ export const SlotActionPill = React.memo<SlotActionPillProps>(
     const dispatch = useDispatch();
     const { enqueueSnackbar } = useSnackbar();
     const [editLoading, setEditLoading] = useState(false);
+    const [saveLoading, setSaveLoading] = useState(false);
 
     // ── Edit: same-tab navigation to build editor ──────────────────
     const handleEdit = useCallback(async () => {
@@ -80,14 +86,28 @@ export const SlotActionPill = React.memo<SlotActionPillProps>(
     }, [buildFactory, navigate, slotKey, rosterId, enqueueSnackbar]);
 
     // ── Save: persist to My Builds without navigating ──────────────
-    const handleSave = useCallback(() => {
-      const build = buildFactory();
-      dispatch(saveBuild(build));
-      enqueueSnackbar(`${build.name} saved to My Builds`, {
-        variant: 'success',
-        autoHideDuration: 3000,
-      });
-    }, [buildFactory, dispatch, enqueueSnackbar]);
+    const handleSave = useCallback(async () => {
+      if (saveLoading) return;
+      setSaveLoading(true);
+      try {
+        const sessionGeneration = await acquireBuildStorageSessionGeneration();
+        const build = buildFactory();
+        const action = saveBuild(build);
+        await putSavedBuildRecord(action.payload, sessionGeneration);
+        assertBuildStorageSessionCurrent(sessionGeneration);
+        dispatch(action);
+        enqueueSnackbar(`${build.name} saved to My Builds`, {
+          variant: 'success',
+          autoHideDuration: 3000,
+        });
+      } catch {
+        enqueueSnackbar('Build could not be saved. Check browser storage and try again.', {
+          variant: 'error',
+        });
+      } finally {
+        setSaveLoading(false);
+      }
+    }, [buildFactory, dispatch, enqueueSnackbar, saveLoading]);
 
     const iconSx = { fontSize: '0.9rem' };
 
@@ -174,7 +194,8 @@ export const SlotActionPill = React.memo<SlotActionPillProps>(
           <Tooltip title="Save to My Builds" arrow placement="top">
             <IconButton
               size="small"
-              onClick={handleSave}
+              onClick={() => void handleSave()}
+              disabled={saveLoading}
               aria-label={`Save ${label} to My Builds`}
               sx={{
                 borderRadius: 0,
@@ -189,7 +210,11 @@ export const SlotActionPill = React.memo<SlotActionPillProps>(
                 },
               }}
             >
-              <BookmarkAddIcon sx={iconSx} />
+              {saveLoading ? (
+                <CircularProgress size={14} color="inherit" />
+              ) : (
+                <BookmarkAddIcon sx={iconSx} />
+              )}
             </IconButton>
           </Tooltip>
         </Box>

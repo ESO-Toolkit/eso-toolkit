@@ -10,7 +10,7 @@
 import { LinkOutlined as LinkIcon, TravelExploreOutlined as FetchIcon } from '@mui/icons-material';
 import { Alert, Box, Button, CircularProgress, Stack, TextField, Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 import { fetchGuideByUrl } from '../api/fetch-guide-api';
 
@@ -31,6 +31,9 @@ const pillSx = {
 
 const looksLikeUrl = (s: string): boolean => /^https?:\/\/\S+\.\S+/i.test(s.trim());
 
+const isAbortError = (error: unknown): boolean =>
+  error instanceof Error && error.name === 'AbortError';
+
 export const ImportBuildLinkPanel: React.FC<ImportBuildLinkPanelProps> = ({ onClose }) => {
   const isDark = useTheme().palette.mode === 'dark';
 
@@ -40,25 +43,47 @@ export const ImportBuildLinkPanel: React.FC<ImportBuildLinkPanelProps> = ({ onCl
   const [text, setText] = useState<string | null>(null);
   const [thin, setThin] = useState(false);
   const [truncated, setTruncated] = useState(false);
+  const activeRequestRef = useRef<AbortController | null>(null);
+
+  useEffect(
+    () => () => {
+      const activeRequest = activeRequestRef.current;
+      activeRequestRef.current = null;
+      activeRequest?.abort();
+    },
+    [],
+  );
 
   const handleFetch = async (): Promise<void> => {
     if (!looksLikeUrl(url)) {
       setError('Enter a full guide URL starting with https://');
       return;
     }
+
+    activeRequestRef.current?.abort();
+    const request = new AbortController();
+    activeRequestRef.current = request;
     setLoading(true);
     setError(null);
     try {
-      const result = await fetchGuideByUrl(url.trim());
+      const result = await fetchGuideByUrl(url.trim(), request.signal);
+      if (request.signal.aborted || activeRequestRef.current !== request) return;
+
       // Heuristic: a build-bearing page has plenty of text. Very little usually
       // means the build is image-only — let the user know but still proceed.
       setThin(result.text.replace(/\s+/g, ' ').trim().length < 200);
       setTruncated(result.truncated);
       setText(result.text);
     } catch (err) {
+      if (request.signal.aborted || activeRequestRef.current !== request || isAbortError(err)) {
+        return;
+      }
       setError(err instanceof Error ? err.message : 'Could not fetch that link.');
     } finally {
-      setLoading(false);
+      if (activeRequestRef.current === request) {
+        activeRequestRef.current = null;
+        setLoading(false);
+      }
     }
   };
 
@@ -107,10 +132,10 @@ export const ImportBuildLinkPanel: React.FC<ImportBuildLinkPanelProps> = ({ onCl
           if (error) setError(null);
         }}
         onKeyDown={(e) => {
-          if (e.key === 'Enter' && !loading) void handleFetch();
+          if (e.key === 'Enter') void handleFetch();
         }}
-        disabled={loading}
         slotProps={{
+          htmlInput: { 'aria-label': 'Guide URL' },
           input: {
             startAdornment: (
               <Box sx={{ display: 'flex', mr: 1, color: 'var(--be-accent, #38bdf8)' }}>
@@ -129,7 +154,7 @@ export const ImportBuildLinkPanel: React.FC<ImportBuildLinkPanelProps> = ({ onCl
       )}
 
       <Stack direction="row" spacing={1} sx={{ justifyContent: 'flex-end' }}>
-        <Button variant="outlined" size="small" onClick={onClose} sx={pillSx} disabled={loading}>
+        <Button variant="outlined" size="small" onClick={onClose} sx={pillSx}>
           Cancel
         </Button>
         <Button
@@ -142,7 +167,7 @@ export const ImportBuildLinkPanel: React.FC<ImportBuildLinkPanelProps> = ({ onCl
               <FetchIcon sx={{ fontSize: 16 }} />
             )
           }
-          disabled={loading || url.trim().length === 0}
+          disabled={url.trim().length === 0}
           onClick={() => void handleFetch()}
           sx={{
             ...pillSx,

@@ -34,11 +34,16 @@ jest.mock('../hooks/useBuildCompleteness', () => ({
   useBuildCompleteness: () => 50,
 }));
 
+jest.mock('../hooks/useSaveBuild', () => ({
+  useSaveBuild: () => jest.fn(),
+}));
+
 jest.mock('@/features/build-hub/components/PublishBuildDialog', () => ({
   PublishBuildDialog: () => null,
 }));
 
 jest.mock('./AddToRosterDialog', () => ({ AddToRosterDialog: () => null }));
+jest.mock('./ImportBuildFilePanel', () => ({ ImportBuildFilePanel: () => null }));
 jest.mock('./ImportBuildImagePanel', () => ({ ImportBuildImagePanel: () => null }));
 jest.mock('./ImportBuildLinkPanel', () => ({ ImportBuildLinkPanel: () => null }));
 jest.mock('./ImportBuildTextPanel', () => ({ ImportBuildTextPanel: () => null }));
