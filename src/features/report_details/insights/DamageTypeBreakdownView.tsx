@@ -233,7 +233,43 @@ export const DamageTypeBreakdownView: React.FC<DamageTypeBreakdownViewProps> = (
         <Box sx={{ maxHeight: 350, overflowY: 'auto' }}>
           <List disablePadding>
             {damageTypeBreakdown.map((damageType) => {
-              const percentage = totalDamage > 0 ? (damageType.totalDamage / totalDamage) * 100 : 0;
+              // A metric with no denominator is unavailable, not zero. Keep the
+              // denominator checks here as a final guard for callers that pass a
+              // partially populated row (the panel normally omits zero-damage rows).
+              const percentage =
+                totalDamage > 0 ? (damageType.totalDamage / totalDamage) * 100 : null;
+              const hasEligibleHits = damageType.eligibleHitCount > 0;
+              const hasDamageDenominator = damageType.totalDamage > 0;
+              const criticalRate = hasEligibleHits ? damageType.criticalRate : null;
+              const criticalDamageShare = hasDamageDenominator
+                ? damageType.criticalDamageShare
+                : null;
+              const criticalRateLabel =
+                criticalRate === null
+                  ? 'Crit hit rate unavailable'
+                  : `Crit hit rate ${criticalRate.toFixed(1)}%`;
+              const criticalRateTooltip =
+                criticalRate === null
+                  ? 'Critical hit rate is unavailable because no eligible normal or critical hits were recorded.'
+                  : `Critical hit rate: ${damageType.criticalHits} critical hits out of ${damageType.eligibleHitCount} eligible hits.`;
+              const criticalDamageShareLabel =
+                criticalDamageShare === null
+                  ? 'Crit damage share unavailable'
+                  : `Crit damage share ${criticalDamageShare.toFixed(1)}%`;
+              const criticalDamageShareTooltip =
+                criticalDamageShare === null
+                  ? !hasDamageDenominator
+                    ? 'Critical damage share is unavailable because total damage is zero.'
+                    : 'Critical damage share is unavailable because one or more hit types are unknown.'
+                  : `Critical damage share: ${formatNumber(damageType.criticalDamage)} critical damage out of ${formatNumber(damageType.totalDamage)} total damage.`;
+              const damageShareLabel =
+                percentage === null
+                  ? 'Overlapping damage share unavailable'
+                  : `${percentage.toFixed(1)}%`;
+              const damageShareAriaLabel =
+                percentage === null
+                  ? 'Overlapping damage share unavailable because total damage is zero'
+                  : `Overlapping damage share: ${percentage.toFixed(1)}% of total damage; categories may overlap`;
               // Try custom mapping first (by display name), then fall back to enum-based mapping
               const color =
                 CUSTOM_DAMAGE_TYPE_COLORS[damageType.displayName] ||
@@ -353,18 +389,29 @@ export const DamageTypeBreakdownView: React.FC<DamageTypeBreakdownViewProps> = (
                         </Box>
 
                         {/* Percentage */}
-                        <Box sx={{ textAlign: 'right' }}>
-                          <Typography
-                            variant="h6"
-                            sx={{
-                              fontWeight: 700,
-                              color: 'white',
-                              textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
-                            }}
-                          >
-                            {percentage.toFixed(1)}%
-                          </Typography>
-                        </Box>
+                        <Tooltip title={damageShareAriaLabel} arrow>
+                          <Box aria-label={damageShareAriaLabel} sx={{ textAlign: 'right' }}>
+                            <Typography
+                              variant="h6"
+                              sx={{
+                                fontWeight: 700,
+                                color: 'white',
+                                textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
+                              }}
+                            >
+                              {damageShareLabel}
+                            </Typography>
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                color: 'rgba(255,255,255,0.9)',
+                                textShadow: '1px 1px 1px rgba(0,0,0,0.8)',
+                              }}
+                            >
+                              overlapping damage share
+                            </Typography>
+                          </Box>
+                        </Tooltip>
                       </Box>
                     </Box>
                   </Box>

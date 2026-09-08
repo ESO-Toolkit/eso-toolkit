@@ -6,7 +6,10 @@ import { useSelectedTargetIds } from '../../../hooks/useSelectedTargetIds';
 import { DamageTypeFlags } from '../../../types/abilities';
 
 import { DamageTypeBreakdownView } from './DamageTypeBreakdownView';
-import { categorizeDamageEvents, type DamageCategoryKey } from './damageTypeCategorization';
+import {
+  categorizeDamageEventsWithMetrics,
+  type DamageCategoryKey,
+} from './damageTypeCategorization';
 
 interface DamageTypeBreakdownPanelProps {
   fight: FightFragment;
@@ -55,14 +58,18 @@ export const DamageTypeBreakdownPanel: React.FC<DamageTypeBreakdownPanelProps> =
       return { damageTypeBreakdown: [], totalDamage: 0 };
     }
 
-    const categorized = categorizeDamageEvents(damageEvents, reportMasterData.abilitiesById, {
-      includeEvent: (event) => {
-        // Only include events where the target is in selectedTargets
-        if (selectedTargetIds.size > 0 && !selectedTargetIds.has(event.targetID)) return false;
-        // Only include events from the selected player when one is chosen
-        if (selectedPlayerId != null && event.sourceID !== selectedPlayerId) return false;
-        return true;
-      },
+    const isSelectedEvent = (event: (typeof damageEvents)[number]): boolean => {
+      if (selectedTargetIds.size > 0 && !selectedTargetIds.has(event.targetID)) return false;
+      if (selectedPlayerId != null && event.sourceID !== selectedPlayerId) return false;
+      return true;
+    };
+    const {
+      all: categorized,
+      eligible: eligibleCategorized,
+      critical: criticalCategorized,
+      unknownHitType: unknownHitTypeCategorized,
+    } = categorizeDamageEventsWithMetrics(damageEvents, reportMasterData.abilitiesById, {
+      includeEvent: isSelectedEvent,
     });
 
     const breakdown: DamageTypeBreakdown[] = CATEGORY_META.filter(
