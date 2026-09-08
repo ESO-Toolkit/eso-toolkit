@@ -180,7 +180,10 @@ function createLookupFromLifecycleEvents(
     .sort((first, second) => first.timestamp - second.timestamp);
 
   for (const event of sortedEvents) {
-    const effectKey = `${event.abilityGameID}_${event.targetID}`;
+    // The same effect can be active on one target from multiple sources. Keep
+    // each lifecycle independent so one source's remove event cannot terminate
+    // another source's interval.
+    const effectKey = `${event.abilityGameID}_${event.sourceID}_${event.targetID}`;
 
     if (applyTypes.includes(event.type)) {
       if (!activeEffects.has(effectKey)) {

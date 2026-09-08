@@ -321,14 +321,20 @@ describe('CalculateStatusEffectUptimes', () => {
       });
 
       it('returns typed no-data when finite endpoints overflow the derived fight duration', () => {
-        const result = calculateStatusEffectUptimes({
-          debuffsLookup: createMockBuffLookupData({}),
-          hostileBuffsLookup: createMockBuffLookupData({}),
-          fightStartTime: -1e308,
-          fightEndTime: 1e308,
-        });
+        const onProgress = jest.fn();
+        const result = calculateStatusEffectUptimes(
+          {
+            debuffsLookup: createMockBuffLookupData({}),
+            hostileBuffsLookup: createMockBuffLookupData({}),
+            fightStartTime: -1e308,
+            fightEndTime: 1e308,
+          },
+          onProgress,
+        );
 
         expect(result).toEqual({ status: 'no-data', reason: 'invalid-fight-window', data: [] });
+        expect(onProgress).toHaveBeenCalledTimes(1);
+        expect(onProgress).toHaveBeenCalledWith(1);
       });
 
       it('should handle intervals extending beyond fight bounds', () => {

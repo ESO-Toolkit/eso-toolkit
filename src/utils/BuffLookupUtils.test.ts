@@ -13,10 +13,11 @@ describe('BuffLookupUtils', () => {
     timestamp: number,
     abilityGameID: number,
     targetID: number,
+    sourceID = 1,
   ): BuffEvent => ({
     timestamp,
     type: 'applybuff',
-    sourceID: 1,
+    sourceID,
     sourceIsFriendly: true,
     targetID,
     targetIsFriendly: true,
@@ -29,10 +30,11 @@ describe('BuffLookupUtils', () => {
     timestamp: number,
     abilityGameID: number,
     targetID: number,
+    sourceID = 1,
   ): BuffEvent => ({
     timestamp,
     type: 'removebuff',
-    sourceID: 1,
+    sourceID,
     sourceIsFriendly: true,
     targetID,
     targetIsFriendly: true,
@@ -134,6 +136,21 @@ describe('BuffLookupUtils', () => {
       expect(isBuffActive(lookup, 12345, 4000)).toBe(false);
       expect(isBuffActiveOnTarget(lookup, 12345, 4000, 1)).toBe(false);
       expect(isBuffActiveOnTarget(lookup, 12345, 4000, 2)).toBe(false);
+    });
+
+    it('keeps simultaneous sources on the same target as independent lifecycles', () => {
+      const lookup = createBuffLookup([
+        createApplyBuffEvent(1000, 12345, 7, 1),
+        createApplyBuffEvent(1500, 12345, 7, 2),
+        createRemoveBuffEvent(2500, 12345, 7, 1),
+        createRemoveBuffEvent(3500, 12345, 7, 2),
+      ]);
+
+      expect(lookup.buffIntervals['12345']).toEqual([
+        { start: 1000, end: 2500, sourceID: 1, targetID: 7 },
+        { start: 1500, end: 3500, sourceID: 2, targetID: 7 },
+      ]);
+      expect(isBuffActiveOnTarget(lookup, 12345, 3000, 7)).toBe(true);
     });
 
     it('uses half-open intervals at timestamp zero and preserves same-millisecond lifecycle order', () => {

@@ -41,6 +41,24 @@ export function isStatusEffectUptimesResultPending(
   return result === undefined || result === null;
 }
 
+export function getStatusEffectUptimesUnavailableMessage(
+  result: StatusEffectUptimesResult | null | undefined,
+): string | undefined {
+  if (result?.status !== 'no-data') {
+    return undefined;
+  }
+
+  switch (result.reason) {
+    case 'missing-fight-start':
+    case 'missing-fight-end':
+      return 'Status effect uptimes are unavailable because this fight is missing timing data.';
+    case 'non-finite-fight-start':
+    case 'non-finite-fight-end':
+    case 'invalid-fight-window':
+      return 'Status effect uptimes are unavailable because this fight has invalid timing data.';
+  }
+}
+
 export const StatusEffectUptimesPanel: React.FC<StatusEffectUptimesPanelProps> = ({
   fight,
   selectedPlayerId,
@@ -68,6 +86,7 @@ export const StatusEffectUptimesPanel: React.FC<StatusEffectUptimesPanelProps> =
   // Use the worker-based selector for status effect uptimes (now returns target-segmented data)
   const { statusEffectUptimesData, isStatusEffectUptimesLoading } = useStatusEffectUptimesTask();
   const statusEffectUptimes = getStatusEffectUptimesForPanel(statusEffectUptimesData);
+  const unavailableMessage = getStatusEffectUptimesUnavailableMessage(statusEffectUptimesData);
 
   const fightStartTime = fight?.startTime;
   const fightEndTime = fight?.endTime;
@@ -440,7 +459,7 @@ export const StatusEffectUptimesPanel: React.FC<StatusEffectUptimesPanelProps> =
 
     // Still loading if status effect task hasn't completed yet
     // An absent task result is loading; an `ok` empty array and a typed no-data
-    // result are both completed states and render as an empty panel.
+    // result are both completed states; typed no-data renders its reason.
     if (isStatusEffectUptimesResultPending(statusEffectUptimesData)) {
       return true;
     }
@@ -506,6 +525,7 @@ export const StatusEffectUptimesPanel: React.FC<StatusEffectUptimesPanelProps> =
         fightId={fightId}
         onOpenTimeline={canOpenTimeline ? () => setIsTimelineOpen(true) : undefined}
         canOpenTimeline={canOpenTimeline}
+        unavailableMessage={unavailableMessage}
       />
       <EffectUptimeTimelineModal
         open={isTimelineOpen}

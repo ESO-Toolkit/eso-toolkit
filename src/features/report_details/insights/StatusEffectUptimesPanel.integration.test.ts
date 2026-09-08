@@ -11,6 +11,7 @@ import type {
 
 import {
   getStatusEffectUptimesForPanel,
+  getStatusEffectUptimesUnavailableMessage,
   isStatusEffectUptimesResultPending,
 } from './StatusEffectUptimesPanel';
 
@@ -28,8 +29,12 @@ describe('StatusEffectUptimesPanel Target Segmentation Integration', () => {
     const emptyOk: StatusEffectUptimesResult = { status: 'ok', data: [] };
 
     expect(getStatusEffectUptimesForPanel(noData)).toBeNull();
+    expect(getStatusEffectUptimesUnavailableMessage(noData)).toBe(
+      'Status effect uptimes are unavailable because this fight has invalid timing data.',
+    );
     expect(isStatusEffectUptimesResultPending(noData)).toBe(false);
     expect(getStatusEffectUptimesForPanel(emptyOk)).toEqual([]);
+    expect(getStatusEffectUptimesUnavailableMessage(emptyOk)).toBeUndefined();
     expect(isStatusEffectUptimesResultPending(emptyOk)).toBe(false);
     expect(isStatusEffectUptimesResultPending(undefined)).toBe(true);
   });

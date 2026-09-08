@@ -127,20 +127,20 @@ export function calculateStatusEffectUptimes(
     data;
 
   if (typeof fightStartTime !== 'number') {
-    return { status: 'no-data', reason: 'missing-fight-start', data: [] };
+    return completeNoData('missing-fight-start', onProgress);
   }
   if (typeof fightEndTime !== 'number') {
-    return { status: 'no-data', reason: 'missing-fight-end', data: [] };
+    return completeNoData('missing-fight-end', onProgress);
   }
   if (!Number.isFinite(fightStartTime)) {
-    return { status: 'no-data', reason: 'non-finite-fight-start', data: [] };
+    return completeNoData('non-finite-fight-start', onProgress);
   }
   if (!Number.isFinite(fightEndTime)) {
-    return { status: 'no-data', reason: 'non-finite-fight-end', data: [] };
+    return completeNoData('non-finite-fight-end', onProgress);
   }
   const fightDuration = fightEndTime - fightStartTime;
   if (fightEndTime <= fightStartTime || !Number.isFinite(fightDuration) || fightDuration <= 0) {
-    return { status: 'no-data', reason: 'invalid-fight-window', data: [] };
+    return completeNoData('invalid-fight-window', onProgress);
   }
 
   const normalizedFightStartTime = normalizeZero(fightStartTime);
@@ -253,6 +253,14 @@ export function calculateStatusEffectUptimes(
   onProgress?.(1);
 
   return { status: 'ok', data: resultArray };
+}
+
+function completeNoData(
+  reason: StatusEffectUptimesNoDataReason,
+  onProgress?: OnProgressCallback,
+): StatusEffectUptimesNoDataResult {
+  onProgress?.(1);
+  return { status: 'no-data', reason, data: [] };
 }
 
 function normalizeZero(value: number): number {
