@@ -77,10 +77,21 @@ Four things that change the plan, each recorded in the manifest and queue log:
      was rejected on it, *after* the renders had already looked fine. He is **camera-limited, not
      interior-limited** — four cameras take blind 40.1% -> 18.8%, the largest gain measured on this
      project — so **one profile capture unlocks him**. Also settled: he cannot ride Taleria's mesh.
-   - **Archcustodian** (`129-dwarven-spider`, body names him, 11 plates). Wide low subject; the
-     front/back pairing still needs an eyeball.
-   - **Chimera** (`149-chimera-white` / `150-chimera-red`, 13 plates) — half of Sanity's Edge boss 2,
-     independently buildable. Resolve white vs red against in-game footage first.
+   - ~~**Archcustodian**~~ and ~~**Chimera**~~ — **screened out 2026-09-08 without spending a GPU
+     job.** `measure-view-coverage` on the extracted mesh of each species gives two-camera blind area
+     **40.4%** and **37.7%**, both above the top of the shipped band (31.5%). Archcustodian's
+     front/back pair is in fact clean (`view-02` / `view-09`), and `view-05` is *not* the profile it
+     looks like in a contact sheet — it is elevated and pushed in. The blocker is the shape, not the
+     plates.
+
+   **Read this before picking anything else off the list.** Those three are not three coincidences.
+   Every remaining Route C trial boss with usable plates is a quadruped, an arachnid or a floating
+   cluster — limbs pointing at the cameras, foreshortened to nothing in both views. The humanoids,
+   which two views cover at 5.6-31.5%, are all built. **The residue of this project is systematically
+   the shape two-view projection cannot do**, so the next unit of progress is a *profile plate*, not
+   another build. Screen candidates with `measure-view-coverage` first; it costs no GPU and a high
+   reading is a trustworthy reject (see the runbook for its measured accuracy, and for why a *low*
+   reading is not a promise).
    - **Overfiend Kazpian** — downgraded, see above. Do not build it without a picture of Kazpian.
    - **Rakkhat / Count Ryelaz / Baron Rize** — blocked on plate framing, not geometry.
 2. **Skeleton / "Boneman" is the single highest-leverage build on the board** — the largest creature
@@ -184,10 +195,18 @@ before each stage; log every job; confirm the process exited and VRAM released b
 Needs in-game capture — front + back, same pose, plain backdrop, **>=660px measured subject height**,
 no VFX, plus a head closeup:
 
-**Ra Kotu needs only ONE full-body PROFILE** (left or right, same pose, plain backdrop, >=660 px) —
-no front, no back, no closeup, because his front/back pair is already good. That is the cheapest ask
-on this list and the highest yield: it takes his blind area 40.1% -> 18.8%, straight into the shipped
-band. Do this one first.
+**Three bosses need only ONE full-body PROFILE each** (left or right, same pose, plain backdrop,
+>=660 px) — no front, no back, no closeup, because their front/back pairs are already good. This is
+much the cheapest ask on the list and the highest yield, and it is now the main line of progress on
+trial bosses rather than a footnote:
+
+| Subject       | Blind now | With profiles | Gain            |
+| ------------- | --------: | ------------: | --------------: |
+| Ra Kotu       |     40.1% |         18.8% | **21.3 points** |
+| Chimera       |     37.7% |         21.6% |  16.1 points    |
+| Archcustodian |     40.4% |         26.0% |  14.4 points    |
+
+Do Ra Kotu first: the largest gain, and it lands him mid-band.
 
 The rest need the full set — front + back, same pose, plain backdrop, **>=660px measured subject
 height**, no VFX, plus a head closeup:

@@ -164,6 +164,40 @@ optional `feather` and `uv_scale`. Boxes drive both the density warp and the mea
 allowed, and the reported metric becomes **region texels**. Omit them and nothing changes; every
 shipped config still uses `head_v_min` and rebuilds identically.
 
+### Screen a candidate's SHAPE before spending the GPU
+
+`measure-view-coverage.py` needs no plates and no GPU, and it will tell you whether two cameras can
+cover a shape at all. Run it on **any mesh of the same species** - an extracted client mesh is ideal,
+and one exists for most of the remaining bosses even where it is unusable for building.
+
+```
+python measure-view-coverage.py <any-mesh-of-that-species>.glb
+```
+
+Read the two-camera **neither** figure against the shipped band, which is **5.6% to 31.5%**.
+
+**Measured predictor accuracy**, screen versus the `visibility: neither` the real build reported:
+
+| Asset                    | Screen | Built | Error      |
+| ------------------------ | -----: | ----: | ---------: |
+| Ra Kotu (rejected)       |  40.1% | 38.8% |  -1.3      |
+| Xalvakka                 |  24.4% | 22.9% |  -1.5      |
+| Ozara                    |  18.4% | 14.7% |  -3.7      |
+| Lightning Storm Atronach |  27.3% | 31.5% |  +4.2      |
+| Tideborn Taleria         |  31.5% | 26.6% |  -4.9      |
+| **Oaxiltso**             |  14.8% | 31.4% | **+16.6**  |
+
+**The error is asymmetric, and that is what makes the screen usable.** It has never flattered a
+subject by more than ~5 points, but it once *understated* blindness by **16.6** (Oaxiltso: the screen
+unwraps independently and without the region density warp, so it does not see how the warp
+reallocates texel area). So:
+
+- **A high reading is a trustworthy reject.** If the screen says 38%, the build will not come back
+  inside the band.
+- **A low reading is not a promise.** Oaxiltso screened at 14.8% and built at 31.4%.
+
+Use it to say no cheaply. Do not use it to say yes.
+
 ### Override the shoulder band with `--head-v-min` whenever you doubt it
 
 `register-npc-plates.py --region head` matches only the rows above a **detected** shoulder line, and

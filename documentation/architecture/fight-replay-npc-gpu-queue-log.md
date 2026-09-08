@@ -535,3 +535,41 @@ share geometry and differ only in skin, making him "a second cheap build off the
 not. Normalised, `AirAtronach_Coral_Boss` is **3.86 x 3.17 x 2.0** with the arms splayed far out to
 the sides; Ra Kotu's plates show a compact roughly 1:1 subject (996 x 950 px) with the arms hanging
 close to the torso. Different geometry, not a recolour. Neither an alias nor a Route B host.
+
+---
+
+## Screened out without a GPU job — Archcustodian and Chimera (2026-09-08)
+
+Directly after the Ra Kotu rejection, the same measurement was run **before** committing any GPU
+time, on the extracted client mesh of each species. No reconstruction was attempted for either.
+
+| Candidate     | Mesh screened                      | 2-camera blind | 4-camera blind |
+| ------------- | ---------------------------------- | -------------: | -------------: |
+| Ra Kotu       | (its own reconstruction)           |      **40.1%** |          18.8% |
+| Archcustodian | `DwarvenSpider_FrostAtronach_Base` |      **40.4%** |          26.0% |
+| Chimera       | `Chimera_A_Basic`                  |      **37.7%** |          21.6% |
+
+All three sit above the top of the shipped band (31.5%), and the screen's error is asymmetric in the
+direction that makes a high reading trustworthy (see the runbook). Ra Kotu confirmed the reading
+empirically: screened 40.1%, built 38.8%, rejected on its atlas.
+
+**The important part is that these three are not three coincidences.** Every remaining Route C trial
+boss with usable plates is a **quadruped, an arachnid or a floating cluster** — shapes whose limbs
+point at the cameras and are foreshortened to nothing in both views. The bipedal and humanoid
+subjects, which two views cover at 5.6-31.5%, have all been built already. **The residue of this
+project is systematically the shape that two-view projection cannot do.**
+
+So the next unit of progress on trial bosses is **not another two-view build**. It is a **profile
+plate** — one per subject, which is a much smaller ask than the front/back/closeup set the fully
+blocked bosses need, and the pipeline already supports left/right cameras via
+`reference.side_plates`. Ranked by what a single profile buys:
+
+| Subject       | Blind now | Blind with profiles | Gain           |
+| ------------- | --------: | ------------------: | -------------: |
+| Ra Kotu       |     40.1% |               18.8% | **21.3 points** |
+| Archcustodian |     40.4% |               26.0% |  14.4 points   |
+| Chimera       |     37.7% |               21.6% |  16.1 points   |
+
+Note the gallery caveat that applies to all three: `dwarven-spider-references/view-05` looks like a
+profile in a contact sheet and is not one - it is elevated and pushed in, looking down at the body.
+Verify framing, not just angle.
