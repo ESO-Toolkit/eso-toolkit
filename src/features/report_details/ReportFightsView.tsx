@@ -23,6 +23,7 @@ import { ReportFightsSkeleton } from '../../components/ReportFightsSkeleton';
 import { FightFragment, ReportFragment } from '../../graphql/gql/graphql';
 import { RootState } from '../../store/storeWithHistory';
 import { getDifficultyLabel } from '../../utils/trialClassification';
+import { createReportFightDetailsIntentHandlers } from '../../utils/reportRoutePreload';
 
 import { BossAvatar } from './BossAvatar';
 import {
@@ -223,6 +224,11 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
       }
     },
     [navigate, reportId],
+  );
+
+  const reportFightDetailsIntentHandlers = React.useMemo(
+    () => createReportFightDetailsIntentHandlers(),
+    [],
   );
 
   const encounters = React.useMemo(() => {
@@ -575,6 +581,9 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
           data-testid={`fight-button-${fight.id}`}
           selected={fightId === String(fight.id)}
           onClick={() => handleFightSelect(fight.id)}
+          onPointerEnter={reportFightDetailsIntentHandlers.onPointerEnter}
+          onFocus={reportFightDetailsIntentHandlers.onFocus}
+          onTouchStart={reportFightDetailsIntentHandlers.onTouchStart}
           sx={{
             width: '100%',
             height: { xs: 82, sm: 88 },
