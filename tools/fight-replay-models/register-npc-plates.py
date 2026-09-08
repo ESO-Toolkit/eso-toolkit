@@ -16,6 +16,16 @@ body-shaped blob under any global statistic.
 Use ``--region head`` for helm plates. That restricts matching to the rows above
 the shoulder line, which is what stops a helm plate locking onto the torso.
 
+The shoulder line comes from a detector that is wrong on several common shapes,
+and when it is wrong this fails **quietly** - it matches the wrong band and then
+reports a healthy width error for that band. Pass ``--head-v-min`` to override
+it (same units as ``regions.head_v_min`` in the config: normalized height from
+the feet). Measured failures: the Lightning Storm Atronach returned 0.9378,
+because its levitating crown slab sits above the face, so matching used the top
+6% of the subject and scored a crown-to-crown fit at 7.79%; Ozara returned
+0.6249, her hips, because her tail dominates the silhouette. Compare any
+override against the ``auto_shoulder_v`` the fit now reports.
+
 Copy the printed JSON into the NPC config's ``reference.closeups`` array, set
 ``accepted`` yourself, and record why for anything rejected.
 """
@@ -43,7 +53,7 @@ class _Attr(argparse.Action):
         items = getattr(namespace, "specs", None)
         if not items:
             parser.error(f"{option_string} must follow a --closeup")
-        items[-1][option_string.lstrip("-")] = values
+        items[-1][option_string.lstrip("-").replace("-", "_")] = values
 
 
 def parse_args():
@@ -60,10 +70,25 @@ def parse_args():
                    help="which base plate to register against; left/right exist only when "
                         "the config supplied a real profile")
     p.add_argument("--region", action=_Attr, choices=["whole", "head"])
+    p.add_argument("--head-v-min", action=_Attr, type=float,
+                   help="override the BASE plate's shoulder line for --region head, in the same "
+                        "normalized-height-from-the-feet units as regions.head_v_min in the NPC "
+                        "config. Use it whenever the automatic detector is wrong: when it is, "
+                        "--region head fails QUIETLY, matching the wrong band and reporting a "
+                        "healthy width error for it. The detector's own value is printed as "
+                        "auto_shoulder_v so the two can be compared.")
     p.set_defaults(specs=[])
     args = p.parse_args()
     if not args.specs:
         p.error("at least one --closeup is required")
+    for spec in args.specs:
+        v = spec.get("head_v_min")
+        if v is None:
+            continue
+        if not 0.0 < v < 1.0:
+            p.error(f"--head-v-min must be strictly between 0 and 1, got {v}")
+        if spec["region"] != "head":
+            p.error(f"--head-v-min only applies to --region head (on {spec['file']})")
     return args
 
 
@@ -89,8 +114,8 @@ def main():
         close = remover(Image.open(source).convert("RGB")).convert("RGBA")
         base = bases[spec["view"]]
         head = spec["region"] == "head"
-        fit = (refs.register_head_region(base, close) if head
-               else refs.register_whole_body(base, close))
+        fit = (refs.register_head_region(base, close, head_v_min=spec.get("head_v_min"))
+               if head else refs.register_whole_body(base, close))
         if fit is None:
             print(f"{spec['file']}: NO VIABLE FIT")
             continue
@@ -119,10 +144,21 @@ def main():
             top, bottom = fit["plate_rows"]
             entry["registration"]["suggested_head_v_min"] = round(
                 (bottom - fit["plate_shoulder"]) / (bottom - top), 4)
+            # Carry BOTH readings into the config. When the band was hand-set, the
+            # line above reports the hand-set value back, which on its own reads as
+            # confirmation rather than as an override - the detector's number has to
+            # travel with it or the record is misleading.
+            entry["registration"]["shoulder_source"] = fit.get("shoulder_source", "detector")
+            entry["registration"]["auto_shoulder_v"] = fit.get("auto_shoulder_v")
+            if spec.get("head_v_min") is not None:
+                entry["registration"]["head_v_min_override"] = spec["head_v_min"]
         snippets.append(entry)
         print(f"{spec['file']} -> {spec['view']}"
               f"{' (head region)' if head else ''}: err={fit['width_error']*100:.2f}% "
               f"scale={fit['scale']:.3f} row={fit['row']:.1f} col={fit['col']:.1f}")
+        if head and spec.get("head_v_min") is not None:
+            print(f"    head band HAND-SET to {spec['head_v_min']} "
+                  f"(detector said {fit.get('auto_shoulder_v')})")
         caveat = refs.registration_caveat(spec["role"])
         if caveat:
             print(f"    !! {caveat}")

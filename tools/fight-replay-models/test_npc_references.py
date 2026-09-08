@@ -135,6 +135,43 @@ def test_head_registration_searches_beyond_the_seeded_window():
     assert fit["scale"] <= 1.30
 
 
+def test_head_v_min_override_moves_the_matched_band():
+    """The override exists because the detector fails SILENTLY.
+
+    A crown ornament above the head makes the detector fire near the very top,
+    so `--region head` matches a sliver and still reports a healthy error for
+    it. The override must move the band, and the detector's own value must stay
+    visible so the two can be compared.
+    """
+    # crown spur, then head, then a wide body: the widest upper row is the spur
+    base = silhouette([(120, 40), (50, 60), (150, 90), (300, 250)])
+    close = silhouette([(200, 240), (600, 240)])
+
+    auto = refs.register_head_region(base, close)
+    forced = refs.register_head_region(base, close, head_v_min=0.55)
+    assert auto is not None and forced is not None
+    assert auto["shoulder_source"] == "detector"
+    assert forced["shoulder_source"] == "hand-set"
+    # the detector's reading survives the override, so a reviewer can compare
+    assert forced["auto_shoulder_v"] == auto["auto_shoulder_v"]
+    # and the override actually moved the shoulder line it matches against
+    assert forced["plate_shoulder"] != auto["plate_shoulder"]
+
+    top, bottom = forced["plate_rows"]
+    v = (bottom - forced["plate_shoulder"]) / (bottom - top)
+    assert abs(v - 0.55) < 0.02
+
+
+def test_head_v_min_override_is_clamped_inside_the_plate():
+    base = silhouette([(50, 60), (150, 90), (300, 250)])
+    close = silhouette([(200, 240), (600, 240)])
+    for v_min in (0.001, 0.999):
+        fit = refs.register_head_region(base, close, head_v_min=v_min)
+        assert fit is not None
+        top, bottom = fit["plate_rows"]
+        assert top < fit["plate_shoulder"] < bottom
+
+
 def test_head_registration_reports_the_plate_shoulder_for_head_v_min():
     base = silhouette([(50, 60), (150, 90), (300, 250)])
     close = silhouette([(200, 240), (600, 240)])

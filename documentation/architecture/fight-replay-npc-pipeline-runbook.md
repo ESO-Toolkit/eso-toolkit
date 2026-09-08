@@ -164,6 +164,34 @@ optional `feather` and `uv_scale`. Boxes drive both the density warp and the mea
 allowed, and the reported metric becomes **region texels**. Omit them and nothing changes; every
 shipped config still uses `head_v_min` and rebuilds identically.
 
+### Override the shoulder band with `--head-v-min` whenever you doubt it
+
+`register-npc-plates.py --region head` matches only the rows above a **detected** shoulder line, and
+the detector is wrong on several common shapes (see above). When it is wrong this fails **quietly**:
+it matches the wrong band and then reports a perfectly healthy width error *for that band*. The
+Lightning Storm Atronach scored **7.79%** on what was actually a crown-to-crown fit across the top
+6% of the subject, because its levitating crown slab sits above the face.
+
+Pass `--head-v-min` — same units as `regions.head_v_min`, normalized height from the feet:
+
+```
+register-npc-plates.py ... --closeup view-04.jpg --role head --view front \
+    --region head --head-v-min 0.775
+```
+
+The fit now carries **both** readings, `shoulder_source` and `auto_shoulder_v`, and the config
+snippet records the override, so "the band was hand-set" can never be mistaken for "the detector
+agreed". Measured detector failures to date: **0.9378** on the Lightning Storm Atronach (crown above
+the face) and **0.6249** on Ozara (her *tail* dominates the normalised silhouette, so it pointed at
+the hips).
+
+**It is a diagnostic as much as a fix.** On both of those subjects, forcing the correct band did not
+rescue the plate — the Storm Atronach reproduced the same fit and the same doubling, and Ozara still
+returned NO VIABLE FIT. What it bought was certainty about *why*: those galleries shoot their
+closeups at a different camera elevation and distance from their base plates, and no
+scale-plus-translate can absorb that. Before this flag existed, a wrong band and a wrong camera were
+indistinguishable.
+
 ### The head-band run detector reports, it does not gate
 
 `detect_run_count_mismatch` compares opaque runs per slice between the plate row and the mesh's

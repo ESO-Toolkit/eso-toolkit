@@ -140,13 +140,24 @@ def register_whole_body(base_rgba, close_rgba, scales=np.arange(0.15, 0.95, 0.01
     return best
 
 
-def register_head_region(base_rgba, close_rgba):
+def register_head_region(base_rgba, close_rgba, head_v_min=None):
     """Match a helm closeup using ONLY the rows above the shoulder line.
 
     Whole-body matching is dominated by the torso, which is exactly how a helm
     plate ends up registered onto the chest. Cutting both silhouettes at the
     shoulder removes that failure mode, and the scale search is seeded from the
     ratio of the two head heights.
+
+    ``head_v_min`` overrides the automatic shoulder detector on the BASE plate,
+    in the same normalized-height-from-the-feet units the NPC configs use. Pass
+    it whenever the detector is wrong, because when it is, this function fails
+    *quietly*: it matches the wrong band and then reports a healthy width error
+    for that band. Measured cases - the Lightning Storm Atronach returned
+    0.9378 (its levitating crown slab sits above the face, so matching used the
+    top 6% of the subject and scored a crown-to-crown fit at 7.79%), and Ozara
+    returned 0.6249, her hips, because her TAIL dominates the silhouette. The
+    detector's own value is still reported as ``auto_shoulder_v`` so an override
+    can be sanity-checked against it.
     """
     bmask, bw, bc = silhouette_profile(base_rgba)
     cmask, cw, cc = silhouette_profile(close_rgba)
@@ -156,7 +167,12 @@ def register_head_region(base_rgba, close_rgba):
         return None
     b_top, b_bottom = int(brows[0]), int(brows[-1])
     c_top, c_bottom = int(crows_all[0]), int(crows_all[-1])
-    b_sh = shoulder_row(bw, b_top, b_bottom)
+    auto_sh = shoulder_row(bw, b_top, b_bottom)
+    b_sh = auto_sh
+    if head_v_min is not None:
+        # head_v_min is measured from the FEET upward; rows run downward.
+        b_sh = int(round(b_bottom - float(head_v_min) * (b_bottom - b_top)))
+        b_sh = max(b_top + 1, min(b_sh, b_bottom - 1))
     c_sh = shoulder_row(cw, c_top, c_bottom)
 
     seed = (b_sh - b_top) / max(c_sh - c_top, 1)
@@ -188,6 +204,8 @@ def register_head_region(base_rgba, close_rgba):
         "seed_scale": round(float(seed), 4),
         "seed_window": [round(seed_lo, 4), round(seed_hi, 4)],
         "profile_variation": round(cv, 4),
+        "auto_shoulder_v": round((b_bottom - auto_sh) / max(b_bottom - b_top, 1), 4),
+        "shoulder_source": "hand-set" if head_v_min is not None else "detector",
     })
     if not (seed_lo <= best["scale"] <= seed_hi):
         best["seed_window_excluded_best"] = True

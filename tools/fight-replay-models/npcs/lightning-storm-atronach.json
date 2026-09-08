@@ -34,7 +34,7 @@
         "role": "head",
         "view": "front",
         "accepted": false,
-        "rejected_reason": "Registered twice. With --region head the shoulder detector fired at v=0.9378 - the crown rocks, not the face - so the matched band was the top 6% of the subject and the 7.79% width error describes a crown-to-crown fit that never saw the face. With --region whole it scored 20.51% and the overlay ghosts the head crop over the THIGHS. Same failure as Oaxiltso: the gallery's closeups are shot from a different camera position, and a single scale+translate cannot reconcile that."
+        "rejected_reason": "Registered three times, and the third attempt is the one that settles it. With --region head the shoulder detector fired at v=0.9378 - the crown rocks - so matching used the top 6% of the subject and the healthy-looking 7.79% width error described a crown-to-crown fit that never saw the face. With --region whole it scored 20.51% and put the head crop across the THIGHS. Re-run with the new --head-v-min 0.775 override against the correct band, it returns the SAME fit (7.79%, scale 0.355), and the overlay is finally legible: the shoulder rocks are plainly doubled and the brow ridge carries a second edge offset vertically by roughly a tenth of a head height. The cause is visible in the raw plate - view-04 is shot from a LOWER camera elevation, looking UP at the face, while the base plate is level. A single scale-plus-translate cannot correct a change in camera elevation. Rejected on the overlay, now for a known reason rather than an unknown one."
       },
       {
         "file": "view-05.jpg",
@@ -51,7 +51,7 @@
         "rejected_reason": "14.46% at scale 0.340 - the LOWEST error of the three and the worst placement: the overlay puts the shoulder crop across the boots. A fourth confirmation that width error is not a reliability signal."
       }
     ],
-    "closeup_note": "All three candidates rejected on their overlays. The base front plate is 981 px tall and the verified face box spans v 0.775-0.945, so the face already occupies ~165 px of the base plate - roughly 2.7x the ~60 px a humanoid face gets - which is why this asset can carry its identity without a closeup."
+    "closeup_note": "All three candidates rejected. The base front plate is 981 px tall and the verified face box spans v 0.775-0.945, so the face already occupies ~165 px of the base plate - roughly 2.7x what a humanoid face gets - which is why this asset carries its identity without a closeup. The blocker is NOT the band detector: re-running view-04 against the correct hand-set band reproduces the same fit and the same doubling, because the gallery's closeups sit at a different camera ELEVATION from its base plates."
   },
   "geometry": {
     "source": "build/lightning-storm-atronach/lightning-storm-atronach-source.glb",

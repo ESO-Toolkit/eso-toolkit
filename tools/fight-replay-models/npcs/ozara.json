@@ -35,7 +35,7 @@
         "view": "front",
         "region": "head",
         "accepted": false,
-        "rejected_reason": "NO VIABLE FIT - the registrar's seeded scale window contains no candidate. This gallery's head closeups are shot from a much nearer camera than the base plates."
+        "rejected_reason": "NO VIABLE FIT - the registrar's seeded scale window contains no candidate. Re-tested after --head-v-min was added, forcing the band to the verified 0.80 against the detector's 0.6249 (her TAIL dominates the normalised silhouette, so the detector was pointing at the hips): still NO VIABLE FIT. The band was not the problem; this gallery's head closeups are shot from a much nearer camera than its base plates."
       },
       {
         "file": "view-11.jpg",
@@ -43,7 +43,7 @@
         "view": "front",
         "region": "head",
         "accepted": false,
-        "rejected_reason": "NO VIABLE FIT, same cause as view-04."
+        "rejected_reason": "NO VIABLE FIT - the registrar's seeded scale window contains no candidate. Re-tested after --head-v-min was added, forcing the band to the verified 0.80 against the detector's 0.6249 (her TAIL dominates the normalised silhouette, so the detector was pointing at the hips): still NO VIABLE FIT. The band was not the problem; this gallery's head closeups are shot from a much nearer camera than its base plates."
       },
       {
         "file": "view-05.jpg",
@@ -51,7 +51,7 @@
         "view": "front",
         "region": "head",
         "accepted": false,
-        "rejected_reason": "50.80% at scale 1.295 with col=-186.4; the overlay is a large blob hanging off the right of the subject entirely."
+        "rejected_reason": "50.80% at scale 1.295 with col=-186.4; the overlay is a large blob hanging off the right of the subject entirely. Re-tested with --head-v-min 0.80: 52.42%, unchanged in kind."
       },
       {
         "file": "view-06.jpg",
