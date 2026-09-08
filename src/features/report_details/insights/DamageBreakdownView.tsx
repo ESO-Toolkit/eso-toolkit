@@ -7,6 +7,7 @@ import {
   Avatar,
   Skeleton,
   Chip,
+  Tooltip,
   useTheme,
 } from '@mui/material';
 import React from 'react';
@@ -19,8 +20,11 @@ interface DamageBreakdown {
   icon?: string;
   totalDamage: number;
   hitCount: number;
+  eligibleHitCount: number;
   criticalHits: number;
-  criticalRate: number;
+  criticalRate: number | null;
+  criticalDamage: number;
+  criticalDamageShare: number | null;
   averageDamage: number;
   damageTypes?: string[];
 }
@@ -73,7 +77,43 @@ export const DamageBreakdownView: React.FC<DamageBreakdownViewProps> = React.mem
           <Box sx={{ maxHeight: 350, overflowY: 'auto' }}>
             <List disablePadding>
               {damageBreakdown.slice(0, 15).map((damage) => {
-                const percentage = totalDamage > 0 ? (damage.totalDamage / totalDamage) * 100 : 0;
+                // A metric with no denominator is unavailable, not zero. Keep the
+                // denominator checks here as a final guard for callers that pass a
+                // partially populated row (the panel normally omits zero-damage rows).
+                const percentage =
+                  totalDamage > 0 ? (damage.totalDamage / totalDamage) * 100 : null;
+                const hasEligibleHits = damage.eligibleHitCount > 0;
+                const hasDamageDenominator = damage.totalDamage > 0;
+                const criticalRate = hasEligibleHits ? damage.criticalRate : null;
+                const criticalDamageShare = hasDamageDenominator
+                  ? damage.criticalDamageShare
+                  : null;
+                const criticalRateLabel =
+                  criticalRate === null
+                    ? 'Crit hit rate unavailable'
+                    : `Crit hit rate ${criticalRate.toFixed(1)}%`;
+                const criticalRateTooltip =
+                  criticalRate === null
+                    ? 'Critical hit rate is unavailable because no eligible normal or critical hits were recorded.'
+                    : `Critical hit rate: ${damage.criticalHits} critical hits out of ${damage.eligibleHitCount} eligible hits.`;
+                const criticalDamageShareLabel =
+                  criticalDamageShare === null
+                    ? 'Crit damage share unavailable'
+                    : `Crit damage share ${criticalDamageShare.toFixed(1)}%`;
+                const criticalDamageShareTooltip =
+                  criticalDamageShare === null
+                    ? !hasDamageDenominator
+                      ? 'Critical damage share is unavailable because total damage is zero.'
+                      : 'Critical damage share is unavailable because one or more hit types are unknown.'
+                    : `Critical damage share: ${formatNumber(damage.criticalDamage)} critical damage out of ${formatNumber(damage.totalDamage)} total damage.`;
+                const damageShareLabel =
+                  percentage === null
+                    ? 'Damage share unavailable'
+                    : `${percentage.toFixed(1)}% dmg`;
+                const damageShareAriaLabel =
+                  percentage === null
+                    ? 'Damage share unavailable because total damage is zero'
+                    : `Damage share: ${percentage.toFixed(1)}% of total damage`;
                 return (
                   <ListItem key={damage.abilityGameID} sx={{ py: 1, pl: 0 }} divider>
                     <Box sx={{ display: 'flex', alignItems: 'center', width: '100%', gap: 1.25 }}>
@@ -97,11 +137,12 @@ export const DamageBreakdownView: React.FC<DamageBreakdownViewProps> = React.mem
                             mb: 0.5,
                           }}
                         >
-                          <Box sx={{ flex: 1 }}>
-                            {damage.criticalRate > 0 && (
-                              <Box sx={{ mb: 0.5 }}>
+                          <Box sx={{ flex: 1, pr: 12 }}>
+                            <Box sx={{ mb: 0.5, display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                              <Tooltip title={criticalRateTooltip} arrow>
                                 <Chip
-                                  label={`${damage.criticalRate.toFixed(1)}% crit`}
+                                  aria-label={criticalRateTooltip}
+                                  label={criticalRateLabel}
                                   size="small"
                                   sx={{
                                     height: 16,
@@ -115,8 +156,26 @@ export const DamageBreakdownView: React.FC<DamageBreakdownViewProps> = React.mem
                                       : '1px solid rgba(67, 56, 202, 0.3)',
                                   }}
                                 />
-                              </Box>
-                            )}
+                              </Tooltip>
+                              <Tooltip title={criticalDamageShareTooltip} arrow>
+                                <Chip
+                                  aria-label={criticalDamageShareTooltip}
+                                  label={criticalDamageShareLabel}
+                                  size="small"
+                                  sx={{
+                                    height: 16,
+                                    fontSize: '0.625rem',
+                                    backgroundColor: isDarkMode
+                                      ? '#4e579857'
+                                      : 'rgba(67, 56, 202, 0.12)',
+                                    color: isDarkMode ? 'rgba(255, 255, 255, 0.87)' : '#3730a3',
+                                    border: isDarkMode
+                                      ? '1px solid #45566f'
+                                      : '1px solid rgba(67, 56, 202, 0.3)',
+                                  }}
+                                />
+                              </Tooltip>
+                            </Box>
                             <Typography variant="body2" sx={{ fontWeight: 600 }}>
                               {damage.abilityName}
                             </Typography>
@@ -124,12 +183,13 @@ export const DamageBreakdownView: React.FC<DamageBreakdownViewProps> = React.mem
                           <Box
                             sx={{
                               position: 'absolute',
-                              top: damage.criticalRate > 0 ? 0 : 2,
+                              top: 0,
                               right: 0,
                             }}
                           >
                             <Chip
-                              label={`${percentage.toFixed(1)}%`}
+                              aria-label={damageShareAriaLabel}
+                              label={damageShareLabel}
                               size="medium"
                               sx={{
                                 position: 'relative',
@@ -317,8 +377,12 @@ export const DamageBreakdownView: React.FC<DamageBreakdownViewProps> = React.mem
                         </Box>
                         <LinearProgress
                           variant="determinate"
-                          value={Math.max(0, Math.min(100, percentage))}
-                          aria-label={`${damage.abilityName}: ${percentage.toFixed(1)}% of total damage`}
+                          value={Math.max(0, Math.min(100, percentage ?? 0))}
+                          aria-label={
+                            percentage === null
+                              ? `${damage.abilityName}: damage share unavailable because total damage is zero`
+                              : `${damage.abilityName}: ${percentage.toFixed(1)}% of total damage`
+                          }
                           sx={{
                             height: 8,
                             borderRadius: 999,
