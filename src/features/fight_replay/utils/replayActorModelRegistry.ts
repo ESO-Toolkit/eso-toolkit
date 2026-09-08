@@ -983,11 +983,9 @@ export function findStaticActorModel(
  * stay on the capsule rather than borrowing another actor's mesh — a wrong body is more misleading
  * in a tactical replay than an abstract one.
  *
- * There is no longer an `?npcModels=prototype` opt-in. It was a STAGING flag from the two-asset
- * prototype, not a performance or rights gate, and it outlived its purpose once the catalog covered
- * 22 trial bosses and a dungeon archetype behind a URL parameter nobody would guess. **Performance
- * is gated where it always was** — the caller skips this entirely on barebones (`detailedFigures`),
- * so a low-end preset still never fetches or parses a GLB.
+ * There is no preview or opt-in mode: every recognised actor resolves to its asset. Performance is
+ * gated by the caller, which skips this entirely on barebones (`detailedFigures`), so a low-end
+ * preset never fetches or parses a GLB.
  */
 export function resolveReplayActorModel(
   actor: Pick<ActorPosition, 'type'> & { name?: string },

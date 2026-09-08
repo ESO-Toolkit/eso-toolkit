@@ -245,9 +245,8 @@ const GAIT_WALK_EXIT_SPEED = 0.1; // units/SECOND to drop back to idle (must be 
 // recognise — including every boss with no shipped model — keeps the project-owned capsule renderer
 // below, so an unknown, missing, or failed asset can never make a combatant disappear.
 //
-// Models are on by default. The old `?npcModels=prototype` opt-in was a staging flag, not a
-// performance gate; the performance gate is `detailedFigures` below, which keeps barebones on
-// capsules and never fetches a GLB.
+// Models render for every recognised actor. The performance gate is `detailedFigures` below, which
+// keeps barebones on capsules and never fetches a GLB.
 //
 // Per-asset orientation/scale/offsets live on the registry entry's `transform` rather than as
 // module constants, because each reconstruction is exported at its own scale and facing.
