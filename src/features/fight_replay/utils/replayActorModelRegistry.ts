@@ -470,6 +470,73 @@ export const STATIC_REPLAY_ACTOR_MODEL_ASSETS: readonly StaticReplayActorModelAs
     },
   },
   {
+    // The first ARCHETYPE asset: one body aliased to a measured family of names rather than to one
+    // encounter. Skeletons are the largest creature archetype in the dungeon corpus, and every
+    // dungeon NPC is a capsule today.
+    //
+    // The 32 aliases below are real ESO Logs actor names harvested from 250 dungeon reports, not
+    // guesses, and they cover 342 fight-appearances. The selection is deliberately conservative —
+    // a keyword sweep for skeleton/bone/draugr matches 79 names, and most of the rest are NOT a
+    // bare humanoid skeleton and would be a wrong body:
+    //   - Draugr and Draugrkin (~170 appearances) are Nordic undead with flesh and armour.
+    //   - Skeletal Bear / Werewolf / Hound / Guar / Senche-Lion / Dire Wolf / Charger are QUADRUPEDS.
+    //   - Bone Colossus is a giant with its own extracted mesh; Flamebreath Skull is a floating head.
+    //   - Blackmarrow * are living necromancers; * Skullguard are titled humanoids.
+    //   - Bonelords are floating tentacled creatures, not skeletons.
+    //   - Boss-subType skeletons (Skeletal Destroyer) are excluded on TIER, not species: this entry
+    //     is scaled to the player figure, and a boss needs its own entry per the standing rule.
+    id: 'boneman-overview-v1',
+    path: 'models/fight-replay/npcs/boneman-overview-v1.glb',
+    renderer: 'static-boss',
+    actorTypes: HOSTILE_ACTOR_TYPES,
+    aliases: [
+      'skeletal archer',
+      'skeletal berserker',
+      'skeletal foot soldier',
+      'skeletal warrior',
+      'skeletal ravager',
+      'skeletal stalker',
+      'skeletal bruiser',
+      'skeletal executioner',
+      'skeletal warden',
+      'skeleton',
+      'skeletal pyromancer',
+      'darkfern skeleton',
+      'skeletal soldier',
+      'venomous skeleton',
+      'skeletal defender',
+      'skeletal healer',
+      'skeletal mage',
+      'skeletal sacrifice',
+      'skeletal spellbinder',
+      'skeletal torturer',
+      'skeletal runecaster',
+      'skeletal cutthroat',
+      'skeletal thrall',
+      'skeletal assassin',
+      'skeletal flame shaper',
+      'boneman archer',
+      'boneman warrior',
+      'skeletal harrier',
+      'imbued skeleton',
+      'skeletal protector',
+      'skeletal sorcerer',
+      'ice skeleton',
+    ],
+    transform: {
+      orientEuler: [0, 0, 0],
+      scale: 0.95,
+      yOffset: 0,
+      yawOffset: 0,
+      modelHeight: 2.0,
+    },
+    provenance: {
+      designation: 'project-authorized-fan-prototype',
+      sourceUrl: 'https://esomodelviewer.com/creatures/post/125-boneman-man-mer',
+      attributionFile: 'public/models/fight-replay/npcs/README-boneman-overview-v1.md',
+    },
+  },
+  {
     // Appears in four Cloudrest encounter slots — the highest count of any single lesser-enemy name.
     // Also the weakest build of its batch: 32.6% of texels face neither camera, because six legs
     // splayed from a deep body is near worst-case for two views. See its README.

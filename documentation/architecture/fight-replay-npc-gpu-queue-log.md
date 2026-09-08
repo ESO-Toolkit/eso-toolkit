@@ -573,3 +573,42 @@ blocked bosses need, and the pipeline already supports left/right cameras via
 Note the gallery caveat that applies to all three: `dwarven-spider-references/view-05` looks like a
 profile in a contact sheet and is not one - it is elevated and pushed in, looking down at the body.
 Verify framing, not just angle.
+
+---
+
+## Job — Boneman / skeleton archetype (2026-09-08) — GPU reconstruction
+
+The first **archetype** build: one body for a measured family of 32 dungeon actor names, rather than
+for one encounter.
+
+- **Input:** `boneman-references/view-01.jpg` (front) and `view-03.jpg` (back), 1920x1080, cut to a
+  shared 1052 px square, subject **994 x 466 px**. A textbook set — clean opposed A-pose, level
+  camera, plain backdrop, plus skull and torso closeups.
+- **Reconstruction:** Hunyuan3D-2mv, 50 steps, octree 380, seed 12345. **287,774 faces in 84.1 s.**
+- **Screened before any projection time: 23.1% blind**, inside the shipped band. Final measured
+  **24.3%** — the screen was within **1.2 points**, its second consecutive accurate call.
+- **Output:** `out/boneman-overview-v1.glb` — 4,997 tris / 4,317 verts / **287,232 bytes**, 223
+  charts, 76.7% coverage, PSNR 37.85 dB, 45.3% neighbour fill. All checks passed, **no warnings** —
+  the head run-structure detector did not fire at all, the only asset in this batch of which that is
+  true.
+- **Accepted.**
+
+**The worry going in was wrong, and worth recording as wrong.** A skeleton is mostly holes, and the
+expectation was that two-view reconstruction would fuse the ribs and gaps into a smooth mannequin. It
+resolved individual ribs, the pelvis, a segmented spine, separated arm bones and articulated hands.
+Marching cubes handles a concave, perforated subject better than the intuition suggests, at least
+when the silhouette is unambiguous.
+
+**A fourth shoulder-detector failure mode: the RIBCAGE.** The detector returned **0.7043** here,
+because a skeleton's widest upper-body row is its ribs, not its shoulders. The three modes previously
+recorded are head ornaments, robe cones and wingspans; add this one. Hand-set to 0.86 with the new
+`--head-v-min`, measured off the mesh.
+
+**That produced the first accepted closeup since the Saints.** `view-04` registers cleanly on the
+skull — one skull, one pair of eye sockets, one tooth row, no doubling — after **15 consecutive
+rejections** across the three bosses built earlier the same day. It would not have been possible
+before `--head-v-min` existed, which retires the "the band might have been the problem" ambiguity for
+good.
+
+`view-07` scored **4.84%, the lowest error on this subject, and was rejected** — the overlay doubles
+both hands. Sixth confirmation that width error is not a reliability signal.

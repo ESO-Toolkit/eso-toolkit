@@ -57,6 +57,7 @@ separate rights review.
 | `yaghra-monstrosity-overview-v1.glb`     | Yaghra Monstrosity              | `static-boss`             |  4,976 |      — |         1 | 512px JPEG  |   327,324 | [creature 120](https://esomodelviewer.com/creatures/post/120-yaghra-monstrosity)    |
 | `ash-titan-overview-v1.glb`              | Ash Titan                       | `static-boss`             |  5,000 |      — |         1 | 512px JPEG  |   330,820 | [creature 112](https://esomodelviewer.com/creatures/post/112-ash-titan)             |
 | `fire-behemoth-overview-v1.glb`          | Fire Behemoth                   | `static-boss`             |  5,000 |      — |         1 | 512px JPEG  |   324,864 | [creature 65](https://esomodelviewer.com/creatures/post/65-fire-behemoth)           |
+| `boneman-overview-v1.glb`                | **skeleton archetype (32 names)** | `static-boss`             |  4,997 |  4,317 |         1 | 512px JPEG  |   287,232 | [creature 125](https://esomodelviewer.com/creatures/post/125-boneman-man-mer)       |
 | `lord-falgravn-overview-v1.glb`          | Lord Falgravn                   | `static-boss`             | 70,000 | 44,724 |         1 | 1024px JPEG | 2,259,112 | [creature 32](https://esomodelviewer.com/creatures/post/32-vampire-lord)            |
 | `ozara-overview-v1.glb`                  | Ozara                           | `static-boss`             | 45,000 | 27,743 |         1 | 1024px JPEG | 1,642,884 | [creature 117](https://esomodelviewer.com/creatures/post/117-lamia-red)             |
 | `xalvakka-overview-v1.glb`               | Xalvakka                        | `static-boss`             | 44,998 | 31,232 |         1 | 1024px JPEG | 1,765,596 | [creature 84](https://esomodelviewer.com/creatures/post/84-harvester-dagonic)       |
@@ -576,6 +577,36 @@ projection candidate"*. **Both halves of that were wrong**, and the pair is inst
 The shape is in fact the strongest possible argument *for* Route B: 96 unconnected levitating stones
 have no continuous silhouette for two-view reconstruction to infer, which is exactly the failure mode
 exact geometry removes.
+
+## Coverage status — dungeons
+
+**The replay has no trial gate**, so it opens for any boss fight and **100% of dungeon NPCs render as
+capsules**. A 250-report sample of real dungeon logs measured **1,435 distinct enemy names** across
+all 58 dungeons — 6.5-9x the trial lesser-enemy surface. Name-complete coverage is not a goal and
+never will be; the measured recommendation is **archetype-first**, ~20-30 species assets each aliased
+to 20-50 names.
+
+| Archetype | Names | Fight-appearances | Status |
+| --- | ---: | ---: | --- |
+| Skeleton (bare humanoid) | 32 | 342 | **Shipped 2026-09-08** — `boneman-overview-v1` |
+| Ordinary humanoid | 221 | 1810 | **Permanent never-build** — a generic figure is what the capsule already is |
+| Mechanic object / hazard | 53 | 531 | **Not creatures.** `Ice Barrier` is the single most frequent name in the entire corpus |
+| Draugr / Draugrkin | ~12 | ~170 | Not built — flesh and armour, a genuinely different body from the skeleton |
+| Atronach family | 18 | 466 | **Partly covered by trial assets already on disk** — see below |
+| Everything else | — | — | Unbuilt |
+
+**The Boneman is the first archetype asset in this catalog, and the ratio is the point.** It serves
+**32 names from one 287 KB build**, against 1.24 names per asset across the 21-asset trial catalog.
+Skeletons were missed by every earlier reference sweep because the model viewer files them under
+**"Boneman"**, not "skeleton".
+
+**A cheap follow-up is visible in the same data and is not yet done.** `Storm Atronach` (74
+fight-appearances across 11 dungeons) and `Frost Atronach` (68) are among the most frequent creature
+names in the corpus, and **both bodies are already on disk** — `lightning-storm-atronach-overview-v1`
+and `frost-atronach-overview-v1`. Following the `craglorn-troll-trash-overview-v1` precedent, a
+dungeon-tier Storm Atronach is a **separate catalog entry pointing at the same `path`** at the
+lesser-enemy scale, costing no new bytes. The frost atronach is already at trash scale and may only
+need aliases.
 
 ## Coverage status — Rockgrove
 
