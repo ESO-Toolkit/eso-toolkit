@@ -59,6 +59,7 @@ separate rights review.
 | `fire-behemoth-overview-v1.glb`          | Fire Behemoth                   | `static-boss`             |  5,000 |      — |         1 | 512px JPEG  |   324,864 | [creature 65](https://esomodelviewer.com/creatures/post/65-fire-behemoth)           |
 | `lord-falgravn-overview-v1.glb`          | Lord Falgravn                   | `static-boss`             | 70,000 | 44,724 |         1 | 1024px JPEG | 2,259,112 | [creature 32](https://esomodelviewer.com/creatures/post/32-vampire-lord)            |
 | `ozara-overview-v1.glb`                  | Ozara                           | `static-boss`             | 45,000 | 27,743 |         1 | 1024px JPEG | 1,642,884 | [creature 117](https://esomodelviewer.com/creatures/post/117-lamia-red)             |
+| `xalvakka-overview-v1.glb`               | Xalvakka                        | `static-boss`             | 44,998 | 31,232 |         1 | 1024px JPEG | 1,765,596 | [creature 84](https://esomodelviewer.com/creatures/post/84-harvester-dagonic)       |
 
 Extracted client assets (see the licensing posture above — **not reconstructions**):
 
@@ -536,9 +537,14 @@ anything on it."*
 **It is not a partial extraction.** A clay render shows the torso, arms, head and crest all present;
 the serpent tail is simply in a **straight-down bind pose**, which stretches the bounding box until
 the body occupies the top fifth of it. This is the identical failure that blocks Xalvakka's
-`Harvester_Monstrous_Boss`, and it means a **tail-coil deformer is worth two bosses, not one** — a
-materially better case for building one than the single-boss framing this document previously
-carried.
+`Harvester_Monstrous_Boss`.
+
+**That observation briefly looked like a case for building a tail-coil deformer, and then killed it
+instead.** Both bosses the deformer would have unlocked shipped the same day as ordinary Route C
+reconstructions, because **reconstructing from plates sidesteps bind pose entirely rather than
+correcting it**. The deformer is worth zero bosses now and should be dropped from the plan. The
+general lesson is worth more than either asset: when an extracted mesh is unusable because of its
+*pose* rather than its *topology*, reach for reconstruction before deformation.
 
 The reconstruction that shipped instead is the strongest of the batch on every projection number:
 **14.7% neither-camera** (only Falgravn and Olms are lower), 35.1% neighbour fill, 353 charts, and
@@ -570,6 +576,25 @@ projection candidate"*. **Both halves of that were wrong**, and the pair is inst
 The shape is in fact the strongest possible argument *for* Route B: 96 unconnected levitating stones
 have no continuous silhouette for two-view reconstruction to infer, which is exactly the failure mode
 exact geometry removes.
+
+## Coverage status — Rockgrove
+
+| Encounter | Name                 | Status                                                                |
+| --------- | -------------------- | --------------------------------------------------------------------- |
+| `mini_1`  | Haj Mota             | Not built — the gallery is a ~90 degree mirror arc with no opposed pair |
+| `boss_1`  | Oaxiltso             | **Shipped 2026-09-07** — Route B, extracted geometry, projected colour |
+| `boss_2`  | Flame-Herald Bahsei  | **Blocked** — his base Naga form has no published reference anywhere    |
+| `mini_2`  | Ash Titan            | **Shipped** (reconstruction, lesser-enemy budget)                      |
+| `boss_3`  | Xalvakka             | **Shipped 2026-09-08** — reconstruction                                |
+
+Rockgrove is **complete except Bahsei**, and Bahsei is the one genuinely reference-less boss here:
+`28-bone-goliath-argonian` covers only his *Bone Goliath* form, which the post body says explicitly,
+and "naga" returns zero hits across all 613 cached post bodies. He needs an in-game capture.
+
+Xalvakka and Oaxiltso between them are also the clearest demonstration of the two routes on
+comparable subjects. Oaxiltso kept ESO's own geometry and paid for it in colour (31.4% blind, ~50%
+fill); Xalvakka gave up exact geometry and got a materially better atlas (22.9% blind, 42.9% fill)
+plus a pose that is not a bind pose.
 
 ## Coverage status — Cloudrest
 

@@ -458,3 +458,38 @@ this gallery's head closeups sit at a far nearer camera than its base plates. Th
 failure than a confident wrong answer and is worth preferring. `view-07` scored **5.74%, the lowest
 error on this subject**, and was still rejected: its ghost hands sit half a hand-width up-left of the
 real hands.
+
+---
+
+## Job — Xalvakka (2026-09-08) — GPU reconstruction
+
+Queued after Ozara, sequentially, never concurrently. Free RAM before start **13.1 GB of 31.7**;
+VRAM confirmed back at the 2.33 GB desktop baseline after the Ozara job exited before this one began.
+
+- **Input:** `xalvakka-harvester-dagonic-references/view-01.jpg` (front) and `view-03.jpg` (back),
+  1920x1080, cut to a shared 1057 px square, subject **994 x 585 px**.
+- **Reconstruction:** Hunyuan3D-2mv, fp16, 50 steps, octree 380, seed 12345. **663,362 faces in
+  60.9 s.** VRAM returned to baseline (2.34 GB) immediately after.
+- **This was the cleanest opposed pair used on this project.** Both plates agree on the tail coil,
+  the four arm angles and the subject height. The reconstruction shows it: the head run-structure
+  warning fires on only **13 of 64 slices (20%)**, the lowest rate of any asset built here.
+- **Output:** `out/xalvakka-overview-v1.glb` — 44,998 tris / 31,232 verts / 1,765,596 bytes,
+  692 charts, 72.7% coverage, PSNR 37.26 dB, neither-camera 22.9%, grazing fill 42.9%, head region
+  52,228 front-facing texels (~228²). All checks passed; one warning.
+- **Accepted.** Rockgrove is now complete except Flame-Herald Bahsei.
+
+**The tail-coil deformer is cancelled.** It was on the board to rescue `Harvester_Monstrous_Boss`
+and, after the Ozara diagnosis, `Lamia_A_Boss` too. Both bosses shipped today as Route C
+reconstructions instead. Reconstructing from plates sidesteps a bind pose rather than correcting it,
+and it costs about a minute of GPU against an unknown amount of deformer work.
+
+**A box-placement technique worth adopting.** Two placements were rejected here before the third was
+accepted, and the fix was not to nudge and re-render. Colour **three adjacent bands at once** in
+`boxes.json` and read off which one holds the face from a single membership render. It also caught a
+misreading: the first two boxes *did* contain the face, but on a subject with a small head, a box
+claiming horns and face looks at contact-sheet scale like a box claiming horns only.
+
+**Fifth confirmation that width error is not a reliability signal.** `view-05` scored **5.44%, the
+lowest on this subject**, and its overlay shows two pairs of eyes and two tooth rows. Also new:
+`view-04` and `view-11` returned fits identical to three decimal places, which is how you find out
+two gallery frames are duplicates.
