@@ -44,6 +44,7 @@ const MAJOR_BUFF_NAMES = new Set([
 ]);
 
 const CP_PASSIVE_NAMES = new Set(['Exploiter', 'Skilled Tracker']);
+const POTION_COOLDOWN_MS = 45_000;
 
 function getMissingBuffIssues(buildIssues: BuildIssue[] | null, buffNames: Set<string>): string[] {
   if (!buildIssues) return [];
@@ -57,6 +58,16 @@ function getMissingBuffIssues(buildIssues: BuildIssue[] | null, buffNames: Set<s
 function getGearIssues(buildIssues: BuildIssue[] | null): number {
   if (!buildIssues) return 0;
   return buildIssues.filter((issue) => 'gearName' in issue).length;
+}
+
+function getExpectedPotionUses(fightDurationMs: number): number | null {
+  if (!Number.isSafeInteger(fightDurationMs) || fightDurationMs <= 0) {
+    return null;
+  }
+
+  // Count opportunities in the half-open fight window [0, duration): the pull is available,
+  // while a cooldown that completes exactly at the fight end cannot contribute to the fight.
+  return Math.ceil(fightDurationMs / POTION_COOLDOWN_MS);
 }
 
 export function buildParseChecklist({
@@ -322,22 +333,28 @@ export function buildParseChecklist({
   }
 
   // ─── Potion Uptime ───────────────────────────────────────────────────────────
-  if (potionUse != null && activeTimeResult) {
+  const expectedPotions = activeTimeResult
+    ? getExpectedPotionUses(activeTimeResult.fightDurationMs)
+    : null;
+  const hasValidPotionUse = potionUse != null && Number.isSafeInteger(potionUse) && potionUse >= 0;
+  if (hasValidPotionUse && activeTimeResult && expectedPotions != null) {
     const fightDuration = activeTimeResult.fightDurationMs / 1000;
-    const expectedPotions = Math.max(1, Math.floor(fightDuration / 45));
     const potionRatio = potionUse / expectedPotions;
     items.push({
       id: 'potions',
       title: 'Potion uptime (Major buffs)',
       status: potionRatio >= 0.8 ? 'pass' : potionRatio >= 0.5 ? 'warn' : 'fail',
-      detail: `${potionUse} potions used (expected ~${expectedPotions} for ${fightDuration.toFixed(0)}s fight)`,
+      detail: `${potionUse} potions used (expected ${expectedPotions} for ${fightDuration.toFixed(0)}s fight)`,
     });
   } else {
     items.push({
       id: 'potions',
       title: 'Potion uptime (Major buffs)',
       status: 'info',
-      detail: 'Potion use data unavailable — verify potion use every ~45s',
+      detail:
+        potionUse != null && activeTimeResult
+          ? 'Potion expectation unavailable due to invalid fight duration or potion use data'
+          : 'Potion use data unavailable — verify potion use every 45s',
     });
   }
 

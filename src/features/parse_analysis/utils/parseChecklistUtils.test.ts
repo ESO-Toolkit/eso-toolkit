@@ -262,8 +262,9 @@ describe('buildParseChecklist', () => {
         },
       });
       const item = findItem(items, 'potions');
-      // 180s / 45s = 4 expected, 4 used => ratio 1.0 => pass
+      // The pull plus cooldowns at 45s, 90s, and 135s yields four uses before fight end.
       expect(item?.status).toBe('pass');
+      expect(item?.detail).toContain('expected 4');
     });
 
     it('should warn when potion use is low', () => {
@@ -281,7 +282,7 @@ describe('buildParseChecklist', () => {
         },
       });
       const item = findItem(items, 'potions');
-      // 180s / 45 = 4 expected, 2 used => ratio 0.5 => warn
+      // 2/4 uses is below the pass threshold but remains a warning.
       expect(item?.status).toBe('warn');
     });
 
@@ -306,6 +307,98 @@ describe('buildParseChecklist', () => {
     it('should be info when potionUse is null', () => {
       const items = buildParseChecklist(createDefaults());
       expect(findItem(items, 'potions')?.status).toBe('info');
+    });
+
+    it.each([
+      [1, 1],
+      [44_999, 1],
+      [45_000, 1],
+      [45_001, 2],
+      [89_999, 2],
+      [90_000, 2],
+      [90_001, 3],
+      [180_000, 4],
+      [180_001, 5],
+      [Number.MAX_SAFE_INTEGER, Math.ceil(Number.MAX_SAFE_INTEGER / 45_000)],
+    ])(
+      'counts pull and cooldown opportunities before %ims as %i expected uses',
+      (fightDurationMs, expectedUses) => {
+        const items = buildParseChecklist({
+          ...createDefaults(),
+          potionUse: expectedUses,
+          activeTimeResult: {
+            activePercentage: 100,
+            activeSeconds: fightDurationMs / 1000,
+            fightDurationMs,
+            totalCasts: 1,
+            baseActiveSeconds: 0,
+            channelExtraSeconds: 0,
+            downtimeSeconds: 0,
+          },
+        });
+
+        const item = findItem(items, 'potions');
+        expect(item?.status).toBe('pass');
+        expect(item?.detail).toContain(`expected ${expectedUses}`);
+        expect(item?.detail).not.toContain('NaN');
+        expect(item?.detail).not.toMatch(/expected -/);
+      },
+    );
+
+    it.each([
+      -1,
+      0,
+      Number.NaN,
+      Number.POSITIVE_INFINITY,
+      Number.NEGATIVE_INFINITY,
+      Number.MAX_SAFE_INTEGER + 1,
+    ])('does not grade potion usage for an invalid duration of %pms', (fightDurationMs) => {
+      const items = buildParseChecklist({
+        ...createDefaults(),
+        potionUse: 0,
+        activeTimeResult: {
+          activePercentage: 100,
+          activeSeconds: 0,
+          fightDurationMs,
+          totalCasts: 1,
+          baseActiveSeconds: 0,
+          channelExtraSeconds: 0,
+          downtimeSeconds: 0,
+        },
+      });
+
+      const item = findItem(items, 'potions');
+      expect(item?.status).toBe('info');
+      expect(item?.detail).toContain('Potion expectation unavailable');
+      expect(item?.detail).not.toContain('NaN');
+      expect(item?.detail).not.toMatch(/expected -/);
+    });
+
+    it.each([
+      -1,
+      Number.NaN,
+      Number.POSITIVE_INFINITY,
+      Number.NEGATIVE_INFINITY,
+      Number.MAX_SAFE_INTEGER + 1,
+      1.5,
+    ])('does not grade an invalid potion use of %p', (potionUse) => {
+      const items = buildParseChecklist({
+        ...createDefaults(),
+        potionUse,
+        activeTimeResult: {
+          activePercentage: 100,
+          activeSeconds: 45,
+          fightDurationMs: 45_001,
+          totalCasts: 1,
+          baseActiveSeconds: 0,
+          channelExtraSeconds: 0,
+          downtimeSeconds: 0,
+        },
+      });
+
+      const item = findItem(items, 'potions');
+      expect(item?.status).toBe('info');
+      expect(item?.detail).toContain('Potion expectation unavailable');
     });
   });
 
