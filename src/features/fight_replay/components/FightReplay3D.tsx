@@ -119,6 +119,14 @@ export interface TrialReplayNav {
 
 interface FightReplay3DProps {
   selectedFight: FightFragment;
+  /**
+   * The same fight as seen by the MAP layer: identical to `selectedFight` except on a pull ESO Logs
+   * ships no `maps` for (any trash pull), where it carries the map borrowed from a sibling fight so
+   * the floor and the markers resolve — see `withInheritedFightMaps`. Only the map/marker plumbing
+   * reads it; titles and badges stay on `selectedFight` so they keep naming the pull itself.
+   * Defaults to `selectedFight`.
+   */
+  mapFight?: FightFragment;
   allBuffEvents: BuffEvent[];
   showActorNames?: boolean;
   markersState?: MapMarkersState | null;
@@ -164,6 +172,7 @@ interface FightReplay3DProps {
 
 export const FightReplay3D: React.FC<FightReplay3DProps> = ({
   selectedFight,
+  mapFight,
   allBuffEvents,
   showActorNames = true,
   markersState,
@@ -358,9 +367,12 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
     };
   }, [selectedFight.name, selectedFight.difficulty, selectedFight.kill]);
 
+  // The fight the map layer works from — `selectedFight` unless it needed to borrow a map.
+  const effectiveMapFight = mapFight ?? selectedFight;
+
   // Map timeline for debug information and phase-aware map changes
   const { mapTimeline } = usePhaseBasedMap({
-    fight: selectedFight || null,
+    fight: effectiveMapFight || null,
     buffEvents: allBuffEvents.length > 0 ? allBuffEvents : null,
   });
 
@@ -1459,7 +1471,7 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
             onUndoMarkers={onUndoMarkers}
             canRedoMarkers={canRedoMarkers}
             onRedoMarkers={onRedoMarkers}
-            fight={selectedFight}
+            fight={effectiveMapFight}
             selectedPlayerIds={selectedPlayerIds}
             onPlayerSelectionChange={setSelectedPlayerIds}
             showPlayerPathsHUD={showPlayerPathsHUD}
