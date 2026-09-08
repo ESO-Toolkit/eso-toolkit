@@ -179,10 +179,10 @@ Fetch `https://www.flickr.com/photo.gne?id=<id>` and read the `sizes` block.
 Dev server: `npm run dev` (port 3001, inside the worker's CORS allowlist of 3000-3003 + 5173).
 
 ```
-http://localhost:3001/report/<CODE>/fight/<N>/replay?npcModels=prototype
+http://localhost:3001/report/<CODE>/fight/<N>/replay
 ```
 
-**`?npcModels=prototype` is required** — models are gated behind it and it is read once at mount.
+**No flag is needed** — the `?npcModels=prototype` opt-in was removed on 2026-09-08. Models render by default; only barebones quality keeps actors on capsules.
 
 **Kyne's Aegis test report with all three bosses: `pnLfGNzYbJPVTA89`, Yandir is fight 6.**
 Verified working: the GLB fetches 200 and Yandir renders.

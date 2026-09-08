@@ -1,9 +1,5 @@
 import type { ActorPosition } from '../../../workers/calculations/CalculateActorPositions';
 
-export const NPC_MODEL_PREVIEW_PARAM = 'npcModels';
-
-export type NpcModelPreviewMode = 'off' | 'prototype';
-
 interface LicensedReplayActorModelAsset {
   id: 'cool-stickman-flipbook';
   path: string;
@@ -946,10 +942,6 @@ export function resolveStaticModelTint(
   return asset.aliasTints?.[normalizedName] ?? asset.tint ?? NEUTRAL_MODEL_TINT;
 }
 
-export function parseNpcModelPreviewMode(value: string | null): NpcModelPreviewMode {
-  return value === 'prototype' ? 'prototype' : 'off';
-}
-
 /**
  * Normalize an ESO Logs actor name for registry lookup.
  *
@@ -989,14 +981,17 @@ export function findStaticActorModel(
  * Returning null is intentional and load-bearing: callers keep the capsule fallback, so a missing,
  * unsupported, or failed model can never make an actor vanish. Unrecognized hostiles deliberately
  * stay on the capsule rather than borrowing another actor's mesh — a wrong body is more misleading
- * in a tactical replay than an abstract one. Reconstructed art stays behind the explicit prototype
- * opt-in while its visual quality, performance, and rights review are pending.
+ * in a tactical replay than an abstract one.
+ *
+ * There is no longer an `?npcModels=prototype` opt-in. It was a STAGING flag from the two-asset
+ * prototype, not a performance or rights gate, and it outlived its purpose once the catalog covered
+ * 22 trial bosses and a dungeon archetype behind a URL parameter nobody would guess. **Performance
+ * is gated where it always was** — the caller skips this entirely on barebones (`detailedFigures`),
+ * so a low-end preset still never fetches or parses a GLB.
  */
 export function resolveReplayActorModel(
   actor: Pick<ActorPosition, 'type'> & { name?: string },
-  npcPreviewMode: NpcModelPreviewMode,
 ): ReplayActorModelAsset | null {
   if (actor.type === 'player') return COOL_STICKMAN_ASSET;
-  if (npcPreviewMode !== 'prototype') return null;
   return findStaticActorModel(actor);
 }

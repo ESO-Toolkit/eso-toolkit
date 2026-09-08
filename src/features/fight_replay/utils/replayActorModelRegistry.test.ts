@@ -12,7 +12,6 @@ import {
   STATIC_REPLAY_ACTOR_MODEL_ASSETS,
   findStaticActorModel,
   normalizeActorName,
-  parseNpcModelPreviewMode,
   resolveReplayActorModel,
 } from './replayActorModelRegistry';
 
@@ -20,13 +19,17 @@ type TestActor = Pick<ActorPosition, 'type'> & { name?: string };
 
 const actor = (type: ActorPosition['type'], name?: string): TestActor => ({ type, name });
 
-describe('parseNpcModelPreviewMode', () => {
-  it('only accepts the exact prototype value', () => {
-    expect(parseNpcModelPreviewMode('prototype')).toBe('prototype');
-    expect(parseNpcModelPreviewMode('Prototype')).toBe('off');
-    expect(parseNpcModelPreviewMode('true')).toBe('off');
-    expect(parseNpcModelPreviewMode('')).toBe('off');
-    expect(parseNpcModelPreviewMode(null)).toBe('off');
+describe('resolveReplayActorModel needs no opt-in', () => {
+  it('resolves a shipped boss with no flag of any kind', () => {
+    // The `?npcModels=prototype` staging flag is gone. Performance is gated by the caller's
+    // `detailedFigures` (barebones) check, which skips the resolver entirely, so this must not
+    // grow a mode argument again.
+    expect(resolveReplayActorModel(actor('boss', 'Captain Vrol'))?.id).toBe(
+      'captain-vrol-overview-v2',
+    );
+    expect(resolveReplayActorModel(actor('enemy', 'Skeletal Archer'))?.id).toBe(
+      'boneman-overview-v1',
+    );
   });
 });
 
@@ -80,50 +83,44 @@ describe('findStaticActorModel', () => {
 });
 
 describe('resolveReplayActorModel', () => {
-  it('always gives players the CC0 flipbook regardless of preview mode', () => {
-    expect(resolveReplayActorModel(actor('player', 'Someone'), 'off')).toBe(COOL_STICKMAN_ASSET);
-    expect(resolveReplayActorModel(actor('player', 'Someone'), 'prototype')).toBe(
-      COOL_STICKMAN_ASSET,
-    );
+  it('always gives players the CC0 flipbook', () => {
+    expect(resolveReplayActorModel(actor('player', 'Someone'))).toBe(COOL_STICKMAN_ASSET);
   });
 
-  it('keeps every hostile on the capsule until the prototype flag is set', () => {
-    expect(resolveReplayActorModel(actor('boss', 'Yandir the Butcher'), 'off')).toBeNull();
-    expect(resolveReplayActorModel(actor('enemy', 'Half-Giant Raider'), 'off')).toBeNull();
-  });
-
-  it('resolves a shipped boss only in prototype mode', () => {
-    expect(resolveReplayActorModel(actor('boss', 'Yandir the Butcher'), 'prototype')?.id).toBe(
+  it('resolves a shipped boss, and keeps an unmodelled one on the capsule', () => {
+    expect(resolveReplayActorModel(actor('boss', 'Yandir the Butcher'))?.id).toBe(
       'yandir-the-butcher-overview-v2',
     );
+    // Half-Giant Raider has no shipped model and must not borrow one.
+    expect(resolveReplayActorModel(actor('enemy', 'Half-Giant Raider'))).toBeNull();
   });
 
   it('resolves each shipped Kyne’s Aegis boss to its own asset', () => {
-    expect(resolveReplayActorModel(actor('boss', 'Captain Vrol'), 'prototype')?.id).toBe(
+    expect(resolveReplayActorModel(actor('boss', 'Captain Vrol'))?.id).toBe(
       'captain-vrol-overview-v2',
     );
-    expect(resolveReplayActorModel(actor('enemy', 'captain vrol #3'), 'prototype')?.id).toBe(
+    expect(resolveReplayActorModel(actor('enemy', 'captain vrol #3'))?.id).toBe(
       'captain-vrol-overview-v2',
     );
-    expect(resolveReplayActorModel(actor('boss', 'Lord Falgravn'), 'prototype')?.id).toBe(
+    expect(resolveReplayActorModel(actor('boss', 'Lord Falgravn'))?.id).toBe(
       'lord-falgravn-overview-v1',
     );
   });
 
   it('resolves the extracted-mesh bosses, and never lends them to their own adds', () => {
-    expect(resolveReplayActorModel(actor('boss', 'Stonebreaker'), 'prototype')?.id).toBe(
+    expect(resolveReplayActorModel(actor('boss', 'Stonebreaker'))?.id).toBe(
       'stonebreaker-overview-v1',
     );
-    expect(resolveReplayActorModel(actor('boss', 'Possessed Mantikora'), 'prototype')?.id).toBe(
+    expect(resolveReplayActorModel(actor('boss', 'Possessed Mantikora'))?.id).toBe(
       'possessed-mantikora-overview-v1',
     );
-    expect(
-      resolveReplayActorModel(actor('boss', 'Foundation Stone Atronach'), 'prototype')?.id,
-    ).toBe('foundation-stone-atronach-overview-v1');
+    expect(resolveReplayActorModel(actor('boss', 'Foundation Stone Atronach'))?.id).toBe(
+      'foundation-stone-atronach-overview-v1',
+    );
     // The Serpent encounter spawns plain Mantikora adds and several trials spawn plain stone
     // atronachs. Neither may borrow the boss body - that would misread the fight.
-    expect(resolveReplayActorModel(actor('enemy', 'Mantikora'), 'prototype')).toBeNull();
-    expect(resolveReplayActorModel(actor('enemy', 'Stone Atronach'), 'prototype')).toBeNull();
+    expect(resolveReplayActorModel(actor('enemy', 'Mantikora'))).toBeNull();
+    expect(resolveReplayActorModel(actor('enemy', 'Stone Atronach'))).toBeNull();
   });
 
   it('separates the boss and dungeon tiers of the same body', () => {
@@ -131,7 +128,7 @@ describe('resolveReplayActorModel', () => {
     // in the measured dungeon corpus (74 fight-appearances) and IS the same mesh — the model viewer
     // says this body serves "generic Storm Atronachs" — so this is a tier split, not a lookalike.
     const scaleOf = (name: string, type: 'boss' | 'enemy', expectedId: string) => {
-      const asset = resolveReplayActorModel(actor(type, name), 'prototype');
+      const asset = resolveReplayActorModel(actor(type, name));
       expect(asset?.id).toBe(expectedId);
       if (!asset || asset.renderer !== 'static-boss')
         throw new Error(`${name} is not a static boss`);
@@ -158,38 +155,36 @@ describe('resolveReplayActorModel', () => {
     // Queried against four real Halls of Fabrication reports: the members are `Reducer`, not
     // `Refabricated Reducer`. A guessed alias would fail silently to a capsule.
     for (const name of ['Reducer', 'Reclaimer', 'Reactor']) {
-      expect(resolveReplayActorModel(actor('boss', name), 'prototype')?.id).toBe(
-        'hof-factotum-overview-v1',
-      );
+      expect(resolveReplayActorModel(actor('boss', name))?.id).toBe('hof-factotum-overview-v1');
     }
     // The refabricated ADDS are a different body and must not borrow it.
-    expect(resolveReplayActorModel(actor('enemy', 'Refabricated Sphere'), 'prototype')).toBeNull();
-    expect(resolveReplayActorModel(actor('enemy', 'Refabricated Spider'), 'prototype')).toBeNull();
+    expect(resolveReplayActorModel(actor('enemy', 'Refabricated Sphere'))).toBeNull();
+    expect(resolveReplayActorModel(actor('enemy', 'Refabricated Spider'))).toBeNull();
   });
 
   it('falls back to the capsule for unrecognized hostiles instead of substituting another model', () => {
-    expect(resolveReplayActorModel(actor('enemy', 'Unmodelled Trash Mob'), 'prototype')).toBeNull();
+    expect(resolveReplayActorModel(actor('enemy', 'Unmodelled Trash Mob'))).toBeNull();
     // Kazpian has no reference imagery anywhere, so he is the durable stand-in for an unmodelled
     // boss. This slot previously held Falgravn, who now ships - if Kazpian is ever built, move
     // this to another unmodelled boss rather than deleting the assertion.
-    expect(resolveReplayActorModel(actor('boss', 'Overfiend Kazpian'), 'prototype')).toBeNull();
+    expect(resolveReplayActorModel(actor('boss', 'Overfiend Kazpian'))).toBeNull();
     // A partial name must never borrow the full-name asset's body.
-    expect(resolveReplayActorModel(actor('boss', 'Vrol'), 'prototype')).toBeNull();
-    expect(resolveReplayActorModel(actor('boss', 'Falgravn the Lesser'), 'prototype')).toBeNull();
+    expect(resolveReplayActorModel(actor('boss', 'Vrol'))).toBeNull();
+    expect(resolveReplayActorModel(actor('boss', 'Falgravn the Lesser'))).toBeNull();
   });
 
   // Lesser enemies that reuse an already-shipped GLB. Names below are copied verbatim from
   // `src/types/trial-encounters.ts`; matching is exact, so a typo fails silently to a capsule.
   it("gives The Serpent's Image the Celestial Serpent's own asset", () => {
     // Not a lookalike — the Image IS the Serpent's duplicate, so this is a faithful reuse.
-    expect(resolveReplayActorModel(actor('enemy', "The Serpent's Image"), 'prototype')?.id).toBe(
+    expect(resolveReplayActorModel(actor('enemy', "The Serpent's Image"))?.id).toBe(
       'the-serpent-overview-v1',
     );
     // Typographic apostrophe and the ESO Logs instance suffix both fold into the same alias.
-    expect(resolveReplayActorModel(actor('boss', 'The Serpent’s Image #2'), 'prototype')?.id).toBe(
+    expect(resolveReplayActorModel(actor('boss', 'The Serpent’s Image #2'))?.id).toBe(
       'the-serpent-overview-v1',
     );
-    expect(resolveReplayActorModel(actor('boss', 'The Serpent'), 'prototype')?.id).toBe(
+    expect(resolveReplayActorModel(actor('boss', 'The Serpent'))?.id).toBe(
       'the-serpent-overview-v1',
     );
   });
@@ -199,16 +194,16 @@ describe('resolveReplayActorModel', () => {
     // Giants, and the UESP research in the asset manifest lists them as Nords on the standard
     // character rig. Vrol's body is therefore a lookalike, not a match, and the catalog's rule
     // is that a wrong body misleads more than an abstract marker does.
-    expect(resolveReplayActorModel(actor('enemy', 'Half-Giant Bulwark'), 'prototype')).toBeNull();
-    expect(resolveReplayActorModel(actor('enemy', 'Half-Giant Raider'), 'prototype')).toBeNull();
+    expect(resolveReplayActorModel(actor('enemy', 'Half-Giant Bulwark'))).toBeNull();
+    expect(resolveReplayActorModel(actor('enemy', 'Half-Giant Raider'))).toBeNull();
   });
 
   it('gives both Sanctum Ophidia trolls the Craglorn troll body, smaller than Stonebreaker', () => {
-    const rockheaver = resolveReplayActorModel(actor('enemy', 'Rockheaver Troll'), 'prototype');
-    const berserker = resolveReplayActorModel(actor('enemy', 'Berserker Troll'), 'prototype');
+    const rockheaver = resolveReplayActorModel(actor('enemy', 'Rockheaver Troll'));
+    const berserker = resolveReplayActorModel(actor('enemy', 'Berserker Troll'));
     expect(rockheaver?.id).toBe('craglorn-troll-trash-overview-v1');
     expect(berserker?.id).toBe('craglorn-troll-trash-overview-v1');
-    const stonebreaker = resolveReplayActorModel(actor('boss', 'Stonebreaker'), 'prototype');
+    const stonebreaker = resolveReplayActorModel(actor('boss', 'Stonebreaker'));
     expect((rockheaver as StaticReplayActorModelAsset).path).toBe(
       (stonebreaker as StaticReplayActorModelAsset).path,
     );
@@ -233,13 +228,13 @@ describe('resolveReplayActorModel', () => {
       'Berserker',
       'Berserker Trolls',
     ].forEach((name) => {
-      expect(resolveReplayActorModel(actor('enemy', name), 'prototype')).toBeNull();
+      expect(resolveReplayActorModel(actor('enemy', name))).toBeNull();
     });
   });
 
   it('keeps friendly npcs and pets on the capsule', () => {
-    expect(resolveReplayActorModel(actor('friendly_npc', 'Ally'), 'prototype')).toBeNull();
-    expect(resolveReplayActorModel(actor('pet', 'Twilight'), 'prototype')).toBeNull();
+    expect(resolveReplayActorModel(actor('friendly_npc', 'Ally'))).toBeNull();
+    expect(resolveReplayActorModel(actor('pet', 'Twilight'))).toBeNull();
   });
 });
 

@@ -1,7 +1,7 @@
 # Fight replay actor-model pipeline
 
 The replay has an opt-in proving ground for enemy and boss models. Add
-`?npcModels=prototype` to a replay URL to render hostile actors with the existing licensed
+Hostile actors render with the existing licensed
 CoolStickman flipbook. Without that exact value, enemies and bosses retain their capsule markers.
 Players continue to use CoolStickman in either mode.
 

@@ -14,8 +14,11 @@ anything.
 
 1. **CC0** — the player figure (`coolstickman-walk.glb`) only. Genuinely open.
 2. **Project-authorized fan reconstruction** — every asset built by the screenshot pipeline. Modelled
-   from published reference screenshots, not extracted. Not CC0, not officially licensed; ships
-   behind the `?npcModels=prototype` opt-in while a rights review is pending.
+   from published reference screenshots, not extracted. Not CC0, not officially licensed.
+   **Renders by default since 2026-09-08**; the `?npcModels=prototype` opt-in that used to gate it
+   was removed at the owner's instruction. Note what that flag did and did not do: it gated
+   *rendering*, never *distribution* — every GLB has always been fetchable from the public site — so
+   its removal changes visibility, not exposure.
 3. **Extracted ESO client assets — NEW, and materially different.** `stonebreaker`,
    `possessed-mantikora`, `foundation-stone-atronach` and `cloudrest-gryphon` are **ESO's own mesh
    and ESO's own hand-authored diffuse atlas, shipped verbatim**. Nothing about them was modelled or

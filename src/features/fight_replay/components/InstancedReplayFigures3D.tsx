@@ -32,10 +32,7 @@ import { enablePerInstanceOpacity } from '../utils/instanceOpacity';
 import { prepareReconstructedModelMaterial } from '../utils/reconstructedModelMaterial';
 import {
   COOL_STICKMAN_ASSET,
-  NPC_MODEL_PREVIEW_PARAM,
-  type NpcModelPreviewMode,
   type StaticReplayActorModelAsset,
-  parseNpcModelPreviewMode,
   resolveReplayModelUrl,
 } from '../utils/replayActorModelRegistry';
 import {
@@ -244,10 +241,13 @@ const GAIT_WALK_EXIT_SPEED = 0.1; // units/SECOND to drop back to idle (must be 
 
 // ---- Optional reconstructed NPC models (one InstancedMesh per registry asset) ----
 // No game-derived geometry is bundled. Reconstructed art enters exclusively through
-// `replayActorModelRegistry`, which records each asset's provenance and keeps it behind the
-// `?npcModels=prototype` opt-in. Anything the registry does not recognise — including every boss
-// with no shipped model — keeps the project-owned capsule renderer below, so an unknown, missing,
-// or failed asset can never make a combatant disappear.
+// `replayActorModelRegistry`, which records each asset's provenance. Anything the registry does not
+// recognise — including every boss with no shipped model — keeps the project-owned capsule renderer
+// below, so an unknown, missing, or failed asset can never make a combatant disappear.
+//
+// Models are on by default. The old `?npcModels=prototype` opt-in was a staging flag, not a
+// performance gate; the performance gate is `detailedFigures` below, which keeps barebones on
+// capsules and never fetches a GLB.
 //
 // Per-asset orientation/scale/offsets live on the registry entry's `transform` rather than as
 // module constants, because each reconstruction is exported at its own scale and facing.
@@ -271,20 +271,6 @@ const GAIT_WALK_EXIT_SPEED = 0.1; // units/SECOND to drop back to idle (must be 
 const DEAD_OPACITY = 0.45;
 const DEAD_DARKEN = 0.45; // multiply material color toward black (1 = unchanged, 0 = black)
 const DEAD_SQUASH_Y = 0.55; // Y scale factor when dead (compresses toward the grounded feet)
-
-/**
- * Read the reconstructed-model opt-in straight from the URL.
- *
- * This is deliberately not a prop or a router hook: the figures render inside the
- * `@react-three/fiber` canvas, which reconciles in its own root, so router context is not reliably
- * available here. The flag only changes on navigation, which remounts the replay anyway.
- */
-function readNpcModelPreviewMode(): NpcModelPreviewMode {
-  if (typeof window === 'undefined') return 'off';
-  return parseNpcModelPreviewMode(
-    new URLSearchParams(window.location.search).get(NPC_MODEL_PREVIEW_PARAM),
-  );
-}
 
 /**
  * Parse one reconstruction into the form the renderer drives.
@@ -589,19 +575,13 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
   const actorIds = useMemo(() => getActorIdsFromLookup(lookup), [lookup]);
   const instanceCount = actorIds.length;
 
-  // The reconstructed-art opt-in. Read once per mount: changing it requires a navigation, which
-  // remounts the replay.
-  const npcModelPreviewMode = useMemo(readNpcModelPreviewMode, []);
-
   // Which registry assets this fight needs and which instance slot each actor occupies. Gates the
   // GLB loads so a fight with no modelled NPC never fetches/parses anything. Barebones
   // (detailedFigures=false) keeps every NPC on the capsule and never fetches.
   const staticModelPlan: StaticModelInstancingPlan = useMemo(
     () =>
-      detailedFigures
-        ? buildStaticModelInstancingPlan(lookup, actorIds, npcModelPreviewMode)
-        : EMPTY_STATIC_MODEL_PLAN,
-    [lookup, actorIds, detailedFigures, npcModelPreviewMode],
+      detailedFigures ? buildStaticModelInstancingPlan(lookup, actorIds) : EMPTY_STATIC_MODEL_PLAN,
+    [lookup, actorIds, detailedFigures],
   );
 
   // actorId → loop index. Used to check an actor's live visibility from a pointer event on a model

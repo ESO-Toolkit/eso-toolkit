@@ -2,9 +2,9 @@
 
 This GLB is a project-authorized, fan-project prototype **reconstructed from published screenshots**,
 not extracted from the ESO client. (Four assets in this catalog *are* extracted client assets and are
-called out separately; this is not one of them.) It is enabled only by the fight replay's
-`?npcModels=prototype` preview flag. The repository owner's authorization covers its use for this
-prototype; this note is not a claim that Elder Scrolls Online intellectual property is freely
+called out separately; this is not one of them.) It renders in the fight replay by default
+(barebones quality keeps every actor on the capsule). The repository owner's authorization covers
+its use for this prototype; this note is not a claim that Elder Scrolls Online intellectual property is freely
 licensed.
 
 - Reference page: <https://esomodelviewer.com/creatures/post/112-ash-titan>
