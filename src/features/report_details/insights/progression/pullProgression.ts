@@ -317,9 +317,17 @@ export const buildPullProgression = (input: PullProgressionInput): PullProgressi
   }
 
   const pulls = rawPulls as readonly PullSnapshot[];
-  const duplicatePullIds = pulls
-    .filter((pull, index) => pulls.findIndex((candidate) => candidate.id === pull.id) !== index)
-    .map((pull) => pull.id);
+  // Pull histories can be large enough that repeatedly scanning the prefix for
+  // a duplicate turns otherwise linear validation into quadratic work.
+  const seenPullIds = new Set<string>();
+  const duplicatePullIds = pulls.flatMap((pull) => {
+    if (seenPullIds.has(pull.id)) {
+      return [pull.id];
+    }
+
+    seenPullIds.add(pull.id);
+    return [];
+  });
   if (duplicatePullIds.length > 0) {
     return unavailable('invalid-input', context, duplicatePullIds);
   }
