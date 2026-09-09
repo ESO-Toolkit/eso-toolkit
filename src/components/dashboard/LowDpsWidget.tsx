@@ -46,23 +46,28 @@ export const LowDpsWidget: React.FC<LowDpsWidgetProps> = ({
   const fight3 = fights[3];
   const fight4 = fights[4];
 
-  const { damageEventsByPlayer: damage0 } = useDamageEventsLookup({
-    context: { reportCode: reportId, fightId: fight0?.id ?? -1 },
-  });
-  const { damageEventsByPlayer: damage1 } = useDamageEventsLookup({
-    context: { reportCode: reportId, fightId: fight1?.id ?? -1 },
-  });
-  const { damageEventsByPlayer: damage2 } = useDamageEventsLookup({
-    context: { reportCode: reportId, fightId: fight2?.id ?? -1 },
-  });
-  const { damageEventsByPlayer: damage3 } = useDamageEventsLookup({
-    context: { reportCode: reportId, fightId: fight3?.id ?? -1 },
-  });
-  const { damageEventsByPlayer: damage4 } = useDamageEventsLookup({
-    context: { reportCode: reportId, fightId: fight4?.id ?? -1 },
-  });
+  const { damageEventsByPlayer: damage0, isDamageEventsLookupLoading: damageLoading0 } =
+    useDamageEventsLookup({
+      context: { reportCode: reportId, fightId: fight0?.id ?? -1 },
+    });
+  const { damageEventsByPlayer: damage1, isDamageEventsLookupLoading: damageLoading1 } =
+    useDamageEventsLookup({
+      context: { reportCode: reportId, fightId: fight1?.id ?? -1 },
+    });
+  const { damageEventsByPlayer: damage2, isDamageEventsLookupLoading: damageLoading2 } =
+    useDamageEventsLookup({
+      context: { reportCode: reportId, fightId: fight2?.id ?? -1 },
+    });
+  const { damageEventsByPlayer: damage3, isDamageEventsLookupLoading: damageLoading3 } =
+    useDamageEventsLookup({
+      context: { reportCode: reportId, fightId: fight3?.id ?? -1 },
+    });
+  const { damageEventsByPlayer: damage4, isDamageEventsLookupLoading: damageLoading4 } =
+    useDamageEventsLookup({
+      context: { reportCode: reportId, fightId: fight4?.id ?? -1 },
+    });
 
-  const { playerData } = usePlayerData({
+  const { playerData, isPlayerDataLoading } = usePlayerData({
     context: { reportCode: reportId, fightId: fight0?.id ?? -1 },
   });
 
@@ -161,6 +166,9 @@ export const LowDpsWidget: React.FC<LowDpsWidgetProps> = ({
   }, [playerData, relevantFights]);
 
   const isEmpty = lowDpsPlayers.length === 0;
+  const isLoading =
+    isPlayerDataLoading ||
+    [damageLoading0, damageLoading1, damageLoading2, damageLoading3, damageLoading4].some(Boolean);
 
   return (
     <BaseWidget
@@ -173,6 +181,7 @@ export const LowDpsWidget: React.FC<LowDpsWidgetProps> = ({
       onRemove={onRemove}
       onScopeChange={onScopeChange}
       isEmpty={isEmpty}
+      isLoading={isLoading}
     >
       {lowDpsPlayers.map((player, idx) => {
         const pct = Math.min((player.dps / player.expected) * 100, 100);

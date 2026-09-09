@@ -47,7 +47,7 @@ export const MissingBuffsWidget: React.FC<MissingBuffsWidgetProps> = ({
   });
 
   const mostRecentFight = fights[0];
-  const { playerData } = usePlayerData({
+  const { playerData, isPlayerDataLoading } = usePlayerData({
     context: { reportCode: reportId, fightId: mostRecentFight?.id ?? -1 },
   });
 
@@ -108,8 +108,9 @@ export const MissingBuffsWidget: React.FC<MissingBuffsWidgetProps> = ({
       onRemove={onRemove}
       onScopeChange={onScopeChange}
       isEmpty={isEmpty}
+      isLoading={isBuffDataLoading || isPlayerDataLoading}
     >
-      {isBuffDataLoading ? (
+      {isBuffDataLoading || isPlayerDataLoading ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 4 }}>
           <CircularProgress size={32} />
         </Box>

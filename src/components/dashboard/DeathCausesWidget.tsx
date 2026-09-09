@@ -208,6 +208,7 @@ export const DeathCausesWidget: React.FC<DeathCausesWidgetProps> = ({
       onRemove={onRemove}
       onScopeChange={onScopeChange}
       isEmpty={isEmpty}
+      isLoading={isLoading}
     >
       {isLoading ? (
         <Box

@@ -1,9 +1,9 @@
 import { configureStore } from '@reduxjs/toolkit';
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { Provider } from 'react-redux';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { MemoryRouter, Route, Routes, useNavigate } from 'react-router-dom';
 
 import { useEsoLogsClientInstance } from '../EsoLogsClientContext';
 import { FightFragment } from '../graphql/gql/graphql';
@@ -50,6 +50,21 @@ const mockUseReportData = useReportData as jest.MockedFunction<typeof useReportD
 const mockUseEsoLogsClient = useEsoLogsClientInstance as jest.MockedFunction<
   typeof useEsoLogsClientInstance
 >;
+
+const RouteSwitchControl: React.FC = () => {
+  const navigate = useNavigate();
+
+  return (
+    <>
+      <button type="button" onClick={() => navigate('/report/report-a/dashboard')}>
+        Switch to report A
+      </button>
+      <button type="button" onClick={() => navigate('/report/report-b/dashboard')}>
+        Switch to report B
+      </button>
+    </>
+  );
+};
 
 describe('RaidDashboardPage', () => {
   const mockFights: FightFragment[] = [
@@ -103,9 +118,22 @@ describe('RaidDashboardPage', () => {
   const renderWithRouter = (store = createTestStore()) => {
     return render(
       <Provider store={store}>
-        <MemoryRouter initialEntries={['/raid-dashboard/test-report']}>
+        <MemoryRouter initialEntries={['/report/test-report/dashboard']}>
           <Routes>
-            <Route path="/raid-dashboard/:reportId" element={<RaidDashboardPage />} />
+            <Route path="/report/:reportId/dashboard" element={<RaidDashboardPage />} />
+          </Routes>
+        </MemoryRouter>
+      </Provider>,
+    );
+  };
+
+  const renderWithRouteSwitch = (store = createTestStore()) => {
+    return render(
+      <Provider store={store}>
+        <MemoryRouter initialEntries={['/report/report-a/dashboard']}>
+          <RouteSwitchControl />
+          <Routes>
+            <Route path="/report/:reportId/dashboard" element={<RaidDashboardPage />} />
           </Routes>
         </MemoryRouter>
       </Provider>,
@@ -119,13 +147,17 @@ describe('RaidDashboardPage', () => {
     mockUseReportData.mockReturnValue({
       reportData: mockReportData,
       isReportLoading: false,
+      reportError: null,
+      refetchReport: jest.fn(),
     });
 
     mockUseEsoLogsClient.mockReturnValue({} as any);
   });
 
   afterEach(() => {
-    jest.runOnlyPendingTimers();
+    act(() => {
+      jest.runOnlyPendingTimers();
+    });
     jest.useRealTimers();
   });
 
@@ -147,23 +179,198 @@ describe('RaidDashboardPage', () => {
     mockUseReportData.mockReturnValue({
       reportData: null,
       isReportLoading: true,
+      reportError: null,
+      refetchReport: jest.fn(),
     });
 
     renderWithRouter();
 
     expect(screen.getByText(/loading/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Pause live refresh' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Refresh dashboard now' })).toBeDisabled();
   });
 
   it('should render auto-refresh toggle', () => {
     renderWithRouter();
 
-    expect(screen.getByText(/AUTO · 5s/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Pause live refresh' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    expect(screen.getByRole('button', { name: 'Refresh dashboard now' })).toBeInTheDocument();
+  });
+
+  it('exposes pause and resume states to assistive technology', async () => {
+    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+    renderWithRouter();
+
+    await user.click(screen.getByRole('button', { name: 'Pause live refresh' }));
+
+    expect(screen.getByRole('button', { name: 'Resume live refresh' })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    );
+  });
+
+  it('marks manual refresh unavailable while a request is in flight', () => {
+    mockUseReportData.mockReturnValue({
+      reportData: mockReportData,
+      isReportLoading: true,
+      reportError: null,
+      refetchReport: jest.fn(),
+    });
+
+    renderWithRouter();
+
+    expect(screen.getByRole('button', { name: 'Refresh dashboard now' })).toBeDisabled();
+  });
+
+  it('does not render retained data from a previous report while the active report loads', () => {
+    mockUseReportData.mockReturnValue({
+      reportData: { ...mockReportData, code: 'previous-report' },
+      isReportLoading: true,
+      reportError: null,
+      refetchReport: jest.fn(),
+    });
+
+    renderWithRouter();
+
+    expect(screen.getByText(/loading dashboard/i)).toBeInTheDocument();
+    expect(screen.queryByText('Test Report')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('widget-death-causes-1')).not.toBeInTheDocument();
+  });
+
+  it('does not label cached unsynchronized data as fresh even when the log has recent activity', () => {
+    mockUseReportData.mockReturnValue({
+      reportData: {
+        ...mockReportData,
+        startTime: Date.now() - 1_000,
+      },
+      isReportLoading: false,
+      reportError: null,
+      refetchReport: jest.fn(),
+    });
+
+    renderWithRouter();
+
+    expect(
+      screen.getByRole('status', { name: /live synchronization status: stale/i }),
+    ).toHaveTextContent(/last successful sync not synchronized/i);
+    expect(
+      screen.queryByRole('status', { name: /live synchronization status: fresh/i }),
+    ).toBeNull();
+  });
+
+  it('keeps report bodies and widgets scoped through an A-to-B-to-A route sequence', async () => {
+    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+    const store = createTestStore();
+    const reportA = {
+      ...mockReportData,
+      code: 'report-a',
+      title: 'Report A',
+    };
+    const reportB = {
+      ...mockReportData,
+      code: 'report-b',
+      title: 'Report B',
+    };
+    let activeReportData = reportA;
+    let isReportLoading = false;
+    mockUseReportData.mockImplementation(() => ({
+      reportData: activeReportData,
+      isReportLoading,
+      reportError: null,
+      refetchReport: jest.fn(),
+    }));
+
+    renderWithRouteSwitch(store);
+    expect(screen.getAllByText('Report A').length).toBeGreaterThan(0);
+    expect(screen.getByTestId('widget-death-causes-1')).toBeInTheDocument();
+
+    isReportLoading = true;
+    await user.click(screen.getByRole('button', { name: 'Switch to report B' }));
+
+    expect(screen.getByText(/loading dashboard/i)).toBeInTheDocument();
+    expect(screen.queryByText('Report A')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('widget-death-causes-1')).not.toBeInTheDocument();
+
+    activeReportData = reportB;
+    isReportLoading = false;
+    act(() => {
+      store.dispatch({ type: 'dashboard/setAutoRefreshEnabled', payload: false });
+    });
+    expect(screen.getAllByText('Report B').length).toBeGreaterThan(0);
+    expect(screen.getByTestId('widget-death-causes-1')).toBeInTheDocument();
+
+    isReportLoading = true;
+    await user.click(screen.getByRole('button', { name: 'Switch to report A' }));
+
+    expect(screen.getByText(/loading dashboard/i)).toBeInTheDocument();
+    expect(screen.queryByText('Report B')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('widget-death-causes-1')).not.toBeInTheDocument();
+
+    activeReportData = reportA;
+    isReportLoading = false;
+    act(() => {
+      store.dispatch({ type: 'dashboard/setAutoRefreshEnabled', payload: true });
+    });
+
+    expect(screen.getAllByText('Report A').length).toBeGreaterThan(0);
+    expect(screen.getByTestId('widget-death-causes-1')).toBeInTheDocument();
+  });
+
+  it('does not render report A loading or failure state under the report B route', async () => {
+    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+    const reportA = {
+      ...mockReportData,
+      code: 'report-a',
+      title: 'Report A',
+    };
+    mockUseReportData.mockReturnValue({
+      reportData: reportA,
+      isReportLoading: false,
+      reportError: 'Report A is unavailable',
+      reportStateId: 'report-a',
+      refetchReport: jest.fn(),
+    });
+
+    renderWithRouteSwitch();
+    expect(
+      screen.getByRole('status', { name: /live synchronization status: api error/i }),
+    ).toHaveTextContent(/showing data from not synchronized/i);
+
+    // The route changes before the provider has switched its report context.
+    // A's retained error must not be attributed to B or disable B's recovery.
+    await user.click(screen.getByRole('button', { name: 'Switch to report B' }));
+
+    expect(screen.getByText(/loading dashboard/i)).toBeInTheDocument();
+    expect(screen.queryByText('Report A is unavailable')).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('status', { name: /live synchronization status: api error/i }),
+    ).not.toBeInTheDocument();
   });
 
   it('should render add widget button', () => {
     renderWithRouter();
 
     expect(screen.getByRole('button', { name: /add widget/i })).toBeInTheDocument();
+  });
+
+  it('announces API failures without fabricating a successful sync timestamp', () => {
+    mockUseReportData.mockReturnValue({
+      reportData: mockReportData,
+      isReportLoading: false,
+      reportError: 'ESO Logs unavailable',
+      refetchReport: jest.fn(),
+    });
+
+    renderWithRouter();
+
+    expect(
+      screen.getByRole('status', { name: /live synchronization status: api error/i }),
+    ).toHaveTextContent(/showing data from not synchronized/i);
+    expect(screen.queryByText(/live sync Â· fresh/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/retrying in 5s/i)).toBeInTheDocument();
   });
 
   it('should render navigation buttons to other report pages', () => {
@@ -207,6 +414,7 @@ describe('RaidDashboardPage', () => {
 
     // Should show PAUSED after click
     expect(screen.getByText(/PAUSED/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Resume live refresh' })).toBeInTheDocument();
   });
 
   it('should display report title when available', () => {
@@ -228,12 +436,29 @@ describe('RaidDashboardPage', () => {
     mockUseReportData.mockReturnValue({
       reportData: null,
       isReportLoading: false,
+      reportError: null,
+      refetchReport: jest.fn(),
     });
 
     renderWithRouter();
 
     // Should not crash, but may show loading or empty state
     expect(screen.getByText('Failed to load report')).toBeInTheDocument();
+  });
+
+  it('announces an initial API failure when no report data is available', () => {
+    mockUseReportData.mockReturnValue({
+      reportData: null,
+      isReportLoading: false,
+      reportError: 'ESO Logs unavailable',
+      refetchReport: jest.fn(),
+    });
+
+    renderWithRouter();
+
+    expect(screen.getByRole('alert')).toHaveTextContent('API error: ESO Logs unavailable');
+    expect(screen.getByRole('button', { name: 'Pause live refresh' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Refresh dashboard now' })).toBeEnabled();
   });
 
   it('should display widgets in a responsive grid', () => {
@@ -248,14 +473,18 @@ describe('RaidDashboardPage', () => {
     it('should not auto-refresh when auto-refresh is disabled', () => {
       const store = createTestStore();
       store.dispatch({ type: 'dashboard/setAutoRefreshEnabled', payload: false });
+      const dispatchSpy = jest.spyOn(store, 'dispatch');
 
       renderWithRouter(store);
+      dispatchSpy.mockClear();
 
       // Fast-forward time
-      jest.advanceTimersByTime(6000);
+      act(() => {
+        jest.advanceTimersByTime(6000);
+      });
 
-      // Should not trigger additional fetches
-      expect(mockUseReportData).toHaveBeenCalledTimes(1);
+      // The live-health clock may re-render, but must not dispatch a report refresh.
+      expect(dispatchSpy).not.toHaveBeenCalled();
     });
 
     it('should auto-refresh when enabled', () => {
