@@ -1,8 +1,17 @@
-import { Box, Typography, Paper, List, ListItem, ListItemText, useTheme } from '@mui/material';
+import {
+  Alert,
+  Box,
+  Button,
+  Typography,
+  Paper,
+  List,
+  ListItem,
+  ListItemText,
+  useTheme,
+} from '@mui/material';
 import React from 'react';
 
 import { AbilityIcon } from '../../../components/AbilityIcon';
-import { InsightsSkeletonLayout } from '../../../components/InsightsSkeletonLayout';
 import { FightFragment } from '../../../graphql/gql/graphql';
 import { KnownAbilities } from '../../../types/abilities';
 
@@ -10,6 +19,7 @@ import { BuffUptimesPanel } from './BuffUptimesPanel';
 import { DamageBreakdownPanel } from './DamageBreakdownPanel';
 import { DamageTypeBreakdownPanel } from './DamageTypeBreakdownPanel';
 import { DebuffUptimesPanel } from './DebuffUptimesPanel';
+import type { InsightsDataState, InsightsRetryAvailability } from './insightsDataState';
 import { StatusEffectUptimesPanel } from './StatusEffectUptimesPanel';
 
 interface InsightsPanelViewProps {
@@ -19,7 +29,9 @@ interface InsightsPanelViewProps {
   buffActors: Partial<Record<KnownAbilities, Set<string>>>;
   fightInitiator: string | null;
   selectedPlayerId: number | null;
-  isLoading: boolean;
+  dataState: InsightsDataState;
+  onRetry: () => void;
+  retryAvailability: InsightsRetryAvailability;
 }
 
 // Shared styling for the insight card wrappers (used by the header card and
@@ -101,17 +113,51 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
   buffActors,
   fightInitiator,
   selectedPlayerId,
-  isLoading,
+  dataState,
+  onRetry,
+  retryAvailability,
 }) => {
   const theme = useTheme();
-  if (isLoading) {
-    return <InsightsSkeletonLayout />;
-  }
+  const stateMessage = getStateMessage(dataState);
+  const isRecoverable = dataState.failedSources.length > 0;
+  const retryReasonId = 'insights-retry-unavailable-reason';
+
   return (
     <>
+      {stateMessage && (
+        <Alert
+          severity={dataState.kind === 'failed' ? 'error' : isRecoverable ? 'warning' : 'info'}
+          role={isRecoverable ? 'alert' : 'status'}
+          aria-live={isRecoverable ? 'assertive' : 'polite'}
+          aria-atomic="true"
+          action={
+            isRecoverable ? (
+              <Button
+                aria-label="Try again to reload failed fight insight data"
+                aria-describedby={retryAvailability.unavailableReason ? retryReasonId : undefined}
+                color="inherit"
+                disabled={!retryAvailability.canRetry}
+                onClick={onRetry}
+                size="small"
+              >
+                Try Again
+              </Button>
+            ) : undefined
+          }
+          sx={{ mb: 2 }}
+        >
+          {stateMessage}
+          {isRecoverable && retryAvailability.unavailableReason ? (
+            <Typography component="span" id={retryReasonId} sx={{ display: 'block' }}>
+              {retryAvailability.unavailableReason}
+            </Typography>
+          ) : null}
+        </Alert>
+      )}
       {/* Main insights grid layout */}
       <Box
         data-testid="insights-panel"
+        aria-busy={dataState.hasPendingSources}
         sx={{
           display: 'flex',
           flexWrap: 'wrap',
@@ -403,4 +449,29 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
       </Box>
     </>
   );
+};
+
+const getStateMessage = (dataState: InsightsDataState): string | null => {
+  switch (dataState.kind) {
+    case 'loading':
+      return 'Loading detailed fight insights. Fight details already available remain visible.';
+    case 'partial': {
+      if (dataState.failedSources.length === 0) {
+        return 'Some fight insight data is still loading. Available insights may be incomplete.';
+      }
+
+      const partialFailureMessage = dataState.hasPendingSources
+        ? 'Some fight insight data could not be loaded while other data is still loading.'
+        : 'Some fight insight data could not be loaded. Other insight data may be incomplete.';
+      return `${partialFailureMessage}${dataState.errorMessage ? ` ${dataState.errorMessage}` : ''}`;
+    }
+    case 'empty':
+      return 'No additional insight data is available for this fight.';
+    case 'stale':
+      return `Some fight insight data could not be refreshed. Showing available results${dataState.hasPendingSources ? ' while other data is still loading' : ''}.${dataState.errorMessage ? ` ${dataState.errorMessage}` : ''}`;
+    case 'failed':
+      return `Unable to load fight insight data.${dataState.errorMessage ? ` ${dataState.errorMessage}` : ''}`;
+    case 'ready':
+      return null;
+  }
 };
