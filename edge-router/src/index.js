@@ -4,6 +4,7 @@ const FALLBACK_CSP =
 export const CSP_REPORT_PATH = '/csp-reports';
 const CSP_REPORTING_GROUP = 'csp-violations';
 const MAX_CSP_REPORT_BYTES = 8 * 1024;
+const MAX_OBSERVED_CSP_REPORTS = 10;
 const CSP_REPORT_CONTENT_TYPES = new Set(['application/csp-report', 'application/reports+json']);
 
 export const SECURITY_HEADERS = {
@@ -121,6 +122,97 @@ const hasValidCspReportSchema = (report) =>
   isLegacyCspReport(report) ||
   (Array.isArray(report) && report.length > 0 && report.every(isModernCspReport));
 
+const getReportRouteTemplate = (documentUrl) => {
+  if (!hasNonEmptyString(documentUrl)) {
+    return 'unknown';
+  }
+
+  try {
+    const { pathname } = new URL(documentUrl);
+    if (pathname === '/report' || pathname.startsWith('/report/')) {
+      return '/report/:report';
+    }
+    if (pathname === '/u' || pathname.startsWith('/u/')) {
+      return '/u/:profile';
+    }
+    if (pathname === '/b' || pathname.startsWith('/b/')) {
+      return '/b/:build';
+    }
+    if (pathname === '/bv' || pathname.startsWith('/bv/')) {
+      return '/bv/:view';
+    }
+    if (pathname === '/rv' || pathname.startsWith('/rv/')) {
+      return '/rv/:view';
+    }
+  } catch {
+    return 'invalid';
+  }
+
+  return 'other';
+};
+
+const getSourceOriginCategory = (blockedUrl, documentUrl) => {
+  if (!hasNonEmptyString(blockedUrl)) {
+    return 'unknown';
+  }
+
+  const source = blockedUrl.trim().toLowerCase();
+  if (source === 'inline' || source === 'eval' || source === 'wasm-eval') {
+    return source;
+  }
+  if (source === 'data') {
+    return 'data';
+  }
+
+  try {
+    const blocked = new URL(blockedUrl);
+    if (blocked.protocol === 'data:') {
+      return 'data';
+    }
+    if (blocked.protocol === 'blob:') {
+      return 'blob';
+    }
+
+    const document = new URL(documentUrl);
+    return blocked.origin === document.origin ? 'same-origin' : 'cross-origin';
+  } catch {
+    return 'other';
+  }
+};
+
+const getSafeDirective = (directive) => {
+  const normalized = directive.trim().toLowerCase();
+  return /^[a-z-]{1,64}$/.test(normalized) ? normalized : 'unknown';
+};
+
+const getCspReportObservations = (report) => {
+  const reports = isLegacyCspReport(report) ? [report['csp-report']] : report;
+
+  return reports.slice(0, MAX_OBSERVED_CSP_REPORTS).map((entry) => {
+    const payload = entry.body ?? entry;
+    const documentUrl = payload.documentURL ?? payload['document-uri'] ?? entry.url;
+    const blockedUrl = payload.blockedURL ?? payload['blocked-uri'];
+    const directive = payload.effectiveDirective ?? payload['effective-directive'];
+
+    return {
+      directive: getSafeDirective(directive),
+      routeTemplate: getReportRouteTemplate(documentUrl),
+      sourceOriginCategory: getSourceOriginCategory(blockedUrl, documentUrl),
+    };
+  });
+};
+
+const observeAcceptedCspReport = (report) => {
+  // Keep worker logs useful without retaining a report URL, query, raw payload, or identifiers.
+  // The 8 KiB body cap and this record cap bound log amplification from hostile clients.
+  console.log(
+    JSON.stringify({
+      event: 'csp-violation',
+      reports: getCspReportObservations(report),
+    }),
+  );
+};
+
 const isAcceptedCspReportContentType = (request) => {
   const contentType = request.headers.get('Content-Type')?.split(';', 1)[0]?.trim().toLowerCase();
   return contentType !== undefined && CSP_REPORT_CONTENT_TYPES.has(contentType);
@@ -218,7 +310,12 @@ const handleCspReport = async (request, assets) => {
 
   try {
     const parsedReport = JSON.parse(boundedBody.body);
-    return reportResponse(hasValidCspReportSchema(parsedReport) ? 204 : 400, csp, request);
+    if (!hasValidCspReportSchema(parsedReport)) {
+      return reportResponse(400, csp, request);
+    }
+
+    observeAcceptedCspReport(parsedReport);
+    return reportResponse(204, csp, request);
   } catch {
     return reportResponse(400, csp, request);
   }
