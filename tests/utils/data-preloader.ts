@@ -76,7 +76,6 @@ export async function preloadAllReportData(
     await page.goto('/', { waitUntil: 'domcontentloaded', timeout });
     
     // Wait for auth state to settle
-    await page.waitForTimeout(2000);
 
     // Step 3: Pre-warm all GraphQL queries in the background
     if (aggressiveWarmup) {
@@ -232,37 +231,58 @@ async function warmGraphQLCache(
 }
 
 /**
- * Execute a GraphQL query and ensure it's cached
+ * Execute a preload query without swallowing transport or GraphQL failures.
  */
 async function executeGraphQLQuery(
   page: Page,
   query: { name: string; query: string; variables: any },
 ): Promise<void> {
-  try {
-    console.log(`🔄 Warming cache for ${query.name}...`);
-    
-    await page.evaluate(async ({ query, variables }) => {
-      const response = await fetch('https://www.esologs.com/api/v2/client', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
-        },
-        body: JSON.stringify({ query, variables }),
-      });
-      
-      if (!response.ok) {
-        throw new Error(`GraphQL query failed: ${response.status}`);
-      }
-      
-      return await response.json();
-    }, { query: query.query, variables: query.variables });
-    
-    console.log(`✅ ${query.name} cache warmed`);
-    
-  } catch (error) {
-    console.warn(`⚠️ Failed to warm cache for ${query.name}:`, error);
+  const configuredApiUrl = process.env.VITE_ROSTER_HUB_API_URL?.trim().replace(/\/$/, '');
+  const graphQlEndpoint = configuredApiUrl
+    ? `${configuredApiUrl}/graphql`
+    : '/roster-hub-api/graphql';
+
+  await page.evaluate(async ({ endpoint, query: queryText, variables, name }) => {
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+      },
+      body: JSON.stringify({ query: queryText, variables }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`GraphQL query failed: ${response.status}`);
+    }
+
+    const payload = (await response.json()) as { errors?: Array<{ message?: string }> };
+    if (payload.errors?.length) {
+      throw new Error(
+        `${name}: ${payload.errors.map((item) => item.message ?? 'Unknown GraphQL error').join('; ')}`,
+      );
+    }
+  }, {
+    endpoint: graphQlEndpoint,
+    query: query.query,
+    variables: query.variables,
+    name: query.name,
+  });
+}
+
+/**
+ * Ensure a history URL reached the Analyzer fight shell, not the SPA fallback.
+ */
+async function assertAnalyzerFightRoute(page: Page, requestedUrl: string): Promise<void> {
+  const expectedPath = new URL(requestedUrl, page.url()).pathname;
+  if (!expectedPath.startsWith('/report/')) return;
+
+  const actualPath = new URL(page.url()).pathname;
+  if (actualPath !== expectedPath) {
+    throw new Error(`Expected Analyzer route ${expectedPath}, received ${actualPath}`);
   }
+
+  await expect(page.getByTestId('fight-details-loaded')).toBeVisible();
 }
 
 /**
@@ -273,33 +293,17 @@ async function preloadTabData(
   options: { reportCode: string; fightId: string; tab: string; timeout: number },
 ): Promise<void> {
   const { reportCode, fightId, tab, timeout } = options;
-  
-  console.log(`📄 Pre-loading data for ${tab} tab...`);
-  
-  // Navigate to the tab URL
   const tabUrl = `/report/${reportCode}/fight/${fightId}/${tab}`;
+
   await page.goto(tabUrl, { waitUntil: 'domcontentloaded', timeout });
-  
-  // Wait for the page to initialize
-  await page.waitForTimeout(1000);
-  
-  // Create skeleton detector for this tab
+  await assertAnalyzerFightRoute(page, tabUrl);
+
   const skeletonDetector = createSkeletonDetector(page);
-  
-  // Wait for initial load using content detection instead of skeleton detection
-  try {
-    await skeletonDetector.waitForContentLoaded({ 
-      timeout: Math.min(timeout, 15000), // Shorter timeout - data should load fast from cache
-      expectPreloaded: false, // This is during cache warming, not using preloaded data yet
-    });
-    console.log(`✅ ${tab} tab data loaded successfully`);
-  } catch (error) {
-    console.warn(`⚠️ ${tab} tab may still have loading states:`, error);
-    // Continue anyway - the data is likely cached even if UI is slow
-  }
-  
-  // Give extra time for any async operations to complete
-  await page.waitForTimeout(2000);
+  await skeletonDetector.waitForContentLoaded({
+    timeout: Math.min(timeout, 15000),
+    expectPreloaded: false,
+  });
+  await skeletonDetector.waitForSkeletonsToDisappear({ timeout: Math.min(timeout, 15000) });
 }
 
 /**
@@ -310,35 +314,17 @@ async function verifyDataPreloaded(
   options: { reportCode: string; fightId: string; tabs: string[] },
 ): Promise<void> {
   const { reportCode, fightId, tabs } = options;
-  
-  console.log('🔍 Verifying data preload status...');
-  
+
   for (const tab of tabs) {
-    // Quick navigation to each tab to verify instant loading
     const tabUrl = `/report/${reportCode}/fight/${fightId}/${tab}`;
-    
-    console.log(`🔎 Verifying ${tab} tab loads instantly...`);
-    const startTime = Date.now();
-    
-    await page.goto(tabUrl, { waitUntil: 'domcontentloaded' });
-    
-    // Data should load almost instantly from cache
+    await page.goto(tabUrl, {
+      waitUntil: 'domcontentloaded',
+    });
+    await assertAnalyzerFightRoute(page, tabUrl);
     const skeletonDetector = createSkeletonDetector(page);
-    const initialSkeletons = await skeletonDetector.getSkeletonInfo();
-    
-    // If there are many skeletons still, data might not be cached properly
-    if (initialSkeletons.count > 5) {
-      console.warn(`⚠️ ${tab} tab has ${initialSkeletons.count} loading skeletons - cache may not be fully warmed`);
-      
-      // Try waiting a bit more
-      await skeletonDetector.waitForSkeletonsToDisappear({ timeout: 10000 });
-    }
-    
-    const loadTime = Date.now() - startTime;
-    console.log(`✅ ${tab} tab verified (loaded in ${loadTime}ms)`);
+    await skeletonDetector.waitForContentLoaded({ timeout: 15000, expectPreloaded: false });
+    await skeletonDetector.waitForSkeletonsToDisappear({ timeout: 10000 });
   }
-  
-  console.log('🎯 All tabs verified as properly preloaded');
 }
 
 /**
@@ -374,41 +360,14 @@ export async function navigateWithPreloadedData(
   options: { timeout?: number; verifyInstantLoad?: boolean } = {},
 ): Promise<void> {
   const { timeout = 30000, verifyInstantLoad = true } = options;
-  
-  console.log(`🚀 Navigating to ${url} with preloaded data expectation...`);
-  
-  const startTime = Date.now();
+
   await page.goto(url, { waitUntil: 'domcontentloaded', timeout });
-  
-  if (verifyInstantLoad) {
-    // Data should load very quickly from cache - use content detection instead of skeleton detection
-    const skeletonDetector = createSkeletonDetector(page);
-    
-    // Give a very short time for content to load with our new detection method
-    try {
-      await skeletonDetector.waitForContentLoaded({ 
-        timeout: 8000, // Slightly longer timeout for content detection
-        expectPreloaded: true, 
-      });
-      const loadTime = Date.now() - startTime;
-      
-      if (loadTime > 10000) {
-        console.warn(`⚠️ Page loaded slowly (${loadTime}ms) - cache may not be effective`);
-      } else {
-        console.log(`⚡ Page loaded quickly (${loadTime}ms) - cache is working well`);
-      }
-    } catch (error) {
-      console.warn('⚠️ Content loading detection failed after navigation - falling back to skeleton detection:', error);
-      // Fall back to skeleton detection if content detection fails
-      try {
-        await skeletonDetector.waitForSkeletonsToDisappear({ timeout: 5000 });
-        console.log('✅ Skeleton detection succeeded as fallback');
-      } catch (skeletonError) {
-        console.warn('⚠️ Skeletons persist after navigation - data may not be cached:', skeletonError);
-        // Continue anyway - sometimes UI is slow even with cached data
-      }
-    }
-  }
+  await assertAnalyzerFightRoute(page, url);
+  if (!verifyInstantLoad) return;
+
+  const skeletonDetector = createSkeletonDetector(page);
+  await skeletonDetector.waitForContentLoaded({ timeout: 8000, expectPreloaded: true });
+  await skeletonDetector.waitForSkeletonsToDisappear({ timeout: 5000 });
 }
 
 /**
@@ -430,14 +389,12 @@ export async function takeScreenshotWithPreloadedData(
   await ensureDataPreloadedForScreenshot(page, preloadOptions);
   
   // Additional safety wait for animations
-  await page.waitForTimeout(1000);
   
   // Verify no loading skeletons remain
   const skeletonDetector = createSkeletonDetector(page);
   const finalSkeletons = await skeletonDetector.getSkeletonInfo();
-  
   if (finalSkeletons.hasSkeletons) {
-    console.warn(`⚠️ ${finalSkeletons.count} skeletons still present before screenshot`);
+    throw new Error(`Cannot capture ${screenshotName}: ${finalSkeletons.count} loading skeletons remain`);
   }
   
   // Take screenshot
