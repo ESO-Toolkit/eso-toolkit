@@ -33,7 +33,21 @@ interface ErrorBoundaryProps {
   children: ReactNode;
   fallback?: ReactNode;
   onError?: (error: Error, errorInfo: React.ErrorInfo) => void;
+  /**
+   * Invoked before the boundary clears its error state. Lazy route wrappers use
+   * the caught error to determine whether recovery needs a page reload.
+   */
+  onRetry?: (error: Error | null) => void;
+  /** Allows callers and tests to provide the controlled reload action. */
+  reloadPage?: () => void;
 }
+
+/** Detect browser errors caused by a route-level dynamic import failing. */
+export const isChunkLoadError = (error: Error | null): boolean =>
+  /chunkloaderror/i.test(error?.name ?? '') ||
+  /chunkloaderror|loading chunk|failed to fetch dynamically imported module|(?:error )?loading dynamically imported module|importing a module script failed/i.test(
+    error?.message ?? '',
+  );
 
 export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   constructor(props: ErrorBoundaryProps) {
@@ -95,6 +109,25 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       errorMessage: this.state.error?.message,
     });
 
+    const error = this.state.error;
+    this.props.onRetry?.(error);
+
+    // Every lazy route in App is already protected by ErrorBoundary. A
+    // rejected dynamic import is cached by the browser, so clearing the
+    // boundary alone would immediately render the same failure. Reloading
+    // obtains a fresh module graph and makes the existing route boundaries
+    // recoverable without changing their loading fallbacks.
+    if (isChunkLoadError(error)) {
+      if (!this.props.onRetry) {
+        this.handleReload();
+      }
+
+      // Keep the fallback mounted while navigation begins. Clearing the
+      // boundary would immediately render the browser-cached rejection again
+      // and can flash or report the same failure a second time.
+      return;
+    }
+
     this.setState({
       hasError: false,
       error: null,
@@ -111,7 +144,11 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       errorMessage: this.state.error?.message,
     });
 
-    window.location.reload();
+    if (this.props.reloadPage) {
+      this.props.reloadPage();
+    } else {
+      window.location.reload();
+    }
   };
 
   toggleDetails = (): void => {
@@ -166,6 +203,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
               <Typography
                 variant="h4"
                 component="h1"
+                id="error-boundary-title"
                 data-testid="error-boundary-title"
                 sx={{ color: 'error', textAlign: 'center' }}
               >
