@@ -1,18 +1,10 @@
 import HelpOutlineIcon from '@mui/icons-material/HelpOutlined';
-import {
-  Box,
-  Typography,
-  List,
-  ListItem,
-  Avatar,
-  Skeleton,
-  IconButton,
-  Tooltip,
-} from '@mui/material';
+import { Box, Typography, List, ListItem, Avatar, IconButton, Tooltip } from '@mui/material';
 import type { Theme } from '@mui/material/styles';
 import React, { useState } from 'react';
 
 import { DamageTypeFlags } from '../../../types/abilities';
+import { AnalyzerPanelState, type AnalyzerPanelStateKind } from '../AnalyzerPanelState';
 
 import { DamageTypeHelpModal } from './DamageTypeHelpModal';
 
@@ -32,7 +24,8 @@ interface DamageTypeBreakdown {
 interface DamageTypeBreakdownViewProps {
   damageTypeBreakdown: DamageTypeBreakdown[];
   totalDamage: number;
-  isLoading: boolean;
+  state: AnalyzerPanelStateKind;
+  stateDetail?: string;
 }
 
 // Color mapping for different damage types
@@ -113,7 +106,8 @@ const CUSTOM_DAMAGE_TYPE_ICONS: Record<string, string> = {
 export const DamageTypeBreakdownView: React.FC<DamageTypeBreakdownViewProps> = ({
   damageTypeBreakdown,
   totalDamage,
-  isLoading,
+  state,
+  stateDetail,
 }) => {
   const [helpModalOpen, setHelpModalOpen] = useState(false);
 
@@ -125,9 +119,18 @@ export const DamageTypeBreakdownView: React.FC<DamageTypeBreakdownViewProps> = (
     setHelpModalOpen(false);
   };
 
-  if (isLoading) {
-    return (
-      <Box sx={{ mt: 2 }}>
+  const formatNumber = (num: number): string => {
+    if (num >= 1000000) {
+      return `${(num / 1000000).toFixed(1)}M`;
+    } else if (num >= 1000) {
+      return `${(num / 1000).toFixed(1)}K`;
+    }
+    return num.toString();
+  };
+
+  return (
+    <Box sx={{ mt: 2 }}>
+      <AnalyzerPanelState title="Damage by Type" state={state} detail={stateDetail}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
           <Typography variant="h6">Damage by Type</Typography>
           <Tooltip title="Learn how damage types are calculated" arrow>
@@ -144,330 +147,258 @@ export const DamageTypeBreakdownView: React.FC<DamageTypeBreakdownViewProps> = (
             </IconButton>
           </Tooltip>
         </Box>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          Damage breakdown by damage type from friendly players:{' '}
-          <Skeleton variant="text" width="60px" sx={{ display: 'inline-block' }} />
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+          Damage breakdown by damage type from friendly players: {formatNumber(totalDamage)}
         </Typography>
-        <Box sx={{ maxHeight: 350, overflowY: 'auto' }}>
-          {[...Array(4)].map((_, index) => (
-            <Box
-              key={index}
-              sx={{
-                py: 1.5,
-                pl: 0.5,
-                pr: 1.5,
-                borderBottom: '1px solid rgba(0,0,0,0.06)',
-              }}
-            >
-              <Box sx={{ width: '100%' }}>
-                <Box
-                  sx={{
-                    position: 'relative',
-                    height: 48,
-                    borderRadius: 2,
-                    bgcolor: (theme: Theme) =>
-                      theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    px: 2,
-                  }}
-                >
-                  {/* Emoji icon placeholder */}
-                  <Skeleton variant="rounded" width={32} height={32} />
+        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2 }}>
+          Categories overlap, so percentages can exceed 100%.
+        </Typography>
 
-                  {/* Text content */}
-                  <Box sx={{ flex: 1, minWidth: 0, ml: 1.5 }}>
-                    <Skeleton variant="text" width="60%" height={16} />
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.25 }}>
-                      <Skeleton variant="text" width="40px" height={12} />
-                      <Skeleton variant="text" width="40px" height={12} />
-                    </Box>
-                  </Box>
+        {damageTypeBreakdown.length > 0 ? (
+          <Box sx={{ maxHeight: 350, overflowY: 'auto' }}>
+            <List disablePadding>
+              {damageTypeBreakdown.map((damageType) => {
+                // A metric with no denominator is unavailable, not zero. Keep the
+                // denominator checks here as a final guard for callers that pass a
+                // partially populated row (the panel normally omits zero-damage rows).
+                const percentage =
+                  totalDamage > 0 ? (damageType.totalDamage / totalDamage) * 100 : null;
+                const hasEligibleHits = damageType.eligibleHitCount > 0;
+                const hasDamageDenominator = damageType.totalDamage > 0;
+                const criticalRate =
+                  hasEligibleHits &&
+                  damageType.criticalRate != null &&
+                  Number.isFinite(damageType.criticalRate)
+                    ? damageType.criticalRate
+                    : null;
+                const criticalDamageShare =
+                  hasDamageDenominator &&
+                  damageType.criticalDamageShare != null &&
+                  Number.isFinite(damageType.criticalDamageShare)
+                    ? damageType.criticalDamageShare
+                    : null;
+                const criticalRateLabel =
+                  criticalRate === null
+                    ? 'Crit hit rate unavailable'
+                    : `Crit hit rate ${criticalRate.toFixed(1)}%`;
+                const criticalRateTooltip =
+                  criticalRate === null
+                    ? 'Critical hit rate is unavailable because no eligible normal or critical hits were recorded.'
+                    : `Critical hit rate: ${damageType.criticalHits} critical hits out of ${damageType.eligibleHitCount} eligible hits.`;
+                const criticalDamageShareLabel =
+                  criticalDamageShare === null
+                    ? 'Crit damage share unavailable'
+                    : `Crit damage share ${criticalDamageShare.toFixed(1)}%`;
+                const criticalDamageShareTooltip =
+                  criticalDamageShare === null
+                    ? !hasDamageDenominator
+                      ? 'Critical damage share is unavailable because total damage is zero.'
+                      : 'Critical damage share is unavailable because one or more hit types are unknown.'
+                    : `Critical damage share: ${formatNumber(damageType.criticalDamage)} critical damage out of ${formatNumber(damageType.totalDamage)} total damage.`;
+                const damageShareLabel =
+                  percentage === null
+                    ? 'Overlapping damage share unavailable'
+                    : `${percentage.toFixed(1)}%`;
+                const damageShareAriaLabel =
+                  percentage === null
+                    ? 'Overlapping damage share unavailable because total damage is zero'
+                    : `Overlapping damage share: ${percentage.toFixed(1)}% of total damage; categories may overlap`;
+                // Try custom mapping first (by display name), then fall back to enum-based mapping
+                const color =
+                  CUSTOM_DAMAGE_TYPE_COLORS[damageType.displayName] ||
+                  DAMAGE_TYPE_COLORS[damageType.damageType] ||
+                  '#6B7280'; // Default gray
+                const gradient =
+                  CUSTOM_DAMAGE_TYPE_GRADIENTS[damageType.displayName] ||
+                  DAMAGE_TYPE_GRADIENTS[damageType.damageType] ||
+                  `linear-gradient(90deg, ${color}88 0%, ${color} 100%)`; // Fallback
+                const icon =
+                  CUSTOM_DAMAGE_TYPE_ICONS[damageType.displayName] ||
+                  DAMAGE_TYPE_ICONS[damageType.damageType] ||
+                  '💥'; // Default explosion
 
-                  {/* Percentage only (no stack badge for damage types) */}
-                  <Skeleton variant="text" width="40px" height={20} />
-                </Box>
-              </Box>
-            </Box>
-          ))}
-        </Box>
-
-        {/* Help Modal */}
-        <DamageTypeHelpModal open={helpModalOpen} onClose={handleCloseHelp} />
-      </Box>
-    );
-  }
-
-  const formatNumber = (num: number): string => {
-    if (num >= 1000000) {
-      return `${(num / 1000000).toFixed(1)}M`;
-    } else if (num >= 1000) {
-      return `${(num / 1000).toFixed(1)}K`;
-    }
-    return num.toString();
-  };
-
-  return (
-    <Box sx={{ mt: 2 }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-        <Typography variant="h6">Damage by Type</Typography>
-        <Tooltip title="Learn how damage types are calculated" arrow>
-          <IconButton
-            size="small"
-            onClick={handleOpenHelp}
-            aria-label="Open damage type help"
-            sx={{
-              color: 'text.secondary',
-              '&:hover': { color: 'primary.main' },
-            }}
-          >
-            <HelpOutlineIcon fontSize="small" />
-          </IconButton>
-        </Tooltip>
-      </Box>
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-        Damage breakdown by damage type from friendly players: {formatNumber(totalDamage)}
-      </Typography>
-      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2 }}>
-        Categories overlap, so percentages can exceed 100%.
-      </Typography>
-
-      {damageTypeBreakdown.length > 0 ? (
-        <Box sx={{ maxHeight: 350, overflowY: 'auto' }}>
-          <List disablePadding>
-            {damageTypeBreakdown.map((damageType) => {
-              // A metric with no denominator is unavailable, not zero. Keep the
-              // denominator checks here as a final guard for callers that pass a
-              // partially populated row (the panel normally omits zero-damage rows).
-              const percentage =
-                totalDamage > 0 ? (damageType.totalDamage / totalDamage) * 100 : null;
-              const hasEligibleHits = damageType.eligibleHitCount > 0;
-              const hasDamageDenominator = damageType.totalDamage > 0;
-              const criticalRate = hasEligibleHits ? damageType.criticalRate : null;
-              const criticalDamageShare = hasDamageDenominator
-                ? damageType.criticalDamageShare
-                : null;
-              const criticalRateLabel =
-                criticalRate === null
-                  ? 'Crit hit rate unavailable'
-                  : `Crit hit rate ${criticalRate.toFixed(1)}%`;
-              const criticalRateTooltip =
-                criticalRate === null
-                  ? 'Critical hit rate is unavailable because no eligible normal or critical hits were recorded.'
-                  : `Critical hit rate: ${damageType.criticalHits} critical hits out of ${damageType.eligibleHitCount} eligible hits.`;
-              const criticalDamageShareLabel =
-                criticalDamageShare === null
-                  ? 'Crit damage share unavailable'
-                  : `Crit damage share ${criticalDamageShare.toFixed(1)}%`;
-              const criticalDamageShareTooltip =
-                criticalDamageShare === null
-                  ? !hasDamageDenominator
-                    ? 'Critical damage share is unavailable because total damage is zero.'
-                    : 'Critical damage share is unavailable because one or more hit types are unknown.'
-                  : `Critical damage share: ${formatNumber(damageType.criticalDamage)} critical damage out of ${formatNumber(damageType.totalDamage)} total damage.`;
-              const damageShareLabel =
-                percentage === null
-                  ? 'Overlapping damage share unavailable'
-                  : `${percentage.toFixed(1)}%`;
-              const damageShareAriaLabel =
-                percentage === null
-                  ? 'Overlapping damage share unavailable because total damage is zero'
-                  : `Overlapping damage share: ${percentage.toFixed(1)}% of total damage; categories may overlap`;
-              // Try custom mapping first (by display name), then fall back to enum-based mapping
-              const color =
-                CUSTOM_DAMAGE_TYPE_COLORS[damageType.displayName] ||
-                DAMAGE_TYPE_COLORS[damageType.damageType] ||
-                '#6B7280'; // Default gray
-              const gradient =
-                CUSTOM_DAMAGE_TYPE_GRADIENTS[damageType.displayName] ||
-                DAMAGE_TYPE_GRADIENTS[damageType.damageType] ||
-                `linear-gradient(90deg, ${color}88 0%, ${color} 100%)`; // Fallback
-              const icon =
-                CUSTOM_DAMAGE_TYPE_ICONS[damageType.displayName] ||
-                DAMAGE_TYPE_ICONS[damageType.damageType] ||
-                '💥'; // Default explosion
-
-              return (
-                <ListItem key={damageType.displayName} sx={{ py: 1.5, pl: 0.5, pr: 1.5 }} divider>
-                  <Box sx={{ width: '100%' }}>
-                    {/* Progress bar container with content inside */}
-                    <Box
-                      sx={{
-                        position: 'relative',
-                        height: 48,
-                        borderRadius: 2,
-                        overflow: 'hidden',
-                        bgcolor: (theme: Theme) =>
-                          theme.palette.mode === 'dark'
-                            ? 'rgba(255,255,255,0.08)'
-                            : 'rgba(0,0,0,0.06)',
-                      }}
-                    >
-                      {/* Progress bar fill */}
-                      <Box
-                        sx={{
-                          position: 'absolute',
-                          top: 0,
-                          left: 0,
-                          height: '100%',
-                          width: `${Math.max(0, Math.min(100, percentage))}%`,
-                          background: gradient,
-                          borderRadius: 2,
-                          transition: 'width 0.3s ease-in-out',
-                        }}
-                      />
-
-                      {/* Content overlay */}
+                return (
+                  <ListItem key={damageType.displayName} sx={{ py: 1.5, pl: 0.5, pr: 1.5 }} divider>
+                    <Box sx={{ width: '100%' }}>
+                      {/* Progress bar container with content inside */}
                       <Box
                         sx={{
                           position: 'relative',
-                          height: '100%',
-                          display: 'flex',
-                          alignItems: 'center',
-                          px: 2,
-                          zIndex: 1,
+                          height: 48,
+                          borderRadius: 2,
+                          overflow: 'hidden',
+                          bgcolor: (theme: Theme) =>
+                            theme.palette.mode === 'dark'
+                              ? 'rgba(255,255,255,0.08)'
+                              : 'rgba(0,0,0,0.06)',
                         }}
                       >
-                        {/* Icon */}
-                        <Avatar
+                        {/* Progress bar fill */}
+                        <Box
                           sx={{
-                            width: 32,
-                            height: 32,
-                            bgcolor: 'transparent',
-                            fontSize: '1.2rem',
-                            filter:
-                              'drop-shadow(0px 0px 2px rgba(0,0,0,0.8)) drop-shadow(0px 0px 4px rgba(255,255,255,0.3))',
-                            textShadow:
-                              '0px 0px 2px rgba(0,0,0,0.9), 0px 0px 4px rgba(255,255,255,0.4)',
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            height: '100%',
+                            width: `${Math.max(0, Math.min(100, percentage ?? 0))}%`,
+                            background: gradient,
+                            borderRadius: 2,
+                            transition: 'width 0.3s ease-in-out',
                           }}
-                          variant="rounded"
+                        />
+
+                        {/* Content overlay */}
+                        <Box
+                          sx={{
+                            position: 'relative',
+                            height: '100%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            px: 2,
+                            zIndex: 1,
+                          }}
                         >
-                          {icon}
-                        </Avatar>
-
-                        {/* Labels */}
-                        <Box sx={{ flex: 1, minWidth: 0, ml: 1.5 }}>
-                          <Typography
-                            variant="body2"
+                          {/* Icon */}
+                          <Avatar
                             sx={{
-                              fontWeight: 700,
-                              color: 'white',
-                              textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
-                              lineHeight: 1.2,
+                              width: 32,
+                              height: 32,
+                              bgcolor: 'transparent',
+                              fontSize: '1.2rem',
+                              filter:
+                                'drop-shadow(0px 0px 2px rgba(0,0,0,0.8)) drop-shadow(0px 0px 4px rgba(255,255,255,0.3))',
+                              textShadow:
+                                '0px 0px 2px rgba(0,0,0,0.9), 0px 0px 4px rgba(255,255,255,0.4)',
                             }}
+                            variant="rounded"
                           >
-                            {damageType.displayName}
-                          </Typography>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.25 }}>
-                            <Typography
-                              variant="caption"
-                              sx={{
-                                color: 'rgba(255,255,255,0.9)',
-                                textShadow: '1px 1px 1px rgba(0,0,0,0.8)',
-                                fontWeight: 500,
-                              }}
-                            >
-                              {formatNumber(damageType.totalDamage)} dmg
-                            </Typography>
-                            <Typography
-                              variant="caption"
-                              sx={{
-                                color: 'rgba(255,255,255,0.7)',
-                                textShadow: '1px 1px 1px rgba(0,0,0,0.8)',
-                              }}
-                            >
-                              •
-                            </Typography>
-                            <Typography
-                              variant="caption"
-                              sx={{
-                                color: 'rgba(255,255,255,0.9)',
-                                textShadow: '1px 1px 1px rgba(0,0,0,0.8)',
-                                fontWeight: 500,
-                              }}
-                            >
-                              {formatNumber(Math.round(damageType.averageDamage))} avg
-                            </Typography>
-                          </Box>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.25 }}>
-                            <Tooltip title={criticalRateTooltip} arrow>
-                              <Typography
-                                aria-label={criticalRateTooltip}
-                                variant="caption"
-                                sx={{
-                                  color: 'rgba(255,255,255,0.9)',
-                                  textShadow: '1px 1px 1px rgba(0,0,0,0.8)',
-                                  fontWeight: 500,
-                                }}
-                              >
-                                {criticalRateLabel}
-                              </Typography>
-                            </Tooltip>
-                            <Typography
-                              variant="caption"
-                              sx={{
-                                color: 'rgba(255,255,255,0.7)',
-                                textShadow: '1px 1px 1px rgba(0,0,0,0.8)',
-                              }}
-                            >
-                              •
-                            </Typography>
-                            <Tooltip title={criticalDamageShareTooltip} arrow>
-                              <Typography
-                                aria-label={criticalDamageShareTooltip}
-                                variant="caption"
-                                sx={{
-                                  color: 'rgba(255,255,255,0.9)',
-                                  textShadow: '1px 1px 1px rgba(0,0,0,0.8)',
-                                  fontWeight: 500,
-                                }}
-                              >
-                                {criticalDamageShareLabel}
-                              </Typography>
-                            </Tooltip>
-                          </Box>
-                        </Box>
+                            {icon}
+                          </Avatar>
 
-                        {/* Percentage */}
-                        <Tooltip title={damageShareAriaLabel} arrow>
-                          <Box aria-label={damageShareAriaLabel} sx={{ textAlign: 'right' }}>
+                          {/* Labels */}
+                          <Box sx={{ flex: 1, minWidth: 0, ml: 1.5 }}>
                             <Typography
-                              variant="h6"
+                              variant="body2"
                               sx={{
                                 fontWeight: 700,
                                 color: 'white',
                                 textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
+                                lineHeight: 1.2,
                               }}
                             >
-                              {damageShareLabel}
+                              {damageType.displayName}
                             </Typography>
-                            <Typography
-                              variant="caption"
-                              sx={{
-                                color: 'rgba(255,255,255,0.9)',
-                                textShadow: '1px 1px 1px rgba(0,0,0,0.8)',
-                              }}
-                            >
-                              overlapping damage share
-                            </Typography>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.25 }}>
+                              <Typography
+                                variant="caption"
+                                sx={{
+                                  color: 'rgba(255,255,255,0.9)',
+                                  textShadow: '1px 1px 1px rgba(0,0,0,0.8)',
+                                  fontWeight: 500,
+                                }}
+                              >
+                                {formatNumber(damageType.totalDamage)} dmg
+                              </Typography>
+                              <Typography
+                                variant="caption"
+                                sx={{
+                                  color: 'rgba(255,255,255,0.7)',
+                                  textShadow: '1px 1px 1px rgba(0,0,0,0.8)',
+                                }}
+                              >
+                                •
+                              </Typography>
+                              <Typography
+                                variant="caption"
+                                sx={{
+                                  color: 'rgba(255,255,255,0.9)',
+                                  textShadow: '1px 1px 1px rgba(0,0,0,0.8)',
+                                  fontWeight: 500,
+                                }}
+                              >
+                                {formatNumber(Math.round(damageType.averageDamage))} avg
+                              </Typography>
+                            </Box>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.25 }}>
+                              <Tooltip title={criticalRateTooltip} arrow>
+                                <Typography
+                                  aria-label={criticalRateTooltip}
+                                  variant="caption"
+                                  sx={{
+                                    color: 'rgba(255,255,255,0.9)',
+                                    textShadow: '1px 1px 1px rgba(0,0,0,0.8)',
+                                    fontWeight: 500,
+                                  }}
+                                >
+                                  {criticalRateLabel}
+                                </Typography>
+                              </Tooltip>
+                              <Typography
+                                variant="caption"
+                                sx={{
+                                  color: 'rgba(255,255,255,0.7)',
+                                  textShadow: '1px 1px 1px rgba(0,0,0,0.8)',
+                                }}
+                              >
+                                •
+                              </Typography>
+                              <Tooltip title={criticalDamageShareTooltip} arrow>
+                                <Typography
+                                  aria-label={criticalDamageShareTooltip}
+                                  variant="caption"
+                                  sx={{
+                                    color: 'rgba(255,255,255,0.9)',
+                                    textShadow: '1px 1px 1px rgba(0,0,0,0.8)',
+                                    fontWeight: 500,
+                                  }}
+                                >
+                                  {criticalDamageShareLabel}
+                                </Typography>
+                              </Tooltip>
+                            </Box>
                           </Box>
-                        </Tooltip>
+
+                          {/* Percentage */}
+                          <Tooltip title={damageShareAriaLabel} arrow>
+                            <Box aria-label={damageShareAriaLabel} sx={{ textAlign: 'right' }}>
+                              <Typography
+                                variant="h6"
+                                sx={{
+                                  fontWeight: 700,
+                                  color: 'white',
+                                  textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
+                                }}
+                              >
+                                {damageShareLabel}
+                              </Typography>
+                              <Typography
+                                variant="caption"
+                                sx={{
+                                  color: 'rgba(255,255,255,0.9)',
+                                  textShadow: '1px 1px 1px rgba(0,0,0,0.8)',
+                                }}
+                              >
+                                overlapping damage share
+                              </Typography>
+                            </Box>
+                          </Tooltip>
+                        </Box>
                       </Box>
                     </Box>
-                  </Box>
-                </ListItem>
-              );
-            })}
-          </List>
-        </Box>
-      ) : (
-        <Typography variant="body2" color="text.secondary">
-          No damage events found for friendly players.
-        </Typography>
-      )}
+                  </ListItem>
+                );
+              })}
+            </List>
+          </Box>
+        ) : (
+          <Typography variant="body2" color="text.secondary">
+            No damage events found for friendly players.
+          </Typography>
+        )}
 
-      {/* Help Modal */}
-      <DamageTypeHelpModal open={helpModalOpen} onClose={handleCloseHelp} />
+        {/* Help Modal */}
+        <DamageTypeHelpModal open={helpModalOpen} onClose={handleCloseHelp} />
+      </AnalyzerPanelState>
     </Box>
   );
 };

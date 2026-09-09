@@ -18,6 +18,7 @@ import type {
   StatusEffectUptimesByTarget,
   StatusEffectUptimesResult,
 } from '../../../workers/calculations/CalculateStatusEffectUptimes';
+import { resolveAnalyzerPanelState } from '../AnalyzerPanelState';
 
 import { BuffUptime } from './BuffUptimeProgressBar';
 import { EffectUptimeTimelineModal } from './EffectUptimeTimelineModal';
@@ -76,15 +77,17 @@ export const StatusEffectUptimesPanel: React.FC<StatusEffectUptimesPanelProps> =
     }
     const targetArray = Array.from(selectedTargetIds);
     // Return first non-sentinel target, or null if only sentinel values
-    return targetArray.find((id) => id !== ALL_TARGETS_SENTINEL) || null;
+    return targetArray.find((id) => id !== ALL_TARGETS_SENTINEL) ?? null;
   }, [selectedTargetIds]);
 
   // Get all dependency loading states to ensure complete data
-  const { hostileBuffLookupData, isHostileBuffLookupLoading } = useHostileBuffLookupTask();
-  const { debuffLookupData, isDebuffLookupLoading } = useDebuffLookupTask();
+  const { hostileBuffLookupData, isHostileBuffLookupLoading, hostileBuffLookupError } =
+    useHostileBuffLookupTask();
+  const { debuffLookupData, isDebuffLookupLoading, debuffLookupError } = useDebuffLookupTask();
 
   // Use the worker-based selector for status effect uptimes (now returns target-segmented data)
-  const { statusEffectUptimesData, isStatusEffectUptimesLoading } = useStatusEffectUptimesTask();
+  const { statusEffectUptimesData, isStatusEffectUptimesLoading, statusEffectUptimesError } =
+    useStatusEffectUptimesTask();
   const statusEffectUptimes = getStatusEffectUptimesForPanel(statusEffectUptimesData);
   const unavailableMessage = getStatusEffectUptimesUnavailableMessage(statusEffectUptimesData);
 
@@ -501,26 +504,33 @@ export const StatusEffectUptimesPanel: React.FC<StatusEffectUptimesPanelProps> =
   ]);
 
   const canOpenTimeline = prefetchedSeries.length > 0;
-
-  if (isDataLoading) {
-    return (
-      <StatusEffectUptimesView
-        selectedTargetId={selectedTargetId}
-        statusEffectUptimes={null}
-        isLoading={true}
-        reportId={reportId}
-        fightId={fightId}
-        canOpenTimeline={false}
-      />
-    );
-  }
+  const requestError =
+    statusEffectUptimesError ?? hostileBuffLookupError ?? debuffLookupError ?? null;
+  const panelState = resolveAnalyzerPanelState({
+    error: requestError,
+    hasData: enhancedStatusEffectUptimes.length > 0,
+    isComplete:
+      statusEffectUptimesData != null &&
+      hostileBuffLookupData !== null &&
+      debuffLookupData !== null &&
+      reportMasterData?.loaded === true &&
+      hasValidFightWindow,
+    isLoading: isDataLoading,
+  });
 
   return (
     <React.Fragment>
       <StatusEffectUptimesView
         selectedTargetId={selectedTargetId}
         statusEffectUptimes={enhancedStatusEffectUptimes}
-        isLoading={false}
+        state={panelState}
+        stateDetail={
+          requestError ??
+          unavailableMessage ??
+          (panelState === 'stale'
+            ? 'Status effect data is incomplete. Showing the latest available values.'
+            : undefined)
+        }
         reportId={reportId}
         fightId={fightId}
         onOpenTimeline={canOpenTimeline ? () => setIsTimelineOpen(true) : undefined}

@@ -62,7 +62,7 @@ describe('BuffUptimesView - Name Filter', () => {
       <ThemeProvider theme={theme}>
         <BuffUptimesView
           buffUptimes={uptimes}
-          isLoading={false}
+          state="ready"
           showAllBuffs={true}
           onToggleShowAll={noopToggle}
           reportId="R1"
@@ -87,7 +87,7 @@ describe('BuffUptimesView - Name Filter', () => {
       <ThemeProvider theme={theme}>
         <BuffUptimesView
           buffUptimes={sampleBuffs}
-          isLoading={true}
+          state="loading"
           showAllBuffs={true}
           onToggleShowAll={noopToggle}
           reportId="R1"
@@ -159,7 +159,7 @@ describe('DebuffUptimesView - Name Filter', () => {
         <DebuffUptimesView
           selectedTargetId={null}
           debuffUptimes={uptimes}
-          isLoading={false}
+          state="ready"
           showAllDebuffs={true}
           onToggleShowAll={noopToggle}
           reportId="R1"
@@ -219,7 +219,7 @@ describe('StatusEffectUptimesView - Name Filter', () => {
         <StatusEffectUptimesView
           selectedTargetId={null}
           statusEffectUptimes={uptimes}
-          isLoading={false}
+          state="ready"
           reportId="R1"
           fightId="1"
         />

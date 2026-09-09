@@ -5,6 +5,7 @@ import { useDamageEvents, useReportMasterData } from '../../../hooks';
 import { useSelectedTargetIds } from '../../../hooks/useSelectedTargetIds';
 import { parseDamageTypeFlags } from '../../../types/abilities';
 import { DamageEvent, HitType } from '../../../types/combatlogEvents';
+import { resolveAnalyzerPanelState } from '../AnalyzerPanelState';
 
 import { DamageBreakdownView } from './DamageBreakdownView';
 
@@ -32,7 +33,8 @@ export const DamageBreakdownPanel: React.FC<DamageBreakdownPanelProps> = ({
   fight: _fight,
   selectedPlayerId,
 }) => {
-  const { damageEvents, isDamageEventsLoading } = useDamageEvents();
+  const { damageEvents, isDamageEventsLoading, damageEventsStatus, damageEventsError } =
+    useDamageEvents();
   const { reportMasterData, isMasterDataLoading } = useReportMasterData();
   const selectedTargetIds = useSelectedTargetIds();
 
@@ -153,15 +155,23 @@ export const DamageBreakdownPanel: React.FC<DamageBreakdownPanelProps> = ({
     return damageBreakdown.reduce((sum, item) => sum + item.totalDamage, 0);
   }, [damageBreakdown]);
 
-  if (isMasterDataLoading || isDamageEventsLoading) {
-    return <DamageBreakdownView damageBreakdown={[]} totalDamage={0} isLoading={true} />;
-  }
+  const state = resolveAnalyzerPanelState({
+    error: damageEventsError,
+    hasData: damageBreakdown.length > 0,
+    isComplete: damageEventsStatus === 'succeeded' && reportMasterData.loaded,
+    isLoading: isMasterDataLoading || isDamageEventsLoading,
+  });
 
   return (
     <DamageBreakdownView
       damageBreakdown={damageBreakdown}
       totalDamage={totalDamage}
-      isLoading={false}
+      state={state}
+      stateDetail={
+        state === 'stale'
+          ? 'Damage events or ability data have not completed loading.'
+          : (damageEventsError ?? undefined)
+      }
     />
   );
 };
