@@ -206,15 +206,80 @@ describe('pinned findings model', () => {
     expect(shared.evidence[0]).toMatchObject({
       timestampMs: 42_000,
       phaseId: 'execute',
-      eventId: 'event-42',
       actor: { role: 'damage-dealer' },
     });
+    expect(shared.evidence[0]).not.toHaveProperty('eventId');
     expect(shared.ownership.current).toEqual({ kind: 'player', role: 'tank' });
     expect(JSON.stringify(shared)).not.toContain('player-ada');
     expect(JSON.stringify(shared)).not.toContain('player-lead');
     expect(JSON.stringify(shared)).not.toContain('Ada');
     expect(JSON.stringify(shared)).not.toContain('Raid Lead');
-    expect(shared.provenance).toEqual(seed.provenance);
+    expect(shared.provenance).toEqual({
+      kind: seed.provenance.kind,
+      source: seed.provenance.source,
+      sourceReference: seed.provenance.sourceReference,
+      observedAfterAnchorMs: 0,
+    });
+    expect(shared.pin).toEqual({
+      status: 'pinned',
+      pinnedAfterAnchorMs: 60_000,
+      changedAfterAnchorMs: 60_000,
+    });
+  });
+
+  it('exports non-identified shares with useful elapsed chronology but no wall-clock or report ids', () => {
+    const reportEventId = 'report-private-8N32Q-event-42';
+    const finding = appendResolution(
+      assignFinding(
+        pinFinding(
+          {
+            ...seed,
+            whatHappened: 'The mechanic occurred at 2026-09-08T12:00:00.000Z.',
+            evidence: [{ ...seed.evidence[0], eventId: reportEventId }],
+          },
+          '2026-09-08T12:01:00.000Z',
+        ),
+        { kind: 'player', id: 'player-lead', displayName: 'Raid Lead', role: 'tank' },
+        '2026-09-08T12:03:00.000Z',
+      ),
+      {
+        id: 'resolution-private-1',
+        at: '2026-09-08T12:05:00.000Z',
+        status: 'acknowledged',
+        note: 'Reviewed by Raid Lead.',
+        changedBy: { id: 'player-lead', displayName: 'Raid Lead', role: 'tank' },
+      },
+    );
+
+    for (const recipient of [{ audience: 'team' as const }, { audience: 'external' as const }]) {
+      const shared = sharePinnedFinding(finding, recipient);
+      const serializedShare = JSON.stringify(shared);
+
+      [
+        '2026-09-08T12:00:00.000Z',
+        '2026-09-08T12:01:00.000Z',
+        '2026-09-08T12:03:00.000Z',
+        '2026-09-08T12:05:00.000Z',
+        reportEventId,
+        'player-ada',
+        'player-lead',
+        'Ada',
+        'Raid Lead',
+      ].forEach((secret) => expect(serializedShare).not.toContain(secret));
+      expect(serializedShare).not.toMatch(/\d{4}-\d{2}-\d{2}T/);
+      expect(shared.whatHappened).toContain('[time]');
+      expect(shared.timeline).toEqual({ anchor: 'earliest-recorded-finding-event' });
+      expect(shared.provenance.observedAfterAnchorMs).toBe(0);
+      expect(shared.pin).toEqual({
+        status: 'pinned',
+        pinnedAfterAnchorMs: 60_000,
+        changedAfterAnchorMs: 60_000,
+      });
+      expect(shared.ownership.history[0].afterAnchorMs).toBe(180_000);
+      expect(shared.resolutionHistory[0].afterAnchorMs).toBe(300_000);
+      expect(shared.evidence[0].timestampMs).toBe(42_000);
+      expect(shared.evidence[0]).not.toHaveProperty('eventId');
+    }
   });
 
   it('redacts differently cased player identifiers and treats their punctuation literally', () => {
@@ -259,6 +324,8 @@ describe('pinned findings model', () => {
       displayName: 'Ada',
       role: 'damage-dealer',
     });
+    expect(shared.provenance).toEqual(seed.provenance);
+    expect(shared.pin.pinnedAt).toBe('2026-09-08T12:01:00.000Z');
   });
 
   it('rejects invalid timestamps and canonicalizes negative zero', () => {
