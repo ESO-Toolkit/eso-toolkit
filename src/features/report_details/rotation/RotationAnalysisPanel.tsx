@@ -2,19 +2,75 @@ import React from 'react';
 import { useSelector } from 'react-redux';
 
 import { ReportActorFragment } from '../../../graphql/gql/graphql';
-import {
-  selectCastEvents,
-  selectResourceEvents,
-  selectEventPlayers,
-} from '../../../store/events_data/actions';
+import { useCastEvents, useResolvedReportFightContext, useResourceEvents } from '../../../hooks';
+import { selectEventPlayers } from '../../../store/events_data/actions';
 import { selectCombinedMasterData } from '../../../store/master_data/masterDataSelectors';
+import { selectResourceEventsEntryForContext } from '../../../store/selectors/eventsSelectors';
+import type { RootState } from '../../../store/storeWithHistory';
 import { ResourceChangeEvent, UnifiedCastEvent } from '../../../types/combatlogEvents';
+import {
+  AnalyzerPanelState,
+  resolveAnalyzerPanelState,
+  type AnalyzerPanelStateKind,
+} from '../AnalyzerPanelState';
 
 import { RotationAnalysisPanelView } from './RotationAnalysisPanelView';
 
 interface RotationAnalysisPanelProps {
   fight: { startTime?: number; endTime?: number; friendlyPlayers?: (number | null)[] | null };
 }
+
+type FightWithResolvedWindow = RotationAnalysisPanelProps['fight'] & {
+  endTime: number;
+  startTime: number;
+};
+
+/**
+ * Timestamp zero is a valid pull boundary, but analysis requires a finite,
+ * positive fight duration. This keeps malformed report metadata from flowing
+ * into duration-derived metrics such as actions per minute.
+ */
+export const hasRotationFightWindow = (
+  fight: RotationAnalysisPanelProps['fight'],
+): fight is FightWithResolvedWindow =>
+  fight.startTime !== undefined &&
+  fight.endTime !== undefined &&
+  Number.isFinite(fight.startTime) &&
+  Number.isFinite(fight.endTime) &&
+  fight.endTime > fight.startTime;
+
+interface RotationPanelLifecycleInput {
+  castEventsError: string | null;
+  castEventsStatus: 'idle' | 'loading' | 'succeeded' | 'failed';
+  hasData: boolean;
+  resourceEventsError: string | null;
+  resourceEventsStatus: 'idle' | 'loading' | 'succeeded' | 'failed';
+}
+
+/**
+ * Empty rotation analyses are only trustworthy once both source streams have
+ * completed. A source that has not settled remains visibly stale.
+ */
+export const resolveRotationAnalysisPanelState = ({
+  castEventsError,
+  castEventsStatus,
+  hasData,
+  resourceEventsError,
+  resourceEventsStatus,
+}: RotationPanelLifecycleInput): AnalyzerPanelStateKind =>
+  resolveAnalyzerPanelState({
+    error:
+      castEventsError ??
+      resourceEventsError ??
+      (castEventsStatus === 'failed'
+        ? 'Cast event data failed to load.'
+        : resourceEventsStatus === 'failed'
+          ? 'Resource event data failed to load.'
+          : null),
+    hasData,
+    isComplete: castEventsStatus === 'succeeded' && resourceEventsStatus === 'succeeded',
+    isLoading: castEventsStatus === 'loading' || resourceEventsStatus === 'loading',
+  });
 
 interface RotationAnalysis {
   playerId: string;
@@ -254,9 +310,12 @@ const analyzeGeneralRotation = (
 };
 
 export const RotationAnalysisPanel: React.FC<RotationAnalysisPanelProps> = ({ fight }) => {
-  // SIMPLIFIED: Use basic selectors directly instead of complex object-creating selectors
-  const castEvents = useSelector(selectCastEvents);
-  const resourceEvents = useSelector(selectResourceEvents);
+  const { castEvents, castEventsError, castEventsStatus } = useCastEvents();
+  const { resourceEvents } = useResourceEvents();
+  const context = useResolvedReportFightContext();
+  const resourceEventsEntry = useSelector((state: RootState) =>
+    selectResourceEventsEntryForContext(state, context),
+  );
   const playersArray = useSelector(selectEventPlayers);
   const masterData = useSelector(selectCombinedMasterData);
 
@@ -272,7 +331,9 @@ export const RotationAnalysisPanel: React.FC<RotationAnalysisPanelProps> = ({ fi
   }, [playersArray]);
 
   const rotationAnalyses = React.useMemo(() => {
-    if (!fight?.startTime || !fight?.endTime || !castEvents || !resourceEvents) return [];
+    if (!hasRotationFightWindow(fight) || !castEvents || !resourceEvents) {
+      return [];
+    }
 
     const fightDurationMs = fight.endTime - fight.startTime;
     const analysisMap: Record<string, RotationAnalysis> = {};
@@ -297,7 +358,7 @@ export const RotationAnalysisPanel: React.FC<RotationAnalysisPanelProps> = ({ fi
       // keeping APM / spammable scores consistent with the Synergy panel
       if (castEvent.type !== 'cast') return;
 
-      const playerId = String(castEvent.sourceID || '');
+      const playerId = String(castEvent.sourceID ?? '');
 
       // Additional check: ensure this player is in the friendlyPlayers list
       if (!friendlyPlayerIds.has(playerId)) return;
@@ -330,7 +391,7 @@ export const RotationAnalysisPanel: React.FC<RotationAnalysisPanelProps> = ({ fi
       }
 
       // Track ability usage
-      const abilityId = castEvent.abilityGameID || 'unknown';
+      const abilityId = castEvent.abilityGameID ?? 'unknown';
       const ability = masterData.abilitiesById[abilityId];
       const abilityName = ability?.name || `Ability ${abilityId}`;
 
@@ -404,7 +465,7 @@ export const RotationAnalysisPanel: React.FC<RotationAnalysisPanelProps> = ({ fi
     resourceEvents.forEach((event: ResourceChangeEvent) => {
       const resourceEvent = event as ResourceChangeEvent;
       if (resourceEvent.type === 'resourcechange') {
-        const playerId = String(resourceEvent.targetID || '');
+        const playerId = String(resourceEvent.targetID ?? '');
 
         // Only process resource events for friendly players
         if (!friendlyPlayerIds.has(playerId)) return;
@@ -494,5 +555,23 @@ export const RotationAnalysisPanel: React.FC<RotationAnalysisPanelProps> = ({ fi
     return Object.values(analysisMap);
   }, [fight, castEvents, resourceEvents, masterData, playersById]);
 
-  return <RotationAnalysisPanelView rotationAnalyses={rotationAnalyses} fight={fight} />;
+  const panelState = resolveRotationAnalysisPanelState({
+    castEventsError,
+    castEventsStatus,
+    hasData: rotationAnalyses.length > 0,
+    resourceEventsError: resourceEventsEntry?.error ?? null,
+    resourceEventsStatus: resourceEventsEntry?.status ?? 'idle',
+  });
+
+  return (
+    <AnalyzerPanelState
+      title="Rotation analysis"
+      state={panelState}
+      detail={castEventsError ?? resourceEventsEntry?.error ?? undefined}
+    >
+      {rotationAnalyses.length > 0 && (
+        <RotationAnalysisPanelView rotationAnalyses={rotationAnalyses} fight={fight} />
+      )}
+    </AnalyzerPanelState>
+  );
 };

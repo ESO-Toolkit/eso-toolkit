@@ -9,6 +9,11 @@ import { usePlayerData } from '../../../hooks';
 import { PlayerTalent } from '../../../types/playerDetails';
 import { abilityIconUrl } from '../../../utils/abilityIconCorrections';
 import { resolveActorName } from '../../../utils/resolveActorName';
+import {
+  AnalyzerPanelState,
+  resolveAnalyzerPanelState,
+  type AnalyzerPanelStateKind,
+} from '../AnalyzerPanelState';
 
 interface TalentsGridPanelProps {
   fight: FightFragment;
@@ -25,8 +30,34 @@ interface TalentRow {
   rawTalentData: PlayerTalent;
 }
 
+interface TalentsPanelLifecycleInput {
+  hasData: boolean;
+  isLoading: boolean;
+  playerDataError: string | null | undefined;
+  playerDataStatus: 'idle' | 'loading' | 'succeeded' | 'failed' | undefined;
+}
+
+/**
+ * Player data is the authoritative source for talents. An idle entry is not an
+ * empty result: it remains stale until the source explicitly succeeds.
+ */
+export const resolveTalentsPanelState = ({
+  hasData,
+  isLoading,
+  playerDataError,
+  playerDataStatus,
+}: TalentsPanelLifecycleInput): AnalyzerPanelStateKind =>
+  resolveAnalyzerPanelState({
+    error:
+      playerDataError ??
+      (playerDataStatus === 'failed' ? 'Player talent data failed to load.' : null),
+    hasData,
+    isComplete: playerDataStatus === 'succeeded',
+    isLoading: isLoading || playerDataStatus === 'loading',
+  });
+
 export const TalentsGridPanel: React.FC<TalentsGridPanelProps> = ({ fight }) => {
-  const { playerData } = usePlayerData();
+  const { playerData, isPlayerDataLoading } = usePlayerData();
   const logger = useLogger('TalentsGridPanel');
 
   // Transform talent data for DataGrid
@@ -37,7 +68,7 @@ export const TalentsGridPanel: React.FC<TalentsGridPanelProps> = ({ fight }) => 
 
     // Get all friendly players in the fight
     fight.friendlyPlayers?.forEach((fightPlayer) => {
-      if (!fightPlayer) return;
+      if (fightPlayer === null || fightPlayer === undefined) return;
 
       const player = playerData.playersById[String(fightPlayer)];
       if (!player) return;
@@ -193,68 +224,70 @@ export const TalentsGridPanel: React.FC<TalentsGridPanelProps> = ({ fight }) => 
     [columnHelper, handleCopyJson],
   );
 
-  if (talentRows.length === 0) {
-    return (
-      <Box sx={{ p: 2, textAlign: 'center' }}>
-        <Typography variant="h6" color="text.secondary">
-          No talent data available for this fight
-        </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-          Talent information may not be available for this report or fight.
-        </Typography>
-      </Box>
-    );
-  }
+  const panelState = resolveTalentsPanelState({
+    hasData: talentRows.length > 0,
+    isLoading: isPlayerDataLoading,
+    playerDataError: playerData?.error,
+    playerDataStatus: playerData?.status,
+  });
 
   return (
-    <Box sx={{ p: 2 }}>
-      <Typography variant="h5" gutterBottom>
-        Player Talents Overview
-      </Typography>
+    <AnalyzerPanelState
+      title="Player talents"
+      state={panelState}
+      detail={playerData?.error ?? undefined}
+    >
+      {talentRows.length > 0 && (
+        <Box sx={{ p: 2 }}>
+          <Typography variant="h5" gutterBottom>
+            Player Talents Overview
+          </Typography>
 
-      <Stack spacing={3}>
-        {/* Summary Stats */}
-        <Box>
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-            <Card variant="outlined" sx={{ flex: 1 }}>
-              <CardContent sx={{ textAlign: 'center' }}>
-                <Typography variant="h4" color="primary" data-testid="unique-talents-count">
-                  {talentRows.length}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Unique Talents
-                </Typography>
-              </CardContent>
-            </Card>
-            <Card variant="outlined" sx={{ flex: 1 }}>
-              <CardContent sx={{ textAlign: 'center' }}>
-                <Typography variant="h4" color="secondary" data-testid="players-in-fight-count">
-                  {fight.friendlyPlayers?.length || 0}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Players in Fight
-                </Typography>
-              </CardContent>
-            </Card>
+          <Stack spacing={3}>
+            {/* Summary Stats */}
+            <Box>
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+                <Card variant="outlined" sx={{ flex: 1 }}>
+                  <CardContent sx={{ textAlign: 'center' }}>
+                    <Typography variant="h4" color="primary" data-testid="unique-talents-count">
+                      {talentRows.length}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Unique Talents
+                    </Typography>
+                  </CardContent>
+                </Card>
+                <Card variant="outlined" sx={{ flex: 1 }}>
+                  <CardContent sx={{ textAlign: 'center' }}>
+                    <Typography variant="h4" color="secondary" data-testid="players-in-fight-count">
+                      {fight.friendlyPlayers?.length ?? 0}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Players in Fight
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </Stack>
+            </Box>
+
+            {/* Talents Grid */}
+            <Box data-testid="talents-grid-panel">
+              <DataGrid
+                data={talentRows as unknown as Record<string, unknown>[]}
+                columns={columns as ColumnDef<Record<string, unknown>>[]}
+                title={`Talents (${talentRows.length} unique)`}
+                height={600}
+                initialPageSize={25}
+                pageSizeOptions={[25, 50, 100]}
+                enableSorting={true}
+                enableFiltering={true}
+                enablePagination={true}
+                emptyMessage="No talents found matching your search criteria"
+              />
+            </Box>
           </Stack>
         </Box>
-
-        {/* Talents Grid */}
-        <Box data-testid="talents-grid-panel">
-          <DataGrid
-            data={talentRows as unknown as Record<string, unknown>[]}
-            columns={columns as ColumnDef<Record<string, unknown>>[]}
-            title={`Talents (${talentRows.length} unique)`}
-            height={600}
-            initialPageSize={25}
-            pageSizeOptions={[25, 50, 100]}
-            enableSorting={true}
-            enableFiltering={true}
-            enablePagination={true}
-            emptyMessage="No talents found matching your search criteria"
-          />
-        </Box>
-      </Stack>
-    </Box>
+      )}
+    </AnalyzerPanelState>
   );
 };
