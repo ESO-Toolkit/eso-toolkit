@@ -5,7 +5,7 @@ import React from 'react';
 import type { FightFragment } from '../../../graphql/gql/graphql';
 
 import type { InsightsDataState, InsightsRetryAvailability } from './insightsDataState';
-import { InsightsPanelView } from './InsightsPanelView';
+import { InsightsPanelView, type FightInitiatorState } from './InsightsPanelView';
 
 jest.mock('../../../components/AbilityIcon', () => ({
   AbilityIcon: () => <span>Ability icon</span>,
@@ -37,7 +37,7 @@ const fight = {
 } as FightFragment;
 
 const availableRetry: InsightsRetryAvailability = { canRetry: true, unavailableReason: null };
-const unavailableFightInitiator = {
+const unavailableFightInitiator: FightInitiatorState = {
   kind: 'unavailable' as const,
   message: 'No initiator data is available.',
 };
@@ -46,7 +46,7 @@ const renderPanel = (
   dataState: InsightsDataState,
   onRetry = jest.fn(),
   retryAvailability = availableRetry,
-  fightInitiator = unavailableFightInitiator,
+  fightInitiator: FightInitiatorState = unavailableFightInitiator,
 ) => {
   render(
     <ThemeProvider theme={createTheme()}>
