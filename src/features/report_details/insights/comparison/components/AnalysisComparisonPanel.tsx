@@ -64,10 +64,23 @@ const DistributionEvidence: React.FC<{ readonly distribution: SampleDistribution
       ? 'Range unknown'
       : `Range ${formatNumber(distribution.minimum)}–${formatNumber(distribution.maximum)}`;
 
+  const qualityDetails = [
+    distribution.unknownSampleCount > 0 ? `${distribution.unknownSampleCount} unknown` : null,
+    distribution.invalidSampleCount > 0 ? `${distribution.invalidSampleCount} invalid` : null,
+  ].filter((detail): detail is string => detail !== null);
+
   return (
-    <Typography component="span" variant="body2" color="text.secondary">
-      {observed}; {range}
-    </Typography>
+    <Box component="span">
+      <Typography component="span" variant="body2" color="text.secondary">
+        {observed}; {range}
+      </Typography>
+      {qualityDetails.length > 0 && (
+        <Typography component="span" variant="body2" color="text.secondary">
+          {' '}
+          ({qualityDetails.join('; ')})
+        </Typography>
+      )}
+    </Box>
   );
 };
 
@@ -114,7 +127,10 @@ const MetricRow: React.FC<{
   );
 };
 
-const ContextDetails: React.FC<{ readonly comparison: AvailableComparison }> = ({ comparison }) => {
+const ContextDetails: React.FC<{
+  readonly comparison: AvailableComparison;
+  readonly headingId: string;
+}> = ({ comparison, headingId }) => {
   const { context } = comparison;
   const items = [
     ['ESO partition', context.partition],
@@ -128,8 +144,8 @@ const ContextDetails: React.FC<{ readonly comparison: AvailableComparison }> = (
   ] as const;
 
   return (
-    <Box component="section" aria-labelledby="comparison-context-heading">
-      <Typography id="comparison-context-heading" variant="subtitle2" gutterBottom>
+    <Box component="section" aria-labelledby={headingId}>
+      <Typography id={headingId} component="h3" variant="subtitle2" gutterBottom>
         Comparison context
       </Typography>
       <Box
@@ -159,7 +175,8 @@ const ContextDetails: React.FC<{ readonly comparison: AvailableComparison }> = (
 const ProvenanceDetails: React.FC<{
   readonly comparison: AvailableComparison;
   readonly cohort: boolean;
-}> = ({ comparison, cohort }) => {
+  readonly headingId: string;
+}> = ({ comparison, cohort, headingId }) => {
   const candidate = cohort
     ? (comparison as Extract<CohortComparisonResult, { readonly status: 'available' }>).provenance
         .candidate
@@ -176,8 +193,8 @@ const ProvenanceDetails: React.FC<{
   const firstBaseline = baseline[0] as IdentifiedProvenance;
 
   return (
-    <Box component="section" aria-labelledby="comparison-provenance-heading">
-      <Typography id="comparison-provenance-heading" variant="subtitle2" gutterBottom>
+    <Box component="section" aria-labelledby={headingId}>
+      <Typography id={headingId} component="h3" variant="subtitle2" gutterBottom>
         Provenance
       </Typography>
       <Box component="dl" sx={{ display: 'grid', gap: 0.5, m: 0 }}>
@@ -197,6 +214,26 @@ const ProvenanceDetails: React.FC<{
             {cohort ? sources : `${firstBaseline.pullId} at ${firstBaseline.occurredAt}`}
           </Box>
         </Typography>
+        {cohort && (
+          <Box component="div">
+            <Typography component="div" variant="body2" sx={{ fontWeight: 700 }}>
+              Cohort baseline pulls ({baseline.length}):
+            </Typography>
+            <Box
+              component="ul"
+              aria-label="Cohort baseline pulls"
+              sx={{ m: 0, pl: 2.5, overflowWrap: 'anywhere' }}
+            >
+              {baseline.map((entry) => (
+                <Box component="li" key={entry.pullId}>
+                  <Typography variant="body2">
+                    {entry.pullId} at {entry.occurredAt}
+                  </Typography>
+                </Box>
+              ))}
+            </Box>
+          </Box>
+        )}
         <Typography component="div" variant="body2">
           <Box component="dt" sx={{ display: 'inline', fontWeight: 700 }}>
             Baseline period:{' '}
@@ -219,18 +256,30 @@ const ProvenanceDetails: React.FC<{
   );
 };
 
+type UnavailableComparisonResult = Extract<
+  ComparisonResult | CohortComparisonResult,
+  { readonly status: 'unavailable' }
+>;
+
+const isContextIncompatibility = (reason: UnavailableComparisonResult['reason']): boolean =>
+  reason.startsWith('cross-');
+
 const UnavailableComparison: React.FC<{
-  readonly comparison: Extract<
-    ComparisonResult | CohortComparisonResult,
-    { readonly status: 'unavailable' }
-  >;
-}> = ({ comparison }) => (
-  <Alert severity="warning" role="alert">
-    <AlertTitle>Comparison unavailable</AlertTitle>
-    {comparison.message} No metric or score is shown because comparison context is invalid or
-    incompatible.
-  </Alert>
-);
+  readonly comparison: UnavailableComparisonResult;
+}> = ({ comparison }) => {
+  const incompatible = isContextIncompatibility(comparison.reason);
+
+  return (
+    <Alert severity="warning" role="alert">
+      <AlertTitle>{incompatible ? 'Comparison incompatible' : 'Comparison unavailable'}</AlertTitle>
+      {comparison.message}{' '}
+      {incompatible
+        ? 'No metric or score is shown because these analyses have incompatible comparison context.'
+        : 'No metric or score is shown because a valid comparison baseline is unavailable.'}
+      {incompatible && <Chip label="Incompatible context" size="small" sx={{ ml: 1 }} />}
+    </Alert>
+  );
+};
 
 /**
  * Presents a model-validated pull or cohort comparison without fabricating a score for unavailable
@@ -242,6 +291,9 @@ export const AnalysisComparisonPanel: React.FC<AnalysisComparisonPanelProps> = (
   title = 'Analysis comparison',
 }) => {
   const headingId = React.useId();
+  const contextHeadingId = `${headingId}-context`;
+  const provenanceHeadingId = `${headingId}-provenance`;
+  const metricsHeadingId = `${headingId}-metrics`;
 
   if (comparison.status === 'unavailable') {
     return (
@@ -264,13 +316,31 @@ export const AnalysisComparisonPanel: React.FC<AnalysisComparisonPanelProps> = (
   const description = cohort
     ? `${comparison.cohortSize} context-compatible baseline pulls; ${comparison.minimumObservedBaselineSamples} observed samples required per metric.`
     : 'One context-compatible baseline pull.';
+  const hasIncompleteEvidence = comparison.metrics.some((metric) => metric.status !== 'available');
+  const provisional =
+    hasIncompleteEvidence || comparison.confidence === 'low' || comparison.confidence === 'unknown';
 
   return (
     <Paper
       component="section"
       aria-labelledby={headingId}
       elevation={0}
-      sx={{ p: { xs: 2, sm: 3 }, overflow: 'hidden' }}
+      sx={(theme) => ({
+        p: { xs: 2, sm: 3 },
+        overflow: 'hidden',
+        background:
+          theme.palette.mode === 'dark'
+            ? 'linear-gradient(180deg, rgba(15,23,42,0.66) 0%, rgba(3,7,18,0.66) 100%)'
+            : theme.palette.background.paper,
+        backdropFilter: 'blur(10px)',
+        WebkitBackdropFilter: 'blur(10px)',
+        border: `1px solid ${theme.palette.divider}`,
+        borderRadius: 14,
+        boxShadow:
+          theme.palette.mode === 'dark'
+            ? '0 8px 30px rgba(0, 0, 0, 0.25)'
+            : '0 4px 12px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.03)',
+      })}
     >
       <Stack spacing={2.5}>
         <Stack
@@ -301,32 +371,69 @@ export const AnalysisComparisonPanel: React.FC<AnalysisComparisonPanelProps> = (
           </Stack>
         </Stack>
 
-        <ContextDetails comparison={comparison} />
-        <ProvenanceDetails comparison={comparison} cohort={cohort} />
+        {provisional && (
+          <Alert severity="info" role="status" aria-live="polite">
+            <AlertTitle>Provisional comparison</AlertTitle>
+            {hasIncompleteEvidence
+              ? 'Some metrics have incomplete or insufficient evidence. Numeric deltas are shown only where both sides have sufficient observed data.'
+              : 'The lowest analysis confidence is low or unknown. Treat this comparison as directional.'}
+          </Alert>
+        )}
 
-        <Box component="section" aria-labelledby="comparison-metrics-heading">
-          <Typography id="comparison-metrics-heading" variant="subtitle2" gutterBottom>
+        <ContextDetails comparison={comparison} headingId={contextHeadingId} />
+        <ProvenanceDetails
+          comparison={comparison}
+          cohort={cohort}
+          headingId={provenanceHeadingId}
+        />
+
+        <Box component="section" aria-labelledby={metricsHeadingId}>
+          <Typography id={metricsHeadingId} component="h3" variant="subtitle2" gutterBottom>
             Metric evidence
           </Typography>
+          {comparison.metrics.length === 0 && (
+            <Alert severity="warning" sx={{ mb: 2 }}>
+              <AlertTitle>No metric evidence</AlertTitle>
+              No metric or score is available for this comparison.
+            </Alert>
+          )}
           <TableContainer
             sx={{ overflowX: 'auto' }}
             tabIndex={0}
+            role="region"
+            aria-labelledby={metricsHeadingId}
             aria-label="Scrollable comparison metrics"
           >
             <Table size="small" aria-label="Comparison metrics" sx={{ minWidth: 620 }}>
               <TableHead>
                 <TableRow>
-                  <TableCell>Metric</TableCell>
-                  <TableCell align="right">Candidate</TableCell>
-                  <TableCell align="right">{baselineLabel}</TableCell>
-                  <TableCell align="right">Delta</TableCell>
-                  <TableCell>Evidence</TableCell>
+                  <TableCell component="th" scope="col">
+                    Metric
+                  </TableCell>
+                  <TableCell component="th" scope="col" align="right">
+                    Candidate
+                  </TableCell>
+                  <TableCell component="th" scope="col" align="right">
+                    {baselineLabel}
+                  </TableCell>
+                  <TableCell component="th" scope="col" align="right">
+                    Delta
+                  </TableCell>
+                  <TableCell component="th" scope="col">
+                    Evidence
+                  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {comparison.metrics.map((metric) => (
-                  <MetricRow key={metric.metric} metric={metric} />
-                ))}
+                {comparison.metrics.length > 0 ? (
+                  comparison.metrics.map((metric) => (
+                    <MetricRow key={metric.metric} metric={metric} />
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={5}>No metric evidence is available.</TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           </TableContainer>
