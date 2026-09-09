@@ -31,7 +31,7 @@ test.describe('Parse Analysis Smoke Tests', () => {
         }),
       );
       const token = `${header}.${payload}.mock_signature`;
-      localStorage.setItem('access_token', token);
+      sessionStorage.setItem('access_token', token);
     });
 
     await page.route('**/api/v2/**', async (route) => {

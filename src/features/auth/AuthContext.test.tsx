@@ -192,7 +192,7 @@ describe('AuthContext', () => {
     // Create a mock valid JWT token (expires in future)
     const futureExp = Math.floor(Date.now() / 1000) + 3600; // 1 hour from now
     const mockToken = createMockToken(futureExp);
-    mockLocalStorage.getItem.mockReturnValue(mockToken);
+    window.sessionStorage.setItem('access_token', mockToken);
 
     renderWithAuthProvider(<TestComponent />);
 
@@ -205,7 +205,7 @@ describe('AuthContext', () => {
     // Create a mock expired JWT token
     const pastExp = Math.floor(Date.now() / 1000) - 3600; // 1 hour ago
     const mockToken = createMockToken(pastExp);
-    mockLocalStorage.getItem.mockReturnValue(mockToken);
+    window.sessionStorage.setItem('access_token', mockToken);
 
     renderWithAuthProvider(<TestComponent />);
 
@@ -216,7 +216,7 @@ describe('AuthContext', () => {
   it('updates analytics user id when access token changes', async () => {
     const futureExp = Math.floor(Date.now() / 1000) + 3600;
     const mockToken = createMockToken(futureExp);
-    mockLocalStorage.getItem.mockReturnValue(mockToken);
+    window.sessionStorage.setItem('access_token', mockToken);
 
     renderWithAuthProvider(<TestComponent />);
 
@@ -256,7 +256,7 @@ describe('AuthContext', () => {
   it('should fetch user data when logged in', async () => {
     const futureExp = Math.floor(Date.now() / 1000) + 3600;
     const mockToken = createMockToken(futureExp);
-    mockLocalStorage.getItem.mockReturnValue(mockToken);
+    window.sessionStorage.setItem('access_token', mockToken);
 
     renderWithAuthProvider(<TestComponent />);
 
@@ -276,7 +276,7 @@ describe('AuthContext', () => {
   it('should handle user fetch error', async () => {
     const futureExp = Math.floor(Date.now() / 1000) + 3600;
     const mockToken = createMockToken(futureExp);
-    mockLocalStorage.getItem.mockReturnValue(mockToken);
+    window.sessionStorage.setItem('access_token', mockToken);
 
     mockEsoLogsClient.query.mockRejectedValue(new Error('Network error'));
 
@@ -292,7 +292,7 @@ describe('AuthContext', () => {
   it('should handle empty user data response', async () => {
     const futureExp = Math.floor(Date.now() / 1000) + 3600;
     const mockToken = createMockToken(futureExp);
-    mockLocalStorage.getItem.mockReturnValue(mockToken);
+    window.sessionStorage.setItem('access_token', mockToken);
 
     mockEsoLogsClient.query.mockResolvedValue({
       userData: null,
@@ -310,7 +310,7 @@ describe('AuthContext', () => {
   it('should allow manual user refetch', async () => {
     const futureExp = Math.floor(Date.now() / 1000) + 3600;
     const mockToken = createMockToken(futureExp);
-    mockLocalStorage.getItem.mockReturnValue(mockToken);
+    window.sessionStorage.setItem('access_token', mockToken);
 
     renderWithAuthProvider(<TestComponent />);
 
@@ -344,7 +344,7 @@ describe('AuthContext', () => {
   it('should mark user as banned and clear authentication', async () => {
     const futureExp = Math.floor(Date.now() / 1000) + 3600;
     const mockToken = createMockToken(futureExp);
-    mockLocalStorage.getItem.mockReturnValue(mockToken);
+    window.sessionStorage.setItem('access_token', mockToken);
 
     mockCheckUserBan.mockResolvedValueOnce({
       isBanned: true,
@@ -371,7 +371,7 @@ describe('AuthContext', () => {
     const mockToken = createMockToken(futureExp);
 
     // Start with valid token
-    mockLocalStorage.getItem.mockReturnValue(mockToken);
+    window.sessionStorage.setItem('access_token', mockToken);
 
     renderWithAuthProvider(<TestComponent />);
 

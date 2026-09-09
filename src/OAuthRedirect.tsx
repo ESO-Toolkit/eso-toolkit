@@ -10,8 +10,8 @@ import {
   getPkceCodeVerifier,
   CLIENT_ID,
   getRedirectUri,
-  LOCAL_STORAGE_ACCESS_TOKEN_KEY,
-  LOCAL_STORAGE_REFRESH_TOKEN_KEY,
+  ACCESS_TOKEN_KEY,
+  REFRESH_TOKEN_KEY,
   setStoredToken,
   startPKCEAuth,
   getIntendedDestination,
@@ -147,10 +147,10 @@ export const OAuthRedirect: React.FC = () => {
 
         // Normal web auth flow
         if (controller.signal.aborted) return;
-        setStoredToken(LOCAL_STORAGE_ACCESS_TOKEN_KEY, data.access_token as string);
+        setStoredToken(ACCESS_TOKEN_KEY, data.access_token as string);
         // Store refresh token if provided
         if (data.refresh_token && typeof data.refresh_token === 'string') {
-          setStoredToken(LOCAL_STORAGE_REFRESH_TOKEN_KEY, data.refresh_token);
+          setStoredToken(REFRESH_TOKEN_KEY, data.refresh_token);
         }
         rebindAccessToken();
 
