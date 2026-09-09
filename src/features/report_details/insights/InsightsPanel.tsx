@@ -34,7 +34,7 @@ import {
   type InsightsDataSourceName,
   type InsightsSourceAvailability,
 } from './insightsDataState';
-import { InsightsPanelView } from './InsightsPanelView';
+import { InsightsPanelView, type FightInitiatorState } from './InsightsPanelView';
 
 interface InsightsPanelProps {
   fight: FightFragment;
@@ -343,10 +343,50 @@ export const InsightsPanel: React.FC<InsightsPanelProps> = ({ fight, context }) 
     return result;
   }, [combatantInfoEvents, playerData?.playersById]);
 
-  // Find the fight initiator (the first friendly player to deal damage)
-  const fightInitiator = React.useMemo(() => {
-    if (!damageEvents || damageEvents.length === 0 || !playerData?.playersById) {
-      return null;
+  // The full damage stream is only required for this label. Keep its state
+  // isolated so that it never holds up the independent Insights content.
+  const fightInitiator = React.useMemo<FightInitiatorState>(() => {
+    const damageIsPending =
+      isDamageEventsLoading || damageEventsStatus === 'idle' || damageEventsStatus === 'loading';
+    const playerDataStatus = playerData?.status ?? (isPlayerDataLoading ? 'loading' : 'idle');
+    const playerDataIsPending =
+      isPlayerDataLoading || playerDataStatus === 'idle' || playerDataStatus === 'loading';
+
+    if (damageEvents.length === 0) {
+      if (damageEventsStatus === 'failed') {
+        return {
+          kind: 'unavailable',
+          message: 'Damage events could not be loaded, so the fight initiator is unavailable.',
+        };
+      }
+
+      if (damageIsPending) {
+        return {
+          kind: 'loading',
+          message: 'Loading damage events to identify the fight initiator.',
+        };
+      }
+
+      return {
+        kind: 'unavailable',
+        message: 'No friendly damage event identified the fight initiator.',
+      };
+    }
+
+    // A paginated stream can expose an event page before it has collected the
+    // true earliest friendly source. Do not publish a tentative initiator.
+    if (damageEventsStatus === 'failed') {
+      return {
+        kind: 'unavailable',
+        message: 'Damage events could not be loaded, so the fight initiator is unavailable.',
+      };
+    }
+
+    if (damageIsPending) {
+      return {
+        kind: 'loading',
+        message: 'Loading damage events to identify the fight initiator.',
+      };
     }
 
     // Find the earliest-timestamp damage event from a friendly player in a single O(n) scan
@@ -362,16 +402,48 @@ export const InsightsPanel: React.FC<InsightsPanelProps> = ({ fight, context }) 
     }
 
     if (!firstDamageEvent) {
-      return null;
+      return {
+        kind: 'unavailable',
+        message: 'No friendly damage event identified the fight initiator.',
+      };
     }
 
-    const sourcePlayer = playerData.playersById[firstDamageEvent.sourceID];
-    if (!sourcePlayer) {
-      return null;
+    const sourcePlayer = playerData?.playersById[firstDamageEvent.sourceID];
+    if (sourcePlayer) {
+      return {
+        kind: 'available',
+        name:
+          sourcePlayer.displayName || sourcePlayer.name || `Player ${firstDamageEvent.sourceID}`,
+      };
     }
 
-    return sourcePlayer.displayName || sourcePlayer.name || `Player ${firstDamageEvent.sourceID}`;
-  }, [damageEvents, playerData?.playersById, fight.friendlyPlayers]);
+    if (playerDataStatus === 'failed') {
+      return {
+        kind: 'unavailable',
+        message: 'Player details could not be loaded, so the fight initiator is unavailable.',
+      };
+    }
+
+    if (playerDataIsPending) {
+      return {
+        kind: 'loading',
+        message: 'Loading player details to identify the fight initiator.',
+      };
+    }
+
+    return {
+      kind: 'unavailable',
+      message: 'The first friendly damage event could not be matched to a player.',
+    };
+  }, [
+    damageEvents,
+    damageEventsStatus,
+    fight.friendlyPlayers,
+    isDamageEventsLoading,
+    isPlayerDataLoading,
+    playerData?.playersById,
+    playerData?.status,
+  ]);
 
   const retryFailedSources = React.useCallback(() => {
     if (

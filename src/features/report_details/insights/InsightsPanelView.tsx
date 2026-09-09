@@ -22,12 +22,17 @@ import { DebuffUptimesPanel } from './DebuffUptimesPanel';
 import type { InsightsDataState, InsightsRetryAvailability } from './insightsDataState';
 import { StatusEffectUptimesPanel } from './StatusEffectUptimesPanel';
 
+export type FightInitiatorState =
+  | { kind: 'available'; name: string }
+  | { kind: 'loading'; message: string }
+  | { kind: 'unavailable'; message: string };
+
 interface InsightsPanelViewProps {
   fight: FightFragment;
   durationMs: number;
   abilityEquipped: Partial<Record<KnownAbilities, string[]>>;
   buffActors: Partial<Record<KnownAbilities, Set<string>>>;
-  fightInitiator: string | null;
+  fightInitiator: FightInitiatorState;
   selectedPlayerId: number | null;
   dataState: InsightsDataState;
   onRetry: () => void;
@@ -211,39 +216,53 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
               </Typography>
             </Box>
 
-            {fightInitiator && (
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mt: 1 }}>
-                <Box
-                  aria-hidden
-                  sx={{
-                    width: 32,
-                    height: 32,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '20px',
-                    backgroundColor:
-                      theme.palette.mode === 'dark'
-                        ? 'rgba(255, 255, 255, 0.1)'
-                        : 'rgba(15, 23, 42, 0.08)',
-                    borderRadius: 1,
-                    boxShadow: 1,
-                  }}
-                >
-                  🎯
-                </Box>
-                <Typography
-                  sx={{
-                    '& strong': { fontWeight: 600 },
-                    '& span': { fontWeight: 400 },
-                    fontSize: { xs: '0.875rem', sm: '0.9rem', md: '0.95rem' },
-                  }}
-                >
-                  <strong>Fight initiator: </strong>
-                  <span>{fightInitiator}</span>
-                </Typography>
+            <Box
+              aria-atomic="true"
+              aria-live="polite"
+              data-testid="fight-initiator"
+              sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mt: 1 }}
+            >
+              <Box
+                aria-hidden
+                sx={{
+                  width: 32,
+                  height: 32,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '20px',
+                  backgroundColor:
+                    theme.palette.mode === 'dark'
+                      ? 'rgba(255, 255, 255, 0.1)'
+                      : 'rgba(15, 23, 42, 0.08)',
+                  borderRadius: 1,
+                  boxShadow: 1,
+                }}
+              >
+                🎯
               </Box>
-            )}
+              <Typography
+                sx={{
+                  '& strong': { fontWeight: 600 },
+                  '& span': { fontWeight: 400 },
+                  fontSize: { xs: '0.875rem', sm: '0.9rem', md: '0.95rem' },
+                }}
+              >
+                <strong>Fight initiator: </strong>
+                <span>
+                  {fightInitiator.kind === 'available'
+                    ? fightInitiator.name
+                    : fightInitiator.kind === 'loading'
+                      ? 'Loading'
+                      : 'Unavailable'}
+                </span>
+              </Typography>
+              {fightInitiator.kind !== 'available' ? (
+                <Typography color="text.secondary" variant="caption">
+                  {fightInitiator.message}
+                </Typography>
+              ) : null}
+            </Box>
 
             <Box sx={{ mt: 2.5 }}>
               <Typography
