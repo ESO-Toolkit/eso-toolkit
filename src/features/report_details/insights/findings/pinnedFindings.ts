@@ -41,12 +41,54 @@ export interface FindingConfidence {
   rationale: string;
 }
 
-export interface FindingProvenance {
+/**
+ * Game metadata required to make a finding comparable without exposing the
+ * report, pull, or player that produced it.
+ */
+export interface FindingAnalysisContext {
+  readonly esoUpdate: string;
+  readonly partition: string;
+  readonly encounter: {
+    readonly kind: 'encounter' | 'training-dummy';
+    readonly identity: string;
+    readonly version: string;
+  };
+  readonly difficulty: string;
+  readonly role: FindingRole;
+  readonly classId: number;
+  readonly buildBracket: string;
+}
+
+export interface FindingPeerBenchmarkDistribution {
+  readonly p25: number;
+  readonly p50: number;
+  readonly p75: number;
+}
+
+interface FindingBaseProvenance {
   kind: FindingProvenanceKind;
   source: string;
   sourceReference?: string;
   observedAt: string;
 }
+
+export interface FindingPeerBenchmarkProvenance extends FindingBaseProvenance {
+  kind: 'peer-benchmark';
+  /** A non-identifying cohort label, such as an update, season, or period. */
+  sourcePeriod: string;
+  sampleSize: number;
+  distribution: FindingPeerBenchmarkDistribution;
+  /** Date-only freshness metadata; safe projections never include a wall-clock timestamp. */
+  refreshDate: string;
+  confidence: FindingConfidenceLevel;
+  provisional: boolean;
+}
+
+export interface FindingRuleOrHeuristicProvenance extends FindingBaseProvenance {
+  kind: Exclude<FindingProvenanceKind, 'peer-benchmark'>;
+}
+
+export type FindingProvenance = FindingPeerBenchmarkProvenance | FindingRuleOrHeuristicProvenance;
 
 export interface FindingRecommendation {
   action: string;
@@ -82,6 +124,7 @@ export interface PinnedFindingSeed {
   whyItMatters: string;
   evidence: readonly FindingPhaseEvidence[];
   confidence: FindingConfidence;
+  analysisContext: FindingAnalysisContext;
   provenance: FindingProvenance;
   recommendedAction: FindingRecommendation;
 }
@@ -165,13 +208,30 @@ export interface SharedFindingTimeline {
   anchor: 'earliest-recorded-finding-event';
 }
 
-export interface PrivacySafeFindingProvenance extends Omit<
-  FindingProvenance,
+interface PrivacySafeFindingProvenanceBase extends Omit<
+  FindingBaseProvenance,
   'observedAt' | 'sourceReference'
 > {
   /** Milliseconds after the private timeline anchor. */
   observedAfterAnchorMs: number;
 }
+
+export interface PrivacySafePeerBenchmarkProvenance extends PrivacySafeFindingProvenanceBase {
+  kind: 'peer-benchmark';
+  sourcePeriod: string;
+  sampleSize: number;
+  distribution: FindingPeerBenchmarkDistribution;
+  refreshDate: string;
+  confidence: FindingConfidenceLevel;
+  provisional: boolean;
+}
+
+export interface PrivacySafeRuleOrHeuristicProvenance extends PrivacySafeFindingProvenanceBase {
+  kind: Exclude<FindingProvenanceKind, 'peer-benchmark'>;
+}
+
+export type PrivacySafeFindingProvenance =
+  PrivacySafePeerBenchmarkProvenance | PrivacySafeRuleOrHeuristicProvenance;
 
 export interface PrivacySafeFindingPin {
   status: PinnedFinding['pin']['status'];
@@ -293,6 +353,75 @@ const validateRole = (value: unknown, fieldName: string): FindingRole => {
   return value as FindingRole;
 };
 
+const validateConfidenceLevel = (value: unknown, fieldName: string): FindingConfidenceLevel => {
+  if (typeof value !== 'string' || !confidenceLevels.has(value as FindingConfidenceLevel)) {
+    throw new Error(`Invalid ${fieldName}`);
+  }
+
+  return value as FindingConfidenceLevel;
+};
+
+const analysisEncounterKinds = new Set<FindingAnalysisContext['encounter']['kind']>([
+  'encounter',
+  'training-dummy',
+]);
+
+/** Context is deliberately a compact game taxonomy, never a report or player reference. */
+const validateAnalysisContextText = (value: unknown, fieldName: string): string => {
+  const text = validateRequiredText(value, fieldName);
+  if (
+    /(?:https?:\/\/|www\.|esologs\.com\/reports\/|\b(?:player|actor)[-_])/iu.test(text) ||
+    /\b[A-Za-z0-9]{16}\b/u.test(text) ||
+    /\b\d{4}-\d{2}-\d{2}T/u.test(text)
+  ) {
+    throw new Error(`Invalid non-identifying ${fieldName}`);
+  }
+
+  return text;
+};
+
+const cloneAnalysisContext = (context: unknown): FindingAnalysisContext => {
+  if (!isRecord(context) || !isRecord(context.encounter)) {
+    throw new Error('Invalid finding analysisContext');
+  }
+
+  if (
+    typeof context.encounter.kind !== 'string' ||
+    !analysisEncounterKinds.has(
+      context.encounter.kind as FindingAnalysisContext['encounter']['kind'],
+    )
+  ) {
+    throw new Error('Invalid analysisContext encounter kind');
+  }
+  if (
+    typeof context.classId !== 'number' ||
+    !Number.isSafeInteger(context.classId) ||
+    context.classId <= 0
+  ) {
+    throw new Error('Invalid analysisContext classId');
+  }
+
+  return {
+    esoUpdate: validateAnalysisContextText(context.esoUpdate, 'analysisContext esoUpdate'),
+    partition: validateAnalysisContextText(context.partition, 'analysisContext partition'),
+    encounter: {
+      kind: context.encounter.kind as FindingAnalysisContext['encounter']['kind'],
+      identity: validateAnalysisContextText(
+        context.encounter.identity,
+        'analysisContext encounter identity',
+      ),
+      version: validateAnalysisContextText(
+        context.encounter.version,
+        'analysisContext encounter version',
+      ),
+    },
+    difficulty: validateAnalysisContextText(context.difficulty, 'analysisContext difficulty'),
+    role: validateRole(context.role, 'analysisContext role'),
+    classId: context.classId,
+    buildBracket: validateAnalysisContextText(context.buildBracket, 'analysisContext buildBracket'),
+  };
+};
+
 const cloneActor = (actor: unknown, fieldName: string): FindingActor | undefined => {
   if (actor === undefined) {
     return undefined;
@@ -342,6 +471,15 @@ const validateIsoDate = (value: unknown, fieldName: string): string => {
   }
 
   return value;
+};
+
+const validateIsoCalendarDate = (value: unknown, fieldName: string): string => {
+  const date = validateIsoDate(value, fieldName);
+  if (date.includes('T')) {
+    throw new Error(`Invalid calendar date for ${fieldName}: ${date}`);
+  }
+
+  return date;
 };
 
 const normalizeTimestampMs = (timestampMs: unknown): number => {
@@ -438,6 +576,30 @@ const cloneConfidence = (confidence: unknown): FindingConfidence => {
   };
 };
 
+const clonePeerBenchmarkDistribution = (
+  distribution: unknown,
+): FindingPeerBenchmarkDistribution => {
+  if (!isRecord(distribution)) {
+    throw new Error('Invalid peer benchmark distribution');
+  }
+
+  const validatePercentile = (value: unknown, fieldName: string): number => {
+    if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) {
+      throw new Error(`Invalid peer benchmark distribution ${fieldName}`);
+    }
+    return Object.is(value, -0) ? 0 : value;
+  };
+
+  const p25 = validatePercentile(distribution.p25, 'p25');
+  const p50 = validatePercentile(distribution.p50, 'p50');
+  const p75 = validatePercentile(distribution.p75, 'p75');
+  if (p25 > p50 || p50 > p75) {
+    throw new Error('Invalid peer benchmark distribution ordering');
+  }
+
+  return { p25, p50, p75 };
+};
+
 const cloneProvenance = (provenance: unknown): FindingProvenance => {
   if (
     !isRecord(provenance) ||
@@ -451,11 +613,54 @@ const cloneProvenance = (provenance: unknown): FindingProvenance => {
     provenance.sourceReference,
     'provenance sourceReference',
   );
-  return {
-    kind: provenance.kind as FindingProvenanceKind,
+  const base = {
     source: validateRequiredText(provenance.source, 'provenance source'),
     observedAt: validateIsoDate(provenance.observedAt, 'provenance observedAt'),
     ...(sourceReference === undefined ? {} : { sourceReference }),
+  };
+
+  if (provenance.kind === 'peer-benchmark') {
+    if (
+      typeof provenance.sampleSize !== 'number' ||
+      !Number.isSafeInteger(provenance.sampleSize) ||
+      provenance.sampleSize <= 0
+    ) {
+      throw new Error('Invalid peer benchmark sampleSize');
+    }
+    if (typeof provenance.provisional !== 'boolean') {
+      throw new Error('Invalid peer benchmark provisional');
+    }
+
+    return {
+      kind: 'peer-benchmark',
+      ...base,
+      sourcePeriod: validateAnalysisContextText(
+        provenance.sourcePeriod,
+        'peer benchmark sourcePeriod',
+      ),
+      sampleSize: provenance.sampleSize,
+      distribution: clonePeerBenchmarkDistribution(provenance.distribution),
+      refreshDate: validateIsoCalendarDate(provenance.refreshDate, 'peer benchmark refreshDate'),
+      confidence: validateConfidenceLevel(provenance.confidence, 'peer benchmark confidence'),
+      provisional: provenance.provisional,
+    };
+  }
+
+  const peerOnlyFields = [
+    'sourcePeriod',
+    'sampleSize',
+    'distribution',
+    'refreshDate',
+    'confidence',
+    'provisional',
+  ];
+  if (peerOnlyFields.some((field) => field in provenance)) {
+    throw new Error('Peer benchmark metadata is only valid for peer-benchmark provenance');
+  }
+
+  return {
+    kind: provenance.kind as Exclude<FindingProvenanceKind, 'peer-benchmark'>,
+    ...base,
   };
 };
 
@@ -536,6 +741,7 @@ const cloneFindingSeed = (seed: unknown): PinnedFindingSeed => {
     whyItMatters: validateRequiredText(seed.whyItMatters, 'finding whyItMatters'),
     evidence: seed.evidence.map(cloneEvidence),
     confidence: cloneConfidence(seed.confidence),
+    analysisContext: cloneAnalysisContext(seed.analysisContext),
     provenance: cloneProvenance(seed.provenance),
     recommendedAction: cloneRecommendation(seed.recommendedAction),
   };
@@ -859,6 +1065,36 @@ const elapsedAfterTimelineAnchor = (value: string, context: PrivacySafeTimelineC
   return Object.is(elapsedMs, -0) ? 0 : elapsedMs;
 };
 
+const projectPrivacySafeProvenance = (
+  provenance: FindingProvenance,
+  timelineContext: PrivacySafeTimelineContext,
+  identityIdentifiers: readonly string[],
+): PrivacySafeFindingProvenance => {
+  const base = {
+    kind: provenance.kind,
+    source: redactPrivacySafeText(provenance.source, identityIdentifiers),
+    observedAfterAnchorMs: elapsedAfterTimelineAnchor(provenance.observedAt, timelineContext),
+  };
+
+  if (provenance.kind === 'peer-benchmark') {
+    return {
+      ...base,
+      kind: 'peer-benchmark',
+      sourcePeriod: provenance.sourcePeriod,
+      sampleSize: provenance.sampleSize,
+      distribution: { ...provenance.distribution },
+      refreshDate: provenance.refreshDate,
+      confidence: provenance.confidence,
+      provisional: provenance.provisional,
+    };
+  }
+
+  return {
+    ...base,
+    kind: provenance.kind,
+  };
+};
+
 const createShareIdContext = (finding: PinnedFinding, namespace: string): ShareIdContext => {
   const pseudonymById = new Map<string, string>();
   const durableIds = [finding.id, ...finding.resolutionHistory.map((event) => event.id)];
@@ -930,6 +1166,7 @@ export const sharePinnedFinding = ((
     ];
     return {
       ...shareableFinding,
+      analysisContext: cloneAnalysisContext(detached.analysisContext),
       id: shareId(detached.id, 'finding', shareIdContext),
       whatHappened: redactText(detached.whatHappened, durableIdentifiers),
       whyItMatters: redactText(detached.whyItMatters, durableIdentifiers),
@@ -991,6 +1228,7 @@ export const sharePinnedFinding = ((
   const identityIdentifiers = identityIdentifiersFor(detached);
   const timelineContext = createPrivacySafeTimelineContext(detached);
   return {
+    analysisContext: cloneAnalysisContext(detached.analysisContext),
     id: shareId(detached.id, 'finding', shareIdContext),
     whatHappened: redactPrivacySafeText(detached.whatHappened, identityIdentifiers),
     whyItMatters: redactPrivacySafeText(detached.whyItMatters, identityIdentifiers),
@@ -1009,14 +1247,11 @@ export const sharePinnedFinding = ((
       ...detached.confidence,
       rationale: redactPrivacySafeText(detached.confidence.rationale, identityIdentifiers),
     },
-    provenance: {
-      kind: detached.provenance.kind,
-      source: redactPrivacySafeText(detached.provenance.source, identityIdentifiers),
-      observedAfterAnchorMs: elapsedAfterTimelineAnchor(
-        detached.provenance.observedAt,
-        timelineContext,
-      ),
-    },
+    provenance: projectPrivacySafeProvenance(
+      detached.provenance,
+      timelineContext,
+      identityIdentifiers,
+    ),
     recommendedAction: {
       action: redactPrivacySafeText(detached.recommendedAction.action, identityIdentifiers),
       ...(detached.recommendedAction.expectedOutcome

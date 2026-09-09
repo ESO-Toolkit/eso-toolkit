@@ -22,6 +22,15 @@ const seed: PinnedFindingSeed = {
     },
   ],
   confidence: { level: 'high', rationale: 'Matched an authoritative encounter event.' },
+  analysisContext: {
+    esoUpdate: 'U46',
+    partition: 'live-na',
+    encounter: { kind: 'encounter', identity: 'boss-a', version: '1.0.0' },
+    difficulty: 'veteran-hardmode',
+    role: 'damage-dealer',
+    classId: 3,
+    buildBracket: 'champion-160',
+  },
   provenance: {
     kind: 'authoritative-rule',
     source: 'Encounter definitions v1',
@@ -75,17 +84,23 @@ describe('pinned findings model', () => {
         actor: evidence.actor && { ...evidence.actor },
       })),
       confidence: { ...seed.confidence },
+      analysisContext: {
+        ...seed.analysisContext,
+        encounter: { ...seed.analysisContext.encounter },
+      },
       provenance: { ...seed.provenance },
       recommendedAction: { ...seed.recommendedAction },
     };
     const pinned = pinFinding(mutableSeed, '2026-09-08T12:01:00.000Z');
     mutableSeed.evidence[0].actor!.displayName = 'Mutated caller';
     mutableSeed.confidence.rationale = 'Mutated caller';
+    (mutableSeed.analysisContext.encounter as { identity: string }).identity = 'mutated-encounter';
     mutableSeed.provenance.sourceReference = 'mutated';
     mutableSeed.recommendedAction.action = 'mutated';
 
     expect(pinned.evidence[0].actor?.displayName).toBe('Ada');
     expect(pinned.confidence.rationale).toContain('authoritative');
+    expect(pinned.analysisContext.encounter.identity).toBe('boss-a');
     expect(pinned.provenance.sourceReference).toBe('boss-a/execute-blast');
     expect(pinned.recommendedAction.action).toContain('safe side');
   });
@@ -289,6 +304,126 @@ describe('pinned findings model', () => {
       expect(shared.evidence[0].timestampMs).toBe(42_000);
       expect(shared.evidence[0]).not.toHaveProperty('eventId');
     }
+  });
+
+  it('retains immutable partition and encounter context in safe shares without cross-context collapse', () => {
+    const liveEncounter = sharePinnedFinding(pinFinding(seed, '2026-09-08T12:01:00.000Z'), {
+      audience: 'external',
+    });
+    const ptsDummy = sharePinnedFinding(
+      pinFinding(
+        {
+          ...seed,
+          analysisContext: {
+            ...seed.analysisContext,
+            partition: 'pts',
+            encounter: {
+              kind: 'training-dummy',
+              identity: 'trial-dummy-21m',
+              version: '2026.9',
+            },
+          },
+        },
+        '2026-09-08T12:01:00.000Z',
+      ),
+      { audience: 'team' },
+    );
+
+    expect(liveEncounter.analysisContext).toEqual(seed.analysisContext);
+    expect(ptsDummy.analysisContext).toMatchObject({
+      partition: 'pts',
+      encounter: { kind: 'training-dummy', identity: 'trial-dummy-21m', version: '2026.9' },
+    });
+    expect(ptsDummy.analysisContext).not.toEqual(liveEncounter.analysisContext);
+    expect(ptsDummy.analysisContext).not.toBe(seed.analysisContext);
+  });
+
+  it('requires a non-identifying, complete analysis context', () => {
+    const invalidContexts = [
+      undefined,
+      { ...seed.analysisContext, partition: ' ' },
+      { ...seed.analysisContext, classId: 0 },
+      { ...seed.analysisContext, role: 'raid-lead' },
+      {
+        ...seed.analysisContext,
+        encounter: { ...seed.analysisContext.encounter, kind: 'pull' },
+      },
+      { ...seed.analysisContext, buildBracket: 'https://www.esologs.com/reports/VY6r8pJ2qNa4ZxLt' },
+    ];
+
+    invalidContexts.forEach((analysisContext) => {
+      expect(() =>
+        pinFinding(
+          { ...seed, analysisContext } as unknown as PinnedFindingSeed,
+          '2026-09-08T12:01:00.000Z',
+        ),
+      ).toThrow(/Invalid/);
+    });
+  });
+
+  it('requires complete peer provenance and preserves non-identifying benchmark context in safe shares', () => {
+    const peerSeed: PinnedFindingSeed = {
+      ...seed,
+      provenance: {
+        kind: 'peer-benchmark',
+        source: 'ESO Logs peer cohort',
+        sourceReference: 'private-peer-query',
+        observedAt: '2026-09-08T12:00:00.000Z',
+        sourcePeriod: 'U46-season-1',
+        sampleSize: 128,
+        distribution: { p25: 0.72, p50: 0.85, p75: 0.93 },
+        refreshDate: '2026-09-09',
+        confidence: 'medium',
+        provisional: true,
+      },
+    };
+    const shared = sharePinnedFinding(pinFinding(peerSeed, '2026-09-08T12:01:00.000Z'), {
+      audience: 'external',
+    });
+
+    expect(shared.provenance).toEqual({
+      kind: 'peer-benchmark',
+      source: 'ESO Logs peer cohort',
+      observedAfterAnchorMs: 0,
+      sourcePeriod: 'U46-season-1',
+      sampleSize: 128,
+      distribution: { p25: 0.72, p50: 0.85, p75: 0.93 },
+      refreshDate: '2026-09-09',
+      confidence: 'medium',
+      provisional: true,
+    });
+    expect(JSON.stringify(shared)).not.toContain('private-peer-query');
+    expect(JSON.stringify(shared)).not.toMatch(/\d{4}-\d{2}-\d{2}T/);
+
+    const incompletePeer = {
+      ...peerSeed,
+      provenance: { ...peerSeed.provenance, sampleSize: 0 },
+    } as unknown as PinnedFindingSeed;
+    expect(() => pinFinding(incompletePeer, '2026-09-08T12:01:00.000Z')).toThrow(
+      'Invalid peer benchmark sampleSize',
+    );
+    expect(() =>
+      pinFinding(
+        {
+          ...seed,
+          provenance: {
+            kind: 'peer-benchmark',
+            source: 'raid cohort aggregate',
+            observedAt: '2026-09-08T12:00:00.000Z',
+          },
+        } as unknown as PinnedFindingSeed,
+        '2026-09-08T12:01:00.000Z',
+      ),
+    ).toThrow('Invalid peer benchmark sampleSize');
+    expect(() =>
+      pinFinding(
+        {
+          ...seed,
+          provenance: { ...seed.provenance, sourcePeriod: 'U46-season-1' },
+        } as unknown as PinnedFindingSeed,
+        '2026-09-08T12:01:00.000Z',
+      ),
+    ).toThrow('Peer benchmark metadata is only valid for peer-benchmark provenance');
   });
 
   it('redacts differently cased player identifiers and treats their punctuation literally', () => {
