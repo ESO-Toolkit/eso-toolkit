@@ -203,7 +203,37 @@ const hasText = (value: unknown): value is string =>
 const isRecord = (value: unknown): value is Readonly<Record<string, unknown>> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
-const isValidScope = (value: unknown): value is ExecutionRuleScope => {
+const isJsonValue = (value: unknown, ancestors = new Set<object>()): boolean => {
+  if (value === null || typeof value === 'string' || typeof value === 'boolean') {
+    return true;
+  }
+
+  if (typeof value === 'number') {
+    return Number.isFinite(value);
+  }
+
+  if (Array.isArray(value)) {
+    if (ancestors.has(value)) return false;
+    ancestors.add(value);
+    const valid = value.every((entry) => isJsonValue(entry, ancestors));
+    ancestors.delete(value);
+    return valid;
+  }
+
+  if (!isRecord(value)) return false;
+  if (ancestors.has(value)) return false;
+
+  const prototype = Object.getPrototypeOf(value);
+  if (prototype !== Object.prototype && prototype !== null) return false;
+
+  ancestors.add(value);
+  const valid = Object.values(value).every((entry) => isJsonValue(entry, ancestors));
+  ancestors.delete(value);
+  return valid;
+};
+
+/** Validates the exact ESO/encounter boundary used to select a rule set. */
+export const isValidExecutionRuleScope = (value: unknown): value is ExecutionRuleScope => {
   if (!isRecord(value) || !isRecord(value.eso) || !isRecord(value.encounter)) return false;
 
   return (
@@ -259,7 +289,7 @@ export const validateExecutionRuleSet = (ruleSet: unknown): ExecutionRuleSetVali
     return { valid: false, detail: 'Unsupported execution-rule schema version.' };
   }
 
-  if (!isValidScope(ruleSet.scope)) {
+  if (!isValidExecutionRuleScope(ruleSet.scope)) {
     return {
       valid: false,
       detail: 'Rule set scope must include ESO update, partition, encounter, and version.',
@@ -291,7 +321,7 @@ export const validateExecutionRuleSet = (ruleSet: unknown): ExecutionRuleSetVali
       };
     }
 
-    if (!isValidScope(rule.scope) || !scopesMatch(rule.scope, ruleSet.scope)) {
+    if (!isValidExecutionRuleScope(rule.scope) || !scopesMatch(rule.scope, ruleSet.scope)) {
       return {
         valid: false,
         detail: `Rule ${rule.id} does not match the versioned rule-set scope.`,
@@ -318,8 +348,11 @@ export const validateExecutionRuleSet = (ruleSet: unknown): ExecutionRuleSetVali
       return { valid: false, detail: `Rule ${rule.id} has non-finite score contributions.` };
     }
 
-    if (!isRecord(rule.configuration)) {
-      return { valid: false, detail: `Rule ${rule.id} configuration must be an object.` };
+    if (!isRecord(rule.configuration) || !isJsonValue(rule.configuration)) {
+      return {
+        valid: false,
+        detail: `Rule ${rule.id} configuration must be a finite, acyclic JSON object.`,
+      };
     }
   }
 
@@ -473,7 +506,7 @@ export const evaluateExecutionRules = (
     );
   }
 
-  if (!isValidScope(reportScope)) {
+  if (!isValidExecutionRuleScope(reportScope)) {
     return unavailable('context-mismatch', 'Report execution scope is invalid or incomplete.');
   }
 
@@ -516,21 +549,26 @@ export const evaluateExecutionRules = (
   let scoreOverflowRuleId: string | null = null;
   const outcomes = ruleSet.rules.map<ExecutionRuleOutcome>((rule) => {
     const findings = (observationsByRule.get(rule.id) ?? []).map<ExecutionFinding>(
-      (observation) => ({
-        ruleId: rule.id,
-        category: rule.category,
-        state: observation.state,
-        actor: observation.actor,
-        role: observation.role,
-        phase: observation.phase,
-        timestamp: observation.timestamp,
-        evidence: observation.evidence,
-        observed: observation.observed,
-        expected: observation.expected,
-        estimatedImpact: observation.estimatedImpact,
-        confidence: observation.confidence,
-        scoreContribution: contributionFor(rule, observation.state),
-      }),
+      (observation) => {
+        const state: ObservationState =
+          observation.confidence === 'unknown' ? 'unknown' : observation.state;
+
+        return {
+          ruleId: rule.id,
+          category: rule.category,
+          state,
+          actor: observation.actor,
+          role: observation.role,
+          phase: observation.phase,
+          timestamp: observation.timestamp,
+          evidence: observation.evidence,
+          observed: observation.observed,
+          expected: rule.expected,
+          estimatedImpact: observation.estimatedImpact,
+          confidence: observation.confidence,
+          scoreContribution: contributionFor(rule, state),
+        };
+      },
     );
 
     const knownContributions = findings
