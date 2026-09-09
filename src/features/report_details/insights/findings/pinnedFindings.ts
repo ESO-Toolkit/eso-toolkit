@@ -704,11 +704,16 @@ const identityIdentifiersFor = (finding: PinnedFinding): readonly string[] => {
   return [...identifiers].filter(Boolean).sort((left, right) => right.length - left.length);
 };
 
-const redactText = (value: string, identityIdentifiers: readonly string[]): string =>
-  identityIdentifiers.reduce(
-    (redacted, identifier) => redacted.split(identifier).join('[player]'),
-    value,
-  );
+const escapeRegExp = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+const redactText = (value: string, identityIdentifiers: readonly string[]): string => {
+  if (identityIdentifiers.length === 0) {
+    return value;
+  }
+
+  const identifiersPattern = identityIdentifiers.map(escapeRegExp).join('|');
+  return value.replace(new RegExp(identifiersPattern, 'giu'), '[player]');
+};
 
 interface ShareIdContext {
   namespace: string;
