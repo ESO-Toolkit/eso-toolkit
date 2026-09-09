@@ -144,6 +144,7 @@
   "scripts": {
     "analyze": "npm run build && npx vite-bundle-analyzer build/assets/*.js",
     "analyze-bundle": "npm run build && node scripts/analyze-bundle.cjs",
+    "benchmark:players-panel-index": "node --expose-gc ./node_modules/tsx/dist/cli.mjs --tsconfig tsconfig/scripts.json scripts/benchmarks/playersPanelEventIndexBenchmark.ts",
     "cache:stats": "node scripts/manage-cache-simple.js stats",
     "cache:clean": "node scripts/manage-cache-simple.js clean",
     "cache:clear": "node scripts/manage-cache-simple.js clear",
