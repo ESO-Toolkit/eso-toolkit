@@ -123,6 +123,30 @@ describe('activePercentageUtils', () => {
       expect(result).toEqual({});
     });
 
+    it.each([
+      ['NaN start time', Number.NaN, 10000],
+      ['NaN end time', 0, Number.NaN],
+      ['infinite start time', Number.POSITIVE_INFINITY, 10000],
+      ['infinite end time', 0, Number.POSITIVE_INFINITY],
+    ])('returns no activity values for %s', (_description, startTime, endTime) => {
+      const result = calculateActivePercentages(
+        { ...mockFight, startTime, endTime },
+        {
+          '123': [
+            createMockDamageEvent({
+              timestamp: 2000,
+              sourceID: 123,
+              targetIsFriendly: false,
+              amount: 100,
+            }),
+          ],
+        },
+      );
+
+      expect(result).toEqual({});
+      expect(Object.values(result).flatMap(Object.values).some(Number.isNaN)).toBe(false);
+    });
+
     it('should calculate activity based on damage events only', () => {
       const damageEvents: DamageEvent[] = [
         createMockDamageEvent({
@@ -275,6 +299,36 @@ describe('activePercentageUtils', () => {
         activeTimeMs: 3000,
         activePercentage: 30,
       });
+    });
+
+    it.each([
+      ['NaN start time', Number.NaN, 10000],
+      ['NaN end time', 0, Number.NaN],
+      ['infinite start time', Number.NEGATIVE_INFINITY, 10000],
+      ['infinite end time', 0, Number.POSITIVE_INFINITY],
+    ])('returns an empty typed result for %s', (_description, startTime, endTime) => {
+      const statistics = calculateDamageStatisticsWithActivity(
+        { ...mockFight, startTime, endTime },
+        {
+          '123': [
+            createMockDamageEvent({
+              timestamp: 2000,
+              sourceID: 123,
+              targetIsFriendly: false,
+              amount: 100,
+            }),
+          ],
+        },
+        new Set(),
+      );
+
+      expect(statistics).toEqual({
+        damageByPlayer: {},
+        criticalDamageByPlayer: {},
+        damageEventsBySource: {},
+        activePercentages: {},
+      });
+      expect(Object.values(statistics).flatMap(Object.values).some(Number.isNaN)).toBe(false);
     });
   });
 });
