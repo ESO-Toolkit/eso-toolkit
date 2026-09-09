@@ -20,6 +20,7 @@ import { LandingPage } from './components/LandingPage';
 import { PerfLowNotice } from './components/PerfLowNotice';
 import { PerfTierProvider } from './components/PerfTierProvider';
 import { ReportFightsSkeleton } from './components/ReportFightsSkeleton';
+import { RetryableLazyRoute } from './components/RetryableLazyRoute';
 import { RobotsMeta } from './components/RobotsMeta';
 import { RosterBuilderSkeleton } from './components/RosterBuilderSkeleton';
 import { RosterHubSkeleton } from './components/RosterHubSkeleton';
@@ -96,9 +97,10 @@ const LiveLog = React.lazy(() =>
 // by the module-scope `preloadReportFightDetails()` above and an idle warm from
 // the report list — both go through the same importer as this route, so the
 // preload and the route resolve the identical chunk.
-const ReportFightDetails = React.lazy(() =>
-  importReportFightDetails().then((module) => ({ default: module.ReportFightDetails })),
-);
+const loadReportFightDetails = (): Promise<{ default: React.ComponentType }> =>
+  importReportFightDetails().then((module) => ({
+    default: module.ReportFightDetails,
+  }));
 const ReportFights = React.lazy(() =>
   import('./features/report_details/ReportFights').then((module) => ({
     default: module.ReportFights,
@@ -644,21 +646,13 @@ const AppRoutes: React.FC = () => {
             <Route
               path="/report/:reportId/fight/:fightId/:tabId"
               element={
-                <ErrorBoundary>
-                  <Suspense fallback={<LoadingFallback />}>
-                    <ReportFightDetails />
-                  </Suspense>
-                </ErrorBoundary>
+                <RetryableLazyRoute fallback={<LoadingFallback />} load={loadReportFightDetails} />
               }
             />
             <Route
               path="/report/:reportId/fight/:fightId"
               element={
-                <ErrorBoundary>
-                  <Suspense fallback={<LoadingFallback />}>
-                    <ReportFightDetails />
-                  </Suspense>
-                </ErrorBoundary>
+                <RetryableLazyRoute fallback={<LoadingFallback />} load={loadReportFightDetails} />
               }
             />
             <Route
@@ -677,7 +671,10 @@ const AppRoutes: React.FC = () => {
                 <ErrorBoundary>
                   <Suspense fallback={<LoadingFallback />}>
                     <LiveLog>
-                      <ReportFightDetails />
+                      <RetryableLazyRoute
+                        fallback={<LoadingFallback />}
+                        load={loadReportFightDetails}
+                      />
                     </LiveLog>
                   </Suspense>
                 </ErrorBoundary>
