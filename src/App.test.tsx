@@ -2,8 +2,9 @@ import { render, screen } from '@testing-library/react';
 import React from 'react';
 import '@testing-library/jest-dom';
 
-import App from './App';
+import App, { preloadReportFightDetailsForInitialRoute } from './App';
 import { getBaseUrl } from './utils/envUtils';
+import { preloadReportFightDetails } from './utils/reportRoutePreload';
 
 jest.mock('./store/storeWithHistory', () => {
   const configureStoreMock = require('redux-mock-store').default;
@@ -76,6 +77,11 @@ jest.mock('./utils/errorTracking', () => ({
   addBreadcrumb: jest.fn(),
 }));
 
+jest.mock('./utils/reportRoutePreload', () => ({
+  importReportFightDetails: jest.fn(),
+  preloadReportFightDetails: jest.fn(),
+}));
+
 jest.mock('./components/AnalyticsListener', () => ({
   AnalyticsListener: () => null,
 }));
@@ -139,7 +145,32 @@ jest.mock('./pages/AboutPage', () => ({
 describe('App', () => {
   beforeEach(() => {
     jest.mocked(getBaseUrl).mockReturnValue('/');
+    jest.mocked(preloadReportFightDetails).mockClear();
   });
+
+  it('does not preload fight details at startup for the report fight list route', () => {
+    preloadReportFightDetailsForInitialRoute('/report/ABC123');
+
+    expect(preloadReportFightDetails).not.toHaveBeenCalled();
+  });
+
+  it.each(['/report/ABC123/fight/42', '/report/ABC123/fight/42/damage', '/report/ABC123/live'])(
+    'preloads fight details at startup for %s',
+    (pathname) => {
+      preloadReportFightDetailsForInitialRoute(pathname);
+
+      expect(preloadReportFightDetails).toHaveBeenCalledTimes(1);
+    },
+  );
+
+  it.each(['/report/ABC123/fight/42/replay', '/report/ABC123/summary'])(
+    'does not preload fight details at startup for non-detail report routes: %s',
+    (pathname) => {
+      preloadReportFightDetailsForInitialRoute(pathname);
+
+      expect(preloadReportFightDetails).not.toHaveBeenCalled();
+    },
+  );
 
   it('renders the about route when navigated', async () => {
     window.history.pushState({}, 'About', '/about');
