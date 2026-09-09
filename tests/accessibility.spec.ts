@@ -197,12 +197,17 @@ async function resolveConsentBeforePageKeyboardTest(
 ): Promise<void> {
   const declineAll = page.getByRole('button', { name: 'Decline All', exact: true });
   if (await declineAll.isVisible()) {
+    const consentRegion = page.getByRole('region', { name: 'Privacy & Cookies', exact: true });
+    await expect(consentRegion).toBeVisible();
+    await expect(consentRegion).not.toHaveAttribute('aria-modal');
+
     // The consent surface may cover the page layout, so resolve it with the
-    // keyboard path a modal must support rather than relying on its pointer
+    // keyboard path its controls must support rather than relying on pointer
     // stacking order.
     await declineAll.focus();
     await page.keyboard.press('Enter');
     await expect(declineAll).toBeHidden();
+    await expect(consentRegion).toBeHidden();
   }
 }
 

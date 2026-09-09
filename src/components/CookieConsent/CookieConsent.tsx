@@ -114,6 +114,10 @@ const ShieldBadge = styled('div')(({ theme }) => ({
 
 export const CookieConsent: React.FC = () => {
   const theme = useTheme();
+  const bannerTitleId = React.useId();
+  const bannerDescriptionId = React.useId();
+  const preferencesTitleId = React.useId();
+  const preferencesDescriptionId = React.useId();
   const [showBanner, setShowBanner] = React.useState(false);
   const [showDetails, setShowDetails] = React.useState(false);
   const [analyticsEnabled, setAnalyticsEnabled] = React.useState(false);
@@ -173,7 +177,11 @@ export const CookieConsent: React.FC = () => {
     <>
       {/* Consent Banner — hidden when preferences dialog is open */}
       {showBanner && !showDetails && (
-        <BannerRoot>
+        <BannerRoot
+          role="region"
+          aria-labelledby={bannerTitleId}
+          aria-describedby={bannerDescriptionId}
+        >
           <AccentBar />
 
           <Box sx={{ p: { xs: 2, sm: 2.5 }, position: 'relative' }}>
@@ -204,6 +212,7 @@ export const CookieConsent: React.FC = () => {
                 <SecurityIcon sx={{ fontSize: 22 }} />
               </ShieldBadge>
               <Typography
+                id={bannerTitleId}
                 variant="subtitle1"
                 component="h2"
                 sx={{
@@ -218,6 +227,7 @@ export const CookieConsent: React.FC = () => {
 
             {/* Description */}
             <Typography
+              id={bannerDescriptionId}
               variant="body2"
               color="text.secondary"
               sx={{ lineHeight: 1.6, mb: 2, pr: 4 }}
@@ -326,6 +336,8 @@ export const CookieConsent: React.FC = () => {
         open={showDetails}
         keepMounted
         onClose={handleCloseDetails}
+        aria-labelledby={preferencesTitleId}
+        aria-describedby={preferencesDescriptionId}
         maxWidth="sm"
         fullWidth
         slots={{ transition: Transition }}
@@ -348,7 +360,7 @@ export const CookieConsent: React.FC = () => {
           },
         }}
       >
-        <DialogTitle sx={{ pb: 1 }}>
+        <DialogTitle id={preferencesTitleId} sx={{ pb: 1 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
             <ShieldIcon sx={{ color: theme.palette.primary.main, fontSize: 24 }} />
             <Typography
@@ -365,7 +377,12 @@ export const CookieConsent: React.FC = () => {
           </Box>
         </DialogTitle>
         <DialogContent dividers sx={{ borderColor: theme.palette.divider }}>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 3, lineHeight: 1.6 }}>
+          <Typography
+            id={preferencesDescriptionId}
+            variant="body2"
+            color="text.secondary"
+            sx={{ mb: 3, lineHeight: 1.6 }}
+          >
             Choose which categories of data processing you consent to. You can change these
             preferences at any time from the{' '}
             <Link href="/privacy" color="primary" underline="hover">
