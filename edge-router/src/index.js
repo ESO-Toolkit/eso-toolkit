@@ -15,11 +15,6 @@ export const SECURITY_HEADERS = {
 
 const REPORTING_HEADERS = {
   'Reporting-Endpoints': `${CSP_REPORTING_GROUP}="${CSP_REPORT_PATH}"`,
-  'Report-To': JSON.stringify({
-    group: CSP_REPORTING_GROUP,
-    max_age: 86_400,
-    endpoints: [{ url: CSP_REPORT_PATH }],
-  }),
 };
 
 const analyzerRoutePrefixes = ['/report/', '/u/', '/b/'];
