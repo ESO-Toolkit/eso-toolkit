@@ -5,7 +5,11 @@ import React from 'react';
 import type { FightFragment } from '../../../graphql/gql/graphql';
 
 import type { InsightsDataState, InsightsRetryAvailability } from './insightsDataState';
-import { InsightsPanelView, type FightInitiatorState } from './InsightsPanelView';
+import {
+  InsightsPanelView,
+  type FightInitiatorState,
+  type InsightsWorkflowState,
+} from './InsightsPanelView';
 
 jest.mock('../../../components/AbilityIcon', () => ({
   AbilityIcon: () => <span>Ability icon</span>,
@@ -383,5 +387,73 @@ describe('InsightsPanelView data states', () => {
       'Showing available results while other data is still loading',
     );
     expect(screen.getByTestId('insights-panel')).toHaveAttribute('aria-busy', 'true');
+  });
+});
+
+const renderProductWorkflow = (productWorkflowState: InsightsWorkflowState) =>
+  render(
+    <ThemeProvider theme={createTheme()}>
+      <InsightsPanelView
+        fight={fight}
+        durationMs={65_000}
+        abilityEquipped={{}}
+        buffActors={{}}
+        fightInitiator={unavailableFightInitiator}
+        selectedPlayerId={null}
+        dataState={{
+          kind: 'ready',
+          errorMessage: null,
+          failedSources: [],
+          hasPendingSources: false,
+        }}
+        onRetry={jest.fn()}
+        retryAvailability={availableRetry}
+        productWorkflowState={productWorkflowState}
+      />
+    </ThemeProvider>,
+  );
+
+describe('InsightsPanelView product workflow', () => {
+  it.each<readonly [InsightsWorkflowState, RegExp]>([
+    ['loading', /Product analysis inputs are loading/],
+    ['partial', /Product analysis inputs are partial/],
+    ['stale', /Product analysis inputs are stale/],
+    ['failed', /Product analysis inputs failed to load/],
+    ['unavailable', /Unknown data is not scored as zero/],
+  ])('shows the explicit %s state without manufacturing a result', (state, status) => {
+    renderProductWorkflow(state);
+
+    expect(screen.getByText(status)).toBeInTheDocument();
+    expect(screen.getByTestId('evidence-drilldown-unavailable')).toHaveTextContent(
+      /withheld rather than treating unavailable events as an empty evidence set/,
+    );
+    expect(screen.getByText(/No comparison score is available/)).toBeInTheDocument();
+    expect(screen.getByText(/No trend or score is inferred/)).toBeInTheDocument();
+  });
+
+  it('orders the product workflow from decision through progression', () => {
+    renderProductWorkflow('unavailable');
+
+    const text = document.body.textContent ?? '';
+    const sections = [
+      'Decision summary',
+      'Evidence drilldown',
+      'Pinned findings',
+      'A/B and cohort comparison',
+      'Pull progression',
+    ];
+    const positions = sections.map((section) => text.indexOf(section));
+
+    expect(positions.every((position) => position >= 0)).toBe(true);
+    expect([...positions].sort((left, right) => left - right)).toEqual(positions);
+  });
+
+  it('withholds provenance and identifiers until a privacy-safe evidence producer exists', () => {
+    const { container } = renderProductWorkflow('unavailable');
+
+    expect(container).toHaveTextContent(/privacy-safe provenance are unavailable/);
+    expect(container).not.toHaveTextContent('F4f2bMwWtgVKxjB9');
+    expect(container).not.toHaveTextContent('Example Player');
+    expect(container).not.toHaveTextContent('0%');
   });
 });

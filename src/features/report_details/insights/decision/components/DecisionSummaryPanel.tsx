@@ -4,6 +4,7 @@ import { useId, type ReactElement } from 'react';
 
 import type {
   DecisionConfidence,
+  DecisionEvidenceProvenance,
   DecisionSummary,
   DecisionSummaryRejectionReason,
 } from '../decisionSummary';
@@ -26,7 +27,6 @@ const DecisionPanelSurface = styled('section')(({ theme }) => ({
 }));
 
 const rejectionCopy: Record<DecisionSummaryRejectionReason, string> = {
-  'invalid-request': 'The analysis request was invalid, so no recommendation was inferred.',
   'incomplete-evidence': 'Required evidence is incomplete, so no recommendation was inferred.',
   'invalid-evidence': 'The supplied evidence is invalid and cannot support a recommendation.',
   'unavailable-evidence': 'The supporting evidence stream is unavailable.',
@@ -34,15 +34,6 @@ const rejectionCopy: Record<DecisionSummaryRejectionReason, string> = {
     'The candidate belongs to a different analysis partition or encounter context.',
   'duplicate-candidate':
     'A duplicate candidate was withheld to avoid presenting the same finding twice.',
-};
-
-const rejectionLabel: Record<DecisionSummaryRejectionReason, string> = {
-  'invalid-request': 'Invalid request',
-  'incomplete-evidence': 'Blocked candidate',
-  'invalid-evidence': 'Blocked candidate',
-  'unavailable-evidence': 'Unavailable evidence',
-  'context-mismatch': 'Blocked candidate',
-  'duplicate-candidate': 'Withheld candidate',
 };
 
 const formatTimestamp = (timestampMs: number): string => {
@@ -58,18 +49,46 @@ const formatConfidence = (confidence: DecisionConfidence): string =>
     ? `Confidence: ${Math.round(confidence.score * 100)}%`
     : `Confidence unavailable: ${confidence.reason}`;
 
+const formatProvenance = (provenance: DecisionEvidenceProvenance): string => {
+  switch (provenance.kind) {
+    case 'game-rule':
+      return `Game rule: ${provenance.ruleId} (${provenance.source})`;
+    case 'fixed-heuristic':
+      return `Fixed heuristic: ${provenance.heuristicId} (${provenance.source})`;
+    case 'peer-benchmark':
+      return [
+        `Peer benchmark: ${provenance.baselineSource}`,
+        `period ${provenance.baselinePeriod}`,
+        `sample ${provenance.sampleSize}`,
+        `distribution ${provenance.distribution}`,
+        `refreshed ${provenance.refreshedAt}`,
+        formatConfidence(provenance.confidence),
+        provenance.provisional ? 'provisional' : 'current',
+      ].join(' · ');
+  }
+};
+
 const formatScope = (summary: DecisionSummary): string => {
   const { scope } = summary;
-  const parts = [
+  return [
     scope.update,
     scope.partitionId,
     scope.encounterKind === 'training-dummy' ? 'Training dummy' : scope.difficulty,
     scope.role,
     scope.esoClass,
     scope.buildBracket,
-  ].filter((part) => part.length > 0);
+  ].join(' · ');
+};
 
-  return parts.length > 0 ? parts.join(' · ') : 'Unavailable';
+const formatRejectionLabel = (
+  reason: DecisionSummaryRejectionReason,
+  outcome: 'blocked' | 'warning',
+): string => {
+  if (reason === 'unavailable-evidence') {
+    return 'Unavailable evidence';
+  }
+
+  return outcome === 'blocked' ? 'Blocked candidate' : 'Withheld candidate';
 };
 
 const inferState = (summary: DecisionSummary): DecisionSummaryPanelState => {
@@ -81,37 +100,15 @@ const inferState = (summary: DecisionSummary): DecisionSummaryPanelState => {
   return 'empty';
 };
 
-const resolveState = (
-  summary: DecisionSummary,
-  explicitState: DecisionSummaryPanelState | undefined,
-): DecisionSummaryPanelState => {
-  if (explicitState !== 'ready') {
-    return explicitState ?? inferState(summary);
-  }
-
-  return summary.items.length > 0 ? 'ready' : inferState(summary);
-};
-
-const isVisibleRejection = (panelState: DecisionSummaryPanelState): boolean =>
-  panelState !== 'loading' && panelState !== 'empty';
-
-const isVisibleItem = (panelState: DecisionSummaryPanelState): boolean => panelState === 'ready';
-
-const formatResponsibleParty = (
-  responsible: DecisionSummary['items'][number]['responsible'],
-): string => (responsible?.role === undefined ? 'Unassigned' : `Role ${responsible.role}`);
-
 export const DecisionSummaryPanel = ({
   summary,
   state,
 }: DecisionSummaryPanelProps): ReactElement => {
   const titleId = `decision-summary-title-${useId()}`;
-  const panelState = resolveState(summary, state);
+  const hasItems = summary.items.length > 0;
+  const hasRejected = summary.rejected.length > 0;
+  const panelState = state ?? inferState(summary);
   const isLoading = panelState === 'loading';
-  const visibleItems = isVisibleItem(panelState) ? summary.items : [];
-  const visibleRejections = isVisibleRejection(panelState) ? summary.rejected : [];
-  const hasItems = visibleItems.length > 0;
-  const hasRejected = visibleRejections.length > 0;
 
   return (
     <DecisionPanelSurface aria-busy={isLoading} aria-labelledby={titleId}>
@@ -129,41 +126,39 @@ export const DecisionSummaryPanel = ({
         </Box>
 
         {isLoading && (
-          <Alert aria-atomic="true" aria-live="polite" role="status" severity="info">
+          <Alert aria-live="polite" role="status" severity="info">
             Loading decision evidence…
           </Alert>
         )}
 
         {!isLoading && panelState === 'empty' && (
-          <Alert aria-atomic="true" aria-live="polite" role="status" severity="info">
+          <Alert aria-live="polite" role="status" severity="info">
             No decision findings were identified for this analysis context.
           </Alert>
         )}
 
         {!isLoading && panelState === 'unavailable' && (
-          <Alert aria-atomic="true" aria-live="polite" role="status" severity="warning">
+          <Alert aria-live="polite" role="status" severity="warning">
             Decision evidence is unavailable. No recommendation was inferred.
           </Alert>
         )}
 
         {!isLoading && panelState === 'rejected' && (
-          <Alert aria-atomic="true" aria-live="polite" role="status" severity="warning">
+          <Alert aria-live="polite" role="status" severity="warning">
             Decision candidates were rejected because their evidence or context could not be
             trusted. No recommendation was inferred.
           </Alert>
         )}
 
         {!isLoading && hasItems && hasRejected && (
-          <Alert aria-atomic="true" aria-live="polite" role="status" severity="warning">
+          <Alert aria-live="polite" role="status" severity="warning">
             Some candidate decisions were withheld because their evidence or context could not be
             trusted.
           </Alert>
         )}
 
-        {visibleItems.map((item) => {
-          const responsible = formatResponsibleParty(item.responsible);
-
-          return (
+        {!isLoading &&
+          summary.items.map((item) => (
             <Box component="article" key={item.id} aria-labelledby={`decision-summary-${item.id}`}>
               <Stack spacing={1.25}>
                 <Box>
@@ -186,7 +181,8 @@ export const DecisionSummaryPanel = ({
 
                 <Box>
                   <Typography variant="body2">
-                    <strong>Evidence provenance:</strong> {item.evidence.provenance}
+                    <strong>Evidence provenance:</strong>{' '}
+                    {formatProvenance(item.evidence.provenance)}
                   </Typography>
                   <Typography color="text.secondary" variant="body2">
                     <strong>Evidence context:</strong> {item.evidence.context}
@@ -204,9 +200,14 @@ export const DecisionSummaryPanel = ({
                     <strong>Estimated impact:</strong>{' '}
                     {item.estimatedImpact.toLocaleString('en-US')}
                   </Typography>
-                  <Typography variant="body2">
-                    <strong>Owner:</strong> {responsible}
-                  </Typography>
+                  {item.responsible && (
+                    <Typography variant="body2">
+                      <strong>Owner:</strong>{' '}
+                      {[item.responsible.actorName, item.responsible.role]
+                        .filter((value): value is string => value !== undefined)
+                        .join(' · ')}
+                    </Typography>
+                  )}
                 </Box>
 
                 <Typography variant="body1">
@@ -214,24 +215,24 @@ export const DecisionSummaryPanel = ({
                 </Typography>
               </Stack>
             </Box>
-          );
-        })}
+          ))}
 
-        {hasRejected && (
+        {!isLoading && hasRejected && (
           <Box aria-label="Withheld decision candidates">
             {hasItems && <Divider sx={{ mb: 1.5 }} />}
             <Typography component="h3" variant="subtitle2">
               Withheld candidates
             </Typography>
             <Stack component="ul" spacing={0.75} sx={{ listStyle: 'none', m: 0, mt: 1, p: 0 }}>
-              {visibleRejections.map((rejection, index) => (
+              {summary.rejected.map((rejection, index) => (
                 <Box
                   component="li"
                   key={`${rejection.candidateId ?? 'unknown'}-${rejection.reason}-${index}`}
                 >
                   <Typography variant="body2">
-                    <strong>{rejectionLabel[rejection.reason]}:</strong>{' '}
+                    <strong>{formatRejectionLabel(rejection.reason, rejection.outcome)}:</strong>{' '}
                     {rejectionCopy[rejection.reason]}
+                    {rejection.candidateId && ` Candidate: ${rejection.candidateId}.`}
                   </Typography>
                 </Box>
               ))}
