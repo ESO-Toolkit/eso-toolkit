@@ -293,6 +293,35 @@ describe('reportSlice caching logic', () => {
       expect(query.mock.calls[0][0]).toMatchObject({ fetchPolicy: 'network-only' });
     });
 
+    it('keeps a retained refresh error visible until the retry succeeds', async () => {
+      let resolveQuery: ((value: unknown) => void) | undefined;
+      const query = jest.fn(
+        () =>
+          new Promise((resolve) => {
+            resolveQuery = resolve;
+          }),
+      );
+      const client = { query } as unknown as EsoLogsClient;
+      const testStore = storeWithEntry(
+        createReportEntry({
+          data: makeReportData([{ id: 1 }]),
+          status: 'failed',
+          error: 'Gateway failed',
+          cacheMetadata: { lastFetchedTimestamp: Date.now() - DATA_FETCH_CACHE_TIMEOUT - 1000 },
+        }),
+      );
+
+      const pendingRetry = testStore.dispatch(fetchReportData({ reportId: CODE, client }));
+      expect(testStore.getState().report.error).toBe('Gateway failed');
+      expect(testStore.getState().report.loading).toBe(true);
+
+      resolveQuery?.({ reportData: { report: makeReportData([{ id: 1 }]) } });
+      await pendingRetry;
+
+      expect(testStore.getState().report.error).toBeNull();
+      expect(testStore.getState().report.loading).toBe(false);
+    });
+
     it('uses the default (cacheable) fetch for a stale report WITH fights', async () => {
       const { client, query } = makeClient();
       const testStore = storeWithEntry(

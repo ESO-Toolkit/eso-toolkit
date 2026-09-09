@@ -43,41 +43,46 @@ export const BuildIssuesWidget: React.FC<BuildIssuesWidgetProps> = ({
   const fight3 = fights[3];
   const fight4 = fights[4];
 
-  const { buffLookupData: buffs0 } = useBuffLookupTask({
+  const { buffLookupData: buffs0, isBuffLookupLoading: buffLoading0 } = useBuffLookupTask({
     context: { reportCode: reportId, fightId: fight0?.id ?? -1 },
   });
-  const { buffLookupData: buffs1 } = useBuffLookupTask({
+  const { buffLookupData: buffs1, isBuffLookupLoading: buffLoading1 } = useBuffLookupTask({
     context: { reportCode: reportId, fightId: fight1?.id ?? -1 },
   });
-  const { buffLookupData: buffs2 } = useBuffLookupTask({
+  const { buffLookupData: buffs2, isBuffLookupLoading: buffLoading2 } = useBuffLookupTask({
     context: { reportCode: reportId, fightId: fight2?.id ?? -1 },
   });
-  const { buffLookupData: buffs3 } = useBuffLookupTask({
+  const { buffLookupData: buffs3, isBuffLookupLoading: buffLoading3 } = useBuffLookupTask({
     context: { reportCode: reportId, fightId: fight3?.id ?? -1 },
   });
-  const { buffLookupData: buffs4 } = useBuffLookupTask({
+  const { buffLookupData: buffs4, isBuffLookupLoading: buffLoading4 } = useBuffLookupTask({
     context: { reportCode: reportId, fightId: fight4?.id ?? -1 },
   });
 
-  const { playerData } = usePlayerData({
+  const { playerData, isPlayerDataLoading } = usePlayerData({
     context: { reportCode: reportId, fightId: fight0?.id ?? -1 },
   });
 
-  const { damageEventsByPlayer: damage0 } = useDamageEventsLookup({
-    context: { reportCode: reportId, fightId: fight0?.id ?? -1 },
-  });
-  const { damageEventsByPlayer: damage1 } = useDamageEventsLookup({
-    context: { reportCode: reportId, fightId: fight1?.id ?? -1 },
-  });
-  const { damageEventsByPlayer: damage2 } = useDamageEventsLookup({
-    context: { reportCode: reportId, fightId: fight2?.id ?? -1 },
-  });
-  const { damageEventsByPlayer: damage3 } = useDamageEventsLookup({
-    context: { reportCode: reportId, fightId: fight3?.id ?? -1 },
-  });
-  const { damageEventsByPlayer: damage4 } = useDamageEventsLookup({
-    context: { reportCode: reportId, fightId: fight4?.id ?? -1 },
-  });
+  const { damageEventsByPlayer: damage0, isDamageEventsLookupLoading: damageLoading0 } =
+    useDamageEventsLookup({
+      context: { reportCode: reportId, fightId: fight0?.id ?? -1 },
+    });
+  const { damageEventsByPlayer: damage1, isDamageEventsLookupLoading: damageLoading1 } =
+    useDamageEventsLookup({
+      context: { reportCode: reportId, fightId: fight1?.id ?? -1 },
+    });
+  const { damageEventsByPlayer: damage2, isDamageEventsLookupLoading: damageLoading2 } =
+    useDamageEventsLookup({
+      context: { reportCode: reportId, fightId: fight2?.id ?? -1 },
+    });
+  const { damageEventsByPlayer: damage3, isDamageEventsLookupLoading: damageLoading3 } =
+    useDamageEventsLookup({
+      context: { reportCode: reportId, fightId: fight3?.id ?? -1 },
+    });
+  const { damageEventsByPlayer: damage4, isDamageEventsLookupLoading: damageLoading4 } =
+    useDamageEventsLookup({
+      context: { reportCode: reportId, fightId: fight4?.id ?? -1 },
+    });
 
   const relevantFights = React.useMemo(() => {
     const allData = [
@@ -184,6 +189,20 @@ export const BuildIssuesWidget: React.FC<BuildIssuesWidgetProps> = ({
   }, [playerBuildIssues, openId]);
 
   const isEmpty = playerBuildIssues.length === 0;
+  const isLoading =
+    isPlayerDataLoading ||
+    [
+      buffLoading0,
+      buffLoading1,
+      buffLoading2,
+      buffLoading3,
+      buffLoading4,
+      damageLoading0,
+      damageLoading1,
+      damageLoading2,
+      damageLoading3,
+      damageLoading4,
+    ].some(Boolean);
 
   return (
     <BaseWidget
@@ -196,6 +215,7 @@ export const BuildIssuesWidget: React.FC<BuildIssuesWidgetProps> = ({
       onRemove={onRemove}
       onScopeChange={onScopeChange}
       isEmpty={isEmpty}
+      isLoading={isLoading}
     >
       {playerBuildIssues.map((row) => {
         const isOpen = openId === row.playerId;

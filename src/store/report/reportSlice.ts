@@ -426,7 +426,9 @@ const reportSlice = createSlice({
         }
         const entry = ensureEntry(state, reportId);
         entry.status = 'loading';
-        entry.error = null;
+        // Preserve the last refresh error until an authoritative success
+        // replaces it. Clearing it here makes retained stale data appear live
+        // for the entire duration of the retry.
         entry.currentRequest = createCurrentRequest(reportId, action.meta.requestId);
         touchAccessOrder(state, cacheKey);
         if (!state.activeContext.reportId) {

@@ -45,23 +45,23 @@ export const LowBuffUptimesWidget: React.FC<LowBuffUptimesWidgetProps> = ({
   const fight3 = fights[3];
   const fight4 = fights[4];
 
-  const { buffLookupData: buffs0 } = useBuffLookupTask({
+  const { buffLookupData: buffs0, isBuffLookupLoading: buffLoading0 } = useBuffLookupTask({
     context: { reportCode: reportId, fightId: fight0?.id ?? -1 },
   });
-  const { buffLookupData: buffs1 } = useBuffLookupTask({
+  const { buffLookupData: buffs1, isBuffLookupLoading: buffLoading1 } = useBuffLookupTask({
     context: { reportCode: reportId, fightId: fight1?.id ?? -1 },
   });
-  const { buffLookupData: buffs2 } = useBuffLookupTask({
+  const { buffLookupData: buffs2, isBuffLookupLoading: buffLoading2 } = useBuffLookupTask({
     context: { reportCode: reportId, fightId: fight2?.id ?? -1 },
   });
-  const { buffLookupData: buffs3 } = useBuffLookupTask({
+  const { buffLookupData: buffs3, isBuffLookupLoading: buffLoading3 } = useBuffLookupTask({
     context: { reportCode: reportId, fightId: fight3?.id ?? -1 },
   });
-  const { buffLookupData: buffs4 } = useBuffLookupTask({
+  const { buffLookupData: buffs4, isBuffLookupLoading: buffLoading4 } = useBuffLookupTask({
     context: { reportCode: reportId, fightId: fight4?.id ?? -1 },
   });
 
-  const { playerData } = usePlayerData({
+  const { playerData, isPlayerDataLoading } = usePlayerData({
     context: { reportCode: reportId, fightId: fight0?.id ?? -1 },
   });
 
@@ -169,6 +169,9 @@ export const LowBuffUptimesWidget: React.FC<LowBuffUptimesWidgetProps> = ({
   }, [playerData, relevantFights]);
 
   const isEmpty = lowUptimes.length === 0;
+  const isLoading =
+    isPlayerDataLoading ||
+    [buffLoading0, buffLoading1, buffLoading2, buffLoading3, buffLoading4].some(Boolean);
 
   return (
     <BaseWidget
@@ -181,6 +184,7 @@ export const LowBuffUptimesWidget: React.FC<LowBuffUptimesWidgetProps> = ({
       onRemove={onRemove}
       onScopeChange={onScopeChange}
       isEmpty={isEmpty}
+      isLoading={isLoading}
     >
       {lowUptimes.map((item, idx) => (
         <Box
