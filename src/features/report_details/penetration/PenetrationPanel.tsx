@@ -9,8 +9,8 @@ import {
 import type { PhaseTransitionInfo } from '../../../hooks/usePhaseTransitions';
 import { usePenetrationDataTask } from '../../../hooks/workerTasks/usePenetrationDataTask';
 import type { ReportFightContextInput } from '../../../store/contextTypes';
-import { getSkeletonForTab, TabId } from '../../../utils/getSkeletonForTab';
 import { PlayerPenetrationData } from '../../../workers/calculations/CalculatePenetration';
+import { AnalyzerPanelState, resolveAnalyzerPanelState } from '../AnalyzerPanelState';
 
 import { PenetrationPanelView } from './PenetrationPanelView';
 
@@ -33,14 +33,20 @@ export const PenetrationPanel: React.FC<PenetrationPanelProps> = ({
   const selectedTargetIds = useSelectedTargetIds();
 
   // Use the worker-based penetration calculation
-  const { penetrationData: allPlayersPenetrationData, isPenetrationDataLoading } =
-    usePenetrationDataTask({ context: resolvedContext });
+  const {
+    penetrationData: allPlayersPenetrationData,
+    isPenetrationDataLoading,
+    penetrationDataError,
+  } = usePenetrationDataTask({ context: resolvedContext });
 
-  const isLoading = isPenetrationDataLoading || isPlayerDataLoading;
+  const isLoading = Boolean(fight) && (isPenetrationDataLoading || isPlayerDataLoading);
 
-  // Only show details when all loading is complete AND we have data
-  const hasCompleteData =
-    !isLoading && allPlayersPenetrationData && playerData?.playersById && fight != null;
+  const penetrationData = allPlayersPenetrationData as Record<string, PlayerPenetrationData> | null;
+  const hasPenetrationResults = penetrationData != null && Object.keys(penetrationData).length > 0;
+  const hasViewData = Boolean(hasPenetrationResults && playerData?.playersById && fight);
+  const hasCompleteInputs = Boolean(
+    fight && playerData?.playersById && playerData.status === 'succeeded' && penetrationData,
+  );
 
   // State to manage which accordion panels are expanded
   const [expandedPlayers, setExpandedPlayers] = React.useState<Record<string, boolean>>({});
@@ -67,23 +73,29 @@ export const PenetrationPanel: React.FC<PenetrationPanelProps> = ({
     [],
   );
 
-  // Show loading state while fetching data OR if data is not complete
-  if (!hasCompleteData) {
-    return getSkeletonForTab(TabId.PENETRATION, false, false);
-  }
-
-  const fightForView = fight as NonNullable<typeof fight>;
+  const hasRetainedData = hasViewData && players.length > 0;
+  const panelError = penetrationDataError ?? playerData?.error ?? null;
+  const state = resolveAnalyzerPanelState({
+    error: panelError,
+    hasData: hasRetainedData,
+    isComplete: hasCompleteInputs,
+    isLoading,
+  });
 
   return (
-    <PenetrationPanelView
-      players={players}
-      selectedTargetIds={selectedTargetIds}
-      fight={fightForView}
-      expandedPlayers={expandedPlayers}
-      onPlayerExpandChange={handlePlayerExpandChange}
-      penetrationData={allPlayersPenetrationData as Record<string, PlayerPenetrationData> | null}
-      isLoading={false}
-      phaseTransitionInfo={phaseTransitionInfo}
-    />
+    <AnalyzerPanelState detail={panelError ?? undefined} state={state} title="Penetration">
+      {hasRetainedData && (
+        <PenetrationPanelView
+          players={players}
+          selectedTargetIds={selectedTargetIds}
+          fight={fight as NonNullable<typeof fight>}
+          expandedPlayers={expandedPlayers}
+          onPlayerExpandChange={handlePlayerExpandChange}
+          penetrationData={penetrationData}
+          isLoading={false}
+          phaseTransitionInfo={phaseTransitionInfo}
+        />
+      )}
+    </AnalyzerPanelState>
   );
 };
