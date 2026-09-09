@@ -82,7 +82,7 @@ describe('evaluateExecutionRules', () => {
       timestamp: 0,
       evidence: [expect.objectContaining({ timestamp: 0, eventId: 'event-0' })],
       observed: { summary: 'Player remained in the beam.', value: true },
-      expected: { summary: 'Player leaves the beam before impact.', value: false },
+      expected: { summary: 'Move out of the beam before it deals damage.' },
       estimatedImpact: {
         value: 10123,
         unit: 'damage',
@@ -148,6 +148,27 @@ describe('evaluateExecutionRules', () => {
 
     expect(result.outcomes[0]).toMatchObject({ status: 'partial', scoreContribution: null });
     expect(result.score).toEqual({ status: 'partial', value: null, knownContribution: -5 });
+  });
+
+  it('uses the configured expected behavior and never turns unknown confidence into a confident score', () => {
+    const result = evaluateExecutionRules(ruleSet([avoidableDamage]), scope, [
+      observation({
+        confidence: 'unknown',
+        expected: { summary: 'Untrusted parser expectation.' },
+      }),
+    ]);
+
+    expect(result).toMatchObject({ status: 'available' });
+    if (result.status !== 'available') return;
+
+    expect(result.outcomes[0]).toMatchObject({ status: 'unknown', scoreContribution: null });
+    expect(result.outcomes[0].findings[0]).toMatchObject({
+      state: 'unknown',
+      confidence: 'unknown',
+      expected: avoidableDamage.expected,
+      scoreContribution: null,
+    });
+    expect(result.score).toEqual({ status: 'unknown', value: null, knownContribution: 0 });
   });
 
   it.each([observation({ timestamp: null }), observation({ evidence: [] })])(
@@ -265,6 +286,22 @@ describe('evaluateExecutionRules', () => {
     expect(validateExecutionRuleSet(ruleSet([invalidRule]))).toMatchObject({
       valid: false,
       detail: expect.stringContaining('provenance'),
+    });
+  });
+
+  it.each([
+    { value: Number.POSITIVE_INFINITY },
+    { nested: { value: Number.NaN } },
+    { parser: () => 'not data' },
+  ])('rejects non-JSON or non-finite rule configuration: %p', (configuration) => {
+    const invalidRule = {
+      ...avoidableDamage,
+      configuration,
+    } as unknown as ExecutionRuleDefinition;
+
+    expect(validateExecutionRuleSet(ruleSet([invalidRule]))).toMatchObject({
+      valid: false,
+      detail: expect.stringContaining('finite, acyclic JSON'),
     });
   });
 
