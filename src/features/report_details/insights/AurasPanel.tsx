@@ -4,6 +4,7 @@ import { useCombatantInfoEvents, usePlayerData } from '../../../hooks';
 import { useSelectedReportAndFight } from '../../../ReportFightContext';
 import { CombatantAura } from '../../../types/combatlogEvents';
 import { resolveActorName } from '../../../utils/resolveActorName';
+import { AnalyzerPanelState, resolveAnalyzerPanelState } from '../AnalyzerPanelState';
 
 import { AurasPanelView } from './AurasPanelView';
 
@@ -26,7 +27,12 @@ export const AurasPanel: React.FC = () => {
 
   // Get data hooks
   const { playerData, isPlayerDataLoading } = usePlayerData();
-  const { combatantInfoEvents, isCombatantInfoEventsLoading } = useCombatantInfoEvents();
+  const {
+    combatantInfoEvents,
+    isCombatantInfoEventsLoading,
+    combatantInfoEventsStatus,
+    combatantInfoEventsError,
+  } = useCombatantInfoEvents();
 
   // Process auras data
   const aurasData = React.useMemo(() => {
@@ -105,13 +111,20 @@ export const AurasPanel: React.FC = () => {
   }, [combatantInfoEvents, playerData]);
 
   const isLoading = isPlayerDataLoading || isCombatantInfoEventsLoading;
+  const hasRetainedData = aurasData.length > 0;
+  const failureDetail = combatantInfoEventsError ?? playerData?.error ?? undefined;
+  const state = resolveAnalyzerPanelState({
+    error: failureDetail,
+    hasData: hasRetainedData,
+    isComplete: combatantInfoEventsStatus === 'succeeded' && playerData?.status === 'succeeded',
+    isLoading,
+  });
 
   return (
-    <AurasPanelView
-      aurasData={aurasData}
-      isLoading={isLoading}
-      reportId={reportId}
-      fightId={fightId}
-    />
+    <AnalyzerPanelState detail={failureDetail} state={state} title="Experimental: Auras overview">
+      {hasRetainedData && (
+        <AurasPanelView aurasData={aurasData} reportId={reportId} fightId={fightId} />
+      )}
+    </AnalyzerPanelState>
   );
 };
