@@ -52,6 +52,53 @@ export function assertCompleteEventPage<TPage extends { data?: unknown }>(
  */
 export const createEventFingerprint = (event: object): string => stableSerialize(event);
 
+export interface EventPageDeduplicationState {
+  previousPageFingerprints: string[];
+}
+
+export const createEventPageDeduplicationState = (): EventPageDeduplicationState => ({
+  previousPageFingerprints: [],
+});
+
+/**
+ * Appends only the portion of a page that is new relative to the immediately
+ * preceding non-empty page. Keeping this operation page-local lets callers
+ * build their final result without retaining every fetched page.
+ */
+export const appendDeduplicatedEventPage = <TEvent extends object>(
+  destination: TEvent[],
+  currentPage: readonly TEvent[],
+  state: EventPageDeduplicationState,
+): void => {
+  const currentPageFingerprints = currentPage.map(createEventFingerprint);
+  const maximumOverlap = Math.min(state.previousPageFingerprints.length, currentPage.length);
+  let overlapLength = 0;
+
+  for (let candidateLength = maximumOverlap; candidateLength > 0; candidateLength -= 1) {
+    const previousOffset = state.previousPageFingerprints.length - candidateLength;
+    let matches = true;
+    for (let index = 0; index < candidateLength; index += 1) {
+      if (
+        state.previousPageFingerprints[previousOffset + index] !== currentPageFingerprints[index]
+      ) {
+        matches = false;
+        break;
+      }
+    }
+    if (matches) {
+      overlapLength = candidateLength;
+      break;
+    }
+  }
+
+  for (let index = overlapLength; index < currentPage.length; index += 1) {
+    destination.push(currentPage[index]);
+  }
+  if (currentPageFingerprints.length > 0) {
+    state.previousPageFingerprints = currentPageFingerprints;
+  }
+};
+
 /**
  * Removes exact records replayed across adjacent page boundaries. Duplicate
  * records inside one page are retained because they can represent distinct
@@ -61,39 +108,10 @@ export const deduplicateEventPages = <TEvent extends object>(
   pages: ReadonlyArray<readonly TEvent[]>,
 ): TEvent[] => {
   const uniqueEvents: TEvent[] = [];
-  let previousPageFingerprints: string[] = [];
+  const state = createEventPageDeduplicationState();
 
   for (const page of pages) {
-    const currentPageFingerprints = page.map(createEventFingerprint);
-    const maximumOverlap = Math.min(previousPageFingerprints.length, page.length);
-    let overlapLength = 0;
-
-    // Cursor pagination replays a contiguous boundary: only remove the longest
-    // exact suffix/prefix overlap. A page-wide set/count comparison can erase a
-    // new legitimate event merely because an identical payload appeared earlier
-    // on the preceding page.
-    for (let candidateLength = maximumOverlap; candidateLength > 0; candidateLength -= 1) {
-      const previousOffset = previousPageFingerprints.length - candidateLength;
-      let matches = true;
-      for (let index = 0; index < candidateLength; index += 1) {
-        if (previousPageFingerprints[previousOffset + index] !== currentPageFingerprints[index]) {
-          matches = false;
-          break;
-        }
-      }
-      if (matches) {
-        overlapLength = candidateLength;
-        break;
-      }
-    }
-
-    uniqueEvents.push(...page.slice(overlapLength));
-    // A transient empty page with an advancing cursor does not establish a new
-    // event boundary. Keep the last non-empty page so a subsequent replay is
-    // still recognized without widening deduplication beyond that boundary.
-    if (currentPageFingerprints.length > 0) {
-      previousPageFingerprints = currentPageFingerprints;
-    }
+    appendDeduplicatedEventPage(uniqueEvents, page, state);
   }
 
   return uniqueEvents;

@@ -8,7 +8,7 @@ import {
   GetDamageEventsQuery,
   HostilityType,
 } from '../../graphql/gql/graphql';
-import { DamageEvent, LogEvent } from '../../types/combatlogEvents';
+import { DamageEvent } from '../../types/combatlogEvents';
 import { Logger, LogLevel } from '../../utils/logger';
 import {
   KeyedCacheState,
@@ -25,7 +25,11 @@ import {
   EVENT_MAX_PAGES_PER_STREAM,
   EVENT_PAGE_LIMIT,
 } from './constants';
-import { assertCompleteEventPage, deduplicateEventPages } from './utils/deduplicateEvents';
+import {
+  appendDeduplicatedEventPage,
+  assertCompleteEventPage,
+  createEventPageDeduplicationState,
+} from './utils/deduplicateEvents';
 import {
   createCurrentRequest,
   hasFreshCacheForMode,
@@ -107,14 +111,14 @@ export const fetchDamageEvents = createAsyncThunk<
 
     // Fetch both friendly and enemy damage events
     const hostilityTypes = [HostilityType.Friendlies, HostilityType.Enemies];
-    const eventStreams: DamageEvent[][] = [];
+    const allEvents: DamageEvent[] = [];
 
     const initialStartTime = restrictToFightWindow ? fight.startTime : undefined;
     const finalEndTime = restrictToFightWindow ? (fight.endTime ?? undefined) : undefined;
 
     try {
       for (const hostilityType of hostilityTypes) {
-        const eventPages: LogEvent[][] = [];
+        const deduplicationState = createEventPageDeduplicationState();
         let nextPageTimestamp: number | null = null;
         let pageCount = 0;
         let streamEventCount = 0;
@@ -150,7 +154,8 @@ export const fetchDamageEvents = createAsyncThunk<
                 `Damage event pagination exceeded ${EVENT_MAX_EVENTS_PER_STREAM} events`,
               );
             }
-            eventPages.push(page.data);
+            const currentPage = page.data as DamageEvent[];
+            appendDeduplicatedEventPage(allEvents, currentPage, deduplicationState);
             logger.info(`Fetched damage events page ${pageCount} for ${hostilityType}`, {
               reportCode,
               fightId: fight.id,
@@ -171,16 +176,12 @@ export const fetchDamageEvents = createAsyncThunk<
           }
           nextPageTimestamp = followingTimestamp;
         } while (nextPageTimestamp != null);
-
-        eventStreams.push(deduplicateEventPages(eventPages as DamageEvent[][]));
       }
     } catch (error) {
       return rejectWithValue(
         error instanceof Error ? error.message : 'Failed to fetch damage events',
       );
     }
-
-    const allEvents = eventStreams.flat();
 
     logger.info('Damage events fetch completed', {
       reportCode,
