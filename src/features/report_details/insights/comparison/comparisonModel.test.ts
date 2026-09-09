@@ -7,6 +7,7 @@ import {
 
 const context: AnalysisContext = {
   partition: 'live-46',
+  esoUpdate: 'update-46',
   encounterKind: 'encounter',
   encounterId: 'trial-1',
   encounterVersion: '2026-09',
@@ -55,6 +56,10 @@ describe('Analyzer/Insights comparison contract', () => {
 
     expect(result).toMatchObject({ status: 'available', confidence: 'low' });
     if (result.status === 'available') {
+      expect(result.context).toMatchObject({
+        partition: context.partition,
+        esoUpdate: context.esoUpdate,
+      });
       expect(result.provenance).toEqual({
         baseline: {
           pullId: baseline.pullId,
@@ -91,6 +96,7 @@ describe('Analyzer/Insights comparison contract', () => {
 
   it.each([
     ['partition', 'pts-46', 'cross-partition'],
+    ['esoUpdate', 'update-47', 'cross-eso-update'],
     ['encounterKind', 'training-dummy', 'cross-encounter-kind'],
     ['encounterId', 'trial-2', 'cross-encounter-id'],
     ['encounterVersion', '2026-10', 'cross-encounter-version'],
@@ -401,6 +407,11 @@ describe('Analyzer/Insights comparison contract', () => {
       'context',
       pull({ context: { ...context, encounterKind: 'invalid' } as unknown as AnalysisContext }),
       'Analysis encounter kind is invalid.',
+    ],
+    [
+      'ESO update',
+      pull({ context: { ...context, esoUpdate: '' } as unknown as AnalysisContext }),
+      'Analysis ESO update is invalid.',
     ],
     [
       'provenance',
