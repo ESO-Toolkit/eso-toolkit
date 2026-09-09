@@ -187,6 +187,25 @@ async function waitForPageReady(page: import('@playwright/test').Page): Promise<
   await page.waitForTimeout(WAIT_FOR_RENDER);
 }
 
+/**
+ * Resolve privacy consent before testing page-level keyboard navigation. An
+ * active consent surface takes precedence over the page, so bypassing it would
+ * mistake its focus order for the application's skip-link behavior.
+ */
+async function resolveConsentBeforePageKeyboardTest(
+  page: import('@playwright/test').Page,
+): Promise<void> {
+  const declineAll = page.getByRole('button', { name: 'Decline All', exact: true });
+  if (await declineAll.isVisible()) {
+    // The consent surface may cover the page layout, so resolve it with the
+    // keyboard path a modal must support rather than relying on its pointer
+    // stacking order.
+    await declineAll.focus();
+    await page.keyboard.press('Enter');
+    await expect(declineAll).toBeHidden();
+  }
+}
+
 test.describe('Accessibility', () => {
   test.describe('Automated axe-core WCAG 2.2 AA scans', () => {
     for (const route of PUBLIC_ROUTES) {
@@ -270,11 +289,13 @@ test.describe('Accessibility', () => {
     test('skip link exists and becomes visible on focus', async ({ page }) => {
       await page.goto('/calculator');
       await waitForPageReady(page);
+      await resolveConsentBeforePageKeyboardTest(page);
 
       const skipLink = page.locator('a[href="#main-content"]');
       await expect(skipLink).toHaveCount(1);
 
       await page.keyboard.press('Tab');
+      await expect(skipLink).toBeFocused();
 
       const skipLinkBox = await skipLink.boundingBox();
       expect(skipLinkBox).not.toBeNull();
@@ -287,8 +308,10 @@ test.describe('Accessibility', () => {
     test('skip link moves focus to main content', async ({ page }) => {
       await page.goto('/calculator');
       await waitForPageReady(page);
+      await resolveConsentBeforePageKeyboardTest(page);
 
       await page.keyboard.press('Tab');
+      await expect(page.locator('a[href="#main-content"]')).toBeFocused();
       await page.keyboard.press('Enter');
 
       const focusedId = await page.evaluate(() => document.activeElement?.id);
@@ -298,6 +321,7 @@ test.describe('Accessibility', () => {
     test('landing page exposes one working skip link', async ({ page }) => {
       await page.goto('/');
       await waitForPageReady(page);
+      await resolveConsentBeforePageKeyboardTest(page);
 
       const skipLink = page.locator('a[href="#main-content"]');
       await expect(skipLink).toHaveCount(1);
@@ -312,6 +336,7 @@ test.describe('Accessibility', () => {
     test('Tab reaches header navigation items', async ({ page }) => {
       await page.goto('/calculator');
       await waitForPageReady(page);
+      await resolveConsentBeforePageKeyboardTest(page);
 
       const focusedElements: string[] = [];
 
@@ -331,39 +356,60 @@ test.describe('Accessibility', () => {
     });
 
     test('mobile menu opens with Enter and closes with Escape', async ({ page }) => {
-      await page.setViewportSize({ width: 375, height: 667 });
+      await page.setViewportSize({ width: 390, height: 844 });
       await page.goto('/calculator');
       await waitForPageReady(page);
+      await resolveConsentBeforePageKeyboardTest(page);
 
-      const hamburger = page.locator('button[aria-label="toggle navigation"]');
+      const hamburger = page.locator('button[aria-controls="mobile-nav-menu"]');
       await expect(hamburger).toBeVisible();
+      await expect(hamburger).toHaveAccessibleName('Open navigation menu');
+      await expect(hamburger).toHaveAttribute('aria-haspopup', 'dialog');
+      await expect(hamburger).toHaveAttribute('aria-expanded', 'false');
+      await expect(hamburger).toHaveAttribute('aria-controls', 'mobile-nav-menu');
 
       await hamburger.focus();
       await page.keyboard.press('Enter');
 
-      const menu = page.locator('#mobile-nav-menu, [role="dialog"][aria-label="Navigation menu"]');
+      const menu = page.getByRole('dialog', { name: 'Navigation menu' });
       await expect(menu).toBeVisible();
+      await expect(menu).toHaveAttribute('aria-modal', 'true');
+      await expect(hamburger).toHaveAccessibleName('Close navigation menu');
+      await expect(hamburger).toHaveAttribute('aria-expanded', 'true');
 
       await page.keyboard.press('Escape');
-      await page.waitForTimeout(500);
 
       await expect(hamburger).toHaveAttribute('aria-expanded', 'false');
+      await expect(hamburger).toHaveAccessibleName('Open navigation menu');
+      await expect(hamburger).toBeFocused();
     });
 
     test('dropdown menus have aria-haspopup and aria-expanded', async ({ page }) => {
+      await page.setViewportSize({ width: 1280, height: 720 });
       await page.goto('/calculator');
       await waitForPageReady(page);
+      await resolveConsentBeforePageKeyboardTest(page);
 
-      const toolsButton = page.locator('button:has-text("Tools")').first();
-      if (await toolsButton.isVisible()) {
-        await expect(toolsButton).toHaveAttribute('aria-haspopup', 'true');
-        await expect(toolsButton).toHaveAttribute('aria-expanded', 'false');
+      const toolsButton = page.getByRole('button', { name: 'Tools', exact: true });
+      await expect(toolsButton).toBeVisible();
+      await expect(toolsButton).toHaveAttribute('aria-haspopup', 'menu');
+      await expect(toolsButton).toHaveAttribute('aria-expanded', 'false');
 
-        await toolsButton.click();
-        await expect(toolsButton).toHaveAttribute('aria-expanded', 'true');
+      await toolsButton.focus();
+      await page.keyboard.press('Enter');
+      const toolsMenu = page.getByRole('menu');
+      await expect(toolsMenu).toBeVisible();
+      // MUI marks inactive page content aria-hidden while its menu is open,
+      // so inspect the persistent trigger by its ARIA relationship instead of
+      // re-querying a temporarily hidden accessible role.
+      const openToolsButton = page.locator('button[aria-controls="tools-menu"]');
+      await expect(openToolsButton).toHaveAttribute('aria-expanded', 'true');
 
-        await page.keyboard.press('Escape');
-      }
+      await page.keyboard.press('Escape');
+      await expect(toolsMenu).toBeHidden();
+      const closedToolsButton = page.getByRole('button', { name: 'Tools', exact: true });
+      await expect(closedToolsButton).toHaveAttribute('aria-expanded', 'false');
+      await expect(closedToolsButton).toBeFocused();
     });
   });
 
