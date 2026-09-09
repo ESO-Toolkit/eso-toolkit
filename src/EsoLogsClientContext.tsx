@@ -18,8 +18,7 @@ interface EsoLogsClientContextType {
 export const EsoLogsClientContext = createContext<EsoLogsClientContextType | undefined>(undefined);
 
 // Read the initial token once at module level so the first render is already
-// synchronised with AuthContext (which also reads from sessionStorage). Legacy
-// localStorage tokens are migrated by getStoredAccessToken(). This
+// synchronised with AuthContext (which also reads from tab-scoped storage). This
 // eliminates the one-frame lag where AuthContext.isLoggedIn=true but
 // EsoLogsClientContext.isLoggedIn=false, which caused visible layout shifts.
 const initialToken = getStoredAccessToken();

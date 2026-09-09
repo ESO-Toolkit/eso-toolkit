@@ -18,7 +18,7 @@ import { Logger, LogLevel } from '../../utils/logger';
 import {
   getStoredAccessToken,
   removeStoredToken,
-  LOCAL_STORAGE_ACCESS_TOKEN_KEY,
+  ACCESS_TOKEN_KEY,
   refreshAccessToken,
 } from './auth';
 import {
@@ -89,7 +89,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [isBanned, setIsBanned] = useState<boolean>(false);
   const [banReason, setBanReason] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
-  // Initialize userLoading to true when a valid token exists in browser storage.
+  // Initialize userLoading to true when a valid token exists in tab-scoped storage.
   // This prevents child components (e.g. HeaderBar) from prematurely calling
   // refetchUser() before AuthProvider's effects have synced the token to the
   // EsoLogsClient — child effects run before parent effects in React.
@@ -128,7 +128,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setAnalyticsUserId(subject);
   }, [accessToken]);
 
-  // Re-bind access token from browser storage (sessionStorage, with legacy migration).
+  // Re-bind access token from this tab's credential store.
   const rebindAccessToken = useCallback(() => {
     const token = getStoredAccessToken();
     setAccessToken(token);
@@ -246,8 +246,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           setBanReason(reason);
           setUserError(reason);
           setCurrentUser(null);
-          // Remove the access token from both session and legacy storage.
-          removeStoredToken(LOCAL_STORAGE_ACCESS_TOKEN_KEY);
+          removeStoredToken(ACCESS_TOKEN_KEY);
           updateAccessToken('');
           addBreadcrumb('Auth: Banned user detected', 'auth', {
             userId: fetchedUser.id,
@@ -298,23 +297,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   ]);
 
   useEffect(() => {
-    // Listen for legacy storage changes (e.g., from OAuthRedirect in another context).
-    const handler = (): void => {
-      const token = getStoredAccessToken();
-      setAccessToken(token);
-      setAuthToken(token);
-      addBreadcrumb('Auth: Access token updated via storage event', 'auth', {
-        tokenPresent: Boolean(token),
-      });
-    };
-    window.addEventListener('storage', handler);
-
-    // Initialize token on mount
+    // Initialize from this tab only. Session storage does not synchronize a
+    // credential to another tab, and persistent storage is never consulted.
     const initialToken = getStoredAccessToken();
     setAccessToken(initialToken);
     setAuthToken(initialToken);
-
-    return () => window.removeEventListener('storage', handler);
   }, [setAuthToken]);
 
   const isLoggedIn =
