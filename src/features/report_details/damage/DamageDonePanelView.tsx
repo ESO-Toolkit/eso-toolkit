@@ -24,7 +24,7 @@ interface DamageRow {
   total: number;
   dps: number;
   activePercentage: number;
-  criticalDamagePercent: number;
+  criticalDamageShare: number | null;
   criticalDamageTotal: number;
   iconUrl?: string;
   role?: 'dps' | 'tank' | 'healer';
@@ -46,7 +46,7 @@ interface DamageDonePanelViewProps {
   resolvePlayerName?: (playerId: number, fallbackName: string) => string;
 }
 
-type SortField = 'name' | 'total' | 'dps' | 'activeDps' | 'criticalDamage';
+type SortField = 'name' | 'total' | 'dps' | 'activeDps' | 'criticalDamageShare';
 type SortDirection = 'asc' | 'desc';
 
 /**
@@ -91,9 +91,9 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
           aValue = a.activePercentage > 0 ? a.dps / (a.activePercentage / 100) : 0;
           bValue = b.activePercentage > 0 ? b.dps / (b.activePercentage / 100) : 0;
           break;
-        case 'criticalDamage':
-          aValue = a.criticalDamageTotal;
-          bValue = b.criticalDamageTotal;
+        case 'criticalDamageShare':
+          aValue = a.criticalDamageShare ?? Number.NEGATIVE_INFINITY;
+          bValue = b.criticalDamageShare ?? Number.NEGATIVE_INFINITY;
           break;
         default:
           return 0;
@@ -175,10 +175,10 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
     return rounded.toString();
   };
 
-  const formatPercent = (num: number): string => {
-    if (!Number.isFinite(num)) return '0%';
-    const precision = Math.abs(num) >= 10 ? 0 : 1;
-    return `${num.toFixed(precision)}%`;
+  const formatCriticalDamageShare = (share: number | null): string => {
+    if (share === null || !Number.isFinite(share)) return 'Unavailable';
+    const precision = Math.abs(share) >= 10 ? 0 : 1;
+    return `${share.toFixed(precision)}%`;
   };
 
   // Get color based on player role using theme-aware colors
@@ -265,9 +265,9 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
             { field: 'dps' as SortField, label: 'DPS', icon: getSortIcon('dps'), accent: true },
             { field: 'activeDps' as SortField, label: 'Active', icon: getSortIcon('activeDps') },
             {
-              field: 'criticalDamage' as SortField,
-              label: 'Crit',
-              icon: getSortIcon('criticalDamage'),
+              field: 'criticalDamageShare' as SortField,
+              label: 'Critical damage share',
+              icon: getSortIcon('criticalDamageShare'),
             },
           ].map(({ field, label, icon, accent }) => (
             <Box
@@ -522,7 +522,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
             <Box
               role="button"
               tabIndex={0}
-              aria-label={getSortButtonLabel('Crit %', 'criticalDamage')}
+              aria-label={getSortButtonLabel('Critical damage share', 'criticalDamageShare')}
               sx={{
                 textAlign: 'right',
                 cursor: 'pointer',
@@ -531,10 +531,10 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                   color: roleColors.isDarkMode ? '#fbbf24' : '#f59e0b',
                 },
               }}
-              onClick={() => handleSort('criticalDamage')}
-              onKeyDown={handleSortKeyDown('criticalDamage')}
+              onClick={() => handleSort('criticalDamageShare')}
+              onKeyDown={handleSortKeyDown('criticalDamageShare')}
             >
-              Crit %{getSortIcon('criticalDamage')}
+              Critical damage share{getSortIcon('criticalDamageShare')}
             </Box>
             <Tooltip title="Deaths" arrow>
               <Box
@@ -782,7 +782,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                   }}
                 >
                   <Tooltip
-                    title={`${formatPercent(row.criticalDamagePercent)} crit (${formatNumber(row.criticalDamageTotal)} dmg)`}
+                    title={`Critical damage share: ${formatCriticalDamageShare(row.criticalDamageShare)} (critical damage: ${formatNumber(row.criticalDamageTotal)})`}
                     arrow
                   >
                     <Typography
@@ -796,7 +796,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                         cursor: 'help',
                       }}
                     >
-                      {formatPercent(row.criticalDamagePercent)}
+                      {formatCriticalDamageShare(row.criticalDamageShare)}
                     </Typography>
                   </Tooltip>
                 </Box>
@@ -1183,7 +1183,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                           textTransform: 'uppercase',
                         }}
                       >
-                        Crit
+                        Critical damage
                       </Typography>
                       <Tooltip title={formatNumber(row.criticalDamageTotal)} arrow>
                         <Typography

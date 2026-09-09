@@ -31,6 +31,30 @@ interface DamageDonePanelProps {
 }
 
 /**
+ * Returns the share of total damage that came from critical hits.
+ *
+ * This is deliberately not a critical-hit rate: the event stream used by this
+ * panel does not provide a trustworthy count of eligible hits. A missing or
+ * invalid total therefore has no meaningful share and must stay unavailable.
+ */
+export const calculateCriticalDamageShare = (
+  totalDamage: number,
+  criticalDamageTotal: number,
+): number | null => {
+  if (
+    !Number.isFinite(totalDamage) ||
+    totalDamage <= 0 ||
+    !Number.isFinite(criticalDamageTotal) ||
+    criticalDamageTotal < 0 ||
+    criticalDamageTotal > totalDamage
+  ) {
+    return null;
+  }
+
+  return (criticalDamageTotal / totalDamage) * 100;
+};
+
+/**
  * Smart component that handles data processing and state management for damage done panel
  */
 export const DamageDonePanel: React.FC<DamageDonePanelProps> = ({ context }) => {
@@ -145,7 +169,11 @@ export const DamageDonePanel: React.FC<DamageDonePanelProps> = ({ context }) => 
             return; // Skip this event
           }
 
-          const amount = 'amount' in event ? Number(event.amount) || 0 : 0;
+          const amount = 'amount' in event ? Number(event.amount) : Number.NaN;
+          if (!Number.isFinite(amount) || amount < 0) {
+            return;
+          }
+
           totalDamage += amount;
 
           // Check if this is a critical hit (hitType === 2)
@@ -157,7 +185,7 @@ export const DamageDonePanel: React.FC<DamageDonePanelProps> = ({ context }) => 
         }
       });
 
-      if (totalDamage > 0) {
+      if (Number.isFinite(totalDamage) && totalDamage > 0 && Number.isFinite(totalCriticalDamage)) {
         damageByPlayer[playerId] = totalDamage;
         criticalDamageByPlayer[playerId] = totalCriticalDamage;
         damageEventsBySource[playerId] = eventCount;
@@ -328,9 +356,8 @@ export const DamageDonePanel: React.FC<DamageDonePanelProps> = ({ context }) => 
         const activePercentage = activeData?.activePercentage ?? 0;
 
         // Get critical damage metrics for this player
-        const criticalDamageTotal = damageStatistics.criticalDamageByPlayer[playerId] || 0;
-        const criticalDamagePercent =
-          totalDamage > 0 ? (criticalDamageTotal / totalDamage) * 100 : 0;
+        const criticalDamageTotal = damageStatistics.criticalDamageByPlayer[playerId] ?? 0;
+        const criticalDamageShare = calculateCriticalDamageShare(totalDamage, criticalDamageTotal);
 
         return {
           id,
@@ -338,7 +365,7 @@ export const DamageDonePanel: React.FC<DamageDonePanelProps> = ({ context }) => 
           total: totalDamage,
           dps: fightDurationMs > 0 ? totalDamage / msToSeconds(fightDurationMs) : 0,
           activePercentage,
-          criticalDamagePercent,
+          criticalDamageShare,
           criticalDamageTotal,
           iconUrl,
           role,
