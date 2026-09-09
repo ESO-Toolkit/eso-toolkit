@@ -1,6 +1,6 @@
 import { Alert, Box, Chip, Divider, Stack, Typography } from '@mui/material';
 import { alpha, styled } from '@mui/material/styles';
-import type { ReactElement } from 'react';
+import { useId, type ReactElement } from 'react';
 
 import type {
   DecisionConfidence,
@@ -105,6 +105,7 @@ export const DecisionSummaryPanel = ({
   summary,
   state,
 }: DecisionSummaryPanelProps): ReactElement => {
+  const titleId = `decision-summary-title-${useId()}`;
   const panelState = resolveState(summary, state);
   const isLoading = panelState === 'loading';
   const visibleItems = isVisibleItem(panelState) ? summary.items : [];
@@ -113,10 +114,10 @@ export const DecisionSummaryPanel = ({
   const hasRejected = visibleRejections.length > 0;
 
   return (
-    <DecisionPanelSurface aria-busy={isLoading} aria-labelledby="decision-summary-title">
+    <DecisionPanelSurface aria-busy={isLoading} aria-labelledby={titleId}>
       <Stack spacing={2}>
         <Box>
-          <Typography component="h2" id="decision-summary-title" variant="h6">
+          <Typography component="h2" id={titleId} variant="h6">
             Decision summary
           </Typography>
           <Typography color="text.secondary" variant="body2">

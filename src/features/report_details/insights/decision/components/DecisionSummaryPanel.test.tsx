@@ -81,6 +81,29 @@ describe('DecisionSummaryPanel', () => {
     expect(screen.getByText('Assign an interrupt before the next pull.')).toBeInTheDocument();
   });
 
+  it('gives each panel instance a unique existing accessible label', () => {
+    render(
+      <ThemeProvider theme={createTheme()}>
+        <DecisionSummaryPanel summary={populatedSummary} />
+        <DecisionSummaryPanel summary={populatedSummary} />
+      </ThemeProvider>,
+    );
+
+    const panels = screen.getAllByRole('region', { name: 'Decision summary' });
+    const labelIds = panels.map((panel) => panel.getAttribute('aria-labelledby'));
+
+    expect(panels).toHaveLength(2);
+    expect(labelIds).toHaveLength(2);
+    expect(new Set(labelIds).size).toBe(2);
+    labelIds.forEach((labelId) => {
+      expect(labelId).toEqual(expect.any(String));
+      const label = document.getElementById(labelId as string);
+      expect(label).not.toBeNull();
+      expect(label?.tagName).toBe('H2');
+      expect(label).toHaveTextContent('Decision summary');
+    });
+  });
+
   it('never renders caller-supplied actor identifiers or display names', () => {
     const summaryWithUntrustedName = {
       ...populatedSummary,
