@@ -134,6 +134,7 @@ const ContextDetails: React.FC<{
   const { context } = comparison;
   const items = [
     ['ESO partition', context.partition],
+    ['ESO update', context.esoUpdate],
     ['Analysis type', formatContextValue(context.encounterKind)],
     ['Encounter', context.encounterId],
     ['Encounter definition', context.encounterVersion],
