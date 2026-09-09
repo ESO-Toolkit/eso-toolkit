@@ -17,6 +17,7 @@ const theme = createTheme();
 
 const context: AnalysisContext = {
   partition: 'live-10.4.5',
+  esoUpdate: 'update-10.4.5',
   encounterKind: 'encounter',
   encounterId: 'lucent-citadel-zel-dragon',
   encounterVersion: '2026.09',
