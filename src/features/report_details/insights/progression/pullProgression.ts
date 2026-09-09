@@ -96,7 +96,9 @@ export interface PullProgressionUnavailable {
     | 'invalid-evidence-timestamp'
     | 'invalid-metric-definition'
     | 'invalid-input'
-    | 'mixed-context';
+    | 'mixed-context'
+    | 'no-pulls'
+    | 'no-metrics';
   readonly context: ProgressionContext;
   readonly conflictingPullIds: readonly string[];
   /** Present when a metric definition cannot be interpreted safely. */
@@ -379,6 +381,17 @@ export const buildPullProgression = (input: PullProgressionInput): PullProgressi
 
   if (conflictingPullIds.length > 0) {
     return unavailable('mixed-context', context, conflictingPullIds);
+  }
+
+  // A storyboard needs at least one observed pull and one explicitly selected
+  // metric. Returning an empty ready state would make unavailable evidence look
+  // like a completed analysis.
+  if (pulls.length === 0) {
+    return unavailable('no-pulls', context, []);
+  }
+
+  if (rawMetrics.length === 0) {
+    return unavailable('no-metrics', context, []);
   }
 
   const orderedPulls = pulls
