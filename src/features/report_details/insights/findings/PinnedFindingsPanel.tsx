@@ -17,6 +17,8 @@ import React, { useState } from 'react';
 
 import {
   type FindingShareRecipient,
+  type FindingPeerBenchmarkDistribution,
+  type FindingProvenanceKind,
   type PinnedFinding,
   type PrivacySafeSharedPinnedFinding,
   type SharedFindingAssignee,
@@ -43,6 +45,14 @@ const audienceLabels: Record<FindingShareRecipient['audience'], string> = {
   'raid-lead': 'Raid lead (identifiers still hidden)',
 };
 
+const provenanceLabels: Record<FindingProvenanceKind, string> = {
+  'authoritative-rule': 'Authoritative rule',
+  'configurable-definition': 'Configurable definition',
+  'game-rule': 'Game rule',
+  'peer-benchmark': 'Peer benchmark',
+  'fixed-heuristic': 'Fixed heuristic',
+};
+
 const formatTimestamp = (timestampMs: number): string => `${Math.floor(timestampMs / 1000)}s`;
 
 const formatRole = (role?: string): string => (role ? role.replace('-', ' ') : 'unspecified role');
@@ -64,6 +74,9 @@ const formatLifecycleOffset = (afterAnchorMs: number): string => {
   const seconds = Math.floor(afterAnchorMs / 1000);
   return `${seconds}s after evidence anchor`;
 };
+
+const formatDistribution = ({ p25, p50, p75 }: FindingPeerBenchmarkDistribution): string =>
+  `p25 ${p25} · p50 ${p50} · p75 ${p75}`;
 
 const projectForPrivacy = (finding: PinnedFinding): PrivacySafeSharedPinnedFinding | undefined => {
   try {
@@ -211,6 +224,27 @@ export const PinnedFindingsPanel = ({
                 <Typography variant="body2" sx={{ overflowWrap: 'anywhere' }}>
                   {shared.whyItMatters}
                 </Typography>
+                <Box component="section" aria-label="Analysis context">
+                  <Typography variant="subtitle2">Analysis context</Typography>
+                  <Typography variant="body2">
+                    <strong>ESO update:</strong> {shared.analysisContext.esoUpdate} ·{' '}
+                    <strong>Partition:</strong> {shared.analysisContext.partition} ·{' '}
+                    <strong>Difficulty:</strong> {shared.analysisContext.difficulty}
+                  </Typography>
+                  <Typography variant="body2">
+                    <strong>
+                      {shared.analysisContext.encounter.kind === 'training-dummy'
+                        ? 'Training dummy'
+                        : 'Encounter'}
+                      :
+                    </strong>{' '}
+                    {shared.analysisContext.encounter.identity} (v
+                    {shared.analysisContext.encounter.version}) · <strong>Role:</strong>{' '}
+                    {formatRole(shared.analysisContext.role)} · <strong>Class:</strong>{' '}
+                    {shared.analysisContext.classId} · <strong>Build bracket:</strong>{' '}
+                    {shared.analysisContext.buildBracket}
+                  </Typography>
+                </Box>
                 <Typography variant="subtitle2">Evidence</Typography>
                 <Stack component="ul" spacing={0.5} sx={{ m: 0, pl: 2 }}>
                   {shared.evidence.map((evidence) => (
@@ -273,10 +307,45 @@ export const PinnedFindingsPanel = ({
                     <Typography variant="body2">No ownership updates yet</Typography>
                   )}
                 </Box>
-                <Typography variant="body2">
-                  <strong>Provenance:</strong> {shared.provenance.kind} · {shared.provenance.source}{' '}
-                  · observed {formatLifecycleOffset(shared.provenance.observedAfterAnchorMs)}
-                </Typography>
+                <Box component="section" aria-label="Finding provenance">
+                  <Typography variant="subtitle2">Provenance</Typography>
+                  <Stack
+                    direction="row"
+                    spacing={1}
+                    sx={{ alignItems: 'center', flexWrap: 'wrap' }}
+                  >
+                    <Chip
+                      aria-label={`Provenance type: ${provenanceLabels[shared.provenance.kind]}`}
+                      color={shared.provenance.kind === 'peer-benchmark' ? 'info' : 'default'}
+                      label={provenanceLabels[shared.provenance.kind]}
+                      size="small"
+                      variant="outlined"
+                    />
+                    <Typography variant="body2" sx={{ overflowWrap: 'anywhere' }}>
+                      <strong>Source:</strong> {shared.provenance.source} · observed{' '}
+                      {formatLifecycleOffset(shared.provenance.observedAfterAnchorMs)}
+                    </Typography>
+                  </Stack>
+                  {shared.provenance.kind === 'peer-benchmark' ? (
+                    <Box aria-label="Peer benchmark details" sx={{ mt: 0.5 }}>
+                      <Typography variant="body2">
+                        <strong>Period:</strong> {shared.provenance.sourcePeriod} ·{' '}
+                        <strong>Sample size:</strong>{' '}
+                        {shared.provenance.sampleSize.toLocaleString()}
+                      </Typography>
+                      <Typography variant="body2">
+                        <strong>Distribution:</strong>{' '}
+                        {formatDistribution(shared.provenance.distribution)}
+                      </Typography>
+                      <Typography variant="body2">
+                        <strong>Refreshed:</strong> {shared.provenance.refreshDate} ·{' '}
+                        <strong>Confidence:</strong> {shared.provenance.confidence} ·{' '}
+                        <strong>State:</strong>{' '}
+                        {shared.provenance.provisional ? 'Provisional' : 'Established'}
+                      </Typography>
+                    </Box>
+                  ) : null}
+                </Box>
                 <Typography variant="body2">
                   <strong>Confidence rationale:</strong> {shared.confidence.rationale}
                 </Typography>
