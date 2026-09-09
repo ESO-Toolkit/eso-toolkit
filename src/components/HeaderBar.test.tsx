@@ -19,7 +19,7 @@ jest.mock('../features/auth/AuthContext', () => ({
 }));
 
 jest.mock('../features/auth/auth', () => ({
-  LOCAL_STORAGE_ACCESS_TOKEN_KEY: 'eso-access-token',
+  ACCESS_TOKEN_KEY: 'eso-access-token',
   startPKCEAuth: jest.fn(),
 }));
 

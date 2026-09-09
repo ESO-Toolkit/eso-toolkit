@@ -6,12 +6,12 @@ import {
   CLIENT_ID,
   PKCE_CODE_VERIFIER_KEY,
   INTENDED_DESTINATION_KEY,
-  LOCAL_STORAGE_ACCESS_TOKEN_KEY,
+  ACCESS_TOKEN_KEY,
   setIntendedDestination,
   setFallbackDestination,
   getIntendedDestination,
   clearIntendedDestination,
-  LOCAL_STORAGE_REFRESH_TOKEN_KEY,
+  REFRESH_TOKEN_KEY,
   getRedirectUri,
   DEV_PREVIEW_OAUTH_RETURN_KEY,
   refreshAccessToken,
@@ -24,6 +24,7 @@ import {
   parseAppAuthPort,
   getStoredAccessToken,
   setStoredToken,
+  clearStoredTokens,
 } from './auth';
 
 jest.mocked(getBaseUrl).mockReturnValue('https://esotk.com/');
@@ -57,6 +58,8 @@ describe('OAuth Basic Functions', () => {
     jest.clearAllMocks();
     mockLocalStorage.getItem.mockReturnValue(null);
     mockSessionStorage.getItem.mockReturnValue(null);
+    mockSessionStorage.setItem.mockImplementation(() => undefined);
+    clearStoredTokens();
   });
 
   describe('PKCE Code Verifier Management', () => {
@@ -80,26 +83,37 @@ describe('OAuth Basic Functions', () => {
   });
 
   describe('OAuth token storage', () => {
-    it('migrates a legacy persistent token into sessionStorage and removes the old copy', () => {
+    it('does not revive legacy persistent credentials in a new tab', () => {
       mockSessionStorage.getItem.mockReturnValue(null);
       mockLocalStorage.getItem.mockReturnValue('legacy-access-token');
 
-      expect(getStoredAccessToken()).toBe('legacy-access-token');
-      expect(mockSessionStorage.setItem).toHaveBeenCalledWith(
-        LOCAL_STORAGE_ACCESS_TOKEN_KEY,
-        'legacy-access-token',
-      );
-      expect(mockLocalStorage.removeItem).toHaveBeenCalledWith(LOCAL_STORAGE_ACCESS_TOKEN_KEY);
+      expect(getStoredAccessToken()).toBe('');
+      expect(mockLocalStorage.getItem).not.toHaveBeenCalled();
+      expect(mockLocalStorage.removeItem).toHaveBeenCalledWith(ACCESS_TOKEN_KEY);
+      expect(mockLocalStorage.removeItem).toHaveBeenCalledWith(REFRESH_TOKEN_KEY);
     });
 
-    it('writes new tokens to sessionStorage and removes any legacy copy', () => {
-      setStoredToken(LOCAL_STORAGE_ACCESS_TOKEN_KEY, 'session-access-token');
+    it('keeps newly issued tokens out of persistent storage', () => {
+      setStoredToken(ACCESS_TOKEN_KEY, 'session-access-token');
 
       expect(mockSessionStorage.setItem).toHaveBeenCalledWith(
-        LOCAL_STORAGE_ACCESS_TOKEN_KEY,
+        ACCESS_TOKEN_KEY,
         'session-access-token',
       );
-      expect(mockLocalStorage.removeItem).toHaveBeenCalledWith(LOCAL_STORAGE_ACCESS_TOKEN_KEY);
+      expect(mockLocalStorage.setItem).not.toHaveBeenCalled();
+      expect(mockLocalStorage.removeItem).toHaveBeenCalledWith(ACCESS_TOKEN_KEY);
+    });
+
+    it('uses memory rather than persistent storage when sessionStorage is unavailable', () => {
+      mockSessionStorage.setItem.mockImplementation(() => {
+        throw new Error('Storage disabled');
+      });
+
+      setStoredToken(ACCESS_TOKEN_KEY, 'memory-only-token');
+
+      expect(getStoredAccessToken()).toBe('memory-only-token');
+      expect(mockLocalStorage.getItem).not.toHaveBeenCalled();
+      expect(mockLocalStorage.setItem).not.toHaveBeenCalled();
     });
   });
 
@@ -317,7 +331,7 @@ describe('OAuth Basic Functions', () => {
 
     it('should have proper storage keys', () => {
       expect(PKCE_CODE_VERIFIER_KEY).toBe('eso_code_verifier');
-      expect(LOCAL_STORAGE_ACCESS_TOKEN_KEY).toBe('access_token');
+      expect(ACCESS_TOKEN_KEY).toBe('access_token');
     });
   });
 
@@ -383,20 +397,23 @@ describe('refreshAccessToken', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockLocalStorage.getItem.mockReturnValue(null);
+    mockSessionStorage.getItem.mockReturnValue(null);
+    mockSessionStorage.setItem.mockImplementation(() => undefined);
     global.fetch = mockFetch;
+    clearStoredTokens();
     _resetRefreshState();
   });
 
   it('should return null and warn when no refresh token is stored', async () => {
-    mockLocalStorage.getItem.mockReturnValue(null);
+    mockSessionStorage.getItem.mockReturnValue(null);
     const result = await refreshAccessToken();
     expect(result).toBeNull();
     expect(mockFetch).not.toHaveBeenCalled();
   });
 
   it('should exchange refresh token for a new access token', async () => {
-    mockLocalStorage.getItem.mockImplementation((key: string) => {
-      if (key === LOCAL_STORAGE_REFRESH_TOKEN_KEY) return 'old-refresh-token';
+    mockSessionStorage.getItem.mockImplementation((key: string) => {
+      if (key === REFRESH_TOKEN_KEY) return 'old-refresh-token';
       return null;
     });
     mockFetch.mockResolvedValueOnce({
@@ -407,19 +424,13 @@ describe('refreshAccessToken', () => {
     const result = await refreshAccessToken();
 
     expect(result).toBe('new-access-token');
-    expect(mockSessionStorage.setItem).toHaveBeenCalledWith(
-      LOCAL_STORAGE_ACCESS_TOKEN_KEY,
-      'new-access-token',
-    );
-    expect(mockSessionStorage.setItem).toHaveBeenCalledWith(
-      LOCAL_STORAGE_REFRESH_TOKEN_KEY,
-      'new-refresh-token',
-    );
+    expect(mockSessionStorage.setItem).toHaveBeenCalledWith(ACCESS_TOKEN_KEY, 'new-access-token');
+    expect(mockSessionStorage.setItem).toHaveBeenCalledWith(REFRESH_TOKEN_KEY, 'new-refresh-token');
   });
 
   it('should clear tokens and return null when the server rejects the refresh', async () => {
-    mockLocalStorage.getItem.mockImplementation((key: string) => {
-      if (key === LOCAL_STORAGE_REFRESH_TOKEN_KEY) return 'expired-refresh-token';
+    mockSessionStorage.getItem.mockImplementation((key: string) => {
+      if (key === REFRESH_TOKEN_KEY) return 'expired-refresh-token';
       return null;
     });
     mockFetch.mockResolvedValueOnce({ ok: false, status: 401 });
@@ -427,13 +438,13 @@ describe('refreshAccessToken', () => {
     const result = await refreshAccessToken();
 
     expect(result).toBeNull();
-    expect(mockSessionStorage.removeItem).toHaveBeenCalledWith(LOCAL_STORAGE_ACCESS_TOKEN_KEY);
-    expect(mockSessionStorage.removeItem).toHaveBeenCalledWith(LOCAL_STORAGE_REFRESH_TOKEN_KEY);
+    expect(mockSessionStorage.removeItem).toHaveBeenCalledWith(ACCESS_TOKEN_KEY);
+    expect(mockSessionStorage.removeItem).toHaveBeenCalledWith(REFRESH_TOKEN_KEY);
   });
 
   it('should deduplicate concurrent calls — only one HTTP request for multiple simultaneous callers', async () => {
-    mockLocalStorage.getItem.mockImplementation((key: string) => {
-      if (key === LOCAL_STORAGE_REFRESH_TOKEN_KEY) return 'shared-refresh-token';
+    mockSessionStorage.getItem.mockImplementation((key: string) => {
+      if (key === REFRESH_TOKEN_KEY) return 'shared-refresh-token';
       return null;
     });
 
@@ -462,8 +473,8 @@ describe('refreshAccessToken', () => {
   });
 
   it('should return cached token within the cooldown window after a successful refresh', async () => {
-    mockLocalStorage.getItem.mockImplementation((key: string) => {
-      if (key === LOCAL_STORAGE_REFRESH_TOKEN_KEY) return 'refresh-token';
+    mockSessionStorage.getItem.mockImplementation((key: string) => {
+      if (key === REFRESH_TOKEN_KEY) return 'refresh-token';
       return null;
     });
     mockFetch.mockResolvedValueOnce({
@@ -480,8 +491,8 @@ describe('refreshAccessToken', () => {
   });
 
   it('passes an AbortSignal to the token fetch so a hung request can time out (M10)', async () => {
-    mockLocalStorage.getItem.mockImplementation((key: string) =>
-      key === LOCAL_STORAGE_REFRESH_TOKEN_KEY ? 'refresh-token' : null,
+    mockSessionStorage.getItem.mockImplementation((key: string) =>
+      key === REFRESH_TOKEN_KEY ? 'refresh-token' : null,
     );
     mockFetch.mockResolvedValueOnce({
       ok: true,
@@ -498,8 +509,8 @@ describe('refreshAccessToken', () => {
 
   it('should allow a fresh call after the cooldown window expires', async () => {
     jest.useFakeTimers();
-    mockLocalStorage.getItem.mockImplementation((key: string) => {
-      if (key === LOCAL_STORAGE_REFRESH_TOKEN_KEY) return 'refresh-token';
+    mockSessionStorage.getItem.mockImplementation((key: string) => {
+      if (key === REFRESH_TOKEN_KEY) return 'refresh-token';
       return null;
     });
     mockFetch
