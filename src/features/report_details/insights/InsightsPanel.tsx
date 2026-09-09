@@ -13,7 +13,7 @@ import { selectSelectedFriendlyPlayerId } from '../../../store/ui/uiSelectors';
 import { KnownAbilities } from '../../../types/abilities';
 import { PlayerTalent } from '../../../types/playerDetails';
 
-import { InsightsPanelView } from './InsightsPanelView';
+import { InsightsPanelView, type InsightsWorkflowState } from './InsightsPanelView';
 
 interface InsightsPanelProps {
   fight: FightFragment;
@@ -40,11 +40,51 @@ export const InsightsPanel: React.FC<InsightsPanelProps> = ({ fight, context }) 
   const selectedFriendlyPlayerId = useSelector(selectSelectedFriendlyPlayerId);
 
   const resolvedContext = useResolvedReportFightContext(context);
-  const { damageEvents, isDamageEventsLoading } = useDamageEvents({ context: resolvedContext });
+  const { damageEvents, isDamageEventsLoading, damageEventsStatus, damageEventsError } =
+    useDamageEvents({ context: resolvedContext });
   const { playerData, isPlayerDataLoading } = usePlayerData({ context: resolvedContext });
-  const { combatantInfoEvents, isCombatantInfoEventsLoading } = useCombatantInfoEvents({
-    context: resolvedContext,
-  });
+  const {
+    combatantInfoEvents,
+    isCombatantInfoEventsLoading,
+    combatantInfoEventsStatus,
+    combatantInfoEventsError,
+  } = useCombatantInfoEvents({ context: resolvedContext });
+
+  const productWorkflowState = React.useMemo<InsightsWorkflowState>(() => {
+    const sourceStatuses = [
+      damageEventsStatus,
+      combatantInfoEventsStatus,
+      playerData?.status ?? 'idle',
+    ];
+
+    if (
+      damageEventsError !== null ||
+      combatantInfoEventsError !== null ||
+      playerData?.error != null ||
+      sourceStatuses.includes('failed')
+    ) {
+      return 'failed';
+    }
+
+    if (sourceStatuses.includes('loading')) {
+      return 'loading';
+    }
+
+    if (sourceStatuses.includes('succeeded') && sourceStatuses.includes('idle')) {
+      return 'partial';
+    }
+
+    // The existing raw streams are not an encounter rule, a baseline, or a
+    // persisted finding. Do not promote them into a recommendation or score.
+    return 'unavailable';
+  }, [
+    combatantInfoEventsError,
+    combatantInfoEventsStatus,
+    damageEventsError,
+    damageEventsStatus,
+    playerData?.error,
+    playerData?.status,
+  ]);
 
   const abilityEquipped = React.useMemo(() => {
     const result: Partial<Record<KnownAbilities, string[]>> = {};
@@ -155,6 +195,7 @@ export const InsightsPanel: React.FC<InsightsPanelProps> = ({ fight, context }) 
       fightInitiator={fightInitiator}
       selectedPlayerId={selectedFriendlyPlayerId ?? null}
       isLoading={isCombatantInfoEventsLoading || isDamageEventsLoading || isPlayerDataLoading}
+      productWorkflowState={productWorkflowState}
     />
   );
 };
