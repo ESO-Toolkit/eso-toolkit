@@ -24,6 +24,7 @@ import {
   EVENT_MAX_PAGES_PER_STREAM,
   EVENT_PAGE_LIMIT,
 } from './constants';
+import { assertCompleteEventPage, deduplicateEventPages } from './utils/deduplicateEvents';
 import { createCurrentRequest, isStaleResponse } from './utils/requestTracking';
 
 type DeathEventsRequest = ReturnType<typeof createCurrentRequest> | null;
@@ -85,6 +86,15 @@ const validateFightTiming = (fight: FightFragment): void => {
   }
 };
 
+const hasFreshCache = (entry: DeathEventsEntry | undefined): boolean => {
+  const lastFetchedTimestamp = entry?.cacheMetadata.lastFetchedTimestamp;
+  return (
+    entry?.status === 'succeeded' &&
+    typeof lastFetchedTimestamp === 'number' &&
+    Date.now() - lastFetchedTimestamp < DATA_FETCH_CACHE_TIMEOUT
+  );
+};
+
 export const fetchDeathEvents = createAsyncThunk<
   DeathEvent[],
   { reportCode: string; fight: FightFragment; client: EsoLogsClient },
@@ -94,13 +104,14 @@ export const fetchDeathEvents = createAsyncThunk<
   async ({ reportCode, fight, client }, { rejectWithValue, signal }) => {
     // Fetch both friendly and enemy death events
     const hostilityTypes = [HostilityType.Friendlies, HostilityType.Enemies];
-    const eventChunks: LogEvent[][] = [];
+    const eventStreams: LogEvent[][] = [];
     let pageCount = 0;
     let streamEventCount = 0;
 
     try {
       validateFightTiming(fight);
       for (const hostilityType of hostilityTypes) {
+        const eventPages: LogEvent[][] = [];
         let nextPageTimestamp: number | null = null;
 
         do {
@@ -125,16 +136,17 @@ export const fetchDeathEvents = createAsyncThunk<
           pageCount += 1;
 
           const page = response.reportData?.report?.events;
-          if (page?.data?.length) {
+          assertCompleteEventPage(page, 'Death');
+          if (page.data.length) {
             streamEventCount += page.data.length;
             if (streamEventCount > EVENT_MAX_EVENTS_PER_STREAM) {
               throw new Error(
                 `Death event pagination exceeded ${EVENT_MAX_EVENTS_PER_STREAM} events`,
               );
             }
-            eventChunks.push(page.data);
+            eventPages.push(page.data);
           }
-          const followingTimestamp = page?.nextPageTimestamp ?? null;
+          const followingTimestamp = page.nextPageTimestamp ?? null;
           if (
             followingTimestamp != null &&
             (!Number.isFinite(followingTimestamp) || followingTimestamp <= requestedStartTime)
@@ -143,6 +155,7 @@ export const fetchDeathEvents = createAsyncThunk<
           }
           nextPageTimestamp = followingTimestamp;
         } while (nextPageTimestamp != null);
+        eventStreams.push(deduplicateEventPages(eventPages));
       }
     } catch (error) {
       return rejectWithValue(
@@ -151,7 +164,7 @@ export const fetchDeathEvents = createAsyncThunk<
     }
 
     // Filter to only death events
-    const deathEvents = eventChunks
+    const deathEvents = eventStreams
       .flat()
       .filter((event) => event.type === 'death') as DeathEvent[];
     return deathEvents;
@@ -162,13 +175,7 @@ export const fetchDeathEvents = createAsyncThunk<
       const { key } = resolveCacheKey({ reportCode, fightId: Number(fight.id) });
       const entry = state.entries[key];
 
-      const lastFetchedTimestamp = entry?.cacheMetadata.lastFetchedTimestamp;
-      const isCached = entry?.status === 'succeeded';
-      const isFresh =
-        typeof lastFetchedTimestamp === 'number' &&
-        Date.now() - lastFetchedTimestamp < DATA_FETCH_CACHE_TIMEOUT;
-
-      if (isCached && isFresh) {
+      if (hasFreshCache(entry)) {
         return false; // Prevent thunk execution
       }
 
@@ -179,6 +186,7 @@ export const fetchDeathEvents = createAsyncThunk<
 
       return true; // Allow thunk execution
     },
+    dispatchConditionRejection: true,
   },
 );
 
@@ -264,6 +272,15 @@ const deathEventsSlice = createSlice({
           fightId: Number(action.meta.arg.fight.id),
         });
         const entry = ensureEntry(state, key);
+        if (action.meta.condition) {
+          if (hasFreshCache(entry)) {
+            entry.status = 'succeeded';
+            entry.error = null;
+            entry.currentRequest = null;
+            touchAccessOrder(state, key);
+          }
+          return;
+        }
         if (
           isStaleResponse(
             entry.currentRequest,

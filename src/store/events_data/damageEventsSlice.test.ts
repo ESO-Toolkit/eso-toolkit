@@ -65,10 +65,29 @@ describe('damageEventsSlice pagination hardening', () => {
     expect(client.query).toHaveBeenCalledTimes(1);
   });
 
-  it('rejects a pagination cursor that does not advance', async () => {
-    client.query.mockResolvedValueOnce(page([damageEvent(1000)], fight.startTime));
+  it('appends deduplicated pages and hostility streams directly in fetch order', async () => {
+    client.query
+      .mockResolvedValueOnce(page([damageEvent(1000)], 1001))
+      .mockResolvedValueOnce(page([damageEvent(1000)], null))
+      .mockResolvedValueOnce(page([damageEvent(2000)], null));
 
     await store.dispatch(fetchDamageEvents({ reportCode: 'ABC123', fight, client }) as never);
+
+    expect(entry()?.status).toBe('succeeded');
+    expect(entry()?.events).toEqual([damageEvent(1000), damageEvent(2000)]);
+    expect(client.query).toHaveBeenCalledTimes(3);
+  });
+
+  it.each([
+    ['equal to the requested start', 1000, true],
+    ['NaN', Number.NaN, true],
+    ['infinite on an unrestricted first page', Number.POSITIVE_INFINITY, false],
+  ])('rejects a pagination cursor that is %s', async (_label, cursor, restrictToFightWindow) => {
+    client.query.mockResolvedValueOnce(page([damageEvent(1000)], cursor));
+
+    await store.dispatch(
+      fetchDamageEvents({ reportCode: 'ABC123', fight, client, restrictToFightWindow }) as never,
+    );
 
     expect(entry()?.status).toBe('failed');
     expect(entry()?.error).toBe('Damage event pagination cursor did not advance');

@@ -26,9 +26,9 @@ import {
   EVENT_PAGE_LIMIT,
   EVENT_QUERY_MAX_CONCURRENCY,
 } from './constants';
+import { assertCompleteEventPage, deduplicateEventPages } from './utils/deduplicateEvents';
 import { createCurrentRequest, isStaleResponse } from './utils/requestTracking';
 
-// Interface for tracking interval fetching state
 interface IntervalFetchResult {
   startTime: number;
   endTime: number;
@@ -86,8 +86,7 @@ const initialState: HostileBuffEventsState = {
   accessOrder: [],
 };
 
-// Helper function to create time intervals
-const createTimeIntervals = (
+export const createHostileBuffTimeIntervals = (
   startTime: number,
   endTime: number,
   intervalSize = 60000,
@@ -132,7 +131,7 @@ const fetchEventsForInterval = async (
   signal: AbortSignal,
   budget: PaginationBudget,
 ): Promise<BuffEvent[]> => {
-  const eventChunks: LogEvent[][] = [];
+  const eventPages: LogEvent[][] = [];
   let nextPageTimestamp: number | null = null;
 
   do {
@@ -157,7 +156,8 @@ const fetchEventsForInterval = async (
     });
 
     const page = response.reportData?.report?.events;
-    if (page?.data?.length) {
+    assertCompleteEventPage(page, 'Hostile buff');
+    if (page.data.length) {
       const nextEventCount = budget.events + page.data.length;
       if (nextEventCount > EVENT_MAX_EVENTS_PER_STREAM) {
         throw new Error(
@@ -165,9 +165,9 @@ const fetchEventsForInterval = async (
         );
       }
       budget.events = nextEventCount;
-      eventChunks.push(page.data);
+      eventPages.push(page.data);
     }
-    const followingTimestamp = page?.nextPageTimestamp ?? null;
+    const followingTimestamp = page.nextPageTimestamp ?? null;
     if (
       followingTimestamp != null &&
       (!Number.isFinite(followingTimestamp) || followingTimestamp <= requestedStartTime)
@@ -177,7 +177,7 @@ const fetchEventsForInterval = async (
     nextPageTimestamp = followingTimestamp;
   } while (nextPageTimestamp != null && nextPageTimestamp < intervalEnd);
 
-  return eventChunks.flat() as BuffEvent[];
+  return deduplicateEventPages(eventPages as BuffEvent[][]);
 };
 
 export const fetchHostileBuffEvents = createAsyncThunk<
@@ -189,7 +189,7 @@ export const fetchHostileBuffEvents = createAsyncThunk<
   async ({ reportCode, fight, client, intervalSize = 30000 }, { rejectWithValue, signal }) => {
     let intervals: Array<{ startTime: number; endTime: number }>;
     try {
-      intervals = createTimeIntervals(fight.startTime, fight.endTime, intervalSize);
+      intervals = createHostileBuffTimeIntervals(fight.startTime, fight.endTime, intervalSize);
     } catch (error) {
       return rejectWithValue(
         error instanceof Error ? error.message : 'Invalid hostile buff event interval',
@@ -259,10 +259,9 @@ export const fetchHostileBuffEvents = createAsyncThunk<
       );
     }
 
-    // Combine all events and sort by timestamp
-    const allEvents = intervalResults
-      .flatMap((result) => result.events)
-      .sort((a, b) => a.timestamp - b.timestamp);
+    const allEvents = deduplicateEventPages(intervalResults.map((result) => result.events)).sort(
+      (a, b) => a.timestamp - b.timestamp,
+    );
 
     return { events: allEvents, intervalResults };
   },
@@ -290,6 +289,7 @@ export const fetchHostileBuffEvents = createAsyncThunk<
 
       return true; // Allow thunk execution
     },
+    dispatchConditionRejection: true,
   },
 );
 
@@ -375,6 +375,18 @@ const hostileBuffEventsSlice = createSlice({
           fightId: Number(action.meta.arg.fight.id),
         });
         const entry = ensureEntry(state, key);
+        if (action.meta.condition) {
+          const lastFetchedTimestamp = entry.cacheMetadata.lastFetchedTimestamp;
+          const isFresh =
+            typeof lastFetchedTimestamp === 'number' &&
+            Date.now() - lastFetchedTimestamp < DATA_FETCH_CACHE_TIMEOUT;
+          if (entry.status === 'succeeded' && isFresh) {
+            entry.error = null;
+            entry.currentRequest = null;
+            touchAccessOrder(state, key);
+          }
+          return;
+        }
         if (
           isStaleResponse(
             entry.currentRequest,

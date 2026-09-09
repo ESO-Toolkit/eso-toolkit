@@ -27,6 +27,7 @@ import {
   EVENT_PAGE_LIMIT,
   EVENT_QUERY_MAX_CONCURRENCY,
 } from './constants';
+import { assertCompleteEventPage, deduplicateEventPages } from './utils/deduplicateEvents';
 import {
   createCurrentRequest,
   hasFreshCacheForMode,
@@ -171,7 +172,8 @@ const fetchEventsForInterval = async (
       },
     });
     const page = response.reportData?.report?.events;
-    if (page?.data?.length) {
+    assertCompleteEventPage(page, 'Friendly buff');
+    if (page.data.length) {
       const nextEventCount = budget.events + page.data.length;
       if (nextEventCount > EVENT_MAX_EVENTS_PER_STREAM) {
         throw new Error(
@@ -181,18 +183,21 @@ const fetchEventsForInterval = async (
       budget.events = nextEventCount;
       eventChunks.push(page.data);
     }
-    const followingTimestamp = page?.nextPageTimestamp ?? null;
+    const followingTimestamp = page.nextPageTimestamp ?? null;
     if (
       followingTimestamp != null &&
-      requestedStartTime != null &&
-      followingTimestamp <= requestedStartTime
+      (!Number.isFinite(followingTimestamp) ||
+        (requestedStartTime != null && followingTimestamp <= requestedStartTime))
     ) {
       throw new Error('Friendly buff event pagination cursor did not advance');
     }
     nextPageTimestamp = followingTimestamp;
-  } while (nextPageTimestamp && (restrictToFightWindow ? nextPageTimestamp < intervalEnd : true));
+  } while (
+    nextPageTimestamp != null &&
+    (restrictToFightWindow ? nextPageTimestamp < intervalEnd : true)
+  );
 
-  return eventChunks.flat() as BuffEvent[];
+  return deduplicateEventPages(eventChunks as BuffEvent[][]);
 };
 
 export const fetchFriendlyBuffEvents = createAsyncThunk<
@@ -306,9 +311,9 @@ export const fetchFriendlyBuffEvents = createAsyncThunk<
     }
 
     // Combine all events and sort by timestamp
-    const allEvents = intervalResults
-      .flatMap((result) => result.events)
-      .sort((a, b) => a.timestamp - b.timestamp);
+    const allEvents = deduplicateEventPages(intervalResults.map((result) => result.events)).sort(
+      (a, b) => a.timestamp - b.timestamp,
+    );
 
     logger.info('Friendly buff events fetch completed', {
       reportCode,
