@@ -217,7 +217,6 @@ describe('pinned findings model', () => {
     expect(shared.provenance).toEqual({
       kind: seed.provenance.kind,
       source: seed.provenance.source,
-      sourceReference: seed.provenance.sourceReference,
       observedAfterAnchorMs: 0,
     });
     expect(shared.pin).toEqual({
@@ -229,6 +228,8 @@ describe('pinned findings model', () => {
 
   it('exports non-identified shares with useful elapsed chronology but no wall-clock or report ids', () => {
     const reportEventId = 'report-private-8N32Q-event-42';
+    const unmodeledReportCode = 'VY6r8pJ2qNa4ZxLt';
+    const reportUrl = `https://www.esologs.com/reports/${unmodeledReportCode}`;
     const finding = appendResolution(
       assignFinding(
         pinFinding(
@@ -236,6 +237,7 @@ describe('pinned findings model', () => {
             ...seed,
             whatHappened: 'The mechanic occurred at 2026-09-08T12:00:00.000Z.',
             evidence: [{ ...seed.evidence[0], eventId: reportEventId }],
+            provenance: { ...seed.provenance, sourceReference: reportUrl },
           },
           '2026-09-08T12:01:00.000Z',
         ),
@@ -251,7 +253,11 @@ describe('pinned findings model', () => {
       },
     );
 
-    for (const recipient of [{ audience: 'team' as const }, { audience: 'external' as const }]) {
+    for (const recipient of [
+      { audience: 'team' as const },
+      { audience: 'external' as const },
+      { audience: 'raid-lead' as const, allowPlayerIdentifiers: false as const },
+    ]) {
       const shared = sharePinnedFinding(finding, recipient);
       const serializedShare = JSON.stringify(shared);
 
@@ -261,6 +267,8 @@ describe('pinned findings model', () => {
         '2026-09-08T12:03:00.000Z',
         '2026-09-08T12:05:00.000Z',
         reportEventId,
+        unmodeledReportCode,
+        reportUrl,
         'player-ada',
         'player-lead',
         'Ada',
@@ -270,6 +278,7 @@ describe('pinned findings model', () => {
       expect(shared.whatHappened).toContain('[time]');
       expect(shared.timeline).toEqual({ anchor: 'earliest-recorded-finding-event' });
       expect(shared.provenance.observedAfterAnchorMs).toBe(0);
+      expect(shared.provenance).not.toHaveProperty('sourceReference');
       expect(shared.pin).toEqual({
         status: 'pinned',
         pinnedAfterAnchorMs: 60_000,
