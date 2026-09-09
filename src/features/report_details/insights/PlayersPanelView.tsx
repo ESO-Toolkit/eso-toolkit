@@ -21,7 +21,6 @@ import {
 import { alpha } from '@mui/material/styles';
 import React, { useState, useMemo, useCallback } from 'react';
 
-import { PlayersSkeleton } from '../../../components/PlayersSkeleton';
 import { GrimoireData } from '../../../components/ScribingSkillsDisplay';
 import type { CompanionBuildForPlayer } from '../../../features/loadout-manager/utils/esotkCompanionReportAdapter';
 import { DetectedRole, type PlayerRoleResult } from '../../../features/role_detection';
@@ -62,7 +61,6 @@ interface PlayersPanelViewProps {
   distanceByPlayer: Record<string, number>;
   reportId?: string | null;
   fightId?: string | null;
-  isLoading: boolean;
   playerGear: Record<number, PlayerGearSetRecord[]>;
   fightStartTime?: number;
   fightEndTime?: number;
@@ -154,7 +152,6 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
     distanceByPlayer,
     reportId,
     fightId,
-    isLoading,
     playerGear,
     fightStartTime: _fightStartTime,
     fightEndTime: _fightEndTime,
@@ -377,18 +374,6 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
 
       return sorted;
     }, [playerCards, searchTerm, roleFilter, sortOption, getEffectiveBroadRole, rolesByPlayerId]);
-
-    if (isLoading) {
-      return <PlayersSkeleton />;
-    }
-
-    if (!playerActors || Object.keys(playerActors).length === 0) {
-      return (
-        <Box sx={{ p: 3 }}>
-          <Typography>No player data available.</Typography>
-        </Box>
-      );
-    }
 
     const companionStatusLabel = companionUpload?.error
       ? 'Companion: error'
