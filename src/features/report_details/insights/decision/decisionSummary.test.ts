@@ -51,7 +51,7 @@ const completeCandidate: DecisionSummaryCandidateInput = {
   observedBehavior: 'Interrupt completed after the cast.',
   expectedBehavior: 'Interrupt completes before the cast.',
   estimatedImpact: 12_500,
-  responsible: { actorName: 'Ari', role: 'interrupt' },
+  responsible: { actorId: 'actor-7', role: 'interrupt' },
   priority: 2,
 };
 
@@ -257,13 +257,93 @@ describe('buildPrioritizedDecisionSummary', () => {
     expect(buildPrioritizedDecisionSummary(malformedCandidateListRequest)).toEqual({
       scope: emptyScope,
       items: [],
-      rejected: [],
+      rejected: [{ candidateId: null, reason: 'invalid-request', outcome: 'blocked' }],
     });
     expect(buildPrioritizedDecisionSummary(malformedRequest)).toEqual({
       scope: emptyScope,
       items: [],
-      rejected: [],
+      rejected: [{ candidateId: null, reason: 'invalid-request', outcome: 'blocked' }],
     });
+  });
+
+  it('surfaces sparse candidate slots as invalid evidence', () => {
+    const candidates = new Array<DecisionSummaryCandidateInput>(2);
+    candidates[1] = completeCandidate;
+
+    const result = buildPrioritizedDecisionSummary(request(candidates));
+
+    expect(result.items.map((item) => item.id)).toEqual(['late-interrupt']);
+    expect(result.items[0].priority.stableOrder).toBe(1);
+    expect(result.rejected).toEqual([
+      { candidateId: null, reason: 'invalid-evidence', outcome: 'blocked' },
+    ]);
+  });
+
+  it('does not let duplicate ids from another scope poison the selected scope', () => {
+    const result = buildPrioritizedDecisionSummary(
+      request([
+        completeCandidate,
+        {
+          ...completeCandidate,
+          scope: { ...selectedScope, partitionId: 'pc-eu-live' },
+        },
+      ]),
+    );
+
+    expect(result.items.map((item) => item.id)).toEqual(['late-interrupt']);
+    expect(result.rejected).toEqual([
+      { candidateId: 'late-interrupt', reason: 'context-mismatch', outcome: 'blocked' },
+    ]);
+  });
+
+  it('strips display names from ownership while retaining report-local ownership', () => {
+    const candidateWithPrivateName = {
+      ...completeCandidate,
+      responsible: { actorId: 'actor-7', actorName: 'Private Player', role: 'interrupt' },
+    } as DecisionSummaryCandidateInput;
+
+    const result = buildPrioritizedDecisionSummary(request([candidateWithPrivateName]));
+
+    expect(result.items[0].responsible).toEqual({ actorId: 'actor-7', role: 'interrupt' });
+    expect(result.items[0].responsible).not.toHaveProperty('actorName');
+  });
+
+  it('copies and freezes output so later input mutation cannot change the summary', () => {
+    const mutableScope = { ...selectedScope };
+    const mutableEvidence = { ...completeEvidence };
+    const mutableResponsible = { actorId: 'actor-7', role: 'interrupt' };
+    const mutableCandidate = {
+      ...completeCandidate,
+      scope: mutableScope,
+      evidence: mutableEvidence,
+      responsible: mutableResponsible,
+    };
+
+    const result = buildPrioritizedDecisionSummary(request([mutableCandidate]));
+    mutableScope.partitionId = 'pc-eu-live';
+    mutableEvidence.context = 'mutated';
+    mutableResponsible.actorId = 'actor-99';
+
+    expect(result.scope.partitionId).toBe('pc-na-live');
+    expect(result.items[0].scope.partitionId).toBe('pc-na-live');
+    expect(result.items[0].evidence.context).toBe('target=Storm Atronach');
+    expect(result.items[0].responsible).toEqual({ actorId: 'actor-7', role: 'interrupt' });
+    expect(Object.isFrozen(result.rejected)).toBe(true);
+  });
+
+  it('rejects padded identity and ownership keys instead of normalizing ambiguously', () => {
+    const result = buildPrioritizedDecisionSummary(
+      request([
+        { ...completeCandidate, id: ' late-interrupt' },
+        { ...completeCandidate, id: 'padded-owner', responsible: { actorId: ' actor-7' } },
+      ]),
+    );
+
+    expect(result.items).toEqual([]);
+    expect(result.rejected).toEqual([
+      { candidateId: null, reason: 'invalid-evidence', outcome: 'blocked' },
+      { candidateId: 'padded-owner', reason: 'invalid-evidence', outcome: 'blocked' },
+    ]);
   });
 
   it('marks malformed present evidence metadata as invalid rather than incomplete', () => {

@@ -58,8 +58,8 @@ export type DecisionEvidenceProvenance =
     }>;
 
 export interface ResponsibleParty {
+  /** Report-local pseudonymous actor key. Never expose a player display name here. */
   readonly actorId?: string;
-  readonly actorName?: string;
   readonly role?: string;
 }
 
@@ -100,6 +100,7 @@ export interface DecisionSummaryItem {
 }
 
 export type DecisionSummaryRejectionReason =
+  | 'invalid-request'
   | 'incomplete-evidence'
   | 'invalid-evidence'
   | 'unavailable-evidence'
@@ -148,6 +149,9 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 const isNonEmptyString = (value: unknown): value is string =>
   typeof value === 'string' && value.trim().length > 0;
 
+const isIdentifierString = (value: unknown): value is string =>
+  isNonEmptyString(value) && value === value.trim();
+
 const isFiniteNumber = (value: unknown): value is number =>
   typeof value === 'number' && Number.isFinite(value);
 
@@ -156,15 +160,15 @@ const isNonNegativeFiniteNumber = (value: unknown): value is number =>
 
 const isScope = (value: unknown): value is DecisionScope =>
   isRecord(value) &&
-  isNonEmptyString(value.partitionId) &&
-  isNonEmptyString(value.update) &&
-  isNonEmptyString(value.encounterId) &&
-  isNonEmptyString(value.encounterVersion) &&
+  isIdentifierString(value.partitionId) &&
+  isIdentifierString(value.update) &&
+  isIdentifierString(value.encounterId) &&
+  isIdentifierString(value.encounterVersion) &&
   (value.encounterKind === 'encounter' || value.encounterKind === 'training-dummy') &&
-  isNonEmptyString(value.difficulty) &&
-  isNonEmptyString(value.role) &&
-  isNonEmptyString(value.esoClass) &&
-  isNonEmptyString(value.buildBracket);
+  isIdentifierString(value.difficulty) &&
+  isIdentifierString(value.role) &&
+  isIdentifierString(value.esoClass) &&
+  isIdentifierString(value.buildBracket);
 
 const scopesMatch = (left: DecisionScope, right: DecisionScope): boolean =>
   left.partitionId === right.partitionId &&
@@ -229,10 +233,10 @@ const isResponsibleParty = (value: unknown): value is ResponsibleParty => {
     return false;
   }
 
-  const fields = [value.actorId, value.actorName, value.role];
+  const fields = [value.actorId, value.role];
   return (
-    fields.some(isNonEmptyString) &&
-    fields.every((field) => field === undefined || isNonEmptyString(field))
+    fields.some(isIdentifierString) &&
+    fields.every((field) => field === undefined || isIdentifierString(field))
   );
 };
 
@@ -294,18 +298,17 @@ const freezeResponsibleParty = (
 
   return Object.freeze({
     ...(responsible.actorId === undefined ? {} : { actorId: responsible.actorId }),
-    ...(responsible.actorName === undefined ? {} : { actorName: responsible.actorName }),
     ...(responsible.role === undefined ? {} : { role: responsible.role }),
   });
 };
 
 const getCandidateId = (candidate: DecisionSummaryCandidateInput): string | null =>
-  isNonEmptyString(candidate.id) ? candidate.id : null;
+  isIdentifierString(candidate.id) ? candidate.id : null;
 
 const isCompleteCandidate = (
   candidate: DecisionSummaryCandidateInput,
 ): candidate is CompleteDecisionCandidate =>
-  isNonEmptyString(candidate.id) &&
+  isIdentifierString(candidate.id) &&
   isScope(candidate.scope) &&
   candidate.availability === 'available' &&
   isNonEmptyString(candidate.whatHappened) &&
@@ -321,7 +324,6 @@ const isCompleteCandidate = (
 
 const hasInvalidPresentMetadata = (candidate: DecisionSummaryCandidateInput): boolean => {
   const stringFields = [
-    candidate.id,
     candidate.whatHappened,
     candidate.whyItMatters,
     candidate.recommendedNextAction,
@@ -330,6 +332,7 @@ const hasInvalidPresentMetadata = (candidate: DecisionSummaryCandidateInput): bo
   ];
 
   return (
+    (candidate.id !== undefined && !isIdentifierString(candidate.id)) ||
     stringFields.some((field) => field !== undefined && !isNonEmptyString(field)) ||
     (candidate.availability !== undefined &&
       candidate.availability !== 'available' &&
@@ -411,63 +414,71 @@ export const buildPrioritizedDecisionSummary = (
     return Object.freeze({
       scope: freezeScope(emptyScope),
       items: Object.freeze(items),
-      rejected: Object.freeze(rejected),
+      rejected: Object.freeze([
+        Object.freeze({
+          candidateId: null,
+          reason: 'invalid-request' as const,
+          outcome: 'blocked' as const,
+        }),
+      ]),
     });
   }
 
   const duplicateIds = new Set<string>();
   const candidateIds = new Set<string>();
 
-  request.candidates.forEach((candidate) => {
-    if (!isRecord(candidate)) return;
+  for (let sourceOrder = 0; sourceOrder < request.candidates.length; sourceOrder += 1) {
+    const candidate: unknown = request.candidates[sourceOrder];
+    if (!isRecord(candidate)) continue;
 
     const candidateInput = candidate as DecisionSummaryCandidateInput;
     if (!isScope(candidateInput.scope) || !scopesMatch(request.scope, candidateInput.scope)) {
-      return;
+      continue;
     }
 
     const candidateId = getCandidateId(candidateInput);
-    if (candidateId === null) return;
+    if (candidateId === null) continue;
     if (candidateIds.has(candidateId)) {
       duplicateIds.add(candidateId);
-      return;
+      continue;
     }
     candidateIds.add(candidateId);
-  });
+  }
 
-  request.candidates.forEach((candidate, sourceOrder) => {
+  for (let sourceOrder = 0; sourceOrder < request.candidates.length; sourceOrder += 1) {
+    const candidate: unknown = request.candidates[sourceOrder];
     if (!isRecord(candidate)) {
       rejected.push(
         Object.freeze({ candidateId: null, reason: 'invalid-evidence', outcome: 'blocked' }),
       );
-      return;
+      continue;
     }
 
     const candidateInput = candidate as DecisionSummaryCandidateInput;
 
     if (!isScope(candidateInput.scope)) {
       rejected.push(rejectedCandidate(candidateInput, 'invalid-evidence'));
-      return;
+      continue;
     }
 
     if (!scopesMatch(request.scope, candidateInput.scope)) {
       rejected.push(rejectedCandidate(candidateInput, 'context-mismatch'));
-      return;
+      continue;
     }
 
     const candidateId = getCandidateId(candidateInput);
     if (candidateId !== null && duplicateIds.has(candidateId)) {
       rejected.push(rejectedCandidate(candidateInput, 'duplicate-candidate'));
-      return;
+      continue;
     }
 
     if (!isCompleteCandidate(candidateInput)) {
       rejected.push(rejectionFor(candidateInput));
-      return;
+      continue;
     }
 
     items.push(toItem(candidateInput, sourceOrder));
-  });
+  }
 
   items.sort(
     (left, right) =>
