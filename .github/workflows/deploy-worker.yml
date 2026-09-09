@@ -10,6 +10,7 @@ on:
         options:
           - roster-hub-api
           - discord-bot
+          - edge-router
 
 permissions:
   contents: read
@@ -30,7 +31,22 @@ jobs:
         with:
           ref: ${{ github.sha }}
 
-      - name: Setup Node.js
+      - name: Setup Node.js for edge-router assets
+        if: inputs.worker == 'edge-router'
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Build edge-router assets
+        if: inputs.worker == 'edge-router'
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm run build
+
+      - name: Setup Node.js for worker dependencies
+        if: inputs.worker != 'edge-router'
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: '24'
@@ -38,6 +54,7 @@ jobs:
           cache-dependency-path: ${{ inputs.worker }}/package-lock.json
 
       - name: Install locked worker dependencies
+        if: inputs.worker != 'edge-router'
         working-directory: ${{ inputs.worker }}
         run: npm ci --ignore-scripts --no-audit --no-fund
 
