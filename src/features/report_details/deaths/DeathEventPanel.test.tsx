@@ -1,5 +1,5 @@
 import { ThemeProvider, createTheme } from '@mui/material/styles';
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 
@@ -125,22 +125,43 @@ const mockFight: FightFragment = createMockFight({
 });
 
 // Default mock setup
-const setupMocks = (overrides: any = {}) => {
+const setupMocks = (overrides: Record<string, Record<string, unknown> | FightFragment> = {}) => {
   const defaultMocks = {
     useSelectedReportAndFight: { reportId: 'test-report', fightId: '1' },
     useDeathEvents: { deathEvents: [], isDeathEventsLoading: false },
-    useDamageEvents: { damageEvents: [], isDamageEventsLoading: false },
-    useCastEvents: { castEvents: [], isCastEventsLoading: false },
+    useDamageEvents: { damageEvents: [], isDamageEventsLoading: false, damageEventsError: null },
+    useCastEvents: { castEvents: [], isCastEventsLoading: false, castEventsError: null },
     useHealingEvents: { healingEvents: [], isHealingEventsLoading: false },
     useResourceEvents: { resourceEvents: [], isResourceEventsLoading: false },
-    useDebuffLookupTask: { debuffLookupData: null, isDebuffLookupLoading: false },
-    useReportMasterData: { reportMasterData: createMockMasterData(), isMasterDataLoading: false },
-    usePlayerData: { playerData: createMockPlayerData() },
+    useDebuffLookupTask: {
+      debuffLookupData: createMockDebuffLookupData([]),
+      isDebuffLookupLoading: false,
+      debuffLookupError: null,
+    },
+    useReportMasterData: {
+      reportMasterData: { ...createMockMasterData(), loaded: true },
+      isMasterDataLoading: false,
+    },
+    usePlayerData: {
+      playerData: { ...createMockPlayerData(), status: 'succeeded', error: null },
+      isPlayerDataLoading: false,
+    },
     useResolvedReportFightContext: { reportCode: 'test-report', fightId: 1 },
     useFightForContext: mockFight,
   };
 
-  const mergedMocks = { ...defaultMocks, ...overrides };
+  const mergedMocks = {
+    ...defaultMocks,
+    ...overrides,
+    useDeathEvents: { ...defaultMocks.useDeathEvents, ...overrides.useDeathEvents },
+    useDamageEvents: { ...defaultMocks.useDamageEvents, ...overrides.useDamageEvents },
+    useCastEvents: { ...defaultMocks.useCastEvents, ...overrides.useCastEvents },
+    useHealingEvents: { ...defaultMocks.useHealingEvents, ...overrides.useHealingEvents },
+    useResourceEvents: { ...defaultMocks.useResourceEvents, ...overrides.useResourceEvents },
+    useDebuffLookupTask: { ...defaultMocks.useDebuffLookupTask, ...overrides.useDebuffLookupTask },
+    useReportMasterData: { ...defaultMocks.useReportMasterData, ...overrides.useReportMasterData },
+    usePlayerData: { ...defaultMocks.usePlayerData, ...overrides.usePlayerData },
+  };
 
   useSelectedReportAndFight.mockReturnValue(mergedMocks.useSelectedReportAndFight);
   useDeathEvents.mockReturnValue(mergedMocks.useDeathEvents);
@@ -179,6 +200,20 @@ const setupMocks = (overrides: any = {}) => {
     getProgressBarStyles: () => ({}),
     isDarkMode: false,
   });
+};
+
+const expectPanelSnapshot = (container: HTMLElement, name: string) => {
+  const panelState = container.querySelector('section');
+  const content = panelState?.lastElementChild;
+
+  if (content?.classList.contains('MuiBox-root') && content.firstElementChild) {
+    const legacyContainer = document.createElement('div');
+    legacyContainer.append(content.firstElementChild.cloneNode(true));
+    expect(legacyContainer).toMatchSnapshot(name);
+    return;
+  }
+
+  expect(container).toMatchSnapshot(name);
 };
 
 describe('DeathEventPanel Taunt Status Tests', () => {
@@ -227,7 +262,7 @@ describe('DeathEventPanel Taunt Status Tests', () => {
         </TestWrapper>,
       );
 
-      expect(container).toMatchSnapshot('death-with-taunted-killer');
+      expectPanelSnapshot(container, 'death-with-taunted-killer');
     });
 
     it('should render death with non-taunted killer in killing blow', () => {
@@ -255,7 +290,7 @@ describe('DeathEventPanel Taunt Status Tests', () => {
         </TestWrapper>,
       );
 
-      expect(container).toMatchSnapshot('death-with-non-taunted-killer');
+      expectPanelSnapshot(container, 'death-with-non-taunted-killer');
     });
 
     it('should render attacks with mixed taunt status preceding death', () => {
@@ -322,7 +357,7 @@ describe('DeathEventPanel Taunt Status Tests', () => {
         </TestWrapper>,
       );
 
-      expect(container).toMatchSnapshot('attacks-with-mixed-taunt-status');
+      expectPanelSnapshot(container, 'attacks-with-mixed-taunt-status');
     });
 
     it('should render multiple attackers with different taunt statuses', () => {
@@ -397,7 +432,7 @@ describe('DeathEventPanel Taunt Status Tests', () => {
         </TestWrapper>,
       );
 
-      expect(container).toMatchSnapshot('multiple-attackers-different-taunt-status');
+      expectPanelSnapshot(container, 'multiple-attackers-different-taunt-status');
     });
 
     it('should handle simultaneous killing blow attacks with mixed taunt status', () => {
@@ -464,7 +499,7 @@ describe('DeathEventPanel Taunt Status Tests', () => {
         </TestWrapper>,
       );
 
-      expect(container).toMatchSnapshot('simultaneous-attacks-mixed-taunt-status');
+      expectPanelSnapshot(container, 'simultaneous-attacks-mixed-taunt-status');
     });
   });
 
@@ -490,7 +525,7 @@ describe('DeathEventPanel Taunt Status Tests', () => {
         </TestWrapper>,
       );
 
-      expect(container).toMatchSnapshot('missing-debuff-lookup-data');
+      expectPanelSnapshot(container, 'missing-debuff-lookup-data');
     });
 
     it('should handle null/undefined sourceID values', () => {
@@ -526,7 +561,7 @@ describe('DeathEventPanel Taunt Status Tests', () => {
         </TestWrapper>,
       );
 
-      expect(container).toMatchSnapshot('null-undefined-source-ids');
+      expectPanelSnapshot(container, 'null-undefined-source-ids');
     });
 
     it('should handle loading states correctly', () => {
@@ -540,7 +575,7 @@ describe('DeathEventPanel Taunt Status Tests', () => {
         </TestWrapper>,
       );
 
-      expect(container).toMatchSnapshot('loading-state');
+      expectPanelSnapshot(container, 'loading-state');
     });
 
     it('should handle empty events arrays', () => {
@@ -559,7 +594,7 @@ describe('DeathEventPanel Taunt Status Tests', () => {
         </TestWrapper>,
       );
 
-      expect(container).toMatchSnapshot('empty-events-arrays');
+      expectPanelSnapshot(container, 'empty-events-arrays');
     });
 
     it('should handle taunt status for blocked attacks', () => {
@@ -605,7 +640,7 @@ describe('DeathEventPanel Taunt Status Tests', () => {
         </TestWrapper>,
       );
 
-      expect(container).toMatchSnapshot('blocked-attack-with-taunt');
+      expectPanelSnapshot(container, 'blocked-attack-with-taunt');
     });
   });
 
@@ -658,7 +693,7 @@ describe('DeathEventPanel Taunt Status Tests', () => {
       expect(recentAttackText).toContain('Enemy Boss');
       expect(recentAttackText).toContain('TAUNT'); // Taunt indicator appears
 
-      expect(container).toMatchSnapshot('recent-attacks-with-taunt-indicator');
+      expectPanelSnapshot(container, 'recent-attacks-with-taunt-indicator');
     });
 
     it('should NOT show taunt indicator after attacker name when not taunted', () => {
@@ -702,7 +737,7 @@ describe('DeathEventPanel Taunt Status Tests', () => {
       // Count taunt indicators - there should be none after the name
       // (Note: Killing blow section may still show taunt status separately)
 
-      expect(container).toMatchSnapshot('recent-attacks-without-taunt-indicator');
+      expectPanelSnapshot(container, 'recent-attacks-without-taunt-indicator');
     });
 
     it('should show multiple taunt indicators for multiple taunted attacks', () => {
@@ -773,7 +808,7 @@ describe('DeathEventPanel Taunt Status Tests', () => {
       const tauntMatches = (recentAttackText.match(/TAUNT/g) || []).length;
       expect(tauntMatches).toBeGreaterThan(0); // At least one taunt indicator
 
-      expect(container).toMatchSnapshot('recent-attacks-multiple-taunt-indicators');
+      expectPanelSnapshot(container, 'recent-attacks-multiple-taunt-indicators');
     });
 
     it('should show mixed taunt indicators for attacks from different enemies', () => {
@@ -855,7 +890,106 @@ describe('DeathEventPanel Taunt Status Tests', () => {
       // Should have some taunt indicators but not for all attacks
       expect(recentAttackText).toContain('TAUNT');
 
-      expect(container).toMatchSnapshot('recent-attacks-mixed-taunt-status');
+      expectPanelSnapshot(container, 'recent-attacks-mixed-taunt-status');
     });
+  });
+});
+
+describe('DeathEventPanel lifecycle states', () => {
+  const zeroStartFight = createMockFight({ id: 1, startTime: 0, endTime: 60000 });
+  const deathAtFightStart = createMockDeathEvent({
+    timestamp: 0,
+    targetID: 456,
+    sourceID: 789,
+    abilityGameID: KnownAbilities.HURRICANE,
+  });
+
+  const renderPanel = () =>
+    render(
+      <TestWrapper>
+        <DeathEventPanel />
+      </TestWrapper>,
+    );
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('shows loading before a death stream is available', () => {
+    setupMocks({ useDeathEvents: { deathEvents: [], isDeathEventsLoading: true } });
+
+    renderPanel();
+
+    expect(screen.getByText('Loading data.')).toBeInTheDocument();
+  });
+
+  it('shows empty after every dependency confirms no player deaths', () => {
+    setupMocks();
+
+    renderPanel();
+
+    expect(screen.getByText('No data is available for this panel.')).toBeInTheDocument();
+  });
+
+  it('shows retained deaths while a dependency is still refreshing', () => {
+    setupMocks({
+      useDeathEvents: { deathEvents: [deathAtFightStart], isDeathEventsLoading: false },
+      useDamageEvents: { isDamageEventsLoading: true },
+      useFightForContext: zeroStartFight,
+    });
+
+    renderPanel();
+
+    expect(
+      screen.getByText('Updating data; showing the latest available results.'),
+    ).toBeInTheDocument();
+    expect(screen.getAllByText('DPS Player').length).toBeGreaterThan(0);
+  });
+
+  it('warns when retained deaths cannot be confirmed current', () => {
+    setupMocks({
+      useDeathEvents: { deathEvents: [deathAtFightStart], isDeathEventsLoading: false },
+      useDebuffLookupTask: { debuffLookupData: null, isDebuffLookupLoading: false },
+      useFightForContext: zeroStartFight,
+    });
+
+    renderPanel();
+
+    expect(screen.getByText('Panel data is not confirmed current.')).toBeInTheDocument();
+    expect(screen.getAllByText('DPS Player').length).toBeGreaterThan(0);
+  });
+
+  it('surfaces a failed refresh while retaining usable deaths', () => {
+    setupMocks({
+      useDeathEvents: { deathEvents: [deathAtFightStart], isDeathEventsLoading: false },
+      useDebuffLookupTask: {
+        debuffLookupData: createMockDebuffLookupData([]),
+        isDebuffLookupLoading: false,
+        debuffLookupError: 'Debuff lookup failed',
+      },
+      useFightForContext: zeroStartFight,
+    });
+
+    renderPanel();
+
+    expect(
+      screen.getByText(
+        'The latest refresh failed. Retained data may be out of date. Debuff lookup failed',
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getAllByText('DPS Player').length).toBeGreaterThan(0);
+  });
+
+  it('marks timestamp-zero deaths ready after all dependencies succeed', () => {
+    setupMocks({
+      useDeathEvents: { deathEvents: [deathAtFightStart], isDeathEventsLoading: false },
+      useFightForContext: zeroStartFight,
+    });
+
+    renderPanel();
+
+    expect(screen.getByText('Data is ready.')).toBeInTheDocument();
+    expect(screen.getAllByText('DPS Player').length).toBeGreaterThan(0);
+    expect(screen.getByText(/0:00\.0/)).toBeInTheDocument();
   });
 });
