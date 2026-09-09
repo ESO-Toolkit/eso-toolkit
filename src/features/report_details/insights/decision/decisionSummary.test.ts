@@ -2,6 +2,8 @@ import {
   buildPrioritizedDecisionSummary,
   type DecisionSummaryCandidateInput,
   type DecisionSummaryRequest,
+  type DecisionEvidence,
+  type DecisionScope,
 } from './decisionSummary';
 
 const selectedScope = {
@@ -59,6 +61,8 @@ const request = (candidates: readonly DecisionSummaryCandidateInput[]): Decision
   scope: selectedScope,
   candidates,
 });
+
+type Mutable<T> = { -readonly [Key in keyof T]: T[Key] };
 
 describe('buildPrioritizedDecisionSummary', () => {
   it('surfaces a complete immutable decision with every required field', () => {
@@ -309,8 +313,8 @@ describe('buildPrioritizedDecisionSummary', () => {
   });
 
   it('copies and freezes output so later input mutation cannot change the summary', () => {
-    const mutableScope = { ...selectedScope };
-    const mutableEvidence = { ...completeEvidence };
+    const mutableScope: Mutable<DecisionScope> = { ...selectedScope };
+    const mutableEvidence: Mutable<DecisionEvidence> = { ...completeEvidence };
     const mutableResponsible = { actorId: 'actor-7', role: 'interrupt' };
     const mutableCandidate = {
       ...completeCandidate,
