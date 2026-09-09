@@ -1,4 +1,5 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import '@testing-library/jest-dom';
@@ -86,6 +87,7 @@ describe('HeaderBar', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     setConnection(undefined);
+    jest.spyOn(window, 'scrollTo').mockImplementation(() => undefined);
     mockUseAuth.mockReturnValue({
       accessToken: '',
       isLoggedIn: false,
@@ -163,6 +165,46 @@ describe('HeaderBar', () => {
     fireEvent.touchStart(screen.getAllByRole('button', { name: /roster hub/i })[0]);
 
     expect(mockPreloadHubRoutes).not.toHaveBeenCalled();
+  });
+
+  it('exposes menu relationships and a stateful mobile navigation control', async () => {
+    renderHeader();
+
+    const menuButton = screen.getByRole('button', { name: 'Open navigation menu' });
+    await act(async () => {
+      menuButton.focus();
+    });
+    expect(menuButton).toHaveFocus();
+    expect(menuButton).toHaveAttribute('aria-haspopup', 'dialog');
+    expect(menuButton).toHaveAttribute('aria-expanded', 'false');
+    expect(menuButton).toHaveAttribute('aria-controls', 'mobile-nav-menu');
+  });
+
+  it('opens the mobile navigation dialog with Enter and restores trigger focus on Escape', async () => {
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter>
+        <HeaderBar />
+      </MemoryRouter>,
+    );
+
+    const menuButton = screen.getByRole('button', { name: 'Open navigation menu' });
+    await act(async () => {
+      menuButton.focus();
+    });
+    await user.keyboard('{Enter}');
+
+    const navigationDialog = screen.getByRole('dialog', { name: 'Navigation menu' });
+    expect(menuButton).toHaveAttribute('aria-expanded', 'true');
+    expect(menuButton).toHaveAttribute('aria-label', 'Close navigation menu');
+    expect(navigationDialog).toHaveAttribute('aria-modal', 'true');
+
+    await user.keyboard('{Escape}');
+
+    await waitFor(() => {
+      expect(menuButton).toHaveAttribute('aria-expanded', 'false');
+      expect(menuButton).toHaveFocus();
+    });
   });
 
   it('opens profile settings as a named dialog rather than a menu', () => {
