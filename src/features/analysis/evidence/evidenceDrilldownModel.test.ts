@@ -5,12 +5,22 @@ import {
 
 const validInput = () =>
   ({
+    context: {
+      esoUpdate: 'U46',
+      partitionId: 'live-pc-na',
+      encounterId: 'lucent-citadel',
+      encounterVersion: '1',
+      difficulty: 'veteran',
+    },
     fight: { startTimestamp: 100, endTimestamp: 200 },
     entries: [
       {
         id: 'late',
-        encounterId: 'encounter-b',
-        partitionId: 'partition-2',
+        esoUpdate: 'U46',
+        encounterId: 'lucent-citadel',
+        encounterVersion: '1',
+        partitionId: 'live-pc-na',
+        difficulty: 'veteran',
         actorId: 'actor-2',
         role: 'damage',
         phaseId: 'execute',
@@ -23,8 +33,11 @@ const validInput = () =>
       },
       {
         id: 'early',
-        encounterId: 'encounter-a',
-        partitionId: 'partition-1',
+        esoUpdate: 'U46',
+        encounterId: 'lucent-citadel',
+        encounterVersion: '1',
+        partitionId: 'live-pc-na',
+        difficulty: 'veteran',
         actorId: 'actor-1',
         role: 'healer',
         phaseId: 'opening',
@@ -43,13 +56,20 @@ describe('createEvidenceDrilldownSnapshot', () => {
     const snapshot = createEvidenceDrilldownSnapshot(validInput());
 
     expect(snapshot).toEqual({
+      context: {
+        esoUpdate: 'U46',
+        partitionId: 'live-pc-na',
+        encounterId: 'lucent-citadel',
+        encounterVersion: '1',
+        difficulty: 'veteran',
+      },
       fight: { startTimestamp: 100, endTimestamp: 200 },
       entries: [
         expect.objectContaining({
           id: 'early',
           scope: {
-            encounterId: 'encounter-a',
-            partitionId: 'partition-1',
+            encounterId: 'lucent-citadel',
+            partitionId: 'live-pc-na',
             actorId: 'actor-1',
             role: 'healer',
             phaseId: 'opening',
@@ -120,8 +140,6 @@ describe('createEvidenceDrilldownSnapshot', () => {
       {
         ...input.entries[0],
         id: 'z',
-        encounterId: 'same',
-        partitionId: 'same',
         actorId: 'same',
         role: 'same',
         phaseId: 'same',
@@ -130,8 +148,6 @@ describe('createEvidenceDrilldownSnapshot', () => {
       {
         ...input.entries[1],
         id: 'a',
-        encounterId: 'same',
-        partitionId: 'same',
         actorId: 'same',
         role: 'same',
         phaseId: 'same',
@@ -154,6 +170,19 @@ describe('createEvidenceDrilldownSnapshot', () => {
   it('rejects duplicate evidence ids instead of merging distinct evidence', () => {
     const input = validInput();
     input.entries[1] = { ...input.entries[1], id: input.entries[0].id };
+
+    expect(createEvidenceDrilldownSnapshot(input)).toBeNull();
+  });
+
+  it.each([
+    ['ESO update', 'esoUpdate', 'U47'],
+    ['partition', 'partitionId', 'pts-pc-na'],
+    ['encounter', 'encounterId', 'cloudrest'],
+    ['encounter version', 'encounterVersion', '2'],
+    ['difficulty', 'difficulty', 'normal'],
+  ] as const)('rejects cross-context %s evidence', (_label, field, value) => {
+    const input = validInput();
+    input.entries[0] = { ...input.entries[0], [field]: value };
 
     expect(createEvidenceDrilldownSnapshot(input)).toBeNull();
   });
@@ -243,6 +272,7 @@ describe('createEvidenceDrilldownSnapshot', () => {
     );
     expect(Object.isFrozen(snapshot)).toBe(true);
     expect(Object.isFrozen(snapshot?.fight)).toBe(true);
+    expect(Object.isFrozen(snapshot?.context)).toBe(true);
     expect(Object.isFrozen(snapshot?.entries)).toBe(true);
     expect(Object.isFrozen(snapshot?.entries[0])).toBe(true);
     expect(Object.isFrozen(snapshot?.entries[0].scope)).toBe(true);

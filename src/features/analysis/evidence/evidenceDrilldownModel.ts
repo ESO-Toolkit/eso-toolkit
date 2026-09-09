@@ -7,10 +7,21 @@
 
 export type EvidenceConfidence = number | 'unknown';
 
+export type EvidenceContext = Readonly<{
+  esoUpdate: string;
+  partitionId: string;
+  encounterId: string;
+  encounterVersion: string;
+  difficulty: string;
+}>;
+
 export type EvidenceDrilldownEntryInput = Readonly<{
   id: string;
+  esoUpdate: string;
   encounterId: string;
+  encounterVersion: string;
   partitionId: string;
+  difficulty: string;
   actorId: string;
   role: string;
   phaseId: string;
@@ -23,6 +34,7 @@ export type EvidenceDrilldownEntryInput = Readonly<{
 }>;
 
 export type EvidenceDrilldownInput = Readonly<{
+  context: EvidenceContext;
   fight: Readonly<{
     startTimestamp: number;
     endTimestamp: number;
@@ -55,6 +67,7 @@ export type EvidenceDrilldownEntry = Readonly<{
 }>;
 
 export type EvidenceDrilldownSnapshot = Readonly<{
+  context: EvidenceContext;
   fight: Readonly<{
     startTimestamp: number;
     endTimestamp: number;
@@ -66,12 +79,22 @@ export type EvidenceDrilldownSnapshot = Readonly<{
 
 type UnknownRecord = Record<string, unknown>;
 
-const INPUT_KEYS = ['fight', 'entries'] as const;
+const INPUT_KEYS = ['context', 'fight', 'entries'] as const;
+const CONTEXT_KEYS = [
+  'esoUpdate',
+  'partitionId',
+  'encounterId',
+  'encounterVersion',
+  'difficulty',
+] as const;
 const FIGHT_KEYS = ['startTimestamp', 'endTimestamp'] as const;
 const ENTRY_KEYS = [
   'id',
+  'esoUpdate',
   'encounterId',
+  'encounterVersion',
   'partitionId',
+  'difficulty',
   'actorId',
   'role',
   'phaseId',
@@ -102,6 +125,19 @@ const isFiniteNumber = (value: unknown): value is number =>
 
 const isNonEmptyString = (value: unknown): value is string =>
   typeof value === 'string' && value.trim().length > 0;
+
+const toContext = (value: unknown): EvidenceContext | null => {
+  if (!isPlainRecord(value) || !hasExactKeys(value, CONTEXT_KEYS)) return null;
+  if (!CONTEXT_KEYS.every((key) => isNonEmptyString(value[key]))) return null;
+
+  return {
+    esoUpdate: value.esoUpdate as string,
+    partitionId: value.partitionId as string,
+    encounterId: value.encounterId as string,
+    encounterVersion: value.encounterVersion as string,
+    difficulty: value.difficulty as string,
+  };
+};
 
 const isConfidence = (value: unknown): value is EvidenceConfidence =>
   value === 'unknown' || (isFiniteNumber(value) && value >= 0 && value <= 1);
@@ -134,14 +170,18 @@ const compareEntries = (left: EvidenceDrilldownEntry, right: EvidenceDrilldownEn
 
 const toEntry = (
   value: unknown,
+  context: EvidenceContext,
   fight: EvidenceDrilldownSnapshot['fight'],
 ): EvidenceDrilldownEntry | null => {
   if (!isPlainRecord(value) || !hasExactKeys(value, ENTRY_KEYS)) return null;
 
   const {
     id,
+    esoUpdate,
     encounterId,
+    encounterVersion,
     partitionId,
+    difficulty,
     actorId,
     role,
     phaseId,
@@ -155,8 +195,11 @@ const toEntry = (
 
   if (
     !isNonEmptyString(id) ||
-    !isNonEmptyString(encounterId) ||
-    !isNonEmptyString(partitionId) ||
+    esoUpdate !== context.esoUpdate ||
+    encounterId !== context.encounterId ||
+    encounterVersion !== context.encounterVersion ||
+    partitionId !== context.partitionId ||
+    difficulty !== context.difficulty ||
     !isNonEmptyString(actorId) ||
     !isNonEmptyString(role) ||
     !isNonEmptyString(phaseId) ||
@@ -193,6 +236,7 @@ const freezeSnapshot = (snapshot: EvidenceDrilldownSnapshot): EvidenceDrilldownS
   }
 
   Object.freeze(snapshot.fight);
+  Object.freeze(snapshot.context);
   Object.freeze(snapshot.entries);
   return Object.freeze(snapshot);
 };
@@ -209,6 +253,8 @@ export const createEvidenceDrilldownSnapshot = (
     }
 
     if (!hasExactKeys(input.fight, FIGHT_KEYS) || !Array.isArray(input.entries)) return null;
+    const context = toContext(input.context);
+    if (context === null) return null;
 
     const { startTimestamp, endTimestamp } = input.fight;
     if (
@@ -224,7 +270,7 @@ export const createEvidenceDrilldownSnapshot = (
     const entries: EvidenceDrilldownEntry[] = [];
 
     for (const candidate of input.entries) {
-      const entry = toEntry(candidate, fight);
+      const entry = toEntry(candidate, context, fight);
       if (entry === null || seenIds.has(entry.id)) return null;
       seenIds.add(entry.id);
       entries.push(entry);
@@ -237,7 +283,7 @@ export const createEvidenceDrilldownSnapshot = (
     );
     if (!isFiniteNumber(scoreContributionTotal)) return null;
 
-    return freezeSnapshot({ fight, entries, scoreContributionTotal });
+    return freezeSnapshot({ context, fight, entries, scoreContributionTotal });
   } catch {
     return null;
   }
