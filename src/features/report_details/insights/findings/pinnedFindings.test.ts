@@ -217,6 +217,36 @@ describe('pinned findings model', () => {
     expect(shared.provenance).toEqual(seed.provenance);
   });
 
+  it('redacts differently cased player identifiers and treats their punctuation literally', () => {
+    const punctuatedSeed: PinnedFindingSeed = {
+      ...seed,
+      whatHappened: 'ada [lead] triggered the mechanic.',
+      whyItMatters: 'PLAYER.ADA+42 needs the evidence without exposing identity.',
+      evidence: [
+        {
+          ...seed.evidence[0],
+          observation: 'Review ADA [LEAD] and player.ada+42 before sharing.',
+          actor: {
+            id: 'player.ada+42',
+            displayName: 'Ada [Lead]',
+            role: 'damage-dealer',
+          },
+        },
+      ],
+    };
+
+    const shared = sharePinnedFinding(pinFinding(punctuatedSeed, '2026-09-08T12:01:00.000Z'), {
+      audience: 'external',
+    });
+    const serializedShare = JSON.stringify(shared).toLowerCase();
+
+    expect(serializedShare).not.toContain('ada [lead]');
+    expect(serializedShare).not.toContain('player.ada+42');
+    expect(shared.whatHappened).toContain('[player]');
+    expect(shared.whyItMatters).toContain('[player]');
+    expect(shared.evidence[0].observation).toContain('[player]');
+  });
+
   it('includes player identifiers only with explicit recipient authorization', () => {
     const shared = sharePinnedFinding(pinFinding(seed, '2026-09-08T12:01:00.000Z'), {
       audience: 'raid-lead',
