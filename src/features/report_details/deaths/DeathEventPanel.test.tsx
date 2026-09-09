@@ -1,5 +1,5 @@
 import { ThemeProvider, createTheme } from '@mui/material/styles';
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 
@@ -125,22 +125,43 @@ const mockFight: FightFragment = createMockFight({
 });
 
 // Default mock setup
-const setupMocks = (overrides: any = {}) => {
+const setupMocks = (overrides: Record<string, Record<string, unknown> | FightFragment> = {}) => {
   const defaultMocks = {
     useSelectedReportAndFight: { reportId: 'test-report', fightId: '1' },
     useDeathEvents: { deathEvents: [], isDeathEventsLoading: false },
-    useDamageEvents: { damageEvents: [], isDamageEventsLoading: false },
-    useCastEvents: { castEvents: [], isCastEventsLoading: false },
+    useDamageEvents: { damageEvents: [], isDamageEventsLoading: false, damageEventsError: null },
+    useCastEvents: { castEvents: [], isCastEventsLoading: false, castEventsError: null },
     useHealingEvents: { healingEvents: [], isHealingEventsLoading: false },
     useResourceEvents: { resourceEvents: [], isResourceEventsLoading: false },
-    useDebuffLookupTask: { debuffLookupData: null, isDebuffLookupLoading: false },
-    useReportMasterData: { reportMasterData: createMockMasterData(), isMasterDataLoading: false },
-    usePlayerData: { playerData: createMockPlayerData() },
+    useDebuffLookupTask: {
+      debuffLookupData: createMockDebuffLookupData([]),
+      isDebuffLookupLoading: false,
+      debuffLookupError: null,
+    },
+    useReportMasterData: {
+      reportMasterData: { ...createMockMasterData(), loaded: true },
+      isMasterDataLoading: false,
+    },
+    usePlayerData: {
+      playerData: { ...createMockPlayerData(), status: 'succeeded', error: null },
+      isPlayerDataLoading: false,
+    },
     useResolvedReportFightContext: { reportCode: 'test-report', fightId: 1 },
     useFightForContext: mockFight,
   };
 
-  const mergedMocks = { ...defaultMocks, ...overrides };
+  const mergedMocks = {
+    ...defaultMocks,
+    ...overrides,
+    useDeathEvents: { ...defaultMocks.useDeathEvents, ...overrides.useDeathEvents },
+    useDamageEvents: { ...defaultMocks.useDamageEvents, ...overrides.useDamageEvents },
+    useCastEvents: { ...defaultMocks.useCastEvents, ...overrides.useCastEvents },
+    useHealingEvents: { ...defaultMocks.useHealingEvents, ...overrides.useHealingEvents },
+    useResourceEvents: { ...defaultMocks.useResourceEvents, ...overrides.useResourceEvents },
+    useDebuffLookupTask: { ...defaultMocks.useDebuffLookupTask, ...overrides.useDebuffLookupTask },
+    useReportMasterData: { ...defaultMocks.useReportMasterData, ...overrides.useReportMasterData },
+    usePlayerData: { ...defaultMocks.usePlayerData, ...overrides.usePlayerData },
+  };
 
   useSelectedReportAndFight.mockReturnValue(mergedMocks.useSelectedReportAndFight);
   useDeathEvents.mockReturnValue(mergedMocks.useDeathEvents);
@@ -857,5 +878,104 @@ describe('DeathEventPanel Taunt Status Tests', () => {
 
       expect(container).toMatchSnapshot('recent-attacks-mixed-taunt-status');
     });
+  });
+});
+
+describe('DeathEventPanel lifecycle states', () => {
+  const zeroStartFight = createMockFight({ id: 1, startTime: 0, endTime: 60000 });
+  const deathAtFightStart = createMockDeathEvent({
+    timestamp: 0,
+    targetID: 456,
+    sourceID: 789,
+    abilityGameID: KnownAbilities.HURRICANE,
+  });
+
+  const renderPanel = () =>
+    render(
+      <TestWrapper>
+        <DeathEventPanel />
+      </TestWrapper>,
+    );
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('shows loading before a death stream is available', () => {
+    setupMocks({ useDeathEvents: { deathEvents: [], isDeathEventsLoading: true } });
+
+    renderPanel();
+
+    expect(screen.getByText('Loading data.')).toBeInTheDocument();
+  });
+
+  it('shows empty after every dependency confirms no player deaths', () => {
+    setupMocks();
+
+    renderPanel();
+
+    expect(screen.getByText('No data is available for this panel.')).toBeInTheDocument();
+  });
+
+  it('shows retained deaths while a dependency is still refreshing', () => {
+    setupMocks({
+      useDeathEvents: { deathEvents: [deathAtFightStart], isDeathEventsLoading: false },
+      useDamageEvents: { isDamageEventsLoading: true },
+      useFightForContext: zeroStartFight,
+    });
+
+    renderPanel();
+
+    expect(
+      screen.getByText('Updating data; showing the latest available results.'),
+    ).toBeInTheDocument();
+    expect(screen.getAllByText('DPS Player').length).toBeGreaterThan(0);
+  });
+
+  it('warns when retained deaths cannot be confirmed current', () => {
+    setupMocks({
+      useDeathEvents: { deathEvents: [deathAtFightStart], isDeathEventsLoading: false },
+      useDebuffLookupTask: { debuffLookupData: null, isDebuffLookupLoading: false },
+      useFightForContext: zeroStartFight,
+    });
+
+    renderPanel();
+
+    expect(screen.getByText('Panel data is not confirmed current.')).toBeInTheDocument();
+    expect(screen.getAllByText('DPS Player').length).toBeGreaterThan(0);
+  });
+
+  it('surfaces a failed refresh while retaining usable deaths', () => {
+    setupMocks({
+      useDeathEvents: { deathEvents: [deathAtFightStart], isDeathEventsLoading: false },
+      useDebuffLookupTask: {
+        debuffLookupData: createMockDebuffLookupData([]),
+        isDebuffLookupLoading: false,
+        debuffLookupError: 'Debuff lookup failed',
+      },
+      useFightForContext: zeroStartFight,
+    });
+
+    renderPanel();
+
+    expect(
+      screen.getByText(
+        'The latest refresh failed. Retained data may be out of date. Debuff lookup failed',
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getAllByText('DPS Player').length).toBeGreaterThan(0);
+  });
+
+  it('marks timestamp-zero deaths ready after all dependencies succeed', () => {
+    setupMocks({
+      useDeathEvents: { deathEvents: [deathAtFightStart], isDeathEventsLoading: false },
+      useFightForContext: zeroStartFight,
+    });
+
+    renderPanel();
+
+    expect(screen.getByText('Data is ready.')).toBeInTheDocument();
+    expect(screen.getAllByText('DPS Player').length).toBeGreaterThan(0);
+    expect(screen.getByText(/0:00\.0/)).toBeInTheDocument();
   });
 });

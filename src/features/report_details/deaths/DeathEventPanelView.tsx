@@ -153,7 +153,7 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
   }, [players]);
   // Helper function to convert timestamp to seconds since fight start
   const formatTimeFromFightStart = (timestamp: number): string => {
-    if (!fight?.startTime) {
+    if (fight?.startTime == null) {
       return timestamp.toString();
     }
     const totalSeconds = (timestamp - fight.startTime) / 1000;

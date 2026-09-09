@@ -22,6 +22,7 @@ import {
 } from '../../../types/combatlogEvents';
 import { isBuffActiveOnTarget } from '../../../utils/BuffLookupUtils';
 import { calculateDeathDurations } from '../../../utils/deathDurationUtils';
+import { AnalyzerPanelState, resolveAnalyzerPanelState } from '../AnalyzerPanelState';
 
 import { DeathEventPanelView } from './DeathEventPanelView';
 
@@ -162,22 +163,26 @@ export const DeathEventPanel: React.FC<DeathEventPanelProps> = ({ context }) => 
 
   // Use hooks to get data scoped to the resolved context
   const { deathEvents, isDeathEventsLoading } = useDeathEvents({ context: resolvedContext });
-  const { damageEvents, isDamageEventsLoading } = useDamageEvents({ context: resolvedContext });
-  const { castEvents, isCastEventsLoading } = useCastEvents({ context: resolvedContext });
+  const { damageEvents, isDamageEventsLoading, damageEventsError } = useDamageEvents({
+    context: resolvedContext,
+  });
+  const { castEvents, isCastEventsLoading, castEventsError } = useCastEvents({
+    context: resolvedContext,
+  });
   const { healingEvents, isHealingEventsLoading } = useHealingEvents({ context: resolvedContext });
   const { resourceEvents, isResourceEventsLoading } = useResourceEvents({
     context: resolvedContext,
   });
-  const { debuffLookupData, isDebuffLookupLoading } = useDebuffLookupTask({
+  const { debuffLookupData, isDebuffLookupLoading, debuffLookupError } = useDebuffLookupTask({
     context: resolvedContext,
   });
   const { reportMasterData, isMasterDataLoading } = useReportMasterData({
     context: resolvedContext,
   });
-  const { playerData } = usePlayerData({ context: resolvedContext });
+  const { playerData, isPlayerDataLoading } = usePlayerData({ context: resolvedContext });
 
   const deathInfos: DeathInfo[] = React.useMemo(() => {
-    if (!fight?.startTime || !fight?.endTime) return [];
+    if (fight?.startTime == null || fight.endTime == null) return [];
 
     // Calculate death durations first
     const deathDurations = calculateDeathDurations(
@@ -256,7 +261,7 @@ export const DeathEventPanel: React.FC<DeathEventPanelProps> = ({ context }) => 
         const relevantDamageEvents: AttackEvent[] = [];
 
         // Find damage events for this player between last death and current death
-        const startTime = lastDeathTimestamp ?? (fight.startTime || 0);
+        const startTime = lastDeathTimestamp ?? fight.startTime;
         const endTime = deathEvent.timestamp;
 
         // OPTIMIZED: Use binary search to find the range of relevant events
@@ -523,24 +528,8 @@ export const DeathEventPanel: React.FC<DeathEventPanelProps> = ({ context }) => 
     isHealingEventsLoading ||
     isResourceEventsLoading ||
     isDebuffLookupLoading ||
-    isMasterDataLoading;
-
-  if (!fight) {
-    return null;
-  }
-
-  if (isLoading) {
-    return (
-      <DeathEventPanelView
-        deathInfos={[]}
-        actorsById={reportMasterData.actorsById}
-        reportId={reportId}
-        fightId={resolvedFightId ?? undefined}
-        fight={fight}
-        isLoading={true}
-      />
-    );
-  }
+    isMasterDataLoading ||
+    isPlayerDataLoading;
 
   // Prepare players data with roles
   const players = Object.entries(reportMasterData.actorsById)
@@ -551,15 +540,32 @@ export const DeathEventPanel: React.FC<DeathEventPanelProps> = ({ context }) => 
       role: playerData?.playersById?.[id]?.role || 'dps', // Default to 'dps' if role not found
     }));
 
+  const failureDetail =
+    damageEventsError ?? castEventsError ?? debuffLookupError ?? playerData?.error ?? undefined;
+  const state = resolveAnalyzerPanelState({
+    error: failureDetail,
+    hasData: deathInfos.length > 0,
+    isComplete:
+      fight !== null &&
+      reportMasterData.loaded &&
+      playerData?.status === 'succeeded' &&
+      debuffLookupData !== null,
+    isLoading,
+  });
+
   return (
-    <DeathEventPanelView
-      deathInfos={deathInfos}
-      actorsById={reportMasterData.actorsById}
-      players={players}
-      reportId={reportId}
-      fightId={resolvedFightId ?? undefined}
-      fight={fight}
-      isLoading={isLoading}
-    />
+    <AnalyzerPanelState detail={failureDetail} state={state} title="Deaths">
+      {deathInfos.length > 0 && fight && (
+        <DeathEventPanelView
+          deathInfos={deathInfos}
+          actorsById={reportMasterData.actorsById}
+          players={players}
+          reportId={reportId}
+          fightId={resolvedFightId ?? undefined}
+          fight={fight}
+          isLoading={false}
+        />
+      )}
+    </AnalyzerPanelState>
   );
 };
