@@ -74,6 +74,24 @@ export const resolveDamageDonePanelState = ({
     isComplete: hasFight && statuses.every((status) => status === 'succeeded'),
   });
 
+/** Returns damage share from critical hits; null means the denominator is not trustworthy. */
+export const calculateCriticalDamageShare = (
+  totalDamage: number,
+  criticalDamageTotal: number,
+): number | null => {
+  if (
+    !Number.isFinite(totalDamage) ||
+    totalDamage <= 0 ||
+    !Number.isFinite(criticalDamageTotal) ||
+    criticalDamageTotal < 0 ||
+    criticalDamageTotal > totalDamage
+  ) {
+    return null;
+  }
+
+  return (criticalDamageTotal / totalDamage) * 100;
+};
+
 /**
  * Smart component that handles data processing and state management for damage done panel
  */
@@ -324,8 +342,7 @@ export const DamageDonePanel: React.FC<DamageDonePanelProps> = ({ context }) => 
 
         // Get critical damage metrics for this player
         const criticalDamageTotal = damageStatistics.criticalDamageByPlayer[playerId] || 0;
-        const criticalDamagePercent =
-          totalDamage > 0 ? (criticalDamageTotal / totalDamage) * 100 : 0;
+        const criticalDamageShare = calculateCriticalDamageShare(totalDamage, criticalDamageTotal);
 
         return {
           id,
@@ -333,7 +350,7 @@ export const DamageDonePanel: React.FC<DamageDonePanelProps> = ({ context }) => 
           total: totalDamage,
           dps: fightDurationMs > 0 ? totalDamage / msToSeconds(fightDurationMs) : 0,
           activePercentage,
-          criticalDamagePercent,
+          criticalDamageShare,
           criticalDamageTotal,
           iconUrl,
           role,
