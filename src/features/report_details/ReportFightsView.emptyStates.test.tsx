@@ -1,12 +1,12 @@
 import { configureStore } from '@reduxjs/toolkit';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import '@testing-library/jest-dom';
 
-import { ReportFragment } from '../../graphql/gql/graphql';
+import { FightFragment, ReportFragment } from '../../graphql/gql/graphql';
 
 import { ReportFightsView } from './ReportFightsView';
 
@@ -39,6 +39,20 @@ const emptyReport = {
   fights: [],
   phases: null,
 } as unknown as ReportFragment;
+
+const fight = {
+  __typename: 'ReportFight',
+  id: 1,
+  name: 'Boss',
+  difficulty: 121,
+  startTime: 0,
+  endTime: 60_000,
+  kill: true,
+  encounterID: 21,
+  originalEncounterID: null,
+  bossPercentage: 0,
+  gameZone: { __typename: 'GameZone', id: 1121, name: 'Sunspire' },
+} as FightFragment;
 
 type ViewProps = React.ComponentProps<typeof ReportFightsView>;
 
@@ -130,4 +144,35 @@ describe('ReportFightsView no-fights states', () => {
     renderView({ loading: true, fights: undefined, reportData: null });
     expect(screen.getByTestId('fights-skeleton')).toBeInTheDocument();
   });
+
+  it('does not send prefetch intent from the non-navigation retry control', async () => {
+    const onFightIntent = jest.fn();
+    const onRetry = jest.fn();
+    const user = userEvent.setup();
+    renderView({ onFightIntent, onRetry });
+
+    await user.click(screen.getByRole('button', { name: /check again/i }));
+
+    expect(onRetry).toHaveBeenCalledTimes(1);
+    expect(onFightIntent).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['pointer', (button: HTMLElement) => fireEvent.pointerEnter(button), 'pointer'],
+    ['focus', (button: HTMLElement) => fireEvent.focus(button), 'focus'],
+    ['touch', (button: HTMLElement) => fireEvent.touchStart(button), 'touch'],
+  ])(
+    'forwards %s intent only from a concrete fight navigation control',
+    (_label, trigger, intent) => {
+      const onFightIntent = jest.fn();
+      renderView({ fights: [fight], onFightIntent });
+
+      fireEvent.touchStart(screen.getByTestId('fight-list'));
+      expect(onFightIntent).not.toHaveBeenCalled();
+
+      trigger(screen.getByTestId('fight-button-1'));
+      expect(onFightIntent).toHaveBeenCalledTimes(1);
+      expect(onFightIntent).toHaveBeenCalledWith(intent);
+    },
+  );
 });

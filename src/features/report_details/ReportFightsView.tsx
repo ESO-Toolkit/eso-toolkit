@@ -22,6 +22,7 @@ import { ReportActionBar } from '../../components/ReportActionBar';
 import { ReportFightsSkeleton } from '../../components/ReportFightsSkeleton';
 import { FightFragment, ReportFragment } from '../../graphql/gql/graphql';
 import { RootState } from '../../store/storeWithHistory';
+import { type RoutePrefetchIntent } from '../../utils/routePrefetchPolicy';
 import { getDifficultyLabel } from '../../utils/trialClassification';
 
 import { BossAvatar } from './BossAvatar';
@@ -139,6 +140,8 @@ interface ReportFightsViewProps {
   stillProcessing?: boolean;
   /** Re-fetches the report from the network ("Try again" / "Check again"). */
   onRetry?: () => void;
+  /** Warms the details chunk after the user targets a specific fight. */
+  onFightIntent?: (intent: RoutePrefetchIntent) => void;
 }
 
 export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
@@ -151,6 +154,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
   error,
   stillProcessing,
   onRetry,
+  onFightIntent,
 }) => {
   const navigate = useNavigate();
   const darkMode = useSelector((state: RootState) => state.ui.darkMode);
@@ -575,6 +579,9 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
           data-testid={`fight-button-${fight.id}`}
           selected={fightId === String(fight.id)}
           onClick={() => handleFightSelect(fight.id)}
+          onPointerEnter={() => onFightIntent?.('pointer')}
+          onFocus={() => onFightIntent?.('focus')}
+          onTouchStart={() => onFightIntent?.('touch')}
           sx={{
             width: '100%',
             height: { xs: 82, sm: 88 },
