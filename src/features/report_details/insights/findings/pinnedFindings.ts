@@ -108,12 +108,45 @@ export interface FindingShareRecipient {
   allowPlayerIdentifiers?: boolean;
 }
 
+type AuthorizedFindingShareRecipient = {
+  audience: 'raid-lead';
+  allowPlayerIdentifiers: true;
+};
+
+type PrivacySafeFindingShareRecipient =
+  | { audience: 'raid-lead'; allowPlayerIdentifiers?: false | undefined }
+  | { audience: 'team' | 'external'; allowPlayerIdentifiers?: boolean };
+
+export interface SharePinnedFinding {
+  (
+    finding: PinnedFinding,
+    recipient: AuthorizedFindingShareRecipient,
+  ): IdentifiedSharedPinnedFinding;
+  (
+    finding: PinnedFinding,
+    recipient: PrivacySafeFindingShareRecipient,
+  ): PrivacySafeSharedPinnedFinding;
+  (finding: PinnedFinding, recipient: FindingShareRecipient): SharedPinnedFinding;
+}
+
 export interface SharedFindingActor {
   role?: FindingRole;
 }
 
 export interface SharedFindingPhaseEvidence extends Omit<FindingPhaseEvidence, 'actor'> {
   actor?: FindingActor | SharedFindingActor;
+}
+
+/**
+ * Evidence safe for a recipient that has not been authorized to correlate it
+ * with a report. Event ids are report-local identifiers, so preserve the pull
+ * relative timestamp and phase context but never export the event id.
+ */
+export interface PrivacySafeSharedFindingPhaseEvidence extends Omit<
+  FindingPhaseEvidence,
+  'actor' | 'eventId'
+> {
+  actor?: SharedFindingActor;
 }
 
 export interface SharedFindingAssignee {
@@ -127,11 +160,53 @@ export interface SharedFindingResolutionEvent extends Omit<FindingResolutionEven
   changedBy?: FindingActor | SharedFindingActor;
 }
 
-export interface SharedPinnedFinding extends Omit<
-  PinnedFinding,
-  'evidence' | 'ownership' | 'resolutionHistory' | 'shareNamespace'
+export interface SharedFindingTimeline {
+  /** No wall-clock anchor is exported; every lifecycle offset is relative to this point. */
+  anchor: 'earliest-recorded-finding-event';
+}
+
+export interface PrivacySafeFindingProvenance extends Omit<FindingProvenance, 'observedAt'> {
+  /** Milliseconds after the private timeline anchor. */
+  observedAfterAnchorMs: number;
+}
+
+export interface PrivacySafeFindingPin {
+  status: PinnedFinding['pin']['status'];
+  pinnedAfterAnchorMs: number;
+  changedAfterAnchorMs: number;
+}
+
+export interface PrivacySafeFindingOwnershipTransition {
+  afterAnchorMs: number;
+  from?: SharedFindingAssignee;
+  to?: SharedFindingAssignee;
+  reason?: string;
+}
+
+export interface PrivacySafeFindingResolutionEvent extends Omit<
+  SharedFindingResolutionEvent,
+  'at' | 'changedBy'
 > {
+  afterAnchorMs: number;
+  changedBy?: SharedFindingActor;
+}
+
+interface SharedPinnedFindingBase extends Omit<
+  PinnedFinding,
+  'evidence' | 'provenance' | 'pin' | 'ownership' | 'resolutionHistory' | 'shareNamespace'
+> {
+  id: string;
+  whatHappened: string;
+  whyItMatters: string;
+  confidence: FindingConfidence;
+  recommendedAction: FindingRecommendation;
+}
+
+/** Full-fidelity projection, allowed only for a raid lead that opted into player identifiers. */
+export interface IdentifiedSharedPinnedFinding extends SharedPinnedFindingBase {
   evidence: readonly SharedFindingPhaseEvidence[];
+  provenance: FindingProvenance;
+  pin: PinnedFinding['pin'];
   ownership: {
     current?: SharedFindingAssignee;
     history: ReadonlyArray<{
@@ -143,10 +218,32 @@ export interface SharedPinnedFinding extends Omit<
   };
   resolutionHistory: readonly SharedFindingResolutionEvent[];
   sharedWith: {
-    audience: FindingShareRecipient['audience'];
-    includesPlayerIdentifiers: boolean;
+    audience: 'raid-lead';
+    includesPlayerIdentifiers: true;
   };
 }
+
+/**
+ * Non-identifying projection. Lifecycle timestamps are elapsed offsets, never
+ * ISO dates, and report-local event ids are omitted to prevent report correlation.
+ */
+export interface PrivacySafeSharedPinnedFinding extends SharedPinnedFindingBase {
+  timeline: SharedFindingTimeline;
+  evidence: readonly PrivacySafeSharedFindingPhaseEvidence[];
+  provenance: PrivacySafeFindingProvenance;
+  pin: PrivacySafeFindingPin;
+  ownership: {
+    current?: SharedFindingAssignee;
+    history: readonly PrivacySafeFindingOwnershipTransition[];
+  };
+  resolutionHistory: readonly PrivacySafeFindingResolutionEvent[];
+  sharedWith: {
+    audience: FindingShareRecipient['audience'];
+    includesPlayerIdentifiers: false;
+  };
+}
+
+export type SharedPinnedFinding = IdentifiedSharedPinnedFinding | PrivacySafeSharedPinnedFinding;
 
 const findingRoles = new Set<FindingRole>(['tank', 'healer', 'damage-dealer', 'unknown']);
 const confidenceLevels = new Set<FindingConfidenceLevel>(['high', 'medium', 'low', 'unknown']);
@@ -646,9 +743,7 @@ export const appendResolution = (
   };
 };
 
-const redactActor = (
-  actor: FindingActor | undefined,
-): FindingActor | SharedFindingActor | undefined => {
+const redactActor = (actor: FindingActor | undefined): SharedFindingActor | undefined => {
   if (!actor) {
     return undefined;
   }
@@ -693,7 +788,12 @@ const identityIdentifiersFor = (finding: PinnedFinding): readonly string[] => {
 
   identifiers.add(finding.id);
   finding.resolutionHistory.forEach((event) => identifiers.add(event.id));
-  finding.evidence.forEach((evidence) => addActorIdentifiers(identifiers, evidence.actor));
+  finding.evidence.forEach((evidence) => {
+    if (evidence.eventId) {
+      identifiers.add(evidence.eventId);
+    }
+    addActorIdentifiers(identifiers, evidence.actor);
+  });
   finding.resolutionHistory.forEach((event) => addActorIdentifiers(identifiers, event.changedBy));
   addAssigneeIdentifiers(identifiers, finding.ownership.current);
   finding.ownership.history.forEach((transition) => {
@@ -715,10 +815,46 @@ const redactText = (value: string, identityIdentifiers: readonly string[]): stri
   return value.replace(new RegExp(identifiersPattern, 'giu'), '[player]');
 };
 
+const ISO_DATE_IN_TEXT_PATTERN =
+  /\b\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:?\d{2}))?\b/gu;
+
+const redactPrivacySafeText = (value: string, identityIdentifiers: readonly string[]): string =>
+  redactText(value, identityIdentifiers).replace(ISO_DATE_IN_TEXT_PATTERN, '[time]');
+
 interface ShareIdContext {
   namespace: string;
   pseudonymById: ReadonlyMap<string, string>;
 }
+
+interface PrivacySafeTimelineContext {
+  earliestRecordedAtMs: number;
+}
+
+const createPrivacySafeTimelineContext = (finding: PinnedFinding): PrivacySafeTimelineContext => {
+  const lifecycleDates = [
+    finding.provenance.observedAt,
+    finding.pin.pinnedAt,
+    finding.pin.changedAt,
+    ...finding.ownership.history.map((transition) => transition.at),
+    ...finding.resolutionHistory.map((event) => event.at),
+  ];
+  const earliestRecordedAtMs = Math.min(...lifecycleDates.map(Date.parse));
+
+  if (!Number.isFinite(earliestRecordedAtMs)) {
+    throw new Error('Invalid finding lifecycle timestamp');
+  }
+
+  return { earliestRecordedAtMs };
+};
+
+const elapsedAfterTimelineAnchor = (value: string, context: PrivacySafeTimelineContext): number => {
+  const elapsedMs = Date.parse(value) - context.earliestRecordedAtMs;
+  if (!Number.isFinite(elapsedMs) || elapsedMs < 0) {
+    throw new Error('Invalid finding lifecycle timestamp');
+  }
+
+  return Object.is(elapsedMs, -0) ? 0 : elapsedMs;
+};
 
 const createShareIdContext = (finding: PinnedFinding, namespace: string): ShareIdContext => {
   const pseudonymById = new Map<string, string>();
@@ -770,7 +906,7 @@ const validateShareRecipient = (recipient: unknown): FindingShareRecipient => {
  * Produces a recipient payload. Player ids and names stay redacted for team and external
  * recipients; only an explicitly authorized raid lead may receive them.
  */
-export const sharePinnedFinding = (
+export const sharePinnedFinding = ((
   finding: PinnedFinding,
   recipient: FindingShareRecipient,
 ): SharedPinnedFinding => {
@@ -845,65 +981,83 @@ export const sharePinnedFinding = (
         note: redactText(event.note, durableIdentifiers),
         ...(event.changedBy ? { changedBy: { ...event.changedBy } } : {}),
       })),
-      sharedWith: { audience: validatedRecipient.audience, includesPlayerIdentifiers },
+      sharedWith: { audience: 'raid-lead', includesPlayerIdentifiers: true },
     };
   }
 
   const identityIdentifiers = identityIdentifiersFor(detached);
+  const timelineContext = createPrivacySafeTimelineContext(detached);
   return {
-    ...shareableFinding,
     id: shareId(detached.id, 'finding', shareIdContext),
-    whatHappened: redactText(detached.whatHappened, identityIdentifiers),
-    whyItMatters: redactText(detached.whyItMatters, identityIdentifiers),
+    whatHappened: redactPrivacySafeText(detached.whatHappened, identityIdentifiers),
+    whyItMatters: redactPrivacySafeText(detached.whyItMatters, identityIdentifiers),
     evidence: detached.evidence.map((evidence) => ({
-      ...evidence,
-      ...(evidence.phaseId ? { phaseId: redactText(evidence.phaseId, identityIdentifiers) } : {}),
-      ...(evidence.phaseName
-        ? { phaseName: redactText(evidence.phaseName, identityIdentifiers) }
+      timestampMs: evidence.timestampMs,
+      ...(evidence.phaseId
+        ? { phaseId: redactPrivacySafeText(evidence.phaseId, identityIdentifiers) }
         : {}),
-      ...(evidence.eventId ? { eventId: redactText(evidence.eventId, identityIdentifiers) } : {}),
-      observation: redactText(evidence.observation, identityIdentifiers),
+      ...(evidence.phaseName
+        ? { phaseName: redactPrivacySafeText(evidence.phaseName, identityIdentifiers) }
+        : {}),
+      observation: redactPrivacySafeText(evidence.observation, identityIdentifiers),
       ...(evidence.actor ? { actor: redactActor(evidence.actor) } : {}),
     })),
     confidence: {
       ...detached.confidence,
-      rationale: redactText(detached.confidence.rationale, identityIdentifiers),
+      rationale: redactPrivacySafeText(detached.confidence.rationale, identityIdentifiers),
     },
     provenance: {
-      ...detached.provenance,
-      source: redactText(detached.provenance.source, identityIdentifiers),
+      kind: detached.provenance.kind,
+      source: redactPrivacySafeText(detached.provenance.source, identityIdentifiers),
+      observedAfterAnchorMs: elapsedAfterTimelineAnchor(
+        detached.provenance.observedAt,
+        timelineContext,
+      ),
       ...(detached.provenance.sourceReference
-        ? { sourceReference: redactText(detached.provenance.sourceReference, identityIdentifiers) }
+        ? {
+            sourceReference: redactPrivacySafeText(
+              detached.provenance.sourceReference,
+              identityIdentifiers,
+            ),
+          }
         : {}),
     },
     recommendedAction: {
-      action: redactText(detached.recommendedAction.action, identityIdentifiers),
+      action: redactPrivacySafeText(detached.recommendedAction.action, identityIdentifiers),
       ...(detached.recommendedAction.expectedOutcome
         ? {
-            expectedOutcome: redactText(
+            expectedOutcome: redactPrivacySafeText(
               detached.recommendedAction.expectedOutcome,
               identityIdentifiers,
             ),
           }
         : {}),
     },
+    pin: {
+      status: detached.pin.status,
+      pinnedAfterAnchorMs: elapsedAfterTimelineAnchor(detached.pin.pinnedAt, timelineContext),
+      changedAfterAnchorMs: elapsedAfterTimelineAnchor(detached.pin.changedAt, timelineContext),
+    },
     ownership: {
       current: redactAssignee(detached.ownership.current),
       history: detached.ownership.history.map((transition) => ({
-        ...transition,
-        from: redactAssignee(transition.from),
-        to: redactAssignee(transition.to),
+        afterAnchorMs: elapsedAfterTimelineAnchor(transition.at, timelineContext),
+        ...(transition.from ? { from: redactAssignee(transition.from) } : {}),
+        ...(transition.to ? { to: redactAssignee(transition.to) } : {}),
         ...(transition.reason
-          ? { reason: redactText(transition.reason, identityIdentifiers) }
+          ? { reason: redactPrivacySafeText(transition.reason, identityIdentifiers) }
           : {}),
       })),
     },
     resolutionHistory: detached.resolutionHistory.map((event) => ({
-      ...event,
       id: shareId(event.id, 'resolution', shareIdContext),
-      note: redactText(event.note, identityIdentifiers),
+      afterAnchorMs: elapsedAfterTimelineAnchor(event.at, timelineContext),
+      status: event.status,
+      previousStatus: event.previousStatus,
+      note: redactPrivacySafeText(event.note, identityIdentifiers),
       ...(event.changedBy ? { changedBy: redactActor(event.changedBy) } : {}),
     })),
-    sharedWith: { audience: validatedRecipient.audience, includesPlayerIdentifiers },
+    timeline: { anchor: 'earliest-recorded-finding-event' },
+    sharedWith: { audience: validatedRecipient.audience, includesPlayerIdentifiers: false },
   };
-};
+}) as SharePinnedFinding;
