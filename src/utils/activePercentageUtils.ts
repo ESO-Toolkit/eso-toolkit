@@ -34,7 +34,16 @@ const getFightTiming = (
   const fightEndTime = Number(fight.endTime);
   const totalFightDuration = fightEndTime - fightStartTime;
 
-  return totalFightDuration <= 0 ? null : { fightStartTime, fightEndTime, totalFightDuration };
+  if (
+    !Number.isFinite(fightStartTime) ||
+    !Number.isFinite(fightEndTime) ||
+    !Number.isFinite(totalFightDuration) ||
+    totalFightDuration <= 0
+  ) {
+    return null;
+  }
+
+  return { fightStartTime, fightEndTime, totalFightDuration };
 };
 
 /**
@@ -120,6 +129,15 @@ export function calculateDamageStatisticsWithActivity(
   const damageEventsBySource: Record<number, number> = {};
   const activityTimestampsByPlayer: ActivityTimestampsByPlayer = {};
   const timing = fight ? getFightTiming(fight) : null;
+
+  if (fight && !timing) {
+    return {
+      damageByPlayer,
+      criticalDamageByPlayer,
+      damageEventsBySource,
+      activePercentages: {},
+    };
+  }
 
   for (const [playerIdStr, events] of Object.entries(damageEventsByPlayer)) {
     const playerId = Number(playerIdStr);
