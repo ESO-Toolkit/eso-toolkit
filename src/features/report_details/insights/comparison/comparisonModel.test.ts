@@ -256,6 +256,29 @@ describe('Analyzer/Insights comparison contract', () => {
     });
   });
 
+  it('rejects empty metric records in pair and cohort comparisons', () => {
+    const emptyMetrics = pull({
+      pullId: 'empty-metrics',
+      metrics: {},
+    });
+    const expected = {
+      status: 'unavailable',
+      reason: 'invalid-analysis',
+      message: 'Analysis metrics are empty.',
+    };
+
+    expect(comparePulls(emptyMetrics, pull({ pullId: 'candidate' }))).toMatchObject(expected);
+    expect(comparePulls(pull(), emptyMetrics)).toMatchObject(expected);
+    expect(
+      compareWithCohort(emptyMetrics, [pull({ pullId: 'cohort-1' })], {
+        minimumObservedBaselineSamples: 1,
+      }),
+    ).toMatchObject(expected);
+    expect(
+      compareWithCohort(pull(), [emptyMetrics], { minimumObservedBaselineSamples: 1 }),
+    ).toMatchObject(expected);
+  });
+
   it('keeps mean and median finite for maximum-magnitude observations', () => {
     const candidate = pull({
       pullId: 'candidate',
