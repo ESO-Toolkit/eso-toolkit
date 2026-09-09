@@ -189,6 +189,82 @@ test('accepts a valid legacy CSP report without persisting or echoing its conten
   );
 });
 
+test('records only bounded, privacy-safe categories for accepted CSP reports', async () => {
+  const assets = makeAssets();
+  const observations = [];
+  const originalLog = console.log;
+  console.log = (message) => observations.push(message);
+
+  try {
+    const response = await handleRequest(
+      requestReport(
+        JSON.stringify({
+          'csp-report': {
+            'blocked-uri': 'https://third-party.example/asset.js?player=private-player',
+            'document-uri': 'https://esotk.com/report/private-report-code?player=private-player',
+            'effective-directive': 'script-src',
+          },
+        }),
+      ),
+      { ASSETS: assets },
+    );
+
+    await assertSafeReportResponse(response, 204);
+  } finally {
+    console.log = originalLog;
+  }
+
+  assert.deepEqual(observations.map((entry) => JSON.parse(entry)), [
+    {
+      event: 'csp-violation',
+      reports: [
+        {
+          directive: 'script-src',
+          routeTemplate: '/report/:report',
+          sourceOriginCategory: 'cross-origin',
+        },
+      ],
+    },
+  ]);
+  assert.equal(observations.join('').includes('private-report-code'), false);
+  assert.equal(observations.join('').includes('private-player'), false);
+});
+
+test('caps the number of accepted reports emitted in one observation', async () => {
+  const assets = makeAssets();
+  const observations = [];
+  const originalLog = console.log;
+  console.log = (message) => observations.push(message);
+
+  try {
+    const report = JSON.stringify(
+      Array.from({ length: 11 }, () => ({
+        body: { effectiveDirective: 'style-src' },
+        type: 'csp-violation',
+        url: 'https://esotk.com/report/private-report-code',
+      })),
+    );
+    const response = await handleRequest(
+      requestReport(report, {
+        headers: { 'Content-Type': 'application/reports+json' },
+      }),
+      { ASSETS: assets },
+    );
+
+    await assertSafeReportResponse(response, 204);
+  } finally {
+    console.log = originalLog;
+  }
+
+  const [observation] = observations.map((entry) => JSON.parse(entry));
+  assert.equal(observation.reports.length, 10);
+  assert.deepEqual(observation.reports[0], {
+    directive: 'style-src',
+    routeTemplate: '/report/:report',
+    sourceOriginCategory: 'unknown',
+  });
+});
+
 test('accepts a valid Reporting API CSP report', async () => {
   const assets = makeAssets();
   const report = JSON.stringify([
