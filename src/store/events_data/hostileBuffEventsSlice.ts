@@ -9,7 +9,6 @@ import {
   HostilityType,
 } from '../../graphql/gql/graphql';
 import { BuffEvent, LogEvent } from '../../types/combatlogEvents';
-import { Logger, LogLevel } from '../../utils/logger';
 import {
   KeyedCacheState,
   removeFromCache,
@@ -29,8 +28,6 @@ import {
 } from './constants';
 import { assertCompleteEventPage, deduplicateEventPages } from './utils/deduplicateEvents';
 import { createCurrentRequest, isStaleResponse } from './utils/requestTracking';
-
-const logger = new Logger({ level: LogLevel.INFO, contextPrefix: 'HostileBuffEvents' });
 
 interface IntervalFetchResult {
   startTime: number;
