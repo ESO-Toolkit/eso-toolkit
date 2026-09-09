@@ -74,12 +74,42 @@ describe('buildPullProgression', () => {
     const result = buildPullProgression({
       context,
       pulls: [pull('same-time-first', 100, 1), pull('same-time-second', 100, 2)],
-      metrics: [],
+      metrics: [{ id: 'damage', direction: 'higher-is-better' }],
     });
 
     expect(result).toMatchObject({
       status: 'ready',
       orderedPullIds: ['same-time-first', 'same-time-second'],
+    });
+  });
+
+  it('returns an explicit unavailable state when no pulls supply storyboard evidence', () => {
+    const result = buildPullProgression({
+      context,
+      pulls: [],
+      metrics: [{ id: 'damage', direction: 'higher-is-better' }],
+    });
+
+    expect(result).toEqual({
+      status: 'unavailable',
+      reason: 'no-pulls',
+      context,
+      conflictingPullIds: [],
+    });
+  });
+
+  it('returns an explicit unavailable state when no metric has been selected', () => {
+    const result = buildPullProgression({
+      context,
+      pulls: [pull('pull-a', 100, 1)],
+      metrics: [],
+    });
+
+    expect(result).toEqual({
+      status: 'unavailable',
+      reason: 'no-metrics',
+      context,
+      conflictingPullIds: [],
     });
   });
 
@@ -225,7 +255,7 @@ describe('buildPullProgression', () => {
     const zeroTimestampResult = buildPullProgression({
       context,
       pulls: [pull('at-report-start', 0, 100)],
-      metrics: [],
+      metrics: [{ id: 'damage', direction: 'higher-is-better' }],
     });
     expect(zeroTimestampResult).toMatchObject({
       status: 'ready',
@@ -264,7 +294,7 @@ describe('buildPullProgression', () => {
     const result = buildPullProgression({
       context,
       pulls: [pull('zero-evidence', 100, 100, { evidence: [{ timestamp: 0 }] })],
-      metrics: [],
+      metrics: [{ id: 'damage', direction: 'higher-is-better' }],
     });
     expect(result.status).toBe('ready');
   });
@@ -445,28 +475,37 @@ describe('buildPullProgression', () => {
   it('copies context and evidence so later caller mutations cannot rewrite the storyboard', () => {
     const mutableContext = { ...context };
     const mutableEvidence = { timestamp: 10, phase: 'opening', note: 'original' };
+    const mutableMetrics = { damage: 100 };
+    const mutablePulls = [
+      {
+        id: 'pull-a',
+        startedAt: 0,
+        context: mutableContext,
+        metrics: mutableMetrics,
+        evidence: [mutableEvidence],
+      },
+    ];
+    const mutableDefinitions = [{ id: 'damage', direction: 'higher-is-better' as const }];
     const result = buildPullProgression({
       context: mutableContext,
-      pulls: [
-        {
-          id: 'pull-a',
-          startedAt: 0,
-          context: mutableContext,
-          metrics: { damage: 100 },
-          evidence: [mutableEvidence],
-        },
-      ],
-      metrics: [{ id: 'damage', direction: 'higher-is-better' }],
+      pulls: mutablePulls,
+      metrics: mutableDefinitions,
     });
 
     mutableContext.partition = 'pts-pc-na';
     mutableEvidence.note = 'rewritten';
+    mutableMetrics.damage = 900;
+    mutablePulls[0].id = 'rewritten-pull';
+    mutableDefinitions[0].id = 'rewritten-metric';
 
     if (result.status !== 'ready') {
       throw new Error('expected a ready progression');
     }
 
     expect(result.context.partition).toBe('live-pc-na');
+    expect(result.orderedPullIds).toEqual(['pull-a']);
+    expect(result.metrics[0].id).toBe('damage');
+    expect(result.metrics[0].points[0].value).toBe(100);
     expect(result.metrics[0].points[0].evidence[0].note).toBe('original');
   });
 });
