@@ -223,5 +223,37 @@ describe('resourceEventsSlice', () => {
 
       expect(mockClient.query).toHaveBeenCalledTimes(2);
     });
+
+    it('keeps a fresh successful empty result cached across a remount', async () => {
+      const emptyResponse = {
+        reportData: {
+          report: {
+            events: {
+              data: [],
+              nextPageTimestamp: null,
+            },
+          },
+        },
+      };
+      mockClient.query.mockResolvedValue(emptyResponse as never);
+
+      const timestamp = 1_000_000;
+      const dateSpy = jest.spyOn(Date, 'now').mockReturnValue(timestamp);
+      const args = { reportCode: 'ABC123', fight: mockFight, client: mockClient };
+
+      await store.dispatch(fetchResourceEvents(args) as any);
+
+      const key = resolveCacheKey({ reportCode: 'ABC123', fightId: 11 }).key;
+      const firstState = getSliceState();
+      expect(firstState.entries[key]?.status).toBe('succeeded');
+      expect(firstState.entries[key]?.events).toEqual([]);
+      expect(firstState.entries[key]?.cacheMetadata.lastFetchedTimestamp).toBe(timestamp);
+      expect(mockClient.query).toHaveBeenCalledTimes(2);
+
+      dateSpy.mockReturnValue(timestamp + DATA_FETCH_CACHE_TIMEOUT / 2);
+      await store.dispatch(fetchResourceEvents(args) as any);
+
+      expect(mockClient.query).toHaveBeenCalledTimes(2);
+    });
   });
 });
