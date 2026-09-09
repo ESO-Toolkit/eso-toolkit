@@ -5,6 +5,38 @@ import React from 'react';
 import { DataGrid } from '../../../components/LazyDataGrid';
 import { useLogger } from '../../../contexts/LoggerContext';
 import { LogEvent } from '../../../types/combatlogEvents';
+import {
+  AnalyzerPanelState,
+  AnalyzerPanelStateKind,
+  resolveAnalyzerPanelState,
+} from '../AnalyzerPanelState';
+
+export interface DebugEventStreamStatus {
+  status?: 'idle' | 'loading' | 'succeeded' | 'failed' | null;
+  error?: string | null;
+}
+
+/** Resolve a panel state from the retained event data and all source streams. */
+export const resolveDebugEventPanelState = (
+  events: readonly unknown[],
+  streams: readonly (DebugEventStreamStatus | null)[],
+): { state: AnalyzerPanelStateKind; detail?: string } => {
+  const error = streams.find((stream) => stream?.error)?.error ?? null;
+  const hasFailure = Boolean(error) || streams.some((stream) => stream?.status === 'failed');
+  const isLoading = streams.some((stream) => stream?.status === 'loading');
+  const isComplete =
+    streams.length === 0 || streams.every((stream) => stream?.status === 'succeeded');
+
+  return {
+    state: resolveAnalyzerPanelState({
+      error: hasFailure ? (error ?? 'An event stream failed.') : null,
+      hasData: events.length > 0,
+      isComplete,
+      isLoading,
+    }),
+    detail: error ?? undefined,
+  };
+};
 
 interface EventsGridProps {
   events: LogEvent[];
@@ -13,6 +45,8 @@ interface EventsGridProps {
   isTargetMode?: boolean;
   hasTargetSelected?: boolean;
   noTargetMessage?: string;
+  state?: AnalyzerPanelStateKind;
+  stateDetail?: string;
 }
 
 // Transform events data for the table
@@ -39,6 +73,8 @@ export const EventsGrid: React.FC<EventsGridProps> = ({
   isTargetMode = false,
   hasTargetSelected = true,
   noTargetMessage = 'Please select a target to view events associated with that target.',
+  state,
+  stateDetail,
 }) => {
   const logger = useLogger('EventsGrid');
 
@@ -143,9 +179,9 @@ export const EventsGrid: React.FC<EventsGridProps> = ({
     [columnHelper, logger],
   );
 
-  // Show target selection message if in target mode but no target is selected
-  if (isTargetMode && !hasTargetSelected) {
-    return (
+  // Show target selection message if in target mode but no target is selected.
+  const grid =
+    isTargetMode && !hasTargetSelected ? (
       <DataGrid
         data={[]}
         columns={columns as ColumnDef<Record<string, unknown>>[]}
@@ -158,23 +194,28 @@ export const EventsGrid: React.FC<EventsGridProps> = ({
         enablePagination={false}
         emptyMessage={noTargetMessage}
       />
+    ) : (
+      <DataGrid
+        data={data}
+        columns={columns as ColumnDef<Record<string, unknown>>[]}
+        title={`${title} (${events.length.toLocaleString()} total)`}
+        height={height}
+        initialPageSize={25}
+        pageSizeOptions={PAGE_SIZE_OPTIONS}
+        enableSorting={true}
+        enableFiltering={true}
+        enablePagination={true}
+        emptyMessage={
+          events.length === 0 ? 'No events to display' : 'No events match the current filters'
+        }
+      />
     );
-  }
+
+  if (!state) return grid;
 
   return (
-    <DataGrid
-      data={data}
-      columns={columns as ColumnDef<Record<string, unknown>>[]}
-      title={`${title} (${events.length.toLocaleString()} total)`}
-      height={height}
-      initialPageSize={25}
-      pageSizeOptions={PAGE_SIZE_OPTIONS}
-      enableSorting={true}
-      enableFiltering={true}
-      enablePagination={true}
-      emptyMessage={
-        events.length === 0 ? 'No events to display' : 'No events match the current filters'
-      }
-    />
+    <AnalyzerPanelState title={title} state={state} detail={stateDetail}>
+      {grid}
+    </AnalyzerPanelState>
   );
 };
