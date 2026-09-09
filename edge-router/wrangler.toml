@@ -1,0 +1,23 @@
+name = "esotk-edge-router"
+main = "src/index.js"
+compatibility_date = "2026-08-27"
+account_id = "75620f084ea25ade5ee57a71a830bba2"
+workers_dev = false
+
+# These routes become active once esotk.com is delegated to this Cloudflare
+# account. Until then, GitHub Pages remains the live origin and cannot supply
+# response headers or successful BrowserRouter deep-link responses.
+routes = [
+  { pattern = "esotk.com/*", zone_name = "esotk.com" },
+  { pattern = "www.esotk.com/*", zone_name = "esotk.com" },
+]
+
+[assets]
+# The deployment workflow builds the application at the repository root before
+# deploying this worker. Serving the build here avoids proxying back to the
+# custom-domain GitHub Pages origin, which would recurse through this route.
+directory = "../build"
+binding = "ASSETS"
+run_worker_first = true
+not_found_handling = "none"
+html_handling = "none"
