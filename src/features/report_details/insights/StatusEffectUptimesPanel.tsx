@@ -14,6 +14,7 @@ import { ALL_TARGETS_SENTINEL } from '../../../hooks/useSelectedTargetIds';
 import { useSelectedReportAndFight } from '../../../ReportFightContext';
 import { selectSelectedFriendlyPlayerId } from '../../../store/ui/uiSelectors';
 import type { BuffLookupData } from '../../../utils/BuffLookupUtils';
+import { resolveAnalyzerPanelState } from '../AnalyzerPanelState';
 
 import { BuffUptime } from './BuffUptimeProgressBar';
 import { EffectUptimeTimelineModal } from './EffectUptimeTimelineModal';
@@ -42,18 +43,24 @@ export const StatusEffectUptimesPanel: React.FC<StatusEffectUptimesPanelProps> =
     }
     const targetArray = Array.from(selectedTargetIds);
     // Return first non-sentinel target, or null if only sentinel values
-    return targetArray.find((id) => id !== ALL_TARGETS_SENTINEL) || null;
+    return targetArray.find((id) => id !== ALL_TARGETS_SENTINEL) ?? null;
   }, [selectedTargetIds]);
 
   // Get all dependency loading states to ensure complete data
-  const { hostileBuffLookupData, isHostileBuffLookupLoading } = useHostileBuffLookupTask();
-  const { debuffLookupData, isDebuffLookupLoading } = useDebuffLookupTask();
+  const { hostileBuffLookupData, isHostileBuffLookupLoading, hostileBuffLookupError } =
+    useHostileBuffLookupTask();
+  const { debuffLookupData, isDebuffLookupLoading, debuffLookupError } = useDebuffLookupTask();
 
   // Use the worker-based selector for status effect uptimes (now returns target-segmented data)
-  const { statusEffectUptimesData, isStatusEffectUptimesLoading } = useStatusEffectUptimesTask();
+  const { statusEffectUptimesData, isStatusEffectUptimesLoading, statusEffectUptimesError } =
+    useStatusEffectUptimesTask();
 
   const fightStartTime = fight?.startTime;
   const fightEndTime = fight?.endTime;
+  const hasValidFightWindow =
+    Number.isFinite(fightStartTime) &&
+    Number.isFinite(fightEndTime) &&
+    fightEndTime > fightStartTime;
 
   const realTargetFilter = React.useMemo(() => {
     if (selectedTargetIds.size === 0 || selectedTargetIds.has(ALL_TARGETS_SENTINEL)) {
@@ -102,7 +109,7 @@ export const StatusEffectUptimesPanel: React.FC<StatusEffectUptimesPanelProps> =
     }
 
     // Cache fight duration calculation
-    const fightDuration = fightEndTime && fightStartTime ? fightEndTime - fightStartTime : 1;
+    const fightDuration = hasValidFightWindow ? fightEndTime - fightStartTime : 1;
 
     // If "All Targets" is selected, include all available targets
     const shouldIncludeAllTargets = selectedTargetIds.has(ALL_TARGETS_SENTINEL);
@@ -181,7 +188,13 @@ export const StatusEffectUptimesPanel: React.FC<StatusEffectUptimesPanelProps> =
     });
 
     return results;
-  }, [statusEffectUptimesData, selectedTargetIds, fightStartTime, fightEndTime]);
+  }, [
+    statusEffectUptimesData,
+    selectedTargetIds,
+    fightStartTime,
+    fightEndTime,
+    hasValidFightWindow,
+  ]);
 
   // Recalculate uptimes when a specific player is selected - now O(1) lookup!
   const playerFilteredStatusEffectUptimes = React.useMemo<BuffUptime[]>(() => {
@@ -306,7 +319,7 @@ export const StatusEffectUptimesPanel: React.FC<StatusEffectUptimesPanelProps> =
 
     // If a player is selected, add group average for comparison
     // Calculate the AVERAGE of individual player uptimes (not the combined/overlapping total)
-    if (usePlayerData && statusEffectUptimesData && fightStartTime && fightEndTime) {
+    if (usePlayerData && statusEffectUptimesData && hasValidFightWindow) {
       const fightDuration = fightEndTime - fightStartTime;
       const shouldIncludeAllTargets = selectedTargetIds.has(ALL_TARGETS_SENTINEL);
       const selectedTargetsArray = shouldIncludeAllTargets
@@ -396,6 +409,7 @@ export const StatusEffectUptimesPanel: React.FC<StatusEffectUptimesPanelProps> =
     fightStartTime,
     selectedTargetIds,
     statusEffectUptimesData,
+    hasValidFightWindow,
   ]);
 
   // Enhanced loading check: ensure ALL required data is available and processing is complete
@@ -432,8 +446,27 @@ export const StatusEffectUptimesPanel: React.FC<StatusEffectUptimesPanelProps> =
     statusEffectUptimesData,
   ]);
 
+  const requestError = statusEffectUptimesError ?? hostileBuffLookupError ?? debuffLookupError;
+  const panelState = resolveAnalyzerPanelState({
+    error: requestError,
+    hasData: enhancedStatusEffectUptimes.length > 0,
+    isComplete:
+      statusEffectUptimesData !== null &&
+      statusEffectUptimesData !== undefined &&
+      hostileBuffLookupData !== null &&
+      debuffLookupData !== null &&
+      reportMasterData?.loaded === true &&
+      hasValidFightWindow,
+    isLoading:
+      isDataLoading &&
+      (isMasterDataLoading ||
+        isStatusEffectUptimesLoading ||
+        isHostileBuffLookupLoading ||
+        isDebuffLookupLoading),
+  });
+
   const prefetchedSeries = React.useMemo(() => {
-    if (!mergedStatusEffectLookup || !fightStartTime || !fightEndTime) {
+    if (!mergedStatusEffectLookup || !hasValidFightWindow) {
       return [];
     }
 
@@ -454,29 +487,22 @@ export const StatusEffectUptimesPanel: React.FC<StatusEffectUptimesPanelProps> =
     fightEndTime,
     enhancedStatusEffectUptimes,
     realTargetFilter,
+    hasValidFightWindow,
   ]);
 
   const canOpenTimeline = prefetchedSeries.length > 0;
-
-  if (isDataLoading) {
-    return (
-      <StatusEffectUptimesView
-        selectedTargetId={selectedTargetId}
-        statusEffectUptimes={null}
-        isLoading={true}
-        reportId={reportId}
-        fightId={fightId}
-        canOpenTimeline={false}
-      />
-    );
-  }
 
   return (
     <React.Fragment>
       <StatusEffectUptimesView
         selectedTargetId={selectedTargetId}
         statusEffectUptimes={enhancedStatusEffectUptimes}
-        isLoading={false}
+        state={panelState}
+        stateDetail={
+          panelState === 'stale'
+            ? 'Showing the most recent status-effect data while required sources are unavailable.'
+            : (requestError ?? undefined)
+        }
         reportId={reportId}
         fightId={fightId}
         onOpenTimeline={canOpenTimeline ? () => setIsTimelineOpen(true) : undefined}

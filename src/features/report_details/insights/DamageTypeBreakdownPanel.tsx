@@ -4,6 +4,7 @@ import { FightFragment } from '../../../graphql/gql/graphql';
 import { useDamageEvents, useReportMasterData } from '../../../hooks';
 import { useSelectedTargetIds } from '../../../hooks/useSelectedTargetIds';
 import { DamageTypeFlags } from '../../../types/abilities';
+import { resolveAnalyzerPanelState } from '../AnalyzerPanelState';
 
 import { DamageTypeBreakdownView } from './DamageTypeBreakdownView';
 import { categorizeDamageEvents, type DamageCategoryKey } from './damageTypeCategorization';
@@ -43,7 +44,8 @@ export const DamageTypeBreakdownPanel: React.FC<DamageTypeBreakdownPanelProps> =
   fight: _fight,
   selectedPlayerId,
 }) => {
-  const { damageEvents, isDamageEventsLoading } = useDamageEvents();
+  const { damageEvents, isDamageEventsLoading, damageEventsStatus, damageEventsError } =
+    useDamageEvents();
   const { reportMasterData, isMasterDataLoading } = useReportMasterData();
 
   const selectedTargetIds = useSelectedTargetIds();
@@ -88,15 +90,23 @@ export const DamageTypeBreakdownPanel: React.FC<DamageTypeBreakdownPanelProps> =
     return { damageTypeBreakdown: breakdown, totalDamage: categorized.totalDamage };
   }, [damageEvents, reportMasterData?.abilitiesById, selectedTargetIds, selectedPlayerId]);
 
-  if (isMasterDataLoading || isDamageEventsLoading) {
-    return <DamageTypeBreakdownView damageTypeBreakdown={[]} totalDamage={0} isLoading={true} />;
-  }
+  const state = resolveAnalyzerPanelState({
+    error: damageEventsError,
+    hasData: damageTypeBreakdown.length > 0,
+    isComplete: damageEventsStatus === 'succeeded' && reportMasterData.loaded,
+    isLoading: isMasterDataLoading || isDamageEventsLoading,
+  });
 
   return (
     <DamageTypeBreakdownView
       damageTypeBreakdown={damageTypeBreakdown}
       totalDamage={totalDamage}
-      isLoading={false}
+      state={state}
+      stateDetail={
+        state === 'stale'
+          ? 'Damage events or ability data have not completed loading.'
+          : (damageEventsError ?? undefined)
+      }
     />
   );
 };

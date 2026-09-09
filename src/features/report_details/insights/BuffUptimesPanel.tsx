@@ -11,6 +11,7 @@ import {
   computeBuffUptimes,
   computeBuffUptimesWithGroupAverage,
 } from '../../../utils/buffUptimeCalculator';
+import { resolveAnalyzerPanelState } from '../AnalyzerPanelState';
 
 import { BuffUptimesView } from './BuffUptimesView';
 import { EffectUptimeTimelineModal } from './EffectUptimeTimelineModal';
@@ -72,8 +73,11 @@ export const IMPORTANT_BUFF_ABILITIES = new Set([
  */
 export const BuffUptimesPanel: React.FC<BuffUptimesPanelProps> = ({ fight, selectedPlayerId }) => {
   const { reportId, fightId } = useSelectedReportAndFight();
-  const { buffLookupData: friendlyBuffsLookup, isBuffLookupLoading: isFriendlyBuffEventsLoading } =
-    useBuffLookupTask();
+  const {
+    buffLookupData: friendlyBuffsLookup,
+    isBuffLookupLoading: isFriendlyBuffEventsLoading,
+    buffLookupError,
+  } = useBuffLookupTask();
   const { reportMasterData, isMasterDataLoading } = useReportMasterData();
   // Selected friendly player to filter buffs by (shows only buffs applied BY this player)
   const selectedFriendlyPlayerId = useSelector(selectSelectedFriendlyPlayerId);
@@ -85,7 +89,11 @@ export const BuffUptimesPanel: React.FC<BuffUptimesPanelProps> = ({ fight, selec
   // Extract stable fight properties
   const fightStartTime = fight?.startTime;
   const fightEndTime = fight?.endTime;
-  const fightDuration = fightEndTime && fightStartTime ? fightEndTime - fightStartTime : 0;
+  const hasValidFightWindow =
+    Number.isFinite(fightStartTime) &&
+    Number.isFinite(fightEndTime) &&
+    fightEndTime > fightStartTime;
+  const fightDuration = hasValidFightWindow ? fightEndTime - fightStartTime : 0;
 
   const friendlyPlayerIds = React.useMemo(() => {
     if (!fight?.friendlyPlayers) {
@@ -222,8 +230,15 @@ export const BuffUptimesPanel: React.FC<BuffUptimesPanelProps> = ({ fight, selec
     return false;
   }, [isMasterDataLoading, isFriendlyBuffEventsLoading, friendlyBuffsLookup, fightDuration]);
 
+  const state = resolveAnalyzerPanelState({
+    error: buffLookupError,
+    hasData: buffUptimes.length > 0,
+    isComplete: friendlyBuffsLookup !== null && hasValidFightWindow,
+    isLoading: isDataLoading && (isMasterDataLoading || isFriendlyBuffEventsLoading),
+  });
+
   const prefetchedSeries = React.useMemo(() => {
-    if (!friendlyBuffsLookup || !fightStartTime || !fightEndTime) {
+    if (!friendlyBuffsLookup || !hasValidFightWindow) {
       return [];
     }
 
@@ -234,30 +249,27 @@ export const BuffUptimesPanel: React.FC<BuffUptimesPanelProps> = ({ fight, selec
       fightEndTime,
       targetFilter: friendlyPlayerIds.size > 0 ? friendlyPlayerIds : null,
     });
-  }, [buffUptimes, friendlyBuffsLookup, fightStartTime, fightEndTime, friendlyPlayerIds]);
+  }, [
+    buffUptimes,
+    friendlyBuffsLookup,
+    fightStartTime,
+    fightEndTime,
+    friendlyPlayerIds,
+    hasValidFightWindow,
+  ]);
 
   const canOpenTimeline = prefetchedSeries.length > 0;
-
-  if (isDataLoading) {
-    return (
-      <BuffUptimesView
-        buffUptimes={[]}
-        isLoading={true}
-        showAllBuffs={showAllBuffs}
-        onToggleShowAll={setShowAllBuffs}
-        reportId={reportId}
-        fightId={fightId}
-        selectedTargetId={null}
-        canOpenTimeline={false}
-      />
-    );
-  }
 
   return (
     <React.Fragment>
       <BuffUptimesView
         buffUptimes={buffUptimes}
-        isLoading={false}
+        state={state}
+        stateDetail={
+          state === 'stale'
+            ? 'Buff events or the selected fight window have not completed.'
+            : (buffLookupError ?? undefined)
+        }
         showAllBuffs={showAllBuffs}
         onToggleShowAll={setShowAllBuffs}
         reportId={reportId}
