@@ -41,10 +41,28 @@ import {
 } from '../hooks/useViewTransitionNavigate';
 import { persistor } from '../store/storeWithHistory';
 import { clearUserContext } from '../utils/errorTracking';
-import { preloadHubRoutes } from '../utils/hubRoutePreload';
+import {
+  importBuildHubPage,
+  importPackHubPage,
+  importRosterHubPage,
+  preloadHubRoutes,
+} from '../utils/hubRoutePreload';
+import { shouldPrefetchHeavyRoute, type RoutePrefetchIntent } from '../utils/routePrefetchPolicy';
 
 import { PerfTierToggle } from './PerfTierToggle';
 import { ThemeToggle } from './ThemeToggle';
+
+type HubRoutePath = '/roster-hub' | '/build-hub' | '/pack-hub';
+
+const hubRouteImporters: Record<HubRoutePath, () => Promise<unknown>> = {
+  '/roster-hub': importRosterHubPage,
+  '/build-hub': importBuildHubPage,
+  '/pack-hub': importPackHubPage,
+};
+
+const prefetchHubRouteOnIntent = (path: HubRoutePath, intent: RoutePrefetchIntent): void => {
+  if (shouldPrefetchHeavyRoute(intent)) preloadHubRoutes([hubRouteImporters[path]]);
+};
 
 // Animated Hamburger Icon
 const HamburgerButton = styled(IconButton, {
@@ -528,29 +546,6 @@ export const HeaderBar: React.FC = () => {
     }
   }, [isLoggedIn, currentUser, userLoading, userError, refetchUser]);
 
-  // Warm the three hub route chunks (/roster-hub, /build-hub, /pack-hub) during
-  // idle time so the first lateral slide between them captures real destination
-  // content in its View Transition snapshot rather than a cold-chunk placeholder.
-  // Deferred to idle so it never competes with the page's own critical resources.
-  React.useEffect(() => {
-    const ric = (
-      window as unknown as {
-        requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
-        cancelIdleCallback?: (handle: number) => void;
-      }
-    ).requestIdleCallback;
-    if (typeof ric === 'function') {
-      const handle = ric(() => preloadHubRoutes(), { timeout: 2500 });
-      return () => {
-        (
-          window as unknown as { cancelIdleCallback?: (handle: number) => void }
-        ).cancelIdleCallback?.(handle);
-      };
-    }
-    const timer = window.setTimeout(() => preloadHubRoutes(), 200);
-    return () => window.clearTimeout(timer);
-  }, []);
-
   const userLabel = React.useMemo(() => {
     if (userDisplayName) return userDisplayName;
     if (userLoading) return 'Loading…';
@@ -829,7 +824,7 @@ export const HeaderBar: React.FC = () => {
     return items;
   }, [isLoggedIn, handleSampleReport]);
 
-  const navItems = [
+  const navItems: ReadonlyArray<{ text: string; icon: string; path: HubRoutePath }> = [
     {
       text: 'Roster Hub',
       icon: '👥',
@@ -848,7 +843,7 @@ export const HeaderBar: React.FC = () => {
   ];
 
   // Lateral peer paths — ordered left-to-right for slide direction
-  const lateralPeers = navItems.map((i) => i.path);
+  const lateralPeers: readonly string[] = navItems.map((i) => i.path);
 
   const getLateralTransitionType = React.useCallback(
     (targetPath: string): ViewTransitionType => {
@@ -919,11 +914,11 @@ export const HeaderBar: React.FC = () => {
                 <Button
                   key={item.text}
                   color="inherit"
-                  // Warm the hub chunks the instant the user shows intent (hover or
-                  // keyboard focus) so even a click faster than the idle preload still
-                  // captures real content in the slide's View Transition snapshot.
-                  onPointerEnter={() => preloadHubRoutes()}
-                  onFocus={() => preloadHubRoutes()}
+                  // Warm the hub chunks only after an intentional interaction so
+                  // constrained connections do not pay for unused route chunks.
+                  onPointerEnter={() => prefetchHubRouteOnIntent(item.path, 'pointer')}
+                  onFocus={() => prefetchHubRouteOnIntent(item.path, 'focus')}
+                  onTouchStart={() => prefetchHubRouteOnIntent(item.path, 'touch')}
                   onClick={() =>
                     navigate(item.path, { vtType: getLateralTransitionType(item.path) })
                   }
@@ -1686,6 +1681,9 @@ export const HeaderBar: React.FC = () => {
             <MobileSheetItem
               key={item.text}
               active={location.pathname === item.path}
+              onPointerEnter={() => prefetchHubRouteOnIntent(item.path, 'pointer')}
+              onFocus={() => prefetchHubRouteOnIntent(item.path, 'focus')}
+              onTouchStart={() => prefetchHubRouteOnIntent(item.path, 'touch')}
               onClick={() => {
                 navigate(item.path, { vtType: getLateralTransitionType(item.path) });
                 setMobileOpen(false);

@@ -16,8 +16,8 @@
  * captured in the snapshot, and the slide is clean — which is exactly why the
  * glitch "goes away once triggered".
  *
- * Warming all three chunks shortly after the header mounts makes the first hop
- * behave like a warm one, so the View Transition always captures real content.
+ * Warming the chunk a user deliberately targets keeps the first hop responsive
+ * without downloading unrelated hubs on constrained connections.
  *
  * These importers are the SINGLE SOURCE OF TRUTH for the hub route chunks:
  * `App.tsx` builds its `React.lazy` routes from the same functions, so preloading
@@ -46,15 +46,15 @@ const hubRouteImporters: ReadonlyArray<() => Promise<unknown>> = [
 // Importers that are currently loading or have already loaded successfully.
 // Repeated calls skip these so we never re-fire a healthy preload. A REJECTED
 // preload is removed again (in the .catch) so a later call can retry: a transient
-// background failure (e.g. an idle preload during a network blip) must not
-// permanently poison hub warming and leave hover/focus/idle unable to re-warm.
+// background failure during an intentional preload must not permanently poison
+// hub warming and leave a later interaction unable to re-warm.
 const warming = new Set<() => Promise<unknown>>();
 
 /**
- * Warm the three hub route chunks so a subsequent hub navigation captures real
+ * Warm selected hub route chunks so a subsequent hub navigation captures real
  * destination content in its View Transition snapshot.
  *
- * Safe to invoke repeatedly (every header mount, plus hover/focus): an importer
+ * Safe to invoke repeatedly (pointer/focus/touch intent): an importer
  * already loading or loaded is skipped, but one whose previous attempt rejected is
  * retried. Import rejections are swallowed — a failed *preload* must never surface
  * as an unhandled rejection; the route's own Suspense boundary and ErrorBoundary
@@ -69,7 +69,7 @@ export function preloadHubRoutes(
     if (warming.has(load)) continue;
     warming.add(load);
     void load().catch(() => {
-      // Transient failure — allow a later call (hover/focus/idle) to retry.
+      // Transient failure — allow a later intentional interaction to retry.
       warming.delete(load);
     });
   }
