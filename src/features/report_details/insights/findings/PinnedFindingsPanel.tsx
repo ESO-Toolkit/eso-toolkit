@@ -18,6 +18,7 @@ import React, { useState } from 'react';
 import {
   type FindingShareRecipient,
   type PinnedFinding,
+  type PrivacySafeSharedPinnedFinding,
   type SharedFindingAssignee,
   type SharedPinnedFinding,
   sharePinnedFinding,
@@ -59,9 +60,15 @@ const formatElapsedTimestamp = (timestampMs: number): string => {
   return `${seconds}s into encounter`;
 };
 
-const projectForPrivacy = (finding: PinnedFinding): SharedPinnedFinding | undefined => {
+const formatLifecycleOffset = (afterAnchorMs: number): string => {
+  const seconds = Math.floor(afterAnchorMs / 1000);
+  return `${seconds}s after evidence anchor`;
+};
+
+const projectForPrivacy = (finding: PinnedFinding): PrivacySafeSharedPinnedFinding | undefined => {
   try {
-    return sharePinnedFinding(finding, { audience: 'team', allowPlayerIdentifiers: false });
+    const shared = sharePinnedFinding(finding, { audience: 'team', allowPlayerIdentifiers: false });
+    return shared.sharedWith.includesPlayerIdentifiers ? undefined : shared;
   } catch {
     return undefined;
   }
@@ -237,7 +244,8 @@ export const PinnedFindingsPanel = ({
                         {shared.resolutionHistory.map((event) => (
                           <Box component="li" key={event.id}>
                             <Typography variant="body2" sx={{ overflowWrap: 'anywhere' }}>
-                              {event.previousStatus} → {event.status} · {event.at} · {event.note}
+                              {event.previousStatus} → {event.status} ·{' '}
+                              {formatLifecycleOffset(event.afterAnchorMs)} · {event.note}
                             </Typography>
                           </Box>
                         ))}
@@ -252,10 +260,10 @@ export const PinnedFindingsPanel = ({
                   {shared.ownership.history.length ? (
                     <Stack component="ol" spacing={0.5} sx={{ m: 0, pl: 2 }}>
                       {shared.ownership.history.map((transition, transitionIndex) => (
-                        <Box component="li" key={`${transition.at}-${transitionIndex}`}>
+                        <Box component="li" key={`${transition.afterAnchorMs}-${transitionIndex}`}>
                           <Typography variant="body2" sx={{ overflowWrap: 'anywhere' }}>
                             {formatAssignee(transition.from)} → {formatAssignee(transition.to)} ·{' '}
-                            {transition.at}
+                            {formatLifecycleOffset(transition.afterAnchorMs)}
                             {transition.reason ? ` · ${transition.reason}` : ''}
                           </Typography>
                         </Box>
@@ -267,10 +275,7 @@ export const PinnedFindingsPanel = ({
                 </Box>
                 <Typography variant="body2">
                   <strong>Provenance:</strong> {shared.provenance.kind} · {shared.provenance.source}{' '}
-                  · observed {shared.provenance.observedAt}
-                  {shared.provenance.sourceReference
-                    ? ` · reference ${shared.provenance.sourceReference}`
-                    : ''}
+                  · observed {formatLifecycleOffset(shared.provenance.observedAfterAnchorMs)}
                 </Typography>
                 <Typography variant="body2">
                   <strong>Confidence rationale:</strong> {shared.confidence.rationale}

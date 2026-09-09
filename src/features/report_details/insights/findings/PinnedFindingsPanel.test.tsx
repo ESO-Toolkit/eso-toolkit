@@ -29,6 +29,7 @@ const seed: PinnedFindingSeed = {
     kind: 'authoritative-rule',
     source: 'Encounter rules',
     observedAt: '2026-09-08T12:00:00.000Z',
+    sourceReference: 'https://www.esologs.com/reports/VY6r8pJ2qNa4ZxLt',
   },
   recommendedAction: {
     action: 'Assign an interrupt owner.',
@@ -90,6 +91,23 @@ describe('PinnedFindingsPanel', () => {
     expect(screen.getByText(/open.*acknowledged/)).toBeInTheDocument();
     expect(screen.getByText(/The assignment was acknowledged/)).toBeInTheDocument();
     expect(screen.queryByText('Ada')).not.toBeInTheDocument();
+  });
+
+  it('renders safe shares with elapsed lineage but no wall-clock provenance reference', () => {
+    const onShare = jest.fn();
+    renderPanel({ status: 'ready', findings: [assignedFinding] }, onShare);
+
+    const panel = screen.getByRole('region', { name: 'Pinned findings' });
+    expect(panel).toHaveTextContent('0s after evidence anchor');
+    expect(panel).toHaveTextContent('120s after evidence anchor');
+    expect(panel).toHaveTextContent('180s after evidence anchor');
+    expect(panel).not.toHaveTextContent('2026-09-08T12:00:00.000Z');
+    expect(panel).not.toHaveTextContent('VY6r8pJ2qNa4ZxLt');
+    expect(panel).not.toHaveTextContent('https://www.esologs.com/reports');
+
+    fireEvent.click(screen.getByRole('button', { name: /Prepare privacy-safe share/ }));
+    expect(JSON.stringify(onShare.mock.calls[0][0])).not.toContain('2026-09-08T12:00:00.000Z');
+    expect(JSON.stringify(onShare.mock.calls[0][0])).not.toContain('VY6r8pJ2qNa4ZxLt');
   });
 
   it('shows lifecycle status and does not fabricate share controls without a handler', () => {
