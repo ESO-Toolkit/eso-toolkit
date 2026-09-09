@@ -1,7 +1,7 @@
-import { Box, Typography } from '@mui/material';
+import { Box } from '@mui/material';
 import React, { useCallback, useMemo, useState } from 'react';
+import { useSelector } from 'react-redux';
 
-import { HealingDoneTableSkeleton } from '../../../components/HealingDoneTableSkeleton';
 import { PlayerCardModal } from '../../../components/PlayerCardModal';
 import {
   useCastEvents,
@@ -13,16 +13,51 @@ import {
   useFightForContext,
 } from '../../../hooks';
 import type { ReportFightContextInput } from '../../../store/contextTypes';
+import { selectCastEventsEntryForContext } from '../../../store/events_data/castEventsSelectors';
+import { selectDeathEventsEntryForContext } from '../../../store/events_data/deathEventsSelectors';
+import { selectHealingEventsEntryForContext } from '../../../store/events_data/healingEventsSelectors';
+import { selectMasterDataEntryForContext } from '../../../store/master_data/masterDataSelectors';
+import { selectReportRegistryEntryForContext } from '../../../store/report/reportSelectors';
+import type { RootState } from '../../../store/storeWithHistory';
 import { KnownAbilities } from '../../../types/abilities';
 import { HealEvent } from '../../../types/combatlogEvents';
 import { msToSeconds } from '../../../utils/fightDuration';
 import { resolveActorName } from '../../../utils/resolveActorName';
+import {
+  AnalyzerPanelState,
+  type AnalyzerPanelStateKind,
+  resolveAnalyzerPanelState,
+} from '../AnalyzerPanelState';
 
 import { HealingDonePanelView } from './HealingDonePanelView';
 
 interface HealingDonePanelProps {
   context?: ReportFightContextInput;
 }
+
+type LoadStatus = 'idle' | 'loading' | 'succeeded' | 'failed';
+
+interface ResolveHealingDonePanelStateInput {
+  error?: string | null;
+  hasData: boolean;
+  isLoading: boolean;
+  hasFight: boolean;
+  statuses: readonly LoadStatus[];
+}
+
+export const resolveHealingDonePanelState = ({
+  error,
+  hasData,
+  isLoading,
+  hasFight,
+  statuses,
+}: ResolveHealingDonePanelStateInput): AnalyzerPanelStateKind =>
+  resolveAnalyzerPanelState({
+    error,
+    hasData,
+    isLoading,
+    isComplete: hasFight && statuses.every((status) => status === 'succeeded'),
+  });
 
 /**
  * Smart component that handles data processing and state management for healing done panel
@@ -38,6 +73,21 @@ export const HealingDonePanel: React.FC<HealingDonePanelProps> = ({ context }) =
   const { castEvents, isCastEventsLoading } = useCastEvents({ context: resolvedContext });
   const { playerData, isPlayerDataLoading } = usePlayerData({ context: resolvedContext });
   const { deathEvents, isDeathEventsLoading } = useDeathEvents({ context: resolvedContext });
+  const healingEntry = useSelector((state: RootState) =>
+    selectHealingEventsEntryForContext(state, resolvedContext),
+  );
+  const reportEntry = useSelector((state: RootState) =>
+    selectReportRegistryEntryForContext(state, resolvedContext),
+  );
+  const masterDataEntry = useSelector((state: RootState) =>
+    selectMasterDataEntryForContext(state, resolvedContext),
+  );
+  const castEntry = useSelector((state: RootState) =>
+    selectCastEventsEntryForContext(state, resolvedContext),
+  );
+  const deathEntry = useSelector((state: RootState) =>
+    selectDeathEventsEntryForContext(state, resolvedContext),
+  );
 
   const masterData = useMemo(
     () => reportMasterData || { actorsById: {}, abilitiesById: {} },
@@ -50,7 +100,8 @@ export const HealingDonePanel: React.FC<HealingDonePanelProps> = ({ context }) =
     isMasterDataLoading ||
     isCastEventsLoading ||
     isPlayerDataLoading ||
-    isDeathEventsLoading;
+    isDeathEventsLoading ||
+    reportEntry?.status === 'loading';
 
   // Memoize healing calculations to prevent unnecessary recalculations
   const healingStatistics = useMemo(() => {
@@ -206,35 +257,47 @@ export const HealingDonePanel: React.FC<HealingDonePanelProps> = ({ context }) =
 
   const orderedPlayerIds = useMemo(() => healingRows.map((row) => row.id), [healingRows]);
 
-  // Show table skeleton while data is being fetched
-  if (isLoading) {
-    return <HealingDoneTableSkeleton rowCount={8} />;
-  }
-
-  // Show no data message if we have no healing data but aren't loading
-  if (healingRows.length === 0) {
-    return (
-      <Box sx={{ textAlign: 'center', py: 4 }}>
-        <Typography variant="body1" color="text.secondary">
-          No healing data available for this fight
-        </Typography>
-      </Box>
-    );
-  }
+  const panelError =
+    reportEntry?.error ??
+    healingEntry?.error ??
+    masterDataEntry?.error ??
+    castEntry?.error ??
+    playerData?.error ??
+    deathEntry?.error ??
+    null;
+  const hasData = healingRows.length > 0;
+  const panelState = resolveHealingDonePanelState({
+    error: panelError,
+    hasData,
+    isLoading,
+    hasFight: Boolean(fight),
+    statuses: [
+      reportEntry?.status ?? 'idle',
+      healingEntry?.status ?? 'idle',
+      masterDataEntry?.status ?? 'idle',
+      castEntry?.status ?? 'idle',
+      playerData?.status ?? 'idle',
+      deathEntry?.status ?? 'idle',
+    ],
+  });
 
   return (
-    <Box data-testid="healing-done-panel">
-      <HealingDonePanelView healingRows={healingRows} onPlayerClick={handlePlayerClick} />
-      {modalPlayerId !== null && (
-        <PlayerCardModal
-          open
-          onClose={handleModalClose}
-          currentPlayerId={modalPlayerId}
-          orderedPlayerIds={orderedPlayerIds}
-          onPlayerChange={handleModalPlayerChange}
-          context={resolvedContext}
-        />
+    <AnalyzerPanelState title="Healing done" state={panelState} detail={panelError ?? undefined}>
+      {hasData && (
+        <Box data-testid="healing-done-panel">
+          <HealingDonePanelView healingRows={healingRows} onPlayerClick={handlePlayerClick} />
+          {modalPlayerId !== null && (
+            <PlayerCardModal
+              open
+              onClose={handleModalClose}
+              currentPlayerId={modalPlayerId}
+              orderedPlayerIds={orderedPlayerIds}
+              onPlayerChange={handleModalPlayerChange}
+              context={resolvedContext}
+            />
+          )}
+        </Box>
       )}
-    </Box>
+    </AnalyzerPanelState>
   );
 };

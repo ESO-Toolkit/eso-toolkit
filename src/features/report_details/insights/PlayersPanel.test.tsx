@@ -7,7 +7,46 @@ import {
   KnownAbilities,
 } from '../../../types/abilities';
 
-import { buildChampionPointEntry, classAnalysisFromKalpaEvidence } from './PlayersPanel';
+import {
+  buildChampionPointEntry,
+  classAnalysisFromKalpaEvidence,
+  resolvePlayersPanelState,
+} from './PlayersPanel';
+
+describe('resolvePlayersPanelState', () => {
+  const completeStatuses = ['succeeded', 'succeeded', 'succeeded'] as const;
+
+  it.each([
+    ['loading', { hasData: false, isLoading: true, hasFight: true, statuses: ['loading'] }],
+    ['partial', { hasData: true, isLoading: true, hasFight: true, statuses: ['loading'] }],
+    ['empty', { hasData: false, isLoading: false, hasFight: true, statuses: completeStatuses }],
+    ['ready', { hasData: true, isLoading: false, hasFight: true, statuses: completeStatuses }],
+    ['stale', { hasData: true, isLoading: false, hasFight: true, statuses: ['idle'] }],
+    [
+      'failed',
+      {
+        error: 'Players request failed',
+        hasData: true,
+        isLoading: false,
+        hasFight: true,
+        statuses: ['failed'],
+      },
+    ],
+  ] as const)('resolves %s without discarding retained player data', (expected, input) => {
+    expect(resolvePlayersPanelState(input)).toBe(expected);
+  });
+
+  it('does not report fresh empty before a fight is authoritative', () => {
+    expect(
+      resolvePlayersPanelState({
+        hasData: false,
+        isLoading: false,
+        hasFight: false,
+        statuses: [...completeStatuses],
+      }),
+    ).toBe('stale');
+  });
+});
 
 describe('Champion Points Constants', () => {
   it('should have the correct champion point ability IDs', () => {

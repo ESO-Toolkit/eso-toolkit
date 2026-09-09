@@ -1,8 +1,7 @@
-import { Box, Typography } from '@mui/material';
+import { Box } from '@mui/material';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 
-import { DamageDoneTableSkeleton } from '../../../components/DamageDoneTableSkeleton';
 import { PlayerCardModal } from '../../../components/PlayerCardModal';
 import {
   useDamageEventsLookup,
@@ -16,12 +15,25 @@ import {
   useResolvedReportFightContext,
 } from '../../../hooks';
 import type { ReportFightContextInput } from '../../../store/contextTypes';
-import { selectActorsById } from '../../../store/master_data/masterDataSelectors';
+import { selectCastEventsEntryForContext } from '../../../store/events_data/castEventsSelectors';
+import { selectDamageEventsEntryForContext } from '../../../store/events_data/damageEventsSelectors';
+import { selectDeathEventsEntryForContext } from '../../../store/events_data/deathEventsSelectors';
+import {
+  selectActorsById,
+  selectMasterDataEntryForContext,
+} from '../../../store/master_data/masterDataSelectors';
+import { selectReportRegistryEntryForContext } from '../../../store/report/reportSelectors';
+import type { RootState } from '../../../store/storeWithHistory';
 import { KnownAbilities } from '../../../types/abilities';
 import { calculateActivePercentages } from '../../../utils/activePercentageUtils';
 import { msToSeconds } from '../../../utils/fightDuration';
 import { resolveActorName } from '../../../utils/resolveActorName';
 import type { DamageOverTimeResult } from '../../../workers/calculations/CalculateDamageOverTime';
+import {
+  AnalyzerPanelState,
+  type AnalyzerPanelStateKind,
+  resolveAnalyzerPanelState,
+} from '../AnalyzerPanelState';
 
 import { DamageDonePanelView } from './DamageDonePanelView';
 
@@ -29,6 +41,30 @@ interface DamageDonePanelProps {
   context?: ReportFightContextInput;
   children?: React.ReactNode;
 }
+
+type LoadStatus = 'idle' | 'loading' | 'succeeded' | 'failed';
+
+interface ResolveDamageDonePanelStateInput {
+  error?: string | null;
+  hasData: boolean;
+  isLoading: boolean;
+  hasFight: boolean;
+  statuses: readonly LoadStatus[];
+}
+
+export const resolveDamageDonePanelState = ({
+  error,
+  hasData,
+  isLoading,
+  hasFight,
+  statuses,
+}: ResolveDamageDonePanelStateInput): AnalyzerPanelStateKind =>
+  resolveAnalyzerPanelState({
+    error,
+    hasData,
+    isLoading,
+    isComplete: hasFight && statuses.every((status) => status === 'succeeded'),
+  });
 
 /**
  * Smart component that handles data processing and state management for damage done panel
@@ -49,10 +85,24 @@ export const DamageDonePanel: React.FC<DamageDonePanelProps> = ({ context }) => 
   const { castEvents, isCastEventsLoading } = useCastEvents({ context: resolvedContext });
   const selectedTargetIds = useSelectedTargetIds();
   const actorsById = useSelector(selectActorsById);
+  const damageEntry = useSelector((state: RootState) =>
+    selectDamageEventsEntryForContext(state, resolvedContext),
+  );
+  const reportEntry = useSelector((state: RootState) =>
+    selectReportRegistryEntryForContext(state, resolvedContext),
+  );
+  const masterDataEntry = useSelector((state: RootState) =>
+    selectMasterDataEntryForContext(state, resolvedContext),
+  );
+  const deathEntry = useSelector((state: RootState) =>
+    selectDeathEventsEntryForContext(state, resolvedContext),
+  );
+  const castEntry = useSelector((state: RootState) =>
+    selectCastEventsEntryForContext(state, resolvedContext),
+  );
 
-  const { damageOverTimeData, isDamageOverTimeLoading } = useDamageOverTimeTask({
-    context: resolvedContext,
-  });
+  const { damageOverTimeData, isDamageOverTimeLoading, damageOverTimeError } =
+    useDamageOverTimeTask({ context: resolvedContext });
 
   // Resolve selected target names for display
   const selectedTargetNames = useMemo(() => {
@@ -114,7 +164,9 @@ export const DamageDonePanel: React.FC<DamageDonePanelProps> = ({ context }) => 
       isMasterDataLoading ||
       isPlayerDataLoading ||
       isDeathEventsLoading ||
-      isCastEventsLoading
+      isCastEventsLoading ||
+      isDamageOverTimeLoading ||
+      reportEntry?.status === 'loading'
     );
   }, [
     isDamageEventsLookupLoading,
@@ -122,6 +174,8 @@ export const DamageDonePanel: React.FC<DamageDonePanelProps> = ({ context }) => 
     isPlayerDataLoading,
     isDeathEventsLoading,
     isCastEventsLoading,
+    isDamageOverTimeLoading,
+    reportEntry?.status,
   ]);
 
   // Memoize damage calculations to prevent unnecessary recalculations
@@ -386,47 +440,59 @@ export const DamageDonePanel: React.FC<DamageDonePanelProps> = ({ context }) => 
     [actorsById],
   );
 
-  // Show table skeleton while data is being fetched
-  if (isLoading) {
-    return <DamageDoneTableSkeleton rowCount={10} />;
-  }
-
-  // Render a styled empty state when there is no damage data to show
-  // (e.g. all damage filtered out by target selection). Mirrors HealingDonePanel.
-  if (damageRows.length === 0) {
-    return (
-      <Box sx={{ textAlign: 'center', py: 4 }}>
-        <Typography variant="body1" color="text.secondary">
-          No damage data available for this fight
-        </Typography>
-      </Box>
-    );
-  }
+  const panelError =
+    reportEntry?.error ??
+    damageEntry?.error ??
+    masterDataEntry?.error ??
+    playerData?.error ??
+    deathEntry?.error ??
+    castEntry?.error ??
+    damageOverTimeError ??
+    null;
+  const hasData = damageRows.length > 0;
+  const panelState = resolveDamageDonePanelState({
+    error: panelError,
+    hasData,
+    isLoading,
+    hasFight: Boolean(fight),
+    statuses: [
+      reportEntry?.status ?? 'idle',
+      damageEntry?.status ?? 'idle',
+      masterDataEntry?.status ?? 'idle',
+      playerData?.status ?? 'idle',
+      deathEntry?.status ?? 'idle',
+      castEntry?.status ?? 'idle',
+    ],
+  });
 
   return (
-    <Box data-testid="damage-done-panel">
-      <DamageDonePanelView
-        damageRows={damageRows}
-        selectedTargetNames={selectedTargetNames}
-        damageOverTimeData={damageOverTimeData as DamageOverTimeResult | null}
-        isDamageOverTimeLoading={isDamageOverTimeLoading}
-        selectedTargetIds={selectedTargetIds}
-        availableTargets={availableTargets}
-        onPlayerClick={handlePlayerClick}
-        context={resolvedContext}
-        fight={fight}
-        resolvePlayerName={resolvePlayerName}
-      />
-      {modalPlayerId !== null && (
-        <PlayerCardModal
-          open
-          onClose={handleModalClose}
-          currentPlayerId={modalPlayerId}
-          orderedPlayerIds={orderedPlayerIds}
-          onPlayerChange={handleModalPlayerChange}
-          context={resolvedContext}
-        />
+    <AnalyzerPanelState title="Damage done" state={panelState} detail={panelError ?? undefined}>
+      {hasData && (
+        <Box data-testid="damage-done-panel">
+          <DamageDonePanelView
+            damageRows={damageRows}
+            selectedTargetNames={selectedTargetNames}
+            damageOverTimeData={damageOverTimeData as DamageOverTimeResult | null}
+            isDamageOverTimeLoading={isDamageOverTimeLoading}
+            selectedTargetIds={selectedTargetIds}
+            availableTargets={availableTargets}
+            onPlayerClick={handlePlayerClick}
+            context={resolvedContext}
+            fight={fight}
+            resolvePlayerName={resolvePlayerName}
+          />
+          {modalPlayerId !== null && (
+            <PlayerCardModal
+              open
+              onClose={handleModalClose}
+              currentPlayerId={modalPlayerId}
+              orderedPlayerIds={orderedPlayerIds}
+              onPlayerChange={handleModalPlayerChange}
+              context={resolvedContext}
+            />
+          )}
+        </Box>
       )}
-    </Box>
+    </AnalyzerPanelState>
   );
 };

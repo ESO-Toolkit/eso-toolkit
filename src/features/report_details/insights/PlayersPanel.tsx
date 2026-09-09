@@ -68,12 +68,19 @@ import { useDebuffEvents } from '../../../hooks/events/useDebuffEvents';
 import { useBuffLookupTask } from '../../../hooks/workerTasks/useBuffLookupTask';
 import { usePlayerTravelDistanceTask } from '../../../hooks/workerTasks/usePlayerTravelDistanceTask';
 import type { ReportFightContextInput } from '../../../store/contextTypes';
+import { selectMasterDataEntryForContext } from '../../../store/master_data/masterDataSelectors';
 import {
   buildFallbackPlayersFromMasterData,
   hasPlayerEntries,
 } from '../../../store/player_data/playerDataFallback';
 import type { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
 import { selectReportRegistryEntryForContext } from '../../../store/report/reportSelectors';
+import {
+  selectDeathEventsEntryForContext,
+  selectHealingEventsEntryForContext,
+  selectHostileBuffEventsEntryForContext,
+  selectResourceEventsEntryForContext,
+} from '../../../store/selectors/eventsSelectors';
 import type { RootState } from '../../../store/storeWithHistory';
 import {
   KnownAbilities,
@@ -111,6 +118,11 @@ import {
   type PotionStreamResult,
 } from '../../../utils/potionDetectionUtils';
 import { type BarSwapAnalysisResult } from '../../parse_analysis/utils/parseAnalysisUtils';
+import {
+  AnalyzerPanelState,
+  type AnalyzerPanelStateKind,
+  resolveAnalyzerPanelState,
+} from '../AnalyzerPanelState';
 
 import { PlayersPanelView } from './PlayersPanelView';
 
@@ -273,6 +285,30 @@ interface PlayersPanelProps {
   context?: ReportFightContextInput;
 }
 
+type LoadStatus = 'idle' | 'loading' | 'succeeded' | 'failed';
+
+interface ResolvePlayersPanelStateInput {
+  error?: string | null;
+  hasData: boolean;
+  isLoading: boolean;
+  hasFight: boolean;
+  statuses: readonly LoadStatus[];
+}
+
+export const resolvePlayersPanelState = ({
+  error,
+  hasData,
+  isLoading,
+  hasFight,
+  statuses,
+}: ResolvePlayersPanelStateInput): AnalyzerPanelStateKind =>
+  resolveAnalyzerPanelState({
+    error,
+    hasData,
+    isLoading,
+    isComplete: hasFight && statuses.every((status) => status === 'succeeded'),
+  });
+
 export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOverride }) => {
   const logger = useLogger('PlayersPanel');
   const dispatch = useAppDispatch();
@@ -308,7 +344,9 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
   const companionUpload = useSelector(selectCompanionUpload);
 
   // Use hooks to get data
-  const { reportMasterData, isMasterDataLoading } = useReportMasterData();
+  const { reportMasterData, isMasterDataLoading } = useReportMasterData({
+    context: resolvedContext,
+  });
   const { playerData, isPlayerDataLoading } = usePlayerData({
     context: resolvedContext,
     includeFallback: false,
@@ -351,24 +389,48 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
     }
   }, [kalpaBuildEvidence, companionSnapshots.length, dispatch]);
 
-  const { combatantInfoEvents, isCombatantInfoEventsLoading } = useCombatantInfoEvents({
+  const {
+    combatantInfoEvents,
+    isCombatantInfoEventsLoading,
+    combatantInfoEventsStatus,
+    combatantInfoEventsError,
+  } = useCombatantInfoEvents({ context: resolvedContext });
+  const { castEvents, isCastEventsLoading, castEventsStatus, castEventsError } = useCastEvents({
     context: resolvedContext,
   });
-  const { castEvents, isCastEventsLoading } = useCastEvents({ context: resolvedContext });
   const { deathEvents, isDeathEventsLoading } = useDeathEvents({ context: resolvedContext });
-  const { friendlyBuffEvents, isFriendlyBuffEventsLoading } = useFriendlyBuffEvents({
-    context: resolvedContext,
-  });
+  const {
+    friendlyBuffEvents,
+    isFriendlyBuffEventsLoading,
+    friendlyBuffEventsStatus,
+    friendlyBuffEventsError,
+  } = useFriendlyBuffEvents({ context: resolvedContext });
   const { hostileBuffEvents, isHostileBuffEventsLoading } = useHostileBuffEvents({
     context: resolvedContext,
   });
-  const { debuffEvents, isDebuffEventsLoading } = useDebuffEvents({ context: resolvedContext });
-  const { damageEvents, isDamageEventsLoading } = useDamageEvents({ context: resolvedContext });
+  const { debuffEvents, isDebuffEventsLoading, debuffEventsStatus, debuffEventsError } =
+    useDebuffEvents({ context: resolvedContext });
+  const { damageEvents, isDamageEventsLoading, damageEventsStatus, damageEventsError } =
+    useDamageEvents({ context: resolvedContext });
   const { healingEvents, isHealingEventsLoading } = useHealingEvents({ context: resolvedContext });
   const { resourceEvents, isResourceEventsLoading } = useResourceEvents({
     context: resolvedContext,
   });
-  const isFightLoading = resolvedContext.fightId !== null && !fight;
+  const masterDataEntry = useSelector((state: RootState) =>
+    selectMasterDataEntryForContext(state, resolvedContext),
+  );
+  const deathEventsEntry = useSelector((state: RootState) =>
+    selectDeathEventsEntryForContext(state, resolvedContext),
+  );
+  const hostileBuffEventsEntry = useSelector((state: RootState) =>
+    selectHostileBuffEventsEntryForContext(state, resolvedContext),
+  );
+  const healingEventsEntry = useSelector((state: RootState) =>
+    selectHealingEventsEntryForContext(state, resolvedContext),
+  );
+  const resourceEventsEntry = useSelector((state: RootState) =>
+    selectResourceEventsEntryForContext(state, resolvedContext),
+  );
 
   // --- Role detection ---
   const { rolesByPlayerId } = useRoleDetection({
@@ -629,12 +691,13 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
   }, [scribingPlayerAbilities]);
 
   // Get friendly buff lookup data for build issues detection
-  const { buffLookupData: friendlyBuffLookup, isBuffLookupLoading } = useBuffLookupTask({
-    context: resolvedContext,
-  });
-  const { playerTravelDistances, isPlayerTravelDistancesLoading } = usePlayerTravelDistanceTask({
-    context: resolvedContext,
-  });
+  const {
+    buffLookupData: friendlyBuffLookup,
+    isBuffLookupLoading,
+    buffLookupError,
+  } = useBuffLookupTask({ context: resolvedContext });
+  const { playerTravelDistances, isPlayerTravelDistancesLoading, playerTravelDistancesError } =
+    usePlayerTravelDistanceTask({ context: resolvedContext });
   const distanceByPlayer = React.useMemo(() => {
     if (!playerTravelDistances?.distancesByPlayerId) {
       return {} as Record<string, number>;
@@ -858,7 +921,7 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
     isResourceEventsLoading ||
     isBuffLookupLoading ||
     isPlayerTravelDistancesLoading ||
-    isFightLoading;
+    reportEntry?.status === 'loading';
 
   React.useEffect(() => {
     if (isLoading) {
@@ -1537,46 +1600,87 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
     return result;
   }, [scribingSkillsByPlayer, scribingRecipes]);
 
+  const panelError =
+    reportEntry?.error ??
+    masterDataEntry?.error ??
+    playerData?.error ??
+    combatantInfoEventsError ??
+    castEventsError ??
+    deathEventsEntry?.error ??
+    friendlyBuffEventsError ??
+    hostileBuffEventsEntry?.error ??
+    debuffEventsError ??
+    damageEventsError ??
+    healingEventsEntry?.error ??
+    resourceEventsEntry?.error ??
+    buffLookupError ??
+    playerTravelDistancesError ??
+    null;
+  const hasData = hasPlayerEntries(playersById);
+  const panelState = resolvePlayersPanelState({
+    error: panelError,
+    hasData,
+    isLoading,
+    hasFight: Boolean(fight),
+    statuses: [
+      reportEntry?.status ?? 'idle',
+      masterDataEntry?.status ?? 'idle',
+      playerData?.status ?? 'idle',
+      combatantInfoEventsStatus,
+      castEventsStatus,
+      deathEventsEntry?.status ?? 'idle',
+      friendlyBuffEventsStatus,
+      hostileBuffEventsEntry?.status ?? 'idle',
+      debuffEventsStatus,
+      damageEventsStatus,
+      healingEventsEntry?.status ?? 'idle',
+      resourceEventsEntry?.status ?? 'idle',
+    ],
+  });
+
   return (
     <PlayerAvatarsProvider players={playersById}>
-      <div data-testid="players-panel-loaded">
-        <PlayersPanelView
-          playerActors={playersById}
-          mundusBuffsByPlayer={mundusBuffsByPlayer}
-          championPointsByPlayer={championPointsByPlayer}
-          scribingSkillsByPlayer={enhancedScribingSkillsByPlayer}
-          buildIssuesByPlayer={buildIssuesByPlayer}
-          classAnalysisByPlayer={classAnalysisByPlayer}
-          kalpaBuildEvidenceByPlayer={kalpaBuildEvidenceByPlayer}
-          deathsByPlayer={deathsByPlayer}
-          resurrectsByPlayer={resurrectsByPlayer}
-          cpmByPlayer={cpmByPlayer}
-          aurasByPlayer={aurasByPlayer}
-          maxHealthByPlayer={maxHealthByPlayer}
-          maxStaminaByPlayer={maxStaminaByPlayer}
-          maxMagickaByPlayer={maxMagickaByPlayer}
-          distanceByPlayer={distanceByPlayer}
-          reportId={reportId}
-          fightId={fightId}
-          isLoading={isLoading}
-          playerGear={playerGear}
-          fightStartTime={fight?.startTime}
-          fightEndTime={fight?.endTime}
-          dpsValueByPlayer={dpsValueByPlayer}
-          hpsValueByPlayer={hpsValueByPlayer}
-          totalDamageByPlayer={totalDamageByPlayer}
-          totalCritDamageByPlayer={totalCritDamageByPlayer}
-          critDpsByPlayer={critDpsByPlayer}
-          critChanceByPlayer={critChanceByPlayer}
-          criticalDamageByPlayer={criticalDamageByPlayer}
-          barSwapByPlayer={barSwapByPlayer}
-          potionResultsByPlayer={potionResultsByPlayer}
-          rolesByPlayerId={rolesByPlayerId}
-          companionBuildsByPlayer={companionBuildsByPlayer}
-          companionUpload={companionUploadState}
-          onCompanionFileSelected={handleCompanionFileSelected}
-        />
-      </div>
+      <AnalyzerPanelState title="Players" state={panelState} detail={panelError ?? undefined}>
+        {hasData && (
+          <div data-testid="players-panel-loaded">
+            <PlayersPanelView
+              playerActors={playersById}
+              mundusBuffsByPlayer={mundusBuffsByPlayer}
+              championPointsByPlayer={championPointsByPlayer}
+              scribingSkillsByPlayer={enhancedScribingSkillsByPlayer}
+              buildIssuesByPlayer={buildIssuesByPlayer}
+              classAnalysisByPlayer={classAnalysisByPlayer}
+              kalpaBuildEvidenceByPlayer={kalpaBuildEvidenceByPlayer}
+              deathsByPlayer={deathsByPlayer}
+              resurrectsByPlayer={resurrectsByPlayer}
+              cpmByPlayer={cpmByPlayer}
+              aurasByPlayer={aurasByPlayer}
+              maxHealthByPlayer={maxHealthByPlayer}
+              maxStaminaByPlayer={maxStaminaByPlayer}
+              maxMagickaByPlayer={maxMagickaByPlayer}
+              distanceByPlayer={distanceByPlayer}
+              reportId={reportId}
+              fightId={fightId}
+              playerGear={playerGear}
+              fightStartTime={fight?.startTime}
+              fightEndTime={fight?.endTime}
+              dpsValueByPlayer={dpsValueByPlayer}
+              hpsValueByPlayer={hpsValueByPlayer}
+              totalDamageByPlayer={totalDamageByPlayer}
+              totalCritDamageByPlayer={totalCritDamageByPlayer}
+              critDpsByPlayer={critDpsByPlayer}
+              critChanceByPlayer={critChanceByPlayer}
+              criticalDamageByPlayer={criticalDamageByPlayer}
+              barSwapByPlayer={barSwapByPlayer}
+              potionResultsByPlayer={potionResultsByPlayer}
+              rolesByPlayerId={rolesByPlayerId}
+              companionBuildsByPlayer={companionBuildsByPlayer}
+              companionUpload={companionUploadState}
+              onCompanionFileSelected={handleCompanionFileSelected}
+            />
+          </div>
+        )}
+      </AnalyzerPanelState>
     </PlayerAvatarsProvider>
   );
 };
