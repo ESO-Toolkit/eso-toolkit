@@ -39,6 +39,9 @@ const TIMELINE_COLORS = [
   '#e11d48',
 ] as const;
 
+const MAX_SCREEN_READER_EFFECTS = 25;
+const MAX_SCREEN_READER_INTERVALS_PER_EFFECT = 12;
+
 const screenReaderOnlySx = {
   position: 'absolute',
   width: 1,
@@ -50,6 +53,49 @@ const screenReaderOnlySx = {
   whiteSpace: 'nowrap',
   border: 0,
 } as const;
+
+interface TimelineInterval {
+  start: number;
+  end: number;
+}
+
+/**
+ * The chart uses a stepped 0/1 series. Convert each active run to a clipped
+ * interval so assistive technology receives the same timing information.
+ */
+function getActiveIntervals(
+  points: UptimeTimelineSeries['points'],
+  durationSeconds: number,
+): TimelineInterval[] {
+  if (durationSeconds <= 0) {
+    return [];
+  }
+
+  const intervals: TimelineInterval[] = [];
+  let activeStart: number | null = null;
+
+  for (const point of points) {
+    const time = Math.min(Math.max(point.x, 0), durationSeconds);
+
+    if (point.y > 0) {
+      activeStart ??= time;
+      continue;
+    }
+
+    if (activeStart != null) {
+      if (time > activeStart) {
+        intervals.push({ start: activeStart, end: time });
+      }
+      activeStart = null;
+    }
+  }
+
+  if (activeStart != null && durationSeconds > activeStart) {
+    intervals.push({ start: activeStart, end: durationSeconds });
+  }
+
+  return intervals;
+}
 
 export type UptimeTimelineCategory = 'buff' | 'debuff' | 'statusEffect';
 
@@ -127,6 +173,27 @@ export const EffectUptimeTimelineModal: React.FC<EffectUptimeTimelineModalProps>
     const duration = formatSeconds(msToSeconds(fightDurationMs));
     return `Effect activity over ${duration} of fight time. Effects shown: ${effectNames}.`;
   }, [fightDurationMs, formatSeconds, series]);
+
+  const screenReaderTimeline = React.useMemo(() => {
+    const durationSeconds = msToSeconds(fightDurationMs);
+    const visibleEffects = series.slice(0, MAX_SCREEN_READER_EFFECTS).map((dataset) => {
+      const intervals = getActiveIntervals(dataset.points, durationSeconds);
+      return {
+        id: dataset.id,
+        label: dataset.label,
+        intervals: intervals.slice(0, MAX_SCREEN_READER_INTERVALS_PER_EFFECT),
+        omittedIntervalCount: Math.max(
+          0,
+          intervals.length - MAX_SCREEN_READER_INTERVALS_PER_EFFECT,
+        ),
+      };
+    });
+
+    return {
+      effects: visibleEffects,
+      omittedEffectCount: Math.max(0, series.length - MAX_SCREEN_READER_EFFECTS),
+    };
+  }, [fightDurationMs, series]);
 
   const chartOption = React.useMemo(() => {
     const duration = msToSeconds(fightDurationMs);
@@ -372,12 +439,40 @@ export const EffectUptimeTimelineModal: React.FC<EffectUptimeTimelineModalProps>
               aria-label="Effect uptime timeline chart"
               aria-describedby={chartDescriptionId}
             >
-              <Typography id={chartDescriptionId} component="span" sx={screenReaderOnlySx}>
-                {chartDescription}
-              </Typography>
               <Box sx={{ width: '100%', minWidth: 0, minHeight: { xs: 240, sm: 300, md: 380 } }}>
                 <EChart option={chartOption} height={380} group="fightReport" />
               </Box>
+            </Box>
+            <Box id={chartDescriptionId} sx={screenReaderOnlySx}>
+              <Typography component="p">{chartDescription}</Typography>
+              <Box component="ul" aria-label="Effect uptime intervals">
+                {screenReaderTimeline.effects.map((effect) => (
+                  <li key={effect.id}>
+                    {effect.label}
+                    {effect.intervals.length > 0 ? (
+                      <Box component="ul">
+                        {effect.intervals.map((interval) => (
+                          <li key={`${effect.id}-${interval.start}-${interval.end}`}>
+                            {`Active from ${formatSeconds(interval.start)} to ${formatSeconds(interval.end)}.`}
+                          </li>
+                        ))}
+                      </Box>
+                    ) : (
+                      ' No active intervals.'
+                    )}
+                    {effect.omittedIntervalCount > 0 && (
+                      <Typography component="p">
+                        {`Showing the first ${MAX_SCREEN_READER_INTERVALS_PER_EFFECT} of ${effect.omittedIntervalCount + MAX_SCREEN_READER_INTERVALS_PER_EFFECT} active intervals.`}
+                      </Typography>
+                    )}
+                  </li>
+                ))}
+              </Box>
+              {screenReaderTimeline.omittedEffectCount > 0 && (
+                <Typography component="p">
+                  {`Showing the first ${MAX_SCREEN_READER_EFFECTS} of ${screenReaderTimeline.omittedEffectCount + MAX_SCREEN_READER_EFFECTS} effects.`}
+                </Typography>
+              )}
             </Box>
           </>
         ) : (
