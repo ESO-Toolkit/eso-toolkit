@@ -4,10 +4,19 @@ import { useSelector } from 'react-redux';
 
 import { usePlayerData, useResolvedReportFightContext, useFightForContext } from '../../../hooks';
 import type { ReportFightContextInput } from '../../../store/contextTypes';
+import { selectCastEventsEntryForContext } from '../../../store/events_data/castEventsSelectors';
+import { selectCombatantInfoEventsEntryForContext } from '../../../store/events_data/combatantInfoEventsSelectors';
+import { selectDamageEventsEntryForContext } from '../../../store/events_data/damageEventsSelectors';
+import { selectDeathEventsEntryForContext } from '../../../store/events_data/deathEventsSelectors';
+import { selectDebuffEventsEntryForContext } from '../../../store/events_data/debuffEventsSelectors';
+import { selectHealingEventsEntryForContext } from '../../../store/events_data/healingEventsSelectors';
+import { selectResourceEventsEntryForContext } from '../../../store/selectors/eventsSelectors';
+import type { RootState } from '../../../store/storeWithHistory';
 import { LogEvent, ResourceChangeEvent } from '../../../types/combatlogEvents';
 import { resolveActorName } from '../../../utils/resolveActorName';
 
 import { selectLocationHeatmapDataSelector } from './debugSelectors';
+import { resolveDebugEventPanelState } from './EventsGrid';
 import { LocationHeatmapPanelView } from './LocationHeatmapPanelView';
 
 interface LocationPoint {
@@ -70,6 +79,22 @@ export const LocationHeatmapPanel: React.FC<LocationHeatmapPanelProps> = ({ cont
     [resolvedContext],
   );
   const { events, actorsById } = useSelector(heatmapSelector);
+  const streamEntries = useSelector((state: RootState) => [
+    selectResourceEventsEntryForContext(state, resolvedContext),
+    selectDamageEventsEntryForContext(state, resolvedContext),
+    selectHealingEventsEntryForContext(state, resolvedContext),
+    selectDebuffEventsEntryForContext(state, resolvedContext),
+    selectCastEventsEntryForContext(state, resolvedContext),
+    selectDeathEventsEntryForContext(state, resolvedContext),
+    selectCombatantInfoEventsEntryForContext(state, resolvedContext),
+  ]);
+  const sourceState = resolveDebugEventPanelState(events, streamEntries);
+  const panelState =
+    fight?.startTime == null || fight?.endTime == null ? 'stale' : sourceState.state;
+  const panelDetail =
+    panelState === 'stale' && sourceState.state !== 'stale'
+      ? 'Fight timing is not available yet.'
+      : sourceState.detail;
 
   const [selectedPlayer, setSelectedPlayer] = React.useState<string>('all');
   const [showHeatmap, setShowHeatmap] = React.useState<boolean>(true);
@@ -78,7 +103,7 @@ export const LocationHeatmapPanel: React.FC<LocationHeatmapPanelProps> = ({ cont
 
   // Get player actors with roles from player data
   const playerActors = React.useMemo(() => {
-    if (!fight?.startTime || !fight?.endTime) return [];
+    if (fight?.startTime == null || fight?.endTime == null) return [];
 
     // Get all player actors
     const allPlayers = Object.values(actorsById)
@@ -108,7 +133,7 @@ export const LocationHeatmapPanel: React.FC<LocationHeatmapPanelProps> = ({ cont
 
   // Calculate fight phases based on damage gaps
   const fightPhases = React.useMemo(() => {
-    if (!fight?.startTime || !fight?.endTime) return [];
+    if (fight?.startTime == null || fight?.endTime == null) return [];
 
     const phases: FightPhase[] = [];
     const fightStart = fight.startTime;
@@ -215,7 +240,7 @@ export const LocationHeatmapPanel: React.FC<LocationHeatmapPanelProps> = ({ cont
 
   // Extract location data from resource change events - focusing on tanks only
   const locationData = React.useMemo(() => {
-    if (!fight?.startTime || !fight?.endTime || playerActors.length === 0) return [];
+    if (fight?.startTime == null || fight?.endTime == null || playerActors.length === 0) return [];
 
     const points: LocationPoint[] = [];
     const fightStart = fight.startTime;
@@ -562,6 +587,8 @@ export const LocationHeatmapPanel: React.FC<LocationHeatmapPanelProps> = ({ cont
       onViewAllPhases={handleViewAllPhases}
       onCopyELMSCode={copyELMSCode}
       generateELMSCode={generateELMSCode}
+      state={panelState}
+      stateDetail={panelDetail}
     />
   );
 };
