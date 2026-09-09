@@ -64,7 +64,6 @@ function makeProps(overrides: Partial<PlayersPanelViewProps> = {}): PlayersPanel
     maxStaminaByPlayer: {},
     maxMagickaByPlayer: {},
     distanceByPlayer: {},
-    isLoading: false,
     playerGear: {},
     ...overrides,
   };
