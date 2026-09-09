@@ -31,7 +31,11 @@ const emptyScope = {
 const completeEvidence = {
   timestampMs: 42_000,
   phase: 'execute',
-  provenance: 'combat-log:event-17',
+  provenance: {
+    kind: 'game-rule',
+    ruleId: 'interrupt-window',
+    source: 'encounter-definition:trial.boss-a@2026.09',
+  },
   context: 'target=Storm Atronach',
 } as const;
 
@@ -273,7 +277,7 @@ describe('buildPrioritizedDecisionSummary', () => {
         {
           ...completeCandidate,
           id: 'invalid-provenance',
-          evidence: { ...completeEvidence, provenance: 42 },
+          evidence: { ...completeEvidence, provenance: { kind: 'peer-benchmark' } },
         },
         {
           ...completeCandidate,
@@ -300,6 +304,84 @@ describe('buildPrioritizedDecisionSummary', () => {
       { candidateId: 'invalid-context', reason: 'invalid-evidence', outcome: 'blocked' },
       { candidateId: 'invalid-confidence', reason: 'invalid-evidence', outcome: 'blocked' },
       { candidateId: 'invalid-responsible', reason: 'invalid-evidence', outcome: 'blocked' },
+    ]);
+  });
+
+  it('accepts each provenance source kind with the required context', () => {
+    const result = buildPrioritizedDecisionSummary(
+      request([
+        completeCandidate,
+        {
+          ...completeCandidate,
+          id: 'fixed-heuristic',
+          evidence: {
+            ...completeEvidence,
+            provenance: {
+              kind: 'fixed-heuristic',
+              heuristicId: 'interrupt-priority',
+              source: 'maintainer-heuristics:v2',
+            },
+          },
+        },
+        {
+          ...completeCandidate,
+          id: 'peer-benchmark',
+          evidence: {
+            ...completeEvidence,
+            provenance: {
+              kind: 'peer-benchmark',
+              baselineSource: 'eso-logs:peer-cohort',
+              baselinePeriod: '2026-Q3',
+              sampleSize: 128,
+              distribution: 'p25=0.8,p50=0.92,p75=0.98',
+              refreshedAt: '2026-09-01T00:00:00Z',
+              confidence: { state: 'known', score: 0.9 },
+              provisional: false,
+            },
+          },
+        },
+      ]),
+    );
+
+    expect(result.rejected).toEqual([]);
+    expect(result.items.map((item) => item.evidence.provenance.kind)).toEqual([
+      'game-rule',
+      'fixed-heuristic',
+      'peer-benchmark',
+    ]);
+  });
+
+  it.each([
+    ['missing baseline period', { baselinePeriod: '' }],
+    ['missing sample size', { sampleSize: 0 }],
+    ['missing distribution', { distribution: '' }],
+    ['invalid refresh date', { refreshedAt: 'not-a-date' }],
+    ['missing confidence', { confidence: undefined }],
+    ['missing provisional state', { provisional: undefined }],
+  ])('rejects peer benchmarks with %s', (_label, change) => {
+    const peerProvenance = {
+      kind: 'peer-benchmark' as const,
+      baselineSource: 'eso-logs:peer-cohort',
+      baselinePeriod: '2026-Q3',
+      sampleSize: 128,
+      distribution: 'p25=0.8,p50=0.92,p75=0.98',
+      refreshedAt: '2026-09-01T00:00:00Z',
+      confidence: { state: 'known' as const, score: 0.9 },
+      provisional: false,
+    };
+    const result = buildPrioritizedDecisionSummary(
+      request([
+        {
+          ...completeCandidate,
+          id: `incomplete-peer-${_label}`,
+          evidence: { ...completeEvidence, provenance: { ...peerProvenance, ...change } },
+        },
+      ]),
+    );
+
+    expect(result.items).toEqual([]);
+    expect(result.rejected).toEqual([
+      expect.objectContaining({ reason: 'invalid-evidence', outcome: 'blocked' }),
     ]);
   });
 

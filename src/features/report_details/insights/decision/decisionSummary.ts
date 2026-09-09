@@ -27,12 +27,35 @@ export interface DecisionScope {
 export interface DecisionEvidence {
   readonly timestampMs: number;
   readonly phase: string;
-  readonly provenance: string;
+  /** The evidence source is typed so benchmark claims cannot masquerade as rules. */
+  readonly provenance: DecisionEvidenceProvenance;
   readonly context: string;
 }
 
 export type DecisionConfidence =
   Readonly<{ state: 'known'; score: number }> | Readonly<{ state: 'unknown'; reason: string }>;
+
+export type DecisionEvidenceProvenance =
+  | Readonly<{
+      readonly kind: 'game-rule';
+      readonly ruleId: string;
+      readonly source: string;
+    }>
+  | Readonly<{
+      readonly kind: 'fixed-heuristic';
+      readonly heuristicId: string;
+      readonly source: string;
+    }>
+  | Readonly<{
+      readonly kind: 'peer-benchmark';
+      readonly baselineSource: string;
+      readonly baselinePeriod: string;
+      readonly sampleSize: number;
+      readonly distribution: string;
+      readonly refreshedAt: string;
+      readonly confidence: DecisionConfidence;
+      readonly provisional: boolean;
+    }>;
 
 export interface ResponsibleParty {
   readonly actorId?: string;
@@ -158,8 +181,36 @@ const isEvidence = (value: unknown): value is DecisionEvidence =>
   isRecord(value) &&
   isNonNegativeFiniteNumber(value.timestampMs) &&
   isNonEmptyString(value.phase) &&
-  isNonEmptyString(value.provenance) &&
+  isEvidenceProvenance(value.provenance) &&
   isNonEmptyString(value.context);
+
+const isEvidenceProvenance = (value: unknown): value is DecisionEvidenceProvenance => {
+  if (!isRecord(value) || !isNonEmptyString(value.kind)) {
+    return false;
+  }
+
+  if (value.kind === 'game-rule') {
+    return isNonEmptyString(value.ruleId) && isNonEmptyString(value.source);
+  }
+
+  if (value.kind === 'fixed-heuristic') {
+    return isNonEmptyString(value.heuristicId) && isNonEmptyString(value.source);
+  }
+
+  return (
+    value.kind === 'peer-benchmark' &&
+    isNonEmptyString(value.baselineSource) &&
+    isNonEmptyString(value.baselinePeriod) &&
+    isFiniteNumber(value.sampleSize) &&
+    Number.isInteger(value.sampleSize) &&
+    value.sampleSize > 0 &&
+    isNonEmptyString(value.distribution) &&
+    isNonEmptyString(value.refreshedAt) &&
+    Number.isFinite(Date.parse(value.refreshedAt)) &&
+    isConfidence(value.confidence) &&
+    typeof value.provisional === 'boolean'
+  );
+};
 
 const isConfidence = (value: unknown): value is DecisionConfidence => {
   if (!isRecord(value)) {
@@ -202,7 +253,30 @@ const freezeEvidence = (evidence: DecisionEvidence): Readonly<DecisionEvidence> 
   Object.freeze({
     timestampMs: evidence.timestampMs,
     phase: evidence.phase,
-    provenance: evidence.provenance,
+    provenance: Object.freeze(
+      evidence.provenance.kind === 'game-rule'
+        ? {
+            kind: evidence.provenance.kind,
+            ruleId: evidence.provenance.ruleId,
+            source: evidence.provenance.source,
+          }
+        : evidence.provenance.kind === 'fixed-heuristic'
+          ? {
+              kind: evidence.provenance.kind,
+              heuristicId: evidence.provenance.heuristicId,
+              source: evidence.provenance.source,
+            }
+          : {
+              kind: evidence.provenance.kind,
+              baselineSource: evidence.provenance.baselineSource,
+              baselinePeriod: evidence.provenance.baselinePeriod,
+              sampleSize: evidence.provenance.sampleSize,
+              distribution: evidence.provenance.distribution,
+              refreshedAt: evidence.provenance.refreshedAt,
+              confidence: freezeConfidence(evidence.provenance.confidence),
+              provisional: evidence.provenance.provisional,
+            },
+    ),
     context: evidence.context,
   });
 
