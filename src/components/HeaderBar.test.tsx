@@ -164,4 +164,32 @@ describe('HeaderBar', () => {
 
     expect(mockPreloadHubRoutes).not.toHaveBeenCalled();
   });
+
+  it('opens profile settings as a named dialog rather than a menu', () => {
+    mockUseAuth.mockReturnValue({
+      accessToken: 'token',
+      isLoggedIn: true,
+      isBanned: false,
+      banReason: null,
+      currentUser: { id: 1, name: 'Aria' },
+      userLoading: false,
+      userError: null,
+      setAccessToken: jest.fn(),
+      refetchUser: jest.fn(),
+      rebindAccessToken: jest.fn(),
+    } as ReturnType<typeof useAuth>);
+
+    render(
+      <MemoryRouter>
+        <HeaderBar />
+      </MemoryRouter>,
+    );
+
+    const profileControl = screen.getByRole('button', { name: 'Profile: Aria' });
+    expect(profileControl).toHaveAttribute('aria-haspopup', 'dialog');
+
+    fireEvent.click(profileControl);
+
+    expect(screen.getByRole('dialog', { name: 'Profile settings' })).toBeInTheDocument();
+  });
 });

@@ -11,6 +11,7 @@ import {
   ListItemIcon,
   ListItemText,
   Popover,
+  Radio,
   Skeleton,
   Typography,
   useTheme,
@@ -330,12 +331,6 @@ const CombinedFilterDropdownComponent: React.FC<CombinedFilterDropdownProps> = (
         open={open}
         anchorEl={anchorEl}
         onClose={() => setAnchorEl(null)}
-        slotProps={{
-          paper: {
-            'aria-label': 'Analyzer filters',
-            role: 'dialog',
-          },
-        }}
         {...dropdownMenuOrigins(menuUp)}
         sx={popoverSx}
         slotProps={{
@@ -370,16 +365,9 @@ const CombinedFilterDropdownComponent: React.FC<CombinedFilterDropdownProps> = (
               </Typography>
             </Box>
 
-            <Box
-              role="listbox"
-              aria-label="Target filter"
-              aria-multiselectable="true"
-              sx={{ pb: 0.5 }}
-            >
+            <Box role="group" aria-label="Target filter" sx={{ pb: 0.5 }}>
               <ListItemButton
-                role="option"
-                aria-selected={isAllBosses}
-                onClick={handleToggleAllBosses}
+                component="label"
                 selected={isAllBosses}
                 sx={{
                   ...listItemSx,
@@ -396,7 +384,12 @@ const CombinedFilterDropdownComponent: React.FC<CombinedFilterDropdownProps> = (
                 }}
               >
                 <ListItemIcon sx={{ minWidth: 32 }}>
-                  <Checkbox size="small" checked={isAllBosses} sx={checkboxSx} tabIndex={-1} />
+                  <Checkbox
+                    size="small"
+                    checked={isAllBosses}
+                    onChange={handleToggleAllBosses}
+                    sx={checkboxSx}
+                  />
                 </ListItemIcon>
                 <ListItemText
                   primary="All Bosses"
@@ -420,9 +413,7 @@ const CombinedFilterDropdownComponent: React.FC<CombinedFilterDropdownProps> = (
               </ListItemButton>
 
               <ListItemButton
-                role="option"
-                aria-selected={isAllEnemies}
-                onClick={handleToggleAllEnemies}
+                component="label"
                 selected={isAllEnemies}
                 sx={{
                   ...listItemSx,
@@ -448,7 +439,7 @@ const CombinedFilterDropdownComponent: React.FC<CombinedFilterDropdownProps> = (
                         color: isDarkMode ? '#a855f7' : '#8b45ff',
                       },
                     }}
-                    tabIndex={-1}
+                    onChange={handleToggleAllEnemies}
                   />
                 </ListItemIcon>
                 <ListItemText
@@ -478,9 +469,7 @@ const CombinedFilterDropdownComponent: React.FC<CombinedFilterDropdownProps> = (
                 return (
                   <ListItemButton
                     key={target.id}
-                    role="option"
-                    aria-selected={isSelected}
-                    onClick={() => handleToggleTarget(target.id)}
+                    component="label"
                     selected={isSelected}
                     sx={{
                       ...listItemSx,
@@ -506,7 +495,7 @@ const CombinedFilterDropdownComponent: React.FC<CombinedFilterDropdownProps> = (
                             color: isDarkMode ? '#22c55e' : '#059669',
                           },
                         }}
-                        tabIndex={-1}
+                        onChange={() => handleToggleTarget(target.id)}
                       />
                     </ListItemIcon>
                     <ListItemText
@@ -567,11 +556,9 @@ const CombinedFilterDropdownComponent: React.FC<CombinedFilterDropdownProps> = (
           </Typography>
         </Box>
 
-        <Box role="listbox" aria-label="Player filter" sx={{ pb: 1 }}>
+        <Box role="radiogroup" aria-label="Player filter" sx={{ pb: 1 }}>
           <ListItemButton
-            role="option"
-            aria-selected={!selectedFriendlyPlayerId}
-            onClick={() => handleSelectPlayer(null)}
+            component="label"
             selected={!selectedFriendlyPlayerId}
             sx={{
               ...listItemSx,
@@ -583,6 +570,16 @@ const CombinedFilterDropdownComponent: React.FC<CombinedFilterDropdownProps> = (
               },
             }}
           >
+            <ListItemIcon sx={{ minWidth: 32 }}>
+              <Radio
+                size="small"
+                name="friendly-player-filter"
+                value="all"
+                checked={!selectedFriendlyPlayerId}
+                onChange={() => handleSelectPlayer(null)}
+                sx={checkboxSx}
+              />
+            </ListItemIcon>
             <ListItemText
               primary="All Players"
               slotProps={{
@@ -609,9 +606,7 @@ const CombinedFilterDropdownComponent: React.FC<CombinedFilterDropdownProps> = (
             return (
               <ListItemButton
                 key={player.id}
-                role="option"
-                aria-selected={isSelected}
-                onClick={() => handleSelectPlayer(player.id)}
+                component="label"
                 selected={isSelected}
                 sx={{
                   ...listItemSx,
@@ -627,6 +622,16 @@ const CombinedFilterDropdownComponent: React.FC<CombinedFilterDropdownProps> = (
                   },
                 }}
               >
+                <ListItemIcon sx={{ minWidth: 32 }}>
+                  <Radio
+                    size="small"
+                    name="friendly-player-filter"
+                    value={String(player.id)}
+                    checked={isSelected}
+                    onChange={() => handleSelectPlayer(player.id)}
+                    sx={checkboxSx}
+                  />
+                </ListItemIcon>
                 <ListItemText
                   primary={player.name}
                   secondary={player.displayName || undefined}

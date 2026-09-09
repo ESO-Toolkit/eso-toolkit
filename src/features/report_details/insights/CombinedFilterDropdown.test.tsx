@@ -59,20 +59,39 @@ describe('CombinedFilterDropdown', () => {
     fireEvent.click(trigger);
 
     expect(trigger).toHaveAttribute('aria-expanded', 'true');
-    expect(screen.getByRole('dialog', { name: 'Analyzer filters' })).toBeInTheDocument();
+    expect(screen.getByRole('dialog', { name: 'Fight filters' })).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: 'All Bosses' })).toBeChecked();
+    expect(screen.getByRole('checkbox', { name: 'All Enemies' })).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: 'Real Boss' })).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: 'Duplicate Add (#11)' })).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: 'Duplicate Add (#12)' })).toBeInTheDocument();
 
-    expect(screen.getByRole('option', { name: /All Bosses/i })).toHaveAttribute(
-      'aria-selected',
-      'true',
-    );
-    expect(screen.getByRole('option', { name: /All Enemies/i })).toBeInTheDocument();
-    expect(screen.getByRole('option', { name: /Real Boss/i })).toBeInTheDocument();
-    expect(screen.getByRole('option', { name: /Duplicate Add \(#11\)/i })).toBeInTheDocument();
-    expect(screen.getByRole('option', { name: /Duplicate Add \(#12\)/i })).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole('option', { name: /All Enemies/i }));
+    fireEvent.click(screen.getByRole('checkbox', { name: 'All Enemies' }));
     expect(dispatch).toHaveBeenCalledWith(
       expect.objectContaining({ payload: [ALL_ENEMIES_SENTINEL] }),
     );
+  });
+
+  it('provides native checkbox and radio controls with named selected states', () => {
+    render(<CombinedFilterDropdown players={[{ id: 42, name: 'Aria' }]} />);
+
+    const trigger = screen.getByRole('button', { name: /all bosses.*all players/i });
+    trigger.focus();
+    expect(trigger).toHaveFocus();
+    expect(trigger).toHaveAttribute('aria-haspopup', 'dialog');
+
+    fireEvent.click(trigger);
+    const dialog = screen.getByRole('dialog', { name: 'Fight filters' });
+    expect(dialog).toBeInTheDocument();
+    expect(screen.getByRole('group', { name: 'Target filter' })).toBeInTheDocument();
+    expect(screen.getByRole('radiogroup', { name: 'Player filter' })).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: 'All Bosses' })).toBeChecked();
+    expect(screen.getByRole('radio', { name: 'Aria' })).not.toBeChecked();
+
+    const playerControl = screen.getByRole('radio', { name: 'Aria' });
+    playerControl.focus();
+    expect(playerControl).toHaveFocus();
+    fireEvent.click(playerControl);
+    expect(dispatch).toHaveBeenCalled();
   });
 });

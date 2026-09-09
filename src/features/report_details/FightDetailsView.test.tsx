@@ -94,10 +94,14 @@ describe('FightDetailsView', () => {
     expect(screen.getByRole('tablist', { name: 'Fight detail sections' })).toBeInTheDocument();
 
     const playersTab = screen.getByRole('tab', { name: 'Players' });
-    playersTab.focus();
-    expect(playersTab).toHaveFocus();
+    expect(playersTab).toHaveAttribute('aria-selected', 'true');
+    expect(playersTab).toHaveAttribute('tabindex', '0');
 
-    const panel = await screen.findByRole('tabpanel', { name: 'players content' });
+    const panel = await screen.findByRole('tabpanel', { name: 'Players' });
+    expect(playersTab).toHaveAttribute('id', 'fight-detail-tab-players');
+    expect(playersTab).toHaveAttribute('aria-controls', 'fight-detail-panel-players');
+    expect(panel).toHaveAttribute('id', 'fight-detail-panel-players');
+    expect(panel).toHaveAttribute('aria-labelledby', 'fight-detail-tab-players');
     panel.focus();
     expect(panel).toHaveFocus();
     expect(panel).toHaveAttribute('tabindex', '0');

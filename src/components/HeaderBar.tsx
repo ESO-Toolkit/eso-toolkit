@@ -16,6 +16,7 @@ import {
   Button,
   Box,
   IconButton,
+  useMediaQuery,
   useTheme,
   Container,
   Menu,
@@ -24,6 +25,7 @@ import {
   ListItemText,
   Fade,
   ButtonBase,
+  Popover,
 } from '@mui/material';
 import type { SxProps, Theme } from '@mui/material/styles';
 import { alpha, styled } from '@mui/material/styles';
@@ -131,6 +133,9 @@ const MobileBackdrop = styled(Box, {
   opacity: open ? 1 : 0,
   visibility: open ? 'visible' : 'hidden',
   transition: 'opacity 0.3s ease, visibility 0.3s ease',
+  '@media (prefers-reduced-motion: reduce)': {
+    transition: 'none',
+  },
 }));
 
 const MobileBottomSheet = styled(Box, {
@@ -565,6 +570,9 @@ export const HeaderBar: React.FC = () => {
   const navigate = useViewTransitionNavigate();
   const location = useLocation();
   const theme = useTheme();
+  const prefersReducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)', {
+    noSsr: true,
+  });
   const isDark = theme.palette.mode === 'dark';
   const { darkMode, toggleDarkMode } = usePersistentDarkMode();
   const [scrolled, setScrolled] = React.useState(false);
@@ -911,6 +919,9 @@ export const HeaderBar: React.FC = () => {
           viewTransitionName: 'site-header',
           boxShadow: scrolled ? '0 10px 30px rgba(0,0,0,0.35)' : 'none',
           transition: 'box-shadow .2s ease',
+          '@media (prefers-reduced-motion: reduce)': {
+            transition: 'none',
+          },
         }}
       >
         <Container maxWidth="lg" sx={{ px: { xs: 2, sm: 3 } }}>
@@ -1013,20 +1024,12 @@ export const HeaderBar: React.FC = () => {
               </Button>
               {!isLoggedIn && <ThemeToggle />}
               {isLoggedIn ? (
-                <Box
+                <ButtonBase
                   onClick={handleProfileMenuOpen}
                   aria-label={userLabel ? `Profile: ${userLabel}` : 'Profile'}
-                  role="button"
-                  tabIndex={0}
-                  aria-haspopup="menu"
+                  aria-haspopup="dialog"
                   aria-expanded={Boolean(profileAnchorEl)}
                   aria-controls={profileAnchorEl ? 'profile-menu' : undefined}
-                  onKeyDown={(e: React.KeyboardEvent<HTMLElement>) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      handleProfileMenuOpen(e);
-                    }
-                  }}
                   sx={{
                     display: { xs: 'none', sm: 'flex' },
                     alignItems: 'center',
@@ -1132,7 +1135,7 @@ export const HeaderBar: React.FC = () => {
                       color: isDark ? '#94a3b8' : '#64748b',
                     }}
                   />
-                </Box>
+                </ButtonBase>
               ) : (
                 <Button
                   onClick={handleLogin}
@@ -1212,7 +1215,7 @@ export const HeaderBar: React.FC = () => {
         anchorOrigin={{ horizontal: 'left', vertical: 'bottom' }}
         slots={{ transition: Fade }}
         slotProps={{
-          transition: { timeout: 200 },
+          transition: { timeout: prefersReducedMotion ? 0 : 200 },
           paper: {
             elevation: 0,
             sx: dropdownPaperSx(theme),
@@ -1277,7 +1280,7 @@ export const HeaderBar: React.FC = () => {
         anchorOrigin={{ horizontal: 'left', vertical: 'bottom' }}
         slots={{ transition: Fade }}
         slotProps={{
-          transition: { timeout: 200 },
+          transition: { timeout: prefersReducedMotion ? 0 : 200 },
           paper: {
             elevation: 0,
             sx: dropdownPaperSx(theme),
@@ -1339,7 +1342,7 @@ export const HeaderBar: React.FC = () => {
       </Menu>
 
       {/* Profile Dropdown */}
-      <Menu
+      <Popover
         id="profile-menu"
         anchorEl={profileAnchorEl}
         open={Boolean(profileAnchorEl)}
@@ -1348,9 +1351,11 @@ export const HeaderBar: React.FC = () => {
         anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
         slots={{ transition: Fade }}
         slotProps={{
-          transition: { timeout: 200 },
+          transition: { timeout: prefersReducedMotion ? 0 : 200 },
           paper: {
             elevation: 0,
+            role: 'dialog',
+            'aria-label': 'Profile settings',
             sx: {
               ...dropdownPaperSx(theme),
               minWidth: 240,
@@ -1389,12 +1394,21 @@ export const HeaderBar: React.FC = () => {
             borderRadius: '12px 12px 0 0',
             textAlign: 'left',
             transition: 'background 0.2s ease',
+            '&:focus-visible': {
+              outline: `3px solid ${theme.palette.primary.main}`,
+              outlineOffset: -3,
+            },
             '&:hover': {
               background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
               '& .profile-card-arrow': {
                 opacity: 0.7,
                 transform: 'translateX(2px)',
               },
+            },
+            '@media (prefers-reduced-motion: reduce)': {
+              transition: 'none',
+              '& .profile-card-arrow': { transition: 'none' },
+              '&:hover .profile-card-arrow': { transform: 'none' },
             },
           }}
         >
@@ -1506,15 +1520,24 @@ export const HeaderBar: React.FC = () => {
               display: 'flex',
               alignItems: 'center',
               gap: 0.75,
+              minHeight: 44,
               px: 1,
               py: 0.625,
               borderRadius: '8px',
               transition: 'background 0.2s ease, color 0.2s ease',
+              '&:focus-visible': {
+                outline: `3px solid ${theme.palette.primary.main}`,
+                outlineOffset: 2,
+              },
               '&:hover': {
                 background: isDark ? 'rgba(248,113,113,0.1)' : 'rgba(220,38,38,0.06)',
                 '& .sign-out-icon, & .sign-out-text': {
                   color: isDark ? '#f87171' : '#dc2626',
                 },
+              },
+              '@media (prefers-reduced-motion: reduce)': {
+                transition: 'none',
+                '& .sign-out-icon, & .sign-out-text': { transition: 'none' },
               },
             }}
           >
@@ -1580,7 +1603,7 @@ export const HeaderBar: React.FC = () => {
             )}
           </IconButton>
         </Box>
-      </Menu>
+      </Popover>
 
       {/* Mobile Bottom Sheet */}
       <MobileBackdrop open={mobileOpen} onClick={() => setMobileOpen(false)} />
