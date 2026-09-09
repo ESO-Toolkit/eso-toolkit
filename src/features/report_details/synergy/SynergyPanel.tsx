@@ -1,4 +1,5 @@
 import React from 'react';
+import { useSelector } from 'react-redux';
 
 import {
   useCastEvents,
@@ -7,6 +8,9 @@ import {
   useFightForContext,
 } from '../../../hooks';
 import type { ReportFightContextInput } from '../../../store/contextTypes';
+import { selectMasterDataErrorForContext } from '../../../store/master_data/masterDataSelectors';
+import type { RootState } from '../../../store/storeWithHistory';
+import { AnalyzerPanelState, resolveAnalyzerPanelState } from '../AnalyzerPanelState';
 
 import { SynergyPanelView } from './SynergyPanelView';
 import { extractSynergyData } from './synergyUtils';
@@ -18,12 +22,17 @@ interface SynergyPanelProps {
 export const SynergyPanel: React.FC<SynergyPanelProps> = ({ context }) => {
   const resolvedContext = useResolvedReportFightContext(context);
   const fight = useFightForContext(resolvedContext);
-  const { castEvents, isCastEventsLoading } = useCastEvents({ context: resolvedContext });
+  const { castEvents, isCastEventsLoading, castEventsStatus, castEventsError } = useCastEvents({
+    context: resolvedContext,
+  });
   const { reportMasterData, isMasterDataLoading } = useReportMasterData({
     context: resolvedContext,
   });
+  const masterDataError = useSelector((state: RootState) =>
+    selectMasterDataErrorForContext(state, resolvedContext),
+  );
 
-  const isLoading = isCastEventsLoading || isMasterDataLoading;
+  const isLoading = Boolean(fight) && (isCastEventsLoading || isMasterDataLoading);
 
   const friendlyPlayerIds = React.useMemo(
     () => fight?.friendlyPlayers?.filter((id): id is number => id !== null) ?? [],
@@ -49,18 +58,30 @@ export const SynergyPanel: React.FC<SynergyPanelProps> = ({ context }) => {
     friendlyPlayerIds,
   ]);
 
-  if (!fight) {
-    return null;
-  }
+  const hasSynergyData = synergyData.totalCount > 0;
+  const state = resolveAnalyzerPanelState({
+    error: masterDataError ?? castEventsError,
+    hasData: hasSynergyData,
+    isComplete: Boolean(fight && reportMasterData.loaded && castEventsStatus === 'succeeded'),
+    isLoading,
+  });
 
   return (
-    <SynergyPanelView
-      data={synergyData}
-      fight={fight}
-      isLoading={isLoading}
-      actorsById={reportMasterData.actorsById}
-      reportCode={resolvedContext.reportCode}
-      fightId={resolvedContext.fightId}
-    />
+    <AnalyzerPanelState
+      detail={masterDataError ?? castEventsError ?? undefined}
+      state={state}
+      title="Synergies"
+    >
+      {hasSynergyData && fight && (
+        <SynergyPanelView
+          data={synergyData}
+          fight={fight}
+          isLoading={false}
+          actorsById={reportMasterData.actorsById}
+          reportCode={resolvedContext.reportCode}
+          fightId={resolvedContext.fightId}
+        />
+      )}
+    </AnalyzerPanelState>
   );
 };
