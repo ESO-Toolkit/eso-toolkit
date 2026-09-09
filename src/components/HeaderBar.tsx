@@ -16,6 +16,7 @@ import {
   Button,
   Box,
   IconButton,
+  useMediaQuery,
   useTheme,
   Container,
   Menu,
@@ -24,6 +25,7 @@ import {
   ListItemText,
   Fade,
   ButtonBase,
+  Popover,
 } from '@mui/material';
 import type { SxProps, Theme } from '@mui/material/styles';
 import { alpha, styled } from '@mui/material/styles';
@@ -56,6 +58,10 @@ const HamburgerButton = styled(IconButton, {
   borderRadius: 8,
   transition:
     'background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+  '&:focus-visible': {
+    outline: `3px solid ${theme.palette.primary.main}`,
+    outlineOffset: 2,
+  },
   '&:hover': {
     backgroundColor: 'rgba(56, 189, 248, 0.1)',
     transform: 'scale(1.05)',
@@ -78,6 +84,11 @@ const HamburgerButton = styled(IconButton, {
     '&:nth-of-type(3)': {
       transform: open ? 'translateY(-7px) rotate(-45deg)' : 'translateY(0) rotate(0)',
     },
+  },
+  '@media (prefers-reduced-motion: reduce)': {
+    transition: 'none',
+    '& .hamburger-line': { transition: 'none' },
+    '&:hover': { transform: 'none' },
   },
 }));
 
@@ -104,6 +115,9 @@ const MobileBackdrop = styled(Box, {
   opacity: open ? 1 : 0,
   visibility: open ? 'visible' : 'hidden',
   transition: 'opacity 0.3s ease, visibility 0.3s ease',
+  '@media (prefers-reduced-motion: reduce)': {
+    transition: 'none',
+  },
 }));
 
 const MobileBottomSheet = styled(Box, {
@@ -156,6 +170,10 @@ const MobileBottomSheet = styled(Box, {
       background: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)',
       borderRadius: 2,
     },
+    '@media (prefers-reduced-motion: reduce)': {
+      transition: 'none',
+      '&::after': { animation: 'none' },
+    },
   };
 });
 
@@ -174,6 +192,7 @@ const MobileSheetItem = styled(ButtonBase, {
     width: '100%',
     textAlign: 'left',
     position: 'relative',
+    minHeight: 48,
     transition: 'background 0.2s ease, transform 0.2s ease',
     background: active ? (isDark ? alpha(accent, 0.1) : alpha(accent, 0.06)) : 'transparent',
     ...(active && {
@@ -192,10 +211,18 @@ const MobileSheetItem = styled(ButtonBase, {
       transform: 'scale(0.98)',
       background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
     },
+    '&:focus-visible': {
+      outline: `3px solid ${accent}`,
+      outlineOffset: 2,
+    },
     '@media (hover: hover)': {
       '&:hover': {
         background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
       },
+    },
+    '@media (prefers-reduced-motion: reduce)': {
+      transition: 'none',
+      '&:active': { transform: 'none' },
     },
   };
 });
@@ -266,6 +293,11 @@ const navButtonSx = (theme: Theme) =>
       'background 0.3s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
     background: 'transparent',
     border: '1px solid transparent',
+    minHeight: 44,
+    '&:focus-visible': {
+      outline: `3px solid ${theme.palette.primary.main}`,
+      outlineOffset: 2,
+    },
     '&::before': {
       content: '""',
       position: 'absolute',
@@ -294,6 +326,12 @@ const navButtonSx = (theme: Theme) =>
       '&::before': { opacity: 1 },
     },
     '&:active': { transform: 'translateY(0)' },
+    '@media (prefers-reduced-motion: reduce)': {
+      transition: 'none',
+      '&::before': { transition: 'none' },
+      '&:hover': { transform: 'none' },
+      '&:active': { transform: 'none' },
+    },
   }) as const;
 
 // ─── SVG noise texture for dropdown panels ──────────────────────────────────
@@ -366,6 +404,10 @@ const dropdownPaperSx = (theme: Theme): SxProps<Theme> => {
       borderRadius: 'inherit',
       background: `radial-gradient(320px circle at var(--mouse-x, 50%) var(--mouse-y, 0%), ${alpha(accent, isDark ? 0.07 : 0.05)}, transparent 60%)`,
       transition: 'background 0.15s ease',
+    },
+    '@media (prefers-reduced-motion: reduce)': {
+      '&::before': { animation: 'none' },
+      '& > .dropdown-spotlight': { transition: 'none' },
     },
   };
 };
@@ -466,6 +508,12 @@ const menuItemSx = (theme: Theme, itemAccent: string, index: number): SxProps<Th
       transform: 'translateX(2px) scale(0.99)',
       background: alpha(itemAccent, isDark ? 0.16 : 0.12),
     },
+    '@media (prefers-reduced-motion: reduce)': {
+      animation: 'none',
+      opacity: 1,
+      transition: 'none',
+      '& *': { transition: 'none' },
+    },
   };
 };
 
@@ -504,6 +552,9 @@ export const HeaderBar: React.FC = () => {
   const navigate = useViewTransitionNavigate();
   const location = useLocation();
   const theme = useTheme();
+  const prefersReducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)', {
+    noSsr: true,
+  });
   const isDark = theme.palette.mode === 'dark';
   const { darkMode, toggleDarkMode } = usePersistentDarkMode();
   const [scrolled, setScrolled] = React.useState(false);
@@ -873,6 +924,9 @@ export const HeaderBar: React.FC = () => {
           viewTransitionName: 'site-header',
           boxShadow: scrolled ? '0 10px 30px rgba(0,0,0,0.35)' : 'none',
           transition: 'box-shadow .2s ease',
+          '@media (prefers-reduced-motion: reduce)': {
+            transition: 'none',
+          },
         }}
       >
         <Container maxWidth="lg" sx={{ px: { xs: 2, sm: 3 } }}>
@@ -952,8 +1006,9 @@ export const HeaderBar: React.FC = () => {
                 onClick={handleReportsClick}
                 endIcon={<ExpandMore />}
                 startIcon={<Assessment />}
-                aria-haspopup="true"
+                aria-haspopup="menu"
                 aria-expanded={Boolean(reportsAnchorEl)}
+                aria-controls={reportsAnchorEl ? 'reports-menu' : undefined}
                 sx={navButtonSx(theme)}
               >
                 Reports
@@ -965,25 +1020,21 @@ export const HeaderBar: React.FC = () => {
                 onClick={handleToolsClick}
                 endIcon={<ExpandMore />}
                 startIcon={<Build />}
-                aria-haspopup="true"
+                aria-haspopup="menu"
                 aria-expanded={Boolean(toolsAnchorEl)}
+                aria-controls={toolsAnchorEl ? 'tools-menu' : undefined}
                 sx={navButtonSx(theme)}
               >
                 Tools
               </Button>
               {!isLoggedIn && <ThemeToggle />}
               {isLoggedIn ? (
-                <Box
+                <ButtonBase
                   onClick={handleProfileMenuOpen}
                   aria-label={userLabel ? `Profile: ${userLabel}` : 'Profile'}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e: React.KeyboardEvent<HTMLElement>) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      handleProfileMenuOpen(e);
-                    }
-                  }}
+                  aria-haspopup="dialog"
+                  aria-expanded={Boolean(profileAnchorEl)}
+                  aria-controls={profileAnchorEl ? 'profile-menu' : undefined}
                   sx={{
                     display: { xs: 'none', sm: 'flex' },
                     alignItems: 'center',
@@ -996,6 +1047,15 @@ export const HeaderBar: React.FC = () => {
                       'background 0.25s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
                     border: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'}`,
                     background: isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)',
+                    minHeight: 44,
+                    '&:focus-visible': {
+                      outline: `3px solid ${theme.palette.primary.main}`,
+                      outlineOffset: 2,
+                    },
+                    '@media (prefers-reduced-motion: reduce)': {
+                      transition: 'none',
+                      '&:active': { transform: 'none' },
+                    },
                     '&:hover': {
                       background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
                       borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)',
@@ -1080,7 +1140,7 @@ export const HeaderBar: React.FC = () => {
                       color: isDark ? '#94a3b8' : '#64748b',
                     }}
                   />
-                </Box>
+                </ButtonBase>
               ) : (
                 <Button
                   onClick={handleLogin}
@@ -1134,7 +1194,8 @@ export const HeaderBar: React.FC = () => {
               <HamburgerButton
                 open={mobileOpen}
                 onClick={handleDrawerToggle}
-                aria-label="toggle navigation"
+                aria-label={mobileOpen ? 'Close navigation menu' : 'Open navigation menu'}
+                aria-haspopup="dialog"
                 aria-expanded={mobileOpen}
                 aria-controls="mobile-nav-menu"
               >
@@ -1151,6 +1212,7 @@ export const HeaderBar: React.FC = () => {
 
       {/* Tools Submenu */}
       <Menu
+        id="tools-menu"
         anchorEl={toolsAnchorEl}
         open={Boolean(toolsAnchorEl)}
         onClose={handleToolsClose}
@@ -1158,7 +1220,7 @@ export const HeaderBar: React.FC = () => {
         anchorOrigin={{ horizontal: 'left', vertical: 'bottom' }}
         slots={{ transition: Fade }}
         slotProps={{
-          transition: { timeout: 200 },
+          transition: { timeout: prefersReducedMotion ? 0 : 200 },
           paper: {
             elevation: 0,
             sx: dropdownPaperSx(theme),
@@ -1215,6 +1277,7 @@ export const HeaderBar: React.FC = () => {
 
       {/* Reports Submenu */}
       <Menu
+        id="reports-menu"
         anchorEl={reportsAnchorEl}
         open={Boolean(reportsAnchorEl)}
         onClose={handleReportsClose}
@@ -1222,7 +1285,7 @@ export const HeaderBar: React.FC = () => {
         anchorOrigin={{ horizontal: 'left', vertical: 'bottom' }}
         slots={{ transition: Fade }}
         slotProps={{
-          transition: { timeout: 200 },
+          transition: { timeout: prefersReducedMotion ? 0 : 200 },
           paper: {
             elevation: 0,
             sx: dropdownPaperSx(theme),
@@ -1284,7 +1347,8 @@ export const HeaderBar: React.FC = () => {
       </Menu>
 
       {/* Profile Dropdown */}
-      <Menu
+      <Popover
+        id="profile-menu"
         anchorEl={profileAnchorEl}
         open={Boolean(profileAnchorEl)}
         onClose={handleProfileMenuClose}
@@ -1292,9 +1356,11 @@ export const HeaderBar: React.FC = () => {
         anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
         slots={{ transition: Fade }}
         slotProps={{
-          transition: { timeout: 200 },
+          transition: { timeout: prefersReducedMotion ? 0 : 200 },
           paper: {
             elevation: 0,
+            role: 'dialog',
+            'aria-label': 'Profile settings',
             sx: {
               ...dropdownPaperSx(theme),
               minWidth: 240,
@@ -1333,12 +1399,21 @@ export const HeaderBar: React.FC = () => {
             borderRadius: '12px 12px 0 0',
             textAlign: 'left',
             transition: 'background 0.2s ease',
+            '&:focus-visible': {
+              outline: `3px solid ${theme.palette.primary.main}`,
+              outlineOffset: -3,
+            },
             '&:hover': {
               background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
               '& .profile-card-arrow': {
                 opacity: 0.7,
                 transform: 'translateX(2px)',
               },
+            },
+            '@media (prefers-reduced-motion: reduce)': {
+              transition: 'none',
+              '& .profile-card-arrow': { transition: 'none' },
+              '&:hover .profile-card-arrow': { transform: 'none' },
             },
           }}
         >
@@ -1450,15 +1525,24 @@ export const HeaderBar: React.FC = () => {
               display: 'flex',
               alignItems: 'center',
               gap: 0.75,
+              minHeight: 44,
               px: 1,
               py: 0.625,
               borderRadius: '8px',
               transition: 'background 0.2s ease, color 0.2s ease',
+              '&:focus-visible': {
+                outline: `3px solid ${theme.palette.primary.main}`,
+                outlineOffset: 2,
+              },
               '&:hover': {
                 background: isDark ? 'rgba(248,113,113,0.1)' : 'rgba(220,38,38,0.06)',
                 '& .sign-out-icon, & .sign-out-text': {
                   color: isDark ? '#f87171' : '#dc2626',
                 },
+              },
+              '@media (prefers-reduced-motion: reduce)': {
+                transition: 'none',
+                '& .sign-out-icon, & .sign-out-text': { transition: 'none' },
               },
             }}
           >
@@ -1494,8 +1578,8 @@ export const HeaderBar: React.FC = () => {
             size="small"
             aria-label={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
             sx={{
-              width: 32,
-              height: 32,
+              width: 44,
+              height: 44,
               borderRadius: '9px',
               background: alpha(isDark ? '#f59e0b' : '#6366f1', isDark ? 0.08 : 0.05),
               border: `1px solid ${alpha(isDark ? '#f59e0b' : '#6366f1', 0.1)}`,
@@ -1506,6 +1590,15 @@ export const HeaderBar: React.FC = () => {
                 transform: 'scale(1.06)',
               },
               '&:active': { transform: 'scale(0.95)' },
+              '&:focus-visible': {
+                outline: `3px solid ${theme.palette.primary.main}`,
+                outlineOffset: 2,
+              },
+              '@media (prefers-reduced-motion: reduce)': {
+                transition: 'none',
+                '&:hover': { transform: 'none' },
+                '&:active': { transform: 'none' },
+              },
             }}
           >
             {darkMode ? (
@@ -1515,7 +1608,7 @@ export const HeaderBar: React.FC = () => {
             )}
           </IconButton>
         </Box>
-      </Menu>
+      </Popover>
 
       {/* Mobile Bottom Sheet */}
       <MobileBackdrop open={mobileOpen} onClick={() => setMobileOpen(false)} />
@@ -1562,6 +1655,7 @@ export const HeaderBar: React.FC = () => {
             onClick={handleNavigateToProfile}
             role="button"
             tabIndex={0}
+            aria-label={`${userLabel || 'Profile'} profile`}
             onKeyDown={(e: React.KeyboardEvent) => {
               if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault();
@@ -1581,6 +1675,7 @@ export const HeaderBar: React.FC = () => {
               alignItems: 'center',
               gap: 1.5,
               cursor: 'pointer',
+              minHeight: 64,
               transition: 'transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
               position: 'relative',
               zIndex: 1,
@@ -1593,6 +1688,14 @@ export const HeaderBar: React.FC = () => {
                 pointerEvents: 'none',
               },
               '&:active': { transform: 'scale(0.98)' },
+              '&:focus-visible': {
+                outline: `3px solid ${theme.palette.primary.main}`,
+                outlineOffset: 2,
+              },
+              '@media (prefers-reduced-motion: reduce)': {
+                transition: 'none',
+                '&:active': { transform: 'none' },
+              },
             }}
           >
             <Box
