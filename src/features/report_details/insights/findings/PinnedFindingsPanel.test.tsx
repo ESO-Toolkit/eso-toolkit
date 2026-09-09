@@ -25,6 +25,15 @@ const seed: PinnedFindingSeed = {
     },
   ],
   confidence: { level: 'medium', rationale: 'Evidence is present in the encounter timeline.' },
+  analysisContext: {
+    esoUpdate: 'U46',
+    partition: 'live-na',
+    encounter: { kind: 'encounter', identity: 'trial-boss-alpha', version: '1.2.0' },
+    difficulty: 'Veteran',
+    role: 'damage-dealer',
+    classId: 3,
+    buildBracket: 'CP160+',
+  },
   provenance: {
     kind: 'authoritative-rule',
     source: 'Encounter rules',
@@ -73,6 +82,14 @@ describe('PinnedFindingsPanel', () => {
     expect(screen.getByText(/Opening/)).toBeInTheDocument();
     expect(screen.getByText(/Player identifiers hidden/)).toBeInTheDocument();
     expect(screen.queryByText('Ada')).not.toBeInTheDocument();
+    const analysisContext = screen.getByLabelText('Analysis context');
+    expect(analysisContext).toHaveTextContent(/ESO update:\s*U46/);
+    expect(analysisContext).toHaveTextContent(/Partition:\s*live-na/);
+    expect(analysisContext).toHaveTextContent(/Difficulty:\s*Veteran/);
+    expect(analysisContext).toHaveTextContent(/Encounter:\s*trial-boss-alpha \(v1\.2\.0\)/);
+    expect(analysisContext).toHaveTextContent(/Role:\s*damage dealer/);
+    expect(analysisContext).toHaveTextContent(/Class:\s*3/);
+    expect(analysisContext).toHaveTextContent(/Build bracket:\s*CP160\+/);
     fireEvent.click(screen.getByRole('button', { name: /Prepare privacy-safe share/ }));
     expect(onShare).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -108,6 +125,77 @@ describe('PinnedFindingsPanel', () => {
     fireEvent.click(screen.getByRole('button', { name: /Prepare privacy-safe share/ }));
     expect(JSON.stringify(onShare.mock.calls[0][0])).not.toContain('2026-09-08T12:00:00.000Z');
     expect(JSON.stringify(onShare.mock.calls[0][0])).not.toContain('VY6r8pJ2qNa4ZxLt');
+  });
+
+  it('distinguishes provenance kinds and renders complete peer benchmark context safely', () => {
+    const onShare = jest.fn();
+    const gameRuleFinding = pinFinding(
+      {
+        ...seed,
+        id: 'game-rule-finding',
+        provenance: {
+          kind: 'game-rule',
+          source: 'ESO combat rule',
+          observedAt: '2026-09-08T12:00:00.000Z',
+        },
+      },
+      '2026-09-08T12:01:00.000Z',
+    );
+    const heuristicFinding = pinFinding(
+      {
+        ...seed,
+        id: 'heuristic-finding',
+        provenance: {
+          kind: 'fixed-heuristic',
+          source: 'Analyzer heuristic',
+          observedAt: '2026-09-08T12:00:00.000Z',
+        },
+      },
+      '2026-09-08T12:01:00.000Z',
+    );
+    const peerFinding = pinFinding(
+      {
+        ...seed,
+        id: 'peer-benchmark-finding',
+        provenance: {
+          kind: 'peer-benchmark',
+          source: 'Community benchmark',
+          sourceReference: 'https://www.esologs.com/reports/UNMODELED-REPORT-CODE',
+          observedAt: '2026-09-08T12:00:00.000Z',
+          sourcePeriod: 'Update 46, August 2026',
+          sampleSize: 1284,
+          distribution: { p25: 72, p50: 81, p75: 89 },
+          refreshDate: '2026-09-01',
+          confidence: 'medium',
+          provisional: true,
+        },
+      },
+      '2026-09-08T12:01:00.000Z',
+    );
+
+    renderPanel(
+      { status: 'ready', findings: [gameRuleFinding, heuristicFinding, peerFinding] },
+      onShare,
+    );
+
+    expect(screen.getByLabelText('Provenance type: Game rule')).toBeInTheDocument();
+    expect(screen.getByLabelText('Provenance type: Fixed heuristic')).toBeInTheDocument();
+    expect(screen.getByLabelText('Provenance type: Peer benchmark')).toBeInTheDocument();
+    const peerDetails = screen.getByLabelText('Peer benchmark details');
+    expect(peerDetails).toHaveTextContent(/Period:\s*Update 46, August 2026/);
+    expect(peerDetails).toHaveTextContent(/Sample size:\s*1,284/);
+    expect(peerDetails).toHaveTextContent(/Distribution:\s*p25 72 · p50 81 · p75 89/);
+    expect(peerDetails).toHaveTextContent(/Refreshed:\s*2026-09-01/);
+    expect(peerDetails).toHaveTextContent(/Confidence:\s*medium/);
+    expect(peerDetails).toHaveTextContent(/State:\s*Provisional/);
+
+    const panel = screen.getByRole('region', { name: 'Pinned findings' });
+    expect(panel).not.toHaveTextContent('UNMODELED-REPORT-CODE');
+    expect(panel).not.toHaveTextContent('https://www.esologs.com/reports');
+    fireEvent.click(screen.getAllByRole('button', { name: /Prepare privacy-safe share/ })[2]);
+    const safeShare = JSON.stringify(onShare.mock.calls[0][0]);
+    expect(safeShare).not.toContain('UNMODELED-REPORT-CODE');
+    expect(safeShare).not.toContain('https://www.esologs.com/reports');
   });
 
   it('shows lifecycle status and does not fabricate share controls without a handler', () => {
