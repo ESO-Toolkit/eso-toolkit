@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { handleRequest, SECURITY_HEADERS } from './index.js';
+import { CSP_REPORT_PATH, handleRequest, SECURITY_HEADERS } from './index.js';
 
 const resolvedCsp =
   "default-src 'self'; frame-ancestors 'self'; script-src 'self' 'sha256-resolved-inline-hash='";
@@ -33,12 +33,35 @@ const makeAssets = ({ headersFile = `/*\n  Content-Security-Policy: ${resolvedCs
 };
 
 const assertSecurityHeaders = (response, expectedCsp = resolvedCsp) => {
-  assert.equal(response.headers.get('Content-Security-Policy-Report-Only'), expectedCsp);
+  assert.equal(
+    response.headers.get('Content-Security-Policy-Report-Only'),
+    `${expectedCsp}; report-uri ${CSP_REPORT_PATH}; report-to csp-violations`,
+  );
   assert.equal(response.headers.get('Content-Security-Policy'), null);
+  const reportingEndpoints = response.headers.get('Reporting-Endpoints');
+  assert.equal(reportingEndpoints, `csp-violations="${CSP_REPORT_PATH}"`);
+  const endpointPath = reportingEndpoints.match(/^csp-violations="([^"]+)"$/)?.[1];
+  assert.equal(new URL(endpointPath, 'https://esotk.com/report/example').href, 'https://esotk.com/csp-reports');
+  assert.equal(response.headers.get('Report-To'), null);
 
   for (const [name, value] of Object.entries(SECURITY_HEADERS)) {
     assert.equal(response.headers.get(name), value, `${name} is present`);
   }
+};
+
+const requestReport = (body, options = {}) =>
+  new Request(`https://esotk.com${CSP_REPORT_PATH}`, {
+    body,
+    headers: { 'Content-Type': 'application/csp-report', ...options.headers },
+    method: 'POST',
+    ...options,
+  });
+
+const assertSafeReportResponse = async (response, expectedStatus) => {
+  assert.equal(response.status, expectedStatus);
+  assert.equal(await response.text(), '');
+  assert.equal(response.headers.get('Cache-Control'), 'no-store');
+  assertSecurityHeaders(response);
 };
 
 test('serves the app shell with success semantics for Analyzer history routes', async () => {
@@ -131,5 +154,170 @@ test('uses a marker-free report-only CSP fallback if the built header asset is u
   const csp = response.headers.get('Content-Security-Policy-Report-Only');
   assert.ok(csp?.includes("frame-ancestors 'self'"));
   assert.ok(!csp?.includes('__CSP_INLINE_SCRIPT_HASHES__'));
-  assertSecurityHeaders(response, csp);
+  const fallbackCsp = csp?.replace(`; report-uri ${CSP_REPORT_PATH}; report-to csp-violations`, '');
+  assertSecurityHeaders(response, fallbackCsp);
+});
+
+test('links report-only CSP headers to the bounded report endpoint without retaining another endpoint', async () => {
+  const assets = makeAssets({
+    headersFile: `/*\n  Content-Security-Policy: ${resolvedCsp}; report-uri https://unsafe.example/reports; report-to legacy\n*/`,
+  });
+  const response = await handleRequest(new Request('https://esotk.com/report/example'), {
+    ASSETS: assets,
+  });
+
+  const csp = response.headers.get('Content-Security-Policy-Report-Only');
+  assert.equal(csp?.includes('https://unsafe.example/reports'), false);
+  assert.equal(csp?.includes('report-to legacy'), false);
+  assertSecurityHeaders(response);
+});
+
+test('accepts a valid legacy CSP report without persisting or echoing its contents', async () => {
+  const assets = makeAssets();
+  const report = JSON.stringify({
+    'csp-report': {
+      'document-uri': 'https://esotk.com/report/private-code?player=private-player',
+      'effective-directive': 'script-src',
+    },
+  });
+  const response = await handleRequest(requestReport(report), { ASSETS: assets });
+
+  await assertSafeReportResponse(response, 204);
+  assert.equal(
+    assets.requests.some((request) => new URL(request.url).pathname === '/index.html'),
+    false,
+  );
+});
+
+test('records only bounded, privacy-safe categories for accepted CSP reports', async () => {
+  const assets = makeAssets();
+  const observations = [];
+  const originalLog = console.log;
+  console.log = (message) => observations.push(message);
+
+  try {
+    const response = await handleRequest(
+      requestReport(
+        JSON.stringify({
+          'csp-report': {
+            'blocked-uri': 'https://third-party.example/asset.js?player=private-player',
+            'document-uri': 'https://esotk.com/report/private-report-code?player=private-player',
+            'effective-directive': 'script-src',
+          },
+        }),
+      ),
+      { ASSETS: assets },
+    );
+
+    await assertSafeReportResponse(response, 204);
+  } finally {
+    console.log = originalLog;
+  }
+
+  assert.deepEqual(observations.map((entry) => JSON.parse(entry)), [
+    {
+      event: 'csp-violation',
+      reports: [
+        {
+          directive: 'script-src',
+          routeTemplate: '/report/:report',
+          sourceOriginCategory: 'cross-origin',
+        },
+      ],
+    },
+  ]);
+  assert.equal(observations.join('').includes('private-report-code'), false);
+  assert.equal(observations.join('').includes('private-player'), false);
+});
+
+test('caps the number of accepted reports emitted in one observation', async () => {
+  const assets = makeAssets();
+  const observations = [];
+  const originalLog = console.log;
+  console.log = (message) => observations.push(message);
+
+  try {
+    const report = JSON.stringify(
+      Array.from({ length: 11 }, () => ({
+        body: { effectiveDirective: 'style-src' },
+        type: 'csp-violation',
+        url: 'https://esotk.com/report/private-report-code',
+      })),
+    );
+    const response = await handleRequest(
+      requestReport(report, {
+        headers: { 'Content-Type': 'application/reports+json' },
+      }),
+      { ASSETS: assets },
+    );
+
+    await assertSafeReportResponse(response, 204);
+  } finally {
+    console.log = originalLog;
+  }
+
+  const [observation] = observations.map((entry) => JSON.parse(entry));
+  assert.equal(observation.reports.length, 10);
+  assert.deepEqual(observation.reports[0], {
+    directive: 'style-src',
+    routeTemplate: '/report/:report',
+    sourceOriginCategory: 'unknown',
+  });
+});
+
+test('accepts a valid Reporting API CSP report', async () => {
+  const assets = makeAssets();
+  const report = JSON.stringify([
+    {
+      body: { effectiveDirective: 'img-src' },
+      type: 'csp-violation',
+      url: 'https://esotk.com/report/redacted',
+    },
+  ]);
+  const response = await handleRequest(
+    requestReport(report, {
+      headers: { 'Content-Type': 'application/reports+json; charset=utf-8' },
+    }),
+    { ASSETS: assets },
+  );
+
+  await assertSafeReportResponse(response, 204);
+});
+
+test('rejects malformed reports and unsupported content types without exposing report data', async () => {
+  const assets = makeAssets();
+  const malformed = await handleRequest(requestReport('{private-report-code'), { ASSETS: assets });
+  await assertSafeReportResponse(malformed, 400);
+
+  const invalidSchema = await handleRequest(
+    requestReport(JSON.stringify({ 'csp-report': { 'effective-directive': ' ' } })),
+    { ASSETS: assets },
+  );
+  await assertSafeReportResponse(invalidSchema, 400);
+
+  const unsupportedContentType = await handleRequest(
+    requestReport('{"private":"report-code"}', { headers: { 'Content-Type': 'text/plain' } }),
+    { ASSETS: assets },
+  );
+  await assertSafeReportResponse(unsupportedContentType, 415);
+});
+
+test('rejects oversized CSP reports after a bounded read', async () => {
+  const assets = makeAssets();
+  const response = await handleRequest(requestReport('x'.repeat(8 * 1024 + 1)), {
+    ASSETS: assets,
+  });
+
+  await assertSafeReportResponse(response, 413);
+});
+
+test('allows only POST requests to the CSP report endpoint', async () => {
+  const assets = makeAssets();
+  const response = await handleRequest(
+    new Request(`https://esotk.com${CSP_REPORT_PATH}`, { method: 'GET' }),
+    { ASSETS: assets },
+  );
+
+  await assertSafeReportResponse(response, 405);
+  assert.equal(response.headers.get('Allow'), 'POST');
 });
