@@ -129,7 +129,7 @@ export const fetchHealingEvents = createAsyncThunk(
       const entry = state.entries[key];
 
       const lastFetchedTimestamp = entry?.cacheMetadata.lastFetchedTimestamp;
-      const isCached = Boolean(entry?.events.length);
+      const isCached = entry?.status === 'succeeded';
       const isFresh =
         typeof lastFetchedTimestamp === 'number' &&
         Date.now() - lastFetchedTimestamp < DATA_FETCH_CACHE_TIMEOUT;
