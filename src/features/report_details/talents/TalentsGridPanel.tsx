@@ -9,8 +9,11 @@ import { usePlayerData } from '../../../hooks';
 import { PlayerTalent } from '../../../types/playerDetails';
 import { abilityIconUrl } from '../../../utils/abilityIconCorrections';
 import { resolveActorName } from '../../../utils/resolveActorName';
-
-import { AnalyzerPanelState, resolveAnalyzerPanelState } from '../AnalyzerPanelState';
+import {
+  AnalyzerPanelState,
+  resolveAnalyzerPanelState,
+  type AnalyzerPanelStateKind,
+} from '../AnalyzerPanelState';
 
 interface TalentsGridPanelProps {
   fight: FightFragment;
@@ -43,7 +46,7 @@ export const resolveTalentsPanelState = ({
   isLoading,
   playerDataError,
   playerDataStatus,
-}: TalentsPanelLifecycleInput) =>
+}: TalentsPanelLifecycleInput): AnalyzerPanelStateKind =>
   resolveAnalyzerPanelState({
     error:
       playerDataError ??
@@ -256,11 +259,7 @@ export const TalentsGridPanel: React.FC<TalentsGridPanelProps> = ({ fight }) => 
                 </Card>
                 <Card variant="outlined" sx={{ flex: 1 }}>
                   <CardContent sx={{ textAlign: 'center' }}>
-                    <Typography
-                      variant="h4"
-                      color="secondary"
-                      data-testid="players-in-fight-count"
-                    >
+                    <Typography variant="h4" color="secondary" data-testid="players-in-fight-count">
                       {fight.friendlyPlayers?.length ?? 0}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">

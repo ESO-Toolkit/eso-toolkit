@@ -2,8 +2,11 @@ import { Box, Card, CardContent, Typography, Chip } from '@mui/material';
 import React from 'react';
 
 import { FightFragment } from '../../../graphql/gql/graphql';
-
-import { AnalyzerPanelState, resolveAnalyzerPanelState } from '../AnalyzerPanelState';
+import {
+  AnalyzerPanelState,
+  resolveAnalyzerPanelState,
+  type AnalyzerPanelStateKind,
+} from '../AnalyzerPanelState';
 
 interface MapsPanelProps {
   fight: FightFragment;
@@ -28,7 +31,7 @@ interface MapsPanelStateInput {
   isLoading: boolean;
 }
 
-export const resolveMapsPanelState = (input: MapsPanelStateInput) =>
+export const resolveMapsPanelState = (input: MapsPanelStateInput): AnalyzerPanelStateKind =>
   resolveAnalyzerPanelState(input);
 
 export const MapsPanel: React.FC<MapsPanelProps> = ({ fight, lifecycle }) => {
@@ -44,7 +47,11 @@ export const MapsPanel: React.FC<MapsPanelProps> = ({ fight, lifecycle }) => {
   });
 
   return (
-    <AnalyzerPanelState title="Fight maps" state={panelState} detail={lifecycle?.error ?? undefined}>
+    <AnalyzerPanelState
+      title="Fight maps"
+      state={panelState}
+      detail={lifecycle?.error ?? undefined}
+    >
       {hasData && (
         <Box sx={{ p: 2 }}>
           <Typography variant="h6" gutterBottom>
@@ -148,11 +155,7 @@ export const MapsPanel: React.FC<MapsPanelProps> = ({ fight, lifecycle }) => {
                 <CardContent>
                   <Box sx={{ display: 'grid', gap: 1.5 }}>
                     <Box>
-                      <Typography
-                        variant="caption"
-                        color="text.secondary"
-                        sx={{ fontWeight: 600 }}
-                      >
+                      <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
                         Zone Name
                       </Typography>
                       <Typography variant="body1" sx={{ fontWeight: 500 }}>
@@ -161,11 +164,7 @@ export const MapsPanel: React.FC<MapsPanelProps> = ({ fight, lifecycle }) => {
                     </Box>
 
                     <Box>
-                      <Typography
-                        variant="caption"
-                        color="text.secondary"
-                        sx={{ fontWeight: 600 }}
-                      >
+                      <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
                         Zone ID
                       </Typography>
                       <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
