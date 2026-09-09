@@ -38,12 +38,11 @@ const assertSecurityHeaders = (response, expectedCsp = resolvedCsp) => {
     `${expectedCsp}; report-uri ${CSP_REPORT_PATH}; report-to csp-violations`,
   );
   assert.equal(response.headers.get('Content-Security-Policy'), null);
-  assert.equal(response.headers.get('Reporting-Endpoints'), `csp-violations="${CSP_REPORT_PATH}"`);
-  assert.deepEqual(JSON.parse(response.headers.get('Report-To')), {
-    endpoints: [{ url: CSP_REPORT_PATH }],
-    group: 'csp-violations',
-    max_age: 86400,
-  });
+  const reportingEndpoints = response.headers.get('Reporting-Endpoints');
+  assert.equal(reportingEndpoints, `csp-violations="${CSP_REPORT_PATH}"`);
+  const endpointPath = reportingEndpoints.match(/^csp-violations="([^"]+)"$/)?.[1];
+  assert.equal(new URL(endpointPath, 'https://esotk.com/report/example').href, 'https://esotk.com/csp-reports');
+  assert.equal(response.headers.get('Report-To'), null);
 
   for (const [name, value] of Object.entries(SECURITY_HEADERS)) {
     assert.equal(response.headers.get(name), value, `${name} is present`);
