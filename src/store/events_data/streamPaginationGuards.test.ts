@@ -12,7 +12,7 @@ jest.mock('../../esologsClient');
 jest.mock('./constants', () => ({
   ...jest.requireActual('./constants'),
   EVENT_MAX_EVENTS_PER_STREAM: 5,
-  EVENT_MAX_PAGES_PER_STREAM: 2,
+  EVENT_MAX_PAGES_PER_STREAM: 3,
 }));
 
 type StreamName = 'death' | 'healing' | 'resource';
@@ -114,13 +114,16 @@ describe.each(streams)('$name event pagination guards', ({ name, fetch, eventTyp
   });
 
   it('fails closed at page and event caps', async () => {
-    client.query.mockResolvedValueOnce(page([], 1001)).mockResolvedValueOnce(page([], 1002));
+    client.query
+      .mockResolvedValueOnce(page([], 1001))
+      .mockResolvedValueOnce(page([], 1002))
+      .mockResolvedValueOnce(page([], 1003));
 
     await dispatch();
 
     expect(entry()).toMatchObject({
       status: 'failed',
-      error: `${name[0].toUpperCase()}${name.slice(1)} event pagination exceeded 2 pages`,
+      error: `${name[0].toUpperCase()}${name.slice(1)} event pagination exceeded 3 pages`,
     });
 
     store = configureStore({
