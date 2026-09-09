@@ -16,6 +16,8 @@ export function useReportData(): {
   isReportLoading: boolean;
   /** Why the report failed to load (fetch/API error) — null when healthy. */
   reportError: string | null;
+  /** The report context that owns the loading and error state. */
+  reportStateId?: string | null;
   /**
    * Re-fetches the report from the network, bypassing both the slice's
    * freshness window and Apollo's cache. Backs the detail page's "Try again" /
@@ -49,8 +51,15 @@ export function useReportData(): {
       reportData: combinedReportData.data,
       isReportLoading,
       reportError: combinedReportData.error ?? null,
+      reportStateId: combinedReportData.reportId,
       refetchReport,
     }),
-    [combinedReportData.data, combinedReportData.error, isReportLoading, refetchReport],
+    [
+      combinedReportData.data,
+      combinedReportData.error,
+      combinedReportData.reportId,
+      isReportLoading,
+      refetchReport,
+    ],
   );
 }

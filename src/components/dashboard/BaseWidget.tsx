@@ -3,6 +3,10 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import { Box, Menu, MenuItem, Typography } from '@mui/material';
 import React from 'react';
 
+import {
+  formatLiveTimestamp,
+  useLiveDashboardWidgetAsOf,
+} from '../../features/live_logging/liveDashboardHealth';
 import { WidgetScope } from '../../store/dashboard/dashboardSlice';
 import { ClassIcon } from '../ClassIcon';
 
@@ -133,6 +137,8 @@ export interface BaseWidgetProps {
   onScopeChange: (scope: WidgetScope) => void;
   children: React.ReactNode;
   isEmpty?: boolean;
+  /** True while this widget's own data dependencies are still refreshing. */
+  isLoading?: boolean;
 }
 
 export const BaseWidget: React.FC<BaseWidgetProps> = ({
@@ -146,9 +152,19 @@ export const BaseWidget: React.FC<BaseWidgetProps> = ({
   onScopeChange,
   children,
   isEmpty = false,
+  isLoading = false,
 }) => {
   const [scopeMenuAnchor, setScopeMenuAnchor] = React.useState<null | HTMLElement>(null);
   const cfg = KIND_CONFIG[kind];
+  const { asOf: dashboardAsOf } = useLiveDashboardWidgetAsOf();
+  const [asOf, setAsOf] = React.useState<number | null>(() => (isLoading ? null : dashboardAsOf));
+
+  React.useEffect(() => {
+    // A report sync and an individual widget's worker/event requests complete
+    // independently. Preserve the widget's previous timestamp until its own
+    // dependencies have settled so stale output never appears newly current.
+    if (!isLoading) setAsOf(dashboardAsOf);
+  }, [dashboardAsOf, isLoading]);
 
   return (
     <Box
@@ -241,13 +257,28 @@ export const BaseWidget: React.FC<BaseWidgetProps> = ({
           >
             {subtitle}
           </Typography>
+          <Typography
+            component="time"
+            dateTime={asOf === null ? undefined : new Date(asOf).toISOString()}
+            aria-label={`Widget data as of ${asOf === null ? 'not synchronized' : new Date(asOf).toISOString()}`}
+            sx={{
+              mt: '3px',
+              fontSize: 9,
+              fontFamily: 'monospace',
+              color: 'rgba(255,255,255,0.42)',
+              lineHeight: 1,
+            }}
+          >
+            As of {formatLiveTimestamp(asOf)}
+          </Typography>
         </Box>
 
         {/* Close */}
         <Box
           component="button"
+          type="button"
           onClick={onRemove}
-          aria-label="Remove widget"
+          aria-label={`Remove ${title} widget`}
           sx={{
             gridArea: 'close',
             background: 'transparent',
@@ -275,7 +306,11 @@ export const BaseWidget: React.FC<BaseWidgetProps> = ({
         {/* Scope dropdown — second row, left-aligned */}
         <Box
           component="button"
+          type="button"
           onClick={(e: React.MouseEvent<HTMLElement>) => setScopeMenuAnchor(e.currentTarget)}
+          aria-label={`Widget scope for ${title}: ${SCOPE_LABELS[scope]}`}
+          aria-expanded={Boolean(scopeMenuAnchor)}
+          aria-haspopup="menu"
           sx={{
             gridArea: 'scope',
             justifySelf: 'start',
@@ -348,6 +383,7 @@ export const BaseWidget: React.FC<BaseWidgetProps> = ({
         anchorEl={scopeMenuAnchor}
         open={Boolean(scopeMenuAnchor)}
         onClose={() => setScopeMenuAnchor(null)}
+        slotProps={{ list: { 'aria-label': `Scope options for ${title}` } }}
       >
         {(Object.keys(SCOPE_LABELS) as WidgetScope[]).map((s) => (
           <MenuItem

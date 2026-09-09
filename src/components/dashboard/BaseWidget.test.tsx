@@ -3,6 +3,8 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
+import { LiveDashboardAsOfContext } from '../../features/live_logging/liveDashboardHealth';
+
 import { BaseWidget } from './BaseWidget';
 
 describe('BaseWidget', () => {
@@ -38,6 +40,64 @@ describe('BaseWidget', () => {
     expect(screen.getByText('Widget Content')).toBeInTheDocument();
   });
 
+  it('shows the dashboard synchronization time for each widget', () => {
+    render(
+      <LiveDashboardAsOfContext.Provider
+        value={{ asOf: new Date('2026-09-05T12:34:56Z').getTime() }}
+      >
+        <BaseWidget {...defaultProps}>
+          <div>Widget Content</div>
+        </BaseWidget>
+      </LiveDashboardAsOfContext.Provider>,
+    );
+
+    expect(screen.getByLabelText('Widget data as of 2026-09-05T12:34:56.000Z')).toBeInTheDocument();
+  });
+
+  it('labels an unsynchronized widget timestamp for assistive technology', () => {
+    render(
+      <BaseWidget {...defaultProps}>
+        <div>Widget Content</div>
+      </BaseWidget>,
+    );
+
+    expect(screen.getByLabelText('Widget data as of not synchronized')).not.toHaveAttribute(
+      'dateTime',
+    );
+  });
+
+  it('keeps its previous as-of time while the widget data refreshes', () => {
+    const firstSync = new Date('2026-09-05T12:34:56Z').getTime();
+    const secondSync = new Date('2026-09-05T12:35:56Z').getTime();
+    const { rerender } = render(
+      <LiveDashboardAsOfContext.Provider value={{ asOf: firstSync }}>
+        <BaseWidget {...defaultProps}>
+          <div>Widget Content</div>
+        </BaseWidget>
+      </LiveDashboardAsOfContext.Provider>,
+    );
+
+    rerender(
+      <LiveDashboardAsOfContext.Provider value={{ asOf: secondSync }}>
+        <BaseWidget {...defaultProps} isLoading>
+          <div>Loading</div>
+        </BaseWidget>
+      </LiveDashboardAsOfContext.Provider>,
+    );
+
+    expect(screen.getByLabelText('Widget data as of 2026-09-05T12:34:56.000Z')).toBeInTheDocument();
+
+    rerender(
+      <LiveDashboardAsOfContext.Provider value={{ asOf: secondSync }}>
+        <BaseWidget {...defaultProps}>
+          <div>Widget Content</div>
+        </BaseWidget>
+      </LiveDashboardAsOfContext.Provider>,
+    );
+
+    expect(screen.getByLabelText('Widget data as of 2026-09-05T12:35:56.000Z')).toBeInTheDocument();
+  });
+
   it('should show "No issues detected" when isEmpty is true', () => {
     render(
       <BaseWidget {...defaultProps} isEmpty={true}>
@@ -59,7 +119,7 @@ describe('BaseWidget', () => {
       </BaseWidget>,
     );
 
-    const removeButton = screen.getByLabelText(/remove widget/i);
+    const removeButton = screen.getByRole('button', { name: 'Remove Test Widget widget' });
     await user.click(removeButton);
 
     expect(onRemove).toHaveBeenCalledTimes(1);
@@ -83,12 +143,15 @@ describe('BaseWidget', () => {
       </BaseWidget>,
     );
 
-    const scopeButton = screen.getByText(/most recent/i);
+    const scopeButton = screen.getByRole('button', {
+      name: 'Widget scope for Test Widget: Most Recent',
+    });
+    expect(scopeButton).toHaveAttribute('aria-expanded', 'false');
     await user.click(scopeButton);
 
     // Menu should be open with all options
-    expect(screen.getByRole('menu')).toBeInTheDocument();
-    const menu = screen.getByRole('menu');
+    expect(scopeButton).toHaveAttribute('aria-expanded', 'true');
+    const menu = screen.getByRole('menu', { name: 'Scope options for Test Widget' });
     expect(within(menu).getByText('Most Recent')).toBeInTheDocument();
     expect(within(menu).getByText('Last 3')).toBeInTheDocument();
     expect(within(menu).getByText('Last 5')).toBeInTheDocument();
