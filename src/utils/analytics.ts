@@ -5,6 +5,12 @@
 
 import ReactGA from 'react-ga4';
 
+import {
+  isValidFieldWebVitalSample,
+  toPrivacySafeRouteTemplate,
+  type FieldWebVitalSample,
+} from '../reportWebVitals';
+
 import { getBuildInfo, getBuildInfoAsync } from './cacheBusting';
 import { hasAnalyticsConsent } from './consentManager';
 import { getEnvVar } from './envUtils';
@@ -353,6 +359,42 @@ export const trackEvent = (
     } catch (error) {
       logger.error('Failed to track event', error as Error);
     }
+  }
+};
+
+/**
+ * Send a field Web Vital using the fixed, non-identifying telemetry schema.
+ * Canonicalize the route again at this exported boundary. This keeps a future
+ * caller from bypassing the reporter and sending report or player identifiers.
+ */
+export const trackFieldWebVital = (sample: FieldWebVitalSample): void => {
+  if (
+    typeof window !== 'undefined' &&
+    (window as Window & { __PLAYWRIGHT_TEST_MODE__?: boolean }).__PLAYWRIGHT_TEST_MODE__
+  ) {
+    return;
+  }
+
+  if (!isValidFieldWebVitalSample(sample)) return;
+
+  if (!hasUserConsented()) return;
+
+  const measurementId = getEnvVar('VITE_GA_MEASUREMENT_ID');
+  if (!measurementId || typeof measurementId !== 'string') return;
+
+  try {
+    // The analytics service calculates p75 from these raw values, partitioned by
+    // the privacy-safe route, device, and network tiers. Do not buffer samples in-browser.
+    ReactGA.event('web_vital', {
+      metric_name: sample.name,
+      metric_value: sample.value,
+      metric_rating: sample.rating,
+      route_template: toPrivacySafeRouteTemplate(sample.route),
+      device_tier: sample.deviceTier,
+      network_tier: sample.networkTier,
+    });
+  } catch (error) {
+    logger.error('Failed to track field Web Vital', error as Error);
   }
 };
 

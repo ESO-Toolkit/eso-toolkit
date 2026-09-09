@@ -9,11 +9,17 @@ import App from './App';
 import './index.css';
 import './styles/view-transitions.css';
 import { prefetchLatestReportsForUrl } from './features/latest_reports/latestReportsRequest';
+import { startFieldWebVitalsCollection } from './reportWebVitals';
 import store, { type RootState } from './store/storeWithHistory';
 import { setPerfTier } from './store/ui/uiSlice';
+import { trackFieldWebVital } from './utils/analytics';
 import { heuristicPerfTier } from './utils/detectPerfTier';
 import { getRoutePathname } from './utils/envUtils';
 import { scheduleItemDataWarmupForPath } from './utils/itemDataWarmup';
+
+// Register consent-gated field telemetry during bootstrap. The reporter copies
+// only its fixed privacy-safe schema into the transport.
+startFieldWebVitalsCollection({ onSample: trackFieldWebVital });
 
 // Kick the Latest Reports list request before React mounts. The route is a
 // lazy chunk behind the whole provider tree, so left to itself the query only
