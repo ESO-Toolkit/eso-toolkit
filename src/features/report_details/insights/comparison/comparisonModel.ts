@@ -230,6 +230,7 @@ const validateMetric = (name: string, metric: unknown): string | null => {
 
 const validateMetrics = (metrics: unknown): string | null => {
   if (!isRecord(metrics)) return 'Analysis metrics are missing.';
+  if (Object.keys(metrics).length === 0) return 'Analysis metrics are empty.';
   for (const [name, metric] of Object.entries(metrics)) {
     if (!isNonEmptyString(name)) return 'Analysis metric identity is invalid.';
     const invalidMetricReason = validateMetric(name, metric);
