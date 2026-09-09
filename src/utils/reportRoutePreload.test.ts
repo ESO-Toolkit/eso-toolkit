@@ -21,6 +21,46 @@ const flush = async (): Promise<void> => {
 };
 
 describe('preloadReportFightDetails', () => {
+  it.each([
+    ['Save-Data', { saveData: true }],
+    ['metered connections', { metered: true }],
+    ['slow effective connections', { effectiveType: '3g' }],
+  ])('suppresses heavy route prefetch on %s', (_label, connection) => {
+    const preloadReportFightDetails = loadFresh();
+    const importer = jest.fn().mockResolvedValue(undefined);
+
+    preloadReportFightDetails(importer, connection);
+
+    expect(importer).not.toHaveBeenCalled();
+  });
+
+  it('allows prefetch on a fast connection', () => {
+    const preloadReportFightDetails = loadFresh();
+    const importer = jest.fn().mockResolvedValue(undefined);
+
+    preloadReportFightDetails(importer, { effectiveType: '4g', saveData: false });
+
+    expect(importer).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([
+    ['pointer', 'onPointerEnter'],
+    ['keyboard focus', 'onFocus'],
+    ['touch', 'onTouchStart'],
+  ] as const)('warms the route on %s intent', (_label, eventName) => {
+    let createIntentHandlers!: typeof import('./reportRoutePreload').createReportFightDetailsIntentHandlers;
+    const importer = jest.fn().mockResolvedValue(undefined);
+    jest.isolateModules(() => {
+      createIntentHandlers = (
+        require('./reportRoutePreload') as typeof import('./reportRoutePreload')
+      ).createReportFightDetailsIntentHandlers;
+    });
+
+    createIntentHandlers(importer)[eventName]();
+
+    expect(importer).toHaveBeenCalledTimes(1);
+  });
+
   it('fires the importer once and skips it once already loaded', async () => {
     const preloadReportFightDetails = loadFresh();
     const importer = jest.fn().mockResolvedValue(undefined);

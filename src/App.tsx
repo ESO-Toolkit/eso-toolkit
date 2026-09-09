@@ -93,9 +93,9 @@ const LiveLog = React.lazy(() =>
 );
 // ReportFightDetails is lazy like every other route (it is the heaviest feature
 // in the app and must not sit in the entry graph). Its LCP is protected instead
-// by the module-scope `preloadReportFightDetails()` above and an idle warm from
-// the report list — both go through the same importer as this route, so the
-// preload and the route resolve the identical chunk.
+// by the module-scope `preloadReportFightDetails()` above and intent-based
+// warming from the report list — both go through the same importer as this
+// route, so the preload and the route resolve the identical chunk.
 const ReportFightDetails = React.lazy(() =>
   importReportFightDetails().then((module) => ({ default: module.ReportFightDetails })),
 );
