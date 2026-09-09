@@ -11,7 +11,7 @@ const context: ProgressionContext = {
   encounterVersion: '1',
   difficulty: 'veteran',
   role: 'damage-dealer',
-  className: 'arcanist',
+  classId: 'arcanist',
   buildBracket: 'cp160',
 };
 
@@ -121,7 +121,6 @@ describe('buildPullProgression', () => {
       { ...context, encounterVersion: '2' },
       { ...context, difficulty: 'normal' },
       { ...context, role: 'healer' },
-      { ...context, className: 'templar' },
       { ...context, buildBracket: 'no-cp' },
     ];
 
@@ -141,6 +140,24 @@ describe('buildPullProgression', () => {
         conflictingPullIds: ['conflicting'],
       });
     }
+  });
+
+  it('isolates a pull with a mismatched classId from the comparison cohort', () => {
+    const result = buildPullProgression({
+      context,
+      pulls: [
+        pull('matching', 10, 100),
+        pull('different-class', 20, 200, { context: { ...context, classId: 'templar' } }),
+      ],
+      metrics: [],
+    });
+
+    expect(result).toEqual({
+      status: 'unavailable',
+      reason: 'mixed-context',
+      context,
+      conflictingPullIds: ['different-class'],
+    });
   });
 
   it('keeps missing, null, and non-finite metric values unknown rather than coercing them to zero', () => {
@@ -493,6 +510,7 @@ describe('buildPullProgression', () => {
     });
 
     mutableContext.partition = 'pts-pc-na';
+    mutableContext.classId = 'templar';
     mutableEvidence.note = 'rewritten';
     mutableMetrics.damage = 900;
     mutablePulls[0].id = 'rewritten-pull';
@@ -502,7 +520,8 @@ describe('buildPullProgression', () => {
       throw new Error('expected a ready progression');
     }
 
-    expect(result.context.partition).toBe('live-pc-na');
+    expect(result.context).toEqual(context);
+    expect(JSON.parse(JSON.stringify(result.context))).toEqual(context);
     expect(result.orderedPullIds).toEqual(['pull-a']);
     expect(result.metrics[0].id).toBe('damage');
     expect(result.metrics[0].points[0].value).toBe(100);

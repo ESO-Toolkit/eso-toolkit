@@ -12,8 +12,8 @@ export interface ProgressionContext {
   readonly difficulty: string;
   /** Character role is part of the comparison cohort. */
   readonly role: string;
-  /** Class is part of the comparison cohort. */
-  readonly className: string;
+  /** Class ID is part of the comparison cohort. */
+  readonly classId: string;
   /** Build bracket prevents cross-build comparisons. */
   readonly buildBracket: string;
 }
@@ -121,7 +121,7 @@ const contextFields = [
   'encounterVersion',
   'difficulty',
   'role',
-  'className',
+  'classId',
   'buildBracket',
 ] as const;
 
@@ -150,7 +150,7 @@ const contextsMatch = (left: ProgressionContext, right: ProgressionContext): boo
   left.encounterVersion === right.encounterVersion &&
   left.difficulty === right.difficulty &&
   left.role === right.role &&
-  left.className === right.className &&
+  left.classId === right.classId &&
   left.buildBracket === right.buildBracket;
 
 const canonicalizeZero = (value: number): number => (Object.is(value, -0) ? 0 : value);
