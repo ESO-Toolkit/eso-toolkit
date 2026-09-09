@@ -323,6 +323,13 @@ export const ReportFightHeader: React.FC = () => {
 
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
+  const focusVisibleSx = {
+    '&:focus-visible': {
+      outline: `3px solid ${theme.palette.primary.main}`,
+      outlineOffset: '2px',
+    },
+  };
+
   // Shared pill-style base for action buttons
   const pillBase = {
     textTransform: 'none' as const,
@@ -330,13 +337,14 @@ export const ReportFightHeader: React.FC = () => {
     fontWeight: 500,
     fontSize: '0.8125rem',
     padding: isMobile ? '0px' : '6px 14px',
-    minWidth: isMobile ? '36px !important' : 'auto',
-    minHeight: isMobile ? '36px !important' : 'auto',
-    width: isMobile ? 36 : 'auto',
-    height: isMobile ? '36px !important' : 'auto',
+    minWidth: isMobile ? '44px !important' : 'auto',
+    minHeight: '44px !important',
+    width: isMobile ? 44 : 'auto',
+    height: isMobile ? '44px !important' : 'auto',
     backdropFilter: 'blur(8px)',
     WebkitBackdropFilter: 'blur(8px)',
     transition: 'all 0.2s ease',
+    ...focusVisibleSx,
   };
 
   return (
@@ -363,12 +371,13 @@ export const ReportFightHeader: React.FC = () => {
               aria-label="Back to Fight List"
               size="small"
               sx={{
-                width: 36,
-                height: 36,
-                minWidth: '36px !important',
-                minHeight: '36px !important',
+                width: 44,
+                height: 44,
+                minWidth: '44px !important',
+                minHeight: '44px !important',
                 padding: '6px',
                 color: isDarkMode ? 'rgba(226, 232, 240, 0.7)' : 'rgba(51, 65, 85, 0.7)',
+                ...focusVisibleSx,
                 '&:hover': {
                   color: isDarkMode ? '#e2e8f0' : '#1e293b',
                   backgroundColor: isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
@@ -382,6 +391,7 @@ export const ReportFightHeader: React.FC = () => {
               onClick={() => navigate(`/report/${reportId}`)}
               startIcon={<ArrowBackIcon sx={{ fontSize: 16 }} />}
               size="small"
+              aria-label="Back to Fight List"
               sx={{
                 ...pillBase,
                 color: isDarkMode ? 'rgba(226, 232, 240, 0.7)' : 'rgba(51, 65, 85, 0.7)',
