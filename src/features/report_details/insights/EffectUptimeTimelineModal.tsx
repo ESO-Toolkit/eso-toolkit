@@ -9,6 +9,7 @@ import {
   Stack,
   Tooltip,
   Typography,
+  useMediaQuery,
   useTheme,
 } from '@mui/material';
 import React from 'react';
@@ -37,6 +38,18 @@ const TIMELINE_COLORS = [
   '#22c55e',
   '#e11d48',
 ] as const;
+
+const screenReaderOnlySx = {
+  position: 'absolute',
+  width: 1,
+  height: 1,
+  p: 0,
+  m: -1,
+  overflow: 'hidden',
+  clip: 'rect(0 0 0 0)',
+  whiteSpace: 'nowrap',
+  border: 0,
+} as const;
 
 export type UptimeTimelineCategory = 'buff' | 'debuff' | 'statusEffect';
 
@@ -69,6 +82,9 @@ export const EffectUptimeTimelineModal: React.FC<EffectUptimeTimelineModalProps>
 }) => {
   const theme = useTheme();
   const { theme: echartsTheme } = useEChartsTheme();
+  const prefersReducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)', {
+    noSsr: true,
+  });
 
   const series = React.useMemo<UptimeTimelineSeries[]>(() => {
     if (prefetchedSeries) {
@@ -106,6 +122,12 @@ export const EffectUptimeTimelineModal: React.FC<EffectUptimeTimelineModalProps>
     return `${seconds.toFixed(1)}s`;
   }, []);
 
+  const chartDescription = React.useMemo(() => {
+    const effectNames = series.map((dataset) => dataset.label).join(', ');
+    const duration = formatSeconds(msToSeconds(fightDurationMs));
+    return `Effect activity over ${duration} of fight time. Effects shown: ${effectNames}.`;
+  }, [fightDurationMs, formatSeconds, series]);
+
   const chartOption = React.useMemo(() => {
     const duration = msToSeconds(fightDurationMs);
 
@@ -138,6 +160,7 @@ export const EffectUptimeTimelineModal: React.FC<EffectUptimeTimelineModalProps>
     });
 
     return {
+      animation: !prefersReducedMotion,
       color: TIMELINE_COLORS.slice(0, series.length),
       xAxis: {
         type: 'value',
@@ -198,7 +221,7 @@ export const EffectUptimeTimelineModal: React.FC<EffectUptimeTimelineModalProps>
       },
       series: echartsSeries,
     };
-  }, [series, fightDurationMs, formatSeconds, echartsTheme]);
+  }, [series, fightDurationMs, formatSeconds, echartsTheme, prefersReducedMotion]);
 
   const categoryBadge = React.useMemo(() => {
     switch (category) {
@@ -215,6 +238,7 @@ export const EffectUptimeTimelineModal: React.FC<EffectUptimeTimelineModalProps>
   const hasData = series.length > 0;
   const titleId = 'effect-uptime-timeline-title';
   const subtitleId = subtitle ? 'effect-uptime-timeline-description' : undefined;
+  const chartDescriptionId = 'effect-uptime-timeline-chart-description';
   return (
     <Dialog
       open={open}
@@ -343,7 +367,14 @@ export const EffectUptimeTimelineModal: React.FC<EffectUptimeTimelineModalProps>
                 );
               })}
             </Box>
-            <Box role="img" aria-label="Effect uptime timeline chart">
+            <Box
+              role="img"
+              aria-label="Effect uptime timeline chart"
+              aria-describedby={chartDescriptionId}
+            >
+              <Typography id={chartDescriptionId} component="span" sx={screenReaderOnlySx}>
+                {chartDescription}
+              </Typography>
               <Box sx={{ width: '100%', minWidth: 0, minHeight: { xs: 240, sm: 300, md: 380 } }}>
                 <EChart option={chartOption} height={380} group="fightReport" />
               </Box>

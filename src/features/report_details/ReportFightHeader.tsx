@@ -122,7 +122,10 @@ export const useFightNavigation = (): {
     if (!reportData?.fights) return [];
 
     return cleanArray(reportData.fights.filter(Boolean))
-      .filter((fight) => fight.startTime && fight.endTime && fight.endTime > fight.startTime)
+      .filter(
+        (fight) =>
+          fight.startTime != null && fight.endTime != null && fight.endTime > fight.startTime,
+      )
       .sort((a, b) => a.startTime - b.startTime);
   }, [reportData?.fights]);
 

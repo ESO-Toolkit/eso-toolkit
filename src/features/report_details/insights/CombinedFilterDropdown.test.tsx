@@ -34,7 +34,7 @@ const mockUseSelectedFight = useSelectedFight as jest.MockedFunction<typeof useS
 const mockUseAppDispatch = useAppDispatch as jest.MockedFunction<typeof useAppDispatch>;
 
 describe('CombinedFilterDropdown', () => {
-  it('provides named, keyboard-focusable filter options with selected state', () => {
+  it('provides native checkbox and radio controls with named selected states', () => {
     const dispatch = jest.fn();
     mockUseAppDispatch.mockReturnValue(dispatch);
     mockUseSelector.mockReturnValue([] as never);
@@ -66,18 +66,15 @@ describe('CombinedFilterDropdown', () => {
 
     const dialog = screen.getByRole('dialog', { name: 'Fight filters' });
     expect(dialog).toBeInTheDocument();
-    expect(screen.getByRole('listbox', { name: 'Target filter' })).toBeInTheDocument();
-    expect(screen.getByRole('listbox', { name: 'Player filter' })).toBeInTheDocument();
-    expect(screen.getByRole('option', { name: 'All Bosses' })).toHaveAttribute(
-      'aria-selected',
-      'true',
-    );
-    expect(screen.getByRole('option', { name: 'Aria' })).toHaveAttribute('aria-selected', 'false');
+    expect(screen.getByRole('group', { name: 'Target filter' })).toBeInTheDocument();
+    expect(screen.getByRole('radiogroup', { name: 'Player filter' })).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: 'All Bosses' })).toBeChecked();
+    expect(screen.getByRole('radio', { name: 'Aria' })).not.toBeChecked();
 
-    const playerOption = screen.getByRole('option', { name: 'Aria' });
-    playerOption.focus();
-    expect(playerOption).toHaveFocus();
-    fireEvent.click(playerOption);
+    const playerControl = screen.getByRole('radio', { name: 'Aria' });
+    playerControl.focus();
+    expect(playerControl).toHaveFocus();
+    fireEvent.click(playerControl);
     expect(dispatch).toHaveBeenCalled();
   });
 });

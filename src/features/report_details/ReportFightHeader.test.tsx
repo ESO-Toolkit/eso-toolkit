@@ -7,7 +7,7 @@ import '@testing-library/jest-dom';
 import { useCurrentFight, useReportData } from '@/hooks';
 import { useSelectedReportAndFight } from '@/ReportFightContext';
 
-import { ReportFightHeader } from './ReportFightHeader';
+import { ReportFightHeader, useFightNavigation } from './ReportFightHeader';
 
 jest.mock('@mui/material', () => ({
   ...jest.requireActual('@mui/material'),
@@ -87,6 +87,15 @@ function getHeaderControls() {
   ];
 }
 
+function NavigationProbe() {
+  const { navigationData } = useFightNavigation();
+  return (
+    <output data-testid="navigation-data">
+      {`${navigationData.currentIndex}:${navigationData.totalCount}`}
+    </output>
+  );
+}
+
 describe('ReportFightHeader accessibility', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -129,5 +138,28 @@ describe('ReportFightHeader accessibility', () => {
           rule.includes(':focus-visible') && rule.includes('outline') && rule.includes('3px'),
       ),
     ).toBe(true);
+  });
+
+  it('includes fights that begin at timestamp zero in navigation', () => {
+    const openingFight = {
+      id: 1,
+      name: 'Opening fight',
+      startTime: 0,
+      endTime: 1_000,
+      difficulty: null,
+      bossPercentage: null,
+      kill: true,
+    };
+
+    mockUseSelectedReportAndFight.mockReturnValue({ reportId: 'REPORT', fightId: '7' });
+    mockUseReportData.mockReturnValue({ reportData: { fights: [openingFight, fight] } } as never);
+
+    render(
+      <MemoryRouter>
+        <NavigationProbe />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByTestId('navigation-data')).toHaveTextContent('1:2');
   });
 });

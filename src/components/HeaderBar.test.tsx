@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import '@testing-library/jest-dom';
@@ -98,5 +98,33 @@ describe('HeaderBar', () => {
     expect(menuButton).toHaveAttribute('aria-haspopup', 'dialog');
     expect(menuButton).toHaveAttribute('aria-expanded', 'false');
     expect(menuButton).toHaveAttribute('aria-controls', 'mobile-nav-menu');
+  });
+
+  it('opens profile settings as a named dialog rather than a menu', () => {
+    mockUseAuth.mockReturnValue({
+      accessToken: 'token',
+      isLoggedIn: true,
+      isBanned: false,
+      banReason: null,
+      currentUser: { id: 1, name: 'Aria' },
+      userLoading: false,
+      userError: null,
+      setAccessToken: jest.fn(),
+      refetchUser: jest.fn(),
+      rebindAccessToken: jest.fn(),
+    } as ReturnType<typeof useAuth>);
+
+    render(
+      <MemoryRouter>
+        <HeaderBar />
+      </MemoryRouter>,
+    );
+
+    const profileControl = screen.getByRole('button', { name: 'Profile: Aria' });
+    expect(profileControl).toHaveAttribute('aria-haspopup', 'dialog');
+
+    fireEvent.click(profileControl);
+
+    expect(screen.getByRole('dialog', { name: 'Profile settings' })).toBeInTheDocument();
   });
 });
