@@ -180,7 +180,7 @@ export const fetchHostileBuffEvents = createAsyncThunk<
       const entry = state.entries[key];
 
       const lastFetchedTimestamp = entry?.cacheMetadata.lastFetchedTimestamp;
-      const isCached = Boolean(entry?.events.length);
+      const isCached = entry?.status === 'succeeded';
       // A partially-failed fetch (some 30s windows errored) is missing events;
       // don't treat it as a complete cache hit, so the next access re-fetches
       // and the gaps can fill in instead of silently undercounting uptime.
