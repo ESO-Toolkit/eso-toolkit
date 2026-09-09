@@ -165,7 +165,10 @@ export interface SharedFindingTimeline {
   anchor: 'earliest-recorded-finding-event';
 }
 
-export interface PrivacySafeFindingProvenance extends Omit<FindingProvenance, 'observedAt'> {
+export interface PrivacySafeFindingProvenance extends Omit<
+  FindingProvenance,
+  'observedAt' | 'sourceReference'
+> {
   /** Milliseconds after the private timeline anchor. */
   observedAfterAnchorMs: number;
 }
@@ -1013,14 +1016,6 @@ export const sharePinnedFinding = ((
         detached.provenance.observedAt,
         timelineContext,
       ),
-      ...(detached.provenance.sourceReference
-        ? {
-            sourceReference: redactPrivacySafeText(
-              detached.provenance.sourceReference,
-              identityIdentifiers,
-            ),
-          }
-        : {}),
     },
     recommendedAction: {
       action: redactPrivacySafeText(detached.recommendedAction.action, identityIdentifiers),
