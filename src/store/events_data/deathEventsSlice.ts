@@ -73,6 +73,19 @@ const initialState: DeathEventsState = {
   accessOrder: [],
 };
 
+const validateFightTiming = (fight: FightFragment): void => {
+  const isValidTimestamp = (value: number): boolean =>
+    Number.isFinite(value) && value >= 0 && !Object.is(value, -0);
+
+  if (
+    !isValidTimestamp(fight.startTime) ||
+    !isValidTimestamp(fight.endTime) ||
+    fight.endTime <= fight.startTime
+  ) {
+    throw new Error('Invalid death event interval');
+  }
+};
+
 const hasFreshCache = (entry: DeathEventsEntry | undefined): boolean => {
   const lastFetchedTimestamp = entry?.cacheMetadata.lastFetchedTimestamp;
   return (
@@ -88,61 +101,66 @@ export const fetchDeathEvents = createAsyncThunk<
   { state: LocalRootState; rejectValue: string }
 >(
   'deathEvents/fetchDeathEvents',
-  async ({ reportCode, fight, client }, { signal }) => {
+  async ({ reportCode, fight, client }, { rejectWithValue, signal }) => {
     // Fetch both friendly and enemy death events
     const hostilityTypes = [HostilityType.Friendlies, HostilityType.Enemies];
     const eventStreams: LogEvent[][] = [];
+    let pageCount = 0;
+    let streamEventCount = 0;
 
-    for (const hostilityType of hostilityTypes) {
-      const eventPages: LogEvent[][] = [];
-      let totalEvents = 0;
-      let pageCount = 0;
-      let nextPageTimestamp: number | null = null;
+    try {
+      validateFightTiming(fight);
+      for (const hostilityType of hostilityTypes) {
+        const eventPages: LogEvent[][] = [];
+        let nextPageTimestamp: number | null = null;
 
-      do {
-        signal.throwIfAborted();
-        if (pageCount >= EVENT_MAX_PAGES_PER_STREAM) {
-          throw new Error(`Death event pagination exceeded ${EVENT_MAX_PAGES_PER_STREAM} pages`);
-        }
-
-        const requestedStartTime = nextPageTimestamp ?? fight.startTime;
-        const response: GetDeathEventsQuery = await client.query({
-          query: GetDeathEventsDocument,
-          fetchPolicy: 'no-cache',
-          context: { fetchOptions: { signal } },
-          variables: {
-            code: reportCode,
-            fightIds: [Number(fight.id)],
-            startTime: requestedStartTime,
-            endTime: fight.endTime,
-            hostilityType: hostilityType,
-            limit: EVENT_PAGE_LIMIT,
-          },
-        });
-        pageCount += 1;
-
-        const page = response.reportData?.report?.events;
-        assertCompleteEventPage(page, 'Death');
-        if (page.data.length) {
-          totalEvents += page.data.length;
-          if (totalEvents > EVENT_MAX_EVENTS_PER_STREAM) {
-            throw new Error(
-              `Death event pagination exceeded ${EVENT_MAX_EVENTS_PER_STREAM} events`,
-            );
+        do {
+          signal.throwIfAborted();
+          if (pageCount >= EVENT_MAX_PAGES_PER_STREAM) {
+            throw new Error(`Death event pagination exceeded ${EVENT_MAX_PAGES_PER_STREAM} pages`);
           }
-          eventPages.push(page.data);
-        }
-        const followingTimestamp = page.nextPageTimestamp ?? null;
-        if (
-          followingTimestamp != null &&
-          (!Number.isFinite(followingTimestamp) || followingTimestamp <= requestedStartTime)
-        ) {
-          throw new Error('Death event pagination cursor did not advance');
-        }
-        nextPageTimestamp = followingTimestamp;
-      } while (nextPageTimestamp != null);
+          const requestedStartTime = nextPageTimestamp ?? fight.startTime;
+          const response: GetDeathEventsQuery = await client.query({
+            query: GetDeathEventsDocument,
+            fetchPolicy: 'no-cache',
+            context: { fetchOptions: { signal } },
+            variables: {
+              code: reportCode,
+              fightIds: [Number(fight.id)],
+              startTime: requestedStartTime,
+              endTime: fight.endTime,
+              hostilityType: hostilityType,
+              limit: EVENT_PAGE_LIMIT,
+            },
+          });
+          pageCount += 1;
 
-      eventStreams.push(deduplicateEventPages(eventPages));
+          const page = response.reportData?.report?.events;
+          assertCompleteEventPage(page, 'Death');
+          if (page.data.length) {
+            streamEventCount += page.data.length;
+            if (streamEventCount > EVENT_MAX_EVENTS_PER_STREAM) {
+              throw new Error(
+                `Death event pagination exceeded ${EVENT_MAX_EVENTS_PER_STREAM} events`,
+              );
+            }
+            eventPages.push(page.data);
+          }
+          const followingTimestamp = page.nextPageTimestamp ?? null;
+          if (
+            followingTimestamp != null &&
+            (!Number.isFinite(followingTimestamp) || followingTimestamp <= requestedStartTime)
+          ) {
+            throw new Error('Death event pagination cursor did not advance');
+          }
+          nextPageTimestamp = followingTimestamp;
+        } while (nextPageTimestamp != null);
+        eventStreams.push(deduplicateEventPages(eventPages));
+      }
+    } catch (error) {
+      return rejectWithValue(
+        error instanceof Error ? error.message : 'Failed to fetch death events',
+      );
     }
 
     // Filter to only death events
@@ -274,7 +292,7 @@ const deathEventsSlice = createSlice({
           return;
         }
         entry.status = 'failed';
-        entry.error = action.error.message || 'Failed to fetch death events';
+        entry.error = action.payload ?? action.error.message ?? 'Failed to fetch death events';
         entry.currentRequest = null;
         touchAccessOrder(state, key);
       });

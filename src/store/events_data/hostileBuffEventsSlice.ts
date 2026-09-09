@@ -40,7 +40,7 @@ interface IntervalFetchResult {
 
 interface PaginationBudget {
   events: number;
-  continuationPages: number;
+  pages: number;
 }
 
 type HostileBuffEventsRequest = ReturnType<typeof createCurrentRequest> | null;
@@ -98,12 +98,15 @@ export const createHostileBuffTimeIntervals = (
     !Number.isFinite(startTime) ||
     !Number.isFinite(endTime) ||
     !Number.isFinite(intervalSize) ||
+    startTime < 0 ||
+    endTime < 0 ||
+    Object.is(startTime, -0) ||
+    Object.is(endTime, -0) ||
     intervalSize <= 0 ||
-    endTime < startTime
+    endTime <= startTime
   ) {
     throw new Error('Invalid hostile buff event interval');
   }
-
   const intervals: Array<{ startTime: number; endTime: number }> = [];
   let currentStart = startTime;
 
@@ -136,15 +139,10 @@ const fetchEventsForInterval = async (
 
   do {
     signal.throwIfAborted();
-    if (nextPageTimestamp != null) {
-      if (budget.continuationPages >= EVENT_MAX_PAGES_PER_STREAM) {
-        throw new Error(
-          `Hostile buff event pagination exceeded ${EVENT_MAX_PAGES_PER_STREAM} continuation pages`,
-        );
-      }
-      budget.continuationPages += 1;
+    if (budget.pages >= EVENT_MAX_PAGES_PER_STREAM) {
+      throw new Error(`Hostile buff event pagination exceeded ${EVENT_MAX_PAGES_PER_STREAM} pages`);
     }
-
+    budget.pages += 1;
     const requestedStartTime = nextPageTimestamp ?? intervalStart;
     const response: GetBuffEventsQuery = await client.query({
       query: GetBuffEventsDocument,
@@ -196,19 +194,30 @@ export const fetchHostileBuffEvents = createAsyncThunk<
     try {
       intervals = createHostileBuffTimeIntervals(fight.startTime, fight.endTime, intervalSize);
     } catch (error) {
-      return rejectWithValue(error instanceof Error ? error.message : 'Invalid event interval');
+      return rejectWithValue(
+        error instanceof Error ? error.message : 'Invalid hostile buff event interval',
+      );
     }
-
-    const intervalResults = new Array<IntervalFetchResult>(intervals.length);
-    const paginationBudget: PaginationBudget = { events: 0, continuationPages: 0 };
+    const paginationBudget: PaginationBudget = { events: 0, pages: 0 };
+    const intervalResults: IntervalFetchResult[] = new Array(intervals.length);
+    const intervalAbortController = new AbortController();
+    const abortIntervals = (): void => intervalAbortController.abort(signal.reason);
+    if (signal.aborted) {
+      abortIntervals();
+    } else {
+      signal.addEventListener('abort', abortIntervals, { once: true });
+    }
     let nextIntervalIndex = 0;
-    let fatalError: unknown;
+    let fetchFailure: unknown;
+
     const fetchNextInterval = async (): Promise<void> => {
-      while (fatalError == null && nextIntervalIndex < intervals.length) {
-        const index = nextIntervalIndex;
+      while (fetchFailure === undefined && nextIntervalIndex < intervals.length) {
+        const intervalIndex = nextIntervalIndex;
         nextIntervalIndex += 1;
-        const interval = intervals[index];
-        if (!interval) continue;
+        const interval = intervals[intervalIndex];
+        if (!interval) {
+          continue;
+        }
 
         try {
           const events = await fetchEventsForInterval(
@@ -217,36 +226,39 @@ export const fetchHostileBuffEvents = createAsyncThunk<
             fight,
             interval.startTime,
             interval.endTime,
-            signal,
+            intervalAbortController.signal,
             paginationBudget,
           );
-
-          intervalResults[index] = {
+          intervalResults[intervalIndex] = {
             startTime: interval.startTime,
             endTime: interval.endTime,
             events,
           };
         } catch (error) {
-          fatalError ??= error;
+          if (fetchFailure === undefined) {
+            fetchFailure = error ?? new Error('Failed to fetch hostile buff events');
+            intervalAbortController.abort(fetchFailure);
+          }
           return;
         }
       }
     };
 
-    await Promise.all(
-      Array.from(
-        { length: Math.min(EVENT_QUERY_MAX_CONCURRENCY, intervals.length) },
-        fetchNextInterval,
-      ),
-    );
+    try {
+      await Promise.all(
+        Array.from({ length: Math.min(EVENT_QUERY_MAX_CONCURRENCY, intervals.length) }, () =>
+          fetchNextInterval(),
+        ),
+      );
+    } finally {
+      signal.removeEventListener('abort', abortIntervals);
+    }
 
-    if (fatalError != null) {
-      logger.error('Failed to fetch complete hostile buff event data', fatalError as Error, {
-        reportCode,
-        fightId: fight.id,
-      });
+    if (fetchFailure !== undefined) {
       return rejectWithValue(
-        fatalError instanceof Error ? fatalError.message : 'Failed to fetch hostile buff events',
+        fetchFailure instanceof Error
+          ? fetchFailure.message
+          : 'Failed to fetch hostile buff events',
       );
     }
 
@@ -263,12 +275,13 @@ export const fetchHostileBuffEvents = createAsyncThunk<
       const entry = state.entries[key];
 
       const lastFetchedTimestamp = entry?.cacheMetadata.lastFetchedTimestamp;
+      const isCached = entry?.status === 'succeeded';
       const isComplete = (entry?.cacheMetadata.failedIntervals ?? 0) === 0;
       const isFresh =
         typeof lastFetchedTimestamp === 'number' &&
         Date.now() - lastFetchedTimestamp < DATA_FETCH_CACHE_TIMEOUT;
 
-      if (entry?.status === 'succeeded' && isComplete && isFresh) {
+      if (isCached && isComplete && isFresh) {
         return false; // Prevent thunk execution
       }
 

@@ -73,6 +73,19 @@ const initialState: HealingEventsState = {
   accessOrder: [],
 };
 
+const validateFightTiming = (fight: FightFragment): void => {
+  const isValidTimestamp = (value: number): boolean =>
+    Number.isFinite(value) && value >= 0 && !Object.is(value, -0);
+
+  if (
+    !isValidTimestamp(fight.startTime) ||
+    !isValidTimestamp(fight.endTime) ||
+    fight.endTime <= fight.startTime
+  ) {
+    throw new Error('Invalid healing event interval');
+  }
+};
+
 const hasFreshCache = (entry: HealingEventsEntry | undefined): boolean => {
   const lastFetchedTimestamp = entry?.cacheMetadata.lastFetchedTimestamp;
   return (
@@ -82,81 +95,81 @@ const hasFreshCache = (entry: HealingEventsEntry | undefined): boolean => {
   );
 };
 
-export const fetchHealingEvents = createAsyncThunk(
+export const fetchHealingEvents = createAsyncThunk<
+  HealEvent[],
+  { reportCode: string; fight: FightFragment; client: EsoLogsClient },
+  { state: LocalRootState; rejectValue: string }
+>(
   'healingEvents/fetchHealingEvents',
-  async (
-    {
-      reportCode,
-      fight,
-      client,
-    }: {
-      reportCode: string;
-      fight: FightFragment;
-      client: EsoLogsClient;
-    },
-    { signal },
-  ) => {
+  async ({ reportCode, fight, client }, { rejectWithValue, signal }) => {
     // Fetch both friendly and enemy healing events
     const hostilityTypes = [HostilityType.Friendlies, HostilityType.Enemies];
     const eventStreams: LogEvent[][] = [];
+    let pageCount = 0;
+    let streamEventCount = 0;
 
-    for (const hostilityType of hostilityTypes) {
-      const eventPages: LogEvent[][] = [];
-      let totalEvents = 0;
-      let pageCount = 0;
-      let nextPageTimestamp: number | null = null;
+    try {
+      validateFightTiming(fight);
+      for (const hostilityType of hostilityTypes) {
+        const eventPages: LogEvent[][] = [];
+        let nextPageTimestamp: number | null = null;
 
-      do {
-        signal.throwIfAborted();
-        if (pageCount >= EVENT_MAX_PAGES_PER_STREAM) {
-          throw new Error(`Healing event pagination exceeded ${EVENT_MAX_PAGES_PER_STREAM} pages`);
-        }
-
-        const requestedStartTime = nextPageTimestamp ?? fight.startTime;
-        const response: GetHealingEventsQuery = await client.query({
-          query: GetHealingEventsDocument,
-          fetchPolicy: 'no-cache',
-          context: { fetchOptions: { signal } },
-          variables: {
-            code: reportCode,
-            fightIds: [Number(fight.id)],
-            startTime: requestedStartTime,
-            endTime: fight.endTime,
-            hostilityType: hostilityType,
-            limit: EVENT_PAGE_LIMIT,
-          },
-        });
-        pageCount += 1;
-
-        const page = response.reportData?.report?.events;
-        assertCompleteEventPage(page, 'Healing');
-        if (page.data.length) {
-          totalEvents += page.data.length;
-          if (totalEvents > EVENT_MAX_EVENTS_PER_STREAM) {
+        do {
+          signal.throwIfAborted();
+          if (pageCount >= EVENT_MAX_PAGES_PER_STREAM) {
             throw new Error(
-              `Healing event pagination exceeded ${EVENT_MAX_EVENTS_PER_STREAM} events`,
+              `Healing event pagination exceeded ${EVENT_MAX_PAGES_PER_STREAM} pages`,
             );
           }
-          eventPages.push(page.data);
-          logger.info(`Fetched healing events page for ${hostilityType}`, {
-            reportCode,
-            fightId: Number(fight.id),
-            hostilityType,
-            eventsInPage: page.data.length,
-            totalEvents: eventPages.reduce((total, events) => total + events.length, 0),
+          const requestedStartTime = nextPageTimestamp ?? fight.startTime;
+          const response: GetHealingEventsQuery = await client.query({
+            query: GetHealingEventsDocument,
+            fetchPolicy: 'no-cache',
+            context: { fetchOptions: { signal } },
+            variables: {
+              code: reportCode,
+              fightIds: [Number(fight.id)],
+              startTime: requestedStartTime,
+              endTime: fight.endTime,
+              hostilityType: hostilityType,
+              limit: EVENT_PAGE_LIMIT,
+            },
           });
-        }
-        const followingTimestamp = page.nextPageTimestamp ?? null;
-        if (
-          followingTimestamp != null &&
-          (!Number.isFinite(followingTimestamp) || followingTimestamp <= requestedStartTime)
-        ) {
-          throw new Error('Healing event pagination cursor did not advance');
-        }
-        nextPageTimestamp = followingTimestamp;
-      } while (nextPageTimestamp != null);
+          pageCount += 1;
 
-      eventStreams.push(deduplicateEventPages(eventPages));
+          const page = response.reportData?.report?.events;
+          assertCompleteEventPage(page, 'Healing');
+          if (page.data.length) {
+            streamEventCount += page.data.length;
+            if (streamEventCount > EVENT_MAX_EVENTS_PER_STREAM) {
+              throw new Error(
+                `Healing event pagination exceeded ${EVENT_MAX_EVENTS_PER_STREAM} events`,
+              );
+            }
+            eventPages.push(page.data);
+            logger.info(`Fetched healing events page for ${hostilityType}`, {
+              reportCode,
+              fightId: Number(fight.id),
+              hostilityType,
+              eventsInPage: page.data.length,
+              totalEvents: streamEventCount,
+            });
+          }
+          const followingTimestamp = page.nextPageTimestamp ?? null;
+          if (
+            followingTimestamp != null &&
+            (!Number.isFinite(followingTimestamp) || followingTimestamp <= requestedStartTime)
+          ) {
+            throw new Error('Healing event pagination cursor did not advance');
+          }
+          nextPageTimestamp = followingTimestamp;
+        } while (nextPageTimestamp != null);
+        eventStreams.push(deduplicateEventPages(eventPages));
+      }
+    } catch (error) {
+      return rejectWithValue(
+        error instanceof Error ? error.message : 'Failed to fetch healing events',
+      );
     }
 
     const allEvents = eventStreams.flat() as HealEvent[];
@@ -308,7 +321,7 @@ const healingEventsSlice = createSlice({
           return;
         }
         entry.status = 'failed';
-        entry.error = action.error.message || 'Failed to fetch healing events';
+        entry.error = action.payload ?? action.error.message ?? 'Failed to fetch healing events';
         entry.currentRequest = null;
         touchAccessOrder(state, key);
       });

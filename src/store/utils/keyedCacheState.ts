@@ -55,19 +55,34 @@ export const resetCacheState = <TEntry>(state: KeyedCacheState<TEntry>): void =>
   state.accessOrder = [];
 };
 
+/**
+ * Evict complete least-recently-used entries only. Event ingestion owns its
+ * fail-closed per-stream array limits; truncating a retained cache entry here
+ * would incorrectly mark partial data as a successful result.
+ */
 export const trimCache = <TEntry>(state: KeyedCacheState<TEntry>, maxEntries: number): void => {
-  if (maxEntries <= 0) {
-    resetCacheState(state);
-    return;
-  }
+  const normalizedMaxEntries = Number.isFinite(maxEntries)
+    ? Math.max(0, Math.floor(maxEntries))
+    : 0;
 
-  while (state.accessOrder.length > maxEntries) {
-    const oldestKey = state.accessOrder.shift();
+  while (state.accessOrder.length > normalizedMaxEntries) {
+    const evictionIndex = state.accessOrder.findIndex((key) => {
+      const entry = state.entries[key];
+      return !(
+        typeof entry === 'object' &&
+        entry !== null &&
+        'currentRequest' in entry &&
+        entry.currentRequest != null
+      );
+    });
+    if (evictionIndex === -1) {
+      break;
+    }
+    const [oldestKey] = state.accessOrder.splice(evictionIndex, 1);
     if (!oldestKey) {
       break;
     }
-    // Don't call removeFromCache here - we're already managing accessOrder via shift()
-    // Just delete the entry from the entries map
+    // Don't call removeFromCache here - we're already managing accessOrder via splice().
     delete state.entries[oldestKey];
   }
 };

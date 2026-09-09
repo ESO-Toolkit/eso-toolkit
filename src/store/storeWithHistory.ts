@@ -144,12 +144,30 @@ export const uiTransform = createTransform<UIState, Partial<UIState>>(
 // Injected slices are folded in structurally — see InjectedState above.
 export type RootState = ReturnType<typeof staticRootReducer> & InjectedState;
 
+// Event arrays are transient analysis data. Keep this allowlist explicit so a
+// future persist change cannot silently write raw report events to storage.
+export const PERSISTED_ROOT_KEYS = [
+  'ui',
+  'loadout',
+  'dashboard',
+  'savedRosters',
+  'savedBuilds',
+] as const;
+
+// Defense in depth for a future whitelist regression: if the events key is
+// ever considered by redux-persist, omit it rather than serializing raw arrays.
+export const eventsTransform = createTransform<unknown, undefined>(
+  () => undefined,
+  () => undefined,
+  { whitelist: ['events'] },
+);
+
 // Persist config
-const persistConfig = {
+export const persistConfig = {
   key: 'root',
   storage,
-  transforms: [uiTransform], // Apply transform to exclude report-specific UI state
-  whitelist: ['ui', 'loadout', 'dashboard', 'savedRosters', 'savedBuilds'], // Persist essential data, loadout, saved rosters, and saved builds
+  transforms: [uiTransform, eventsTransform],
+  whitelist: [...PERSISTED_ROOT_KEYS],
 };
 
 const injectedReducers: Partial<Record<keyof InjectedState, Reducer>> = {};
