@@ -18,7 +18,7 @@ import {
 import type { ReportFightContextInput } from '../../../store/contextTypes';
 import { selectActorsById } from '../../../store/master_data/masterDataSelectors';
 import { KnownAbilities } from '../../../types/abilities';
-import { calculateActivePercentages } from '../../../utils/activePercentageUtils';
+import { calculateDamageStatisticsWithActivity } from '../../../utils/activePercentageUtils';
 import { msToSeconds } from '../../../utils/fightDuration';
 import { resolveActorName } from '../../../utils/resolveActorName';
 import type { DamageOverTimeResult } from '../../../workers/calculations/CalculateDamageOverTime';
@@ -125,79 +125,10 @@ export const DamageDonePanel: React.FC<DamageDonePanelProps> = ({ context }) => 
   ]);
 
   // Memoize damage calculations to prevent unnecessary recalculations
-  const damageStatistics = useMemo(() => {
-    const damageByPlayer: Record<number, number> = {};
-    const criticalDamageByPlayer: Record<number, number> = {};
-    const damageEventsBySource: Record<number, number> = {};
-
-    // Convert string keys to numbers and calculate totals
-    Object.entries(damageEventsByPlayer).forEach(([playerIdStr, events]) => {
-      const playerId = Number(playerIdStr);
-      let totalDamage = 0;
-      let totalCriticalDamage = 0;
-      let eventCount = 0;
-
-      events.forEach((event) => {
-        // Skip events that damage friendly targets
-        if (!event.targetIsFriendly) {
-          // Apply target filter if specific targets are selected
-          if (selectedTargetIds.size > 0 && !selectedTargetIds.has(event.targetID)) {
-            return; // Skip this event
-          }
-
-          const amount = 'amount' in event ? Number(event.amount) || 0 : 0;
-          totalDamage += amount;
-
-          // Check if this is a critical hit (hitType === 2)
-          if (event.hitType === 2) {
-            totalCriticalDamage += amount;
-          }
-
-          eventCount++;
-        }
-      });
-
-      if (totalDamage > 0) {
-        damageByPlayer[playerId] = totalDamage;
-        criticalDamageByPlayer[playerId] = totalCriticalDamage;
-        damageEventsBySource[playerId] = eventCount;
-      }
-    });
-
-    return { damageByPlayer, criticalDamageByPlayer, damageEventsBySource };
-  }, [damageEventsByPlayer, selectedTargetIds]);
-
-  // Calculate active percentages using ESO logs methodology with target filtering
-  const activePercentages = useMemo(() => {
-    if (!fight || !damageEventsByPlayer) {
-      return {};
-    }
-
-    // Filter damage events by selected target before calculating active percentages
-    const filteredDamageEventsByPlayer: Record<string, (typeof damageEventsByPlayer)[string]> = {};
-
-    Object.entries(damageEventsByPlayer).forEach(([playerIdStr, events]) => {
-      const filteredEvents = events.filter((event) => {
-        // Skip events that damage friendly targets
-        if (event.targetIsFriendly) {
-          return false;
-        }
-
-        // Apply target filter if specific targets are selected
-        if (selectedTargetIds.size > 0 && !selectedTargetIds.has(event.targetID)) {
-          return false;
-        }
-
-        return true;
-      });
-
-      if (filteredEvents.length > 0) {
-        filteredDamageEventsByPlayer[playerIdStr] = filteredEvents;
-      }
-    });
-
-    return calculateActivePercentages(fight, filteredDamageEventsByPlayer);
-  }, [fight, damageEventsByPlayer, selectedTargetIds]);
+  const damageStatistics = useMemo(
+    () => calculateDamageStatisticsWithActivity(fight, damageEventsByPlayer, selectedTargetIds),
+    [fight, damageEventsByPlayer, selectedTargetIds],
+  );
 
   const fightDurationMs = useMemo(() => {
     if (fight && fight.startTime != null && fight.endTime != null) {
@@ -324,7 +255,7 @@ export const DamageDonePanel: React.FC<DamageDonePanelProps> = ({ context }) => 
         const cpm = cpmByPlayer[id] || 0;
 
         // Get active percentage for this player
-        const activeData = activePercentages[playerId];
+        const activeData = damageStatistics.activePercentages[playerId];
         const activePercentage = activeData?.activePercentage ?? 0;
 
         // Get critical damage metrics for this player
@@ -355,7 +286,7 @@ export const DamageDonePanel: React.FC<DamageDonePanelProps> = ({ context }) => 
     masterData.actorsById,
     fightDurationMs,
     getPlayerRole,
-    activePercentages,
+    damageStatistics.activePercentages,
     deathsByPlayer,
     resByPlayer,
     cpmByPlayer,
