@@ -15,7 +15,7 @@ interface Actor {
   type: string;
   subType: string | null;
   server: string;
-  gameID: number;
+  gameID: number | null;
   [key: string]: unknown; // Add index signature for DataGrid compatibility
 }
 
@@ -167,6 +167,7 @@ export const ActorsPanelView: React.FC<ActorsPanelViewProps> = ({
       columnHelper.accessor('gameID', {
         header: 'Game ID',
         size: 100,
+        cell: (info) => info.getValue() ?? 'Unknown',
       }),
       // Copy PlayersById Entry column
       columnHelper.display({

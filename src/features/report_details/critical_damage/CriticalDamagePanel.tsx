@@ -1,4 +1,3 @@
-import { Box, Typography } from '@mui/material';
 import React from 'react';
 
 import {
@@ -10,7 +9,7 @@ import {
 import type { PhaseTransitionInfo } from '../../../hooks/usePhaseTransitions';
 import { useCompanionCritEvidence } from '../../../hooks/workerTasks/useCompanionCritEvidence';
 import type { ReportFightContextInput } from '../../../store/contextTypes';
-import { getSkeletonForTab, TabId } from '../../../utils/getSkeletonForTab';
+import { AnalyzerPanelState, resolveAnalyzerPanelState } from '../AnalyzerPanelState';
 
 import { CriticalDamagePanelView } from './CriticalDamagePanelView';
 
@@ -35,11 +34,20 @@ export const CriticalDamagePanel: React.FC<CriticalDamagePanelProps> = ({
   // detail view's evidence-driven defaults agree with the worker's baked-in wasActive.
   const companionCritEvidence = useCompanionCritEvidence(resolvedContext);
 
-  const isLoading = isCriticalDamageLoading || isPlayerDataLoading || !fight;
+  // A missing fight is a terminal unresolved dependency, not an active request.
+  // Treating it as loading would leave an invalid/deleted fight context spinning forever.
+  const isLoading = Boolean(fight) && (isCriticalDamageLoading || isPlayerDataLoading);
 
-  // Only show details when all loading is complete AND we have data
-  const hasCompleteData =
-    !isLoading && criticalDamageData?.playerDataMap && playerData?.playersById && fight;
+  const criticalDamagePlayerDataMap = criticalDamageData?.playerDataMap;
+  const hasCriticalDamageResults =
+    criticalDamagePlayerDataMap != null && Object.keys(criticalDamagePlayerDataMap).length > 0;
+  const hasViewData = Boolean(hasCriticalDamageResults && playerData?.playersById && fight);
+  const hasCompleteInputs = Boolean(
+    fight &&
+    playerData?.playersById &&
+    playerData.status === 'succeeded' &&
+    criticalDamagePlayerDataMap,
+  );
 
   // Get all players for accordion
   const players = React.useMemo(() => {
@@ -74,36 +82,31 @@ export const CriticalDamagePanel: React.FC<CriticalDamagePanelProps> = ({
     setGlobalFightingFinesseEnabled(enabled);
   }, []);
 
-  // Show loading state while fetching data OR if data is not complete
-  if (!hasCompleteData) {
-    return getSkeletonForTab(TabId.CRITICAL_DAMAGE, false, false);
-  }
-
-  // Show error state if there was an error
-  if (criticalDamageError) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 200 }}>
-        <Typography color="error">
-          Error calculating critical damage: {criticalDamageError}
-        </Typography>
-      </Box>
-    );
-  }
-
-  const fightForView = fight as NonNullable<typeof fight>;
+  const hasRetainedData = hasViewData && players.length > 0;
+  const panelError = criticalDamageError ?? playerData?.error ?? null;
+  const state = resolveAnalyzerPanelState({
+    error: panelError,
+    hasData: hasRetainedData,
+    isComplete: hasCompleteInputs,
+    isLoading,
+  });
 
   return (
-    <CriticalDamagePanelView
-      players={players}
-      fight={fightForView}
-      expandedPanels={expandedPanels}
-      onExpandChange={handleExpandChange}
-      criticalDamageData={criticalDamageData?.playerDataMap || null}
-      isLoading={false}
-      phaseTransitionInfo={phaseTransitionInfo}
-      globalFightingFinesseEnabled={globalFightingFinesseEnabled}
-      onGlobalFightingFinesseToggle={handleGlobalFightingFinesseToggle}
-      companionCritEvidence={companionCritEvidence}
-    />
+    <AnalyzerPanelState detail={panelError ?? undefined} state={state} title="Critical damage">
+      {hasRetainedData && (
+        <CriticalDamagePanelView
+          players={players}
+          fight={fight as NonNullable<typeof fight>}
+          expandedPanels={expandedPanels}
+          onExpandChange={handleExpandChange}
+          criticalDamageData={criticalDamagePlayerDataMap || null}
+          isLoading={false}
+          phaseTransitionInfo={phaseTransitionInfo}
+          globalFightingFinesseEnabled={globalFightingFinesseEnabled}
+          onGlobalFightingFinesseToggle={handleGlobalFightingFinesseToggle}
+          companionCritEvidence={companionCritEvidence}
+        />
+      )}
+    </AnalyzerPanelState>
   );
 };
