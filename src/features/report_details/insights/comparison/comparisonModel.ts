@@ -5,8 +5,10 @@ export type EncounterKind = 'encounter' | 'training-dummy';
 export type AnalysisRole = 'damage' | 'healer' | 'tank' | 'unknown';
 
 export interface AnalysisContext {
-  /** ESO live-server/update partition. Different partitions must never be compared. */
+  /** ESO live-server partition. Different partitions must never be compared. */
   readonly partition: string;
+  /** ESO update identity. Analyses from different updates must never be compared. */
+  readonly esoUpdate: string;
   readonly encounterKind: EncounterKind;
   readonly encounterId: string;
   /** The exact encounter definition/content version used to produce the analysis. */
@@ -92,6 +94,7 @@ export type MetricComparison =
 
 type ContextMismatchReason =
   | 'cross-partition'
+  | 'cross-eso-update'
   | 'cross-encounter-kind'
   | 'cross-encounter-id'
   | 'cross-encounter-version'
@@ -179,6 +182,7 @@ const isConfidence = (value: unknown): value is Confidence =>
 const validateContext = (context: unknown): string | null => {
   if (!isRecord(context)) return 'Analysis context is missing.';
   if (!isNonEmptyString(context.partition)) return 'Analysis partition is invalid.';
+  if (!isNonEmptyString(context.esoUpdate)) return 'Analysis ESO update is invalid.';
   if (context.encounterKind !== 'encounter' && context.encounterKind !== 'training-dummy')
     return 'Analysis encounter kind is invalid.';
   if (!isNonEmptyString(context.encounterId)) return 'Analysis encounter identity is invalid.';
@@ -266,6 +270,7 @@ const getContextMismatch = (
   actual: AnalysisContext,
 ): ContextMismatchReason | null => {
   if (expected.partition !== actual.partition) return 'cross-partition';
+  if (expected.esoUpdate !== actual.esoUpdate) return 'cross-eso-update';
   if (expected.encounterKind !== actual.encounterKind) return 'cross-encounter-kind';
   if (expected.encounterId !== actual.encounterId) return 'cross-encounter-id';
   if (expected.encounterVersion !== actual.encounterVersion) return 'cross-encounter-version';
@@ -280,6 +285,8 @@ const mismatchMessage = (reason: ContextMismatchReason): string => {
   switch (reason) {
     case 'cross-partition':
       return 'Analyses from different ESO partitions cannot be compared.';
+    case 'cross-eso-update':
+      return 'Analyses from different ESO updates cannot be compared.';
     case 'cross-encounter-kind':
       return 'Encounter and training-dummy analyses cannot be compared.';
     case 'cross-encounter-id':
@@ -315,6 +322,7 @@ const identifyProvenance = (analysis: PullAnalysis): IdentifiedProvenance =>
 const snapshotContext = (context: AnalysisContext): AnalysisContext =>
   freezeSnapshot({
     partition: context.partition,
+    esoUpdate: context.esoUpdate,
     encounterKind: context.encounterKind,
     encounterId: context.encounterId,
     encounterVersion: context.encounterVersion,
@@ -469,7 +477,7 @@ const getMinimumObservedBaselineSamples = (
   return validationError ? { error: validationError } : { value: minimumObservedBaselineSamples };
 };
 
-/** Compares two pulls only when their partition and complete encounter definition match exactly. */
+/** Compares two pulls only when their ESO partition, update, and encounter definition match exactly. */
 export const comparePulls = (baseline: PullAnalysis, candidate: PullAnalysis): ComparisonResult => {
   const invalidBaselineReason = validateAnalysis(baseline);
   const invalidCandidateReason = validateAnalysis(candidate);
