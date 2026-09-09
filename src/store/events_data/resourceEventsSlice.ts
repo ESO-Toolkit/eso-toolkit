@@ -19,7 +19,12 @@ import {
   trimCache,
 } from '../utils/keyedCacheState';
 
-import { EVENT_CACHE_MAX_ENTRIES, EVENT_PAGE_LIMIT } from './constants';
+import {
+  EVENT_CACHE_MAX_ENTRIES,
+  EVENT_MAX_EVENTS_PER_STREAM,
+  EVENT_MAX_PAGES_PER_STREAM,
+  EVENT_PAGE_LIMIT,
+} from './constants';
 import { createCurrentRequest, isStaleResponse } from './utils/requestTracking';
 
 const logger = new Logger({ level: LogLevel.INFO, contextPrefix: 'ResourceEvents' });
@@ -67,53 +72,97 @@ const initialState: ResourceEventsState = {
   accessOrder: [],
 };
 
+const validateFightTiming = (fight: FightFragment): void => {
+  const isValidTimestamp = (value: number): boolean =>
+    Number.isFinite(value) && value >= 0 && !Object.is(value, -0);
+
+  if (
+    !isValidTimestamp(fight.startTime) ||
+    !isValidTimestamp(fight.endTime) ||
+    fight.endTime <= fight.startTime
+  ) {
+    throw new Error('Invalid resource event interval');
+  }
+};
+
 export const fetchResourceEvents = createAsyncThunk<
   ResourceChangeEvent[],
   { reportCode: string; fight: FightFragment; client: EsoLogsClient },
   { state: LocalRootState; rejectValue: string }
 >(
   'resourceEvents/fetchResourceEvents',
-  async ({ reportCode, fight, client }) => {
+  async ({ reportCode, fight, client }, { rejectWithValue, signal }) => {
     logger.info('Fetching resource events', {
       reportCode,
       fightId: Number(fight.id),
     });
 
     const hostilityTypes = [HostilityType.Friendlies, HostilityType.Enemies];
-    let allEvents: LogEvent[] = [];
+    const eventChunks: LogEvent[][] = [];
+    let pageCount = 0;
+    let streamEventCount = 0;
 
-    for (const hostilityType of hostilityTypes) {
-      let nextPageTimestamp: number | null = null;
+    try {
+      validateFightTiming(fight);
+      for (const hostilityType of hostilityTypes) {
+        let nextPageTimestamp: number | null = null;
 
-      do {
-        const response: GetResourceEventsQuery = await client.query({
-          query: GetResourceEventsDocument,
-          fetchPolicy: 'no-cache',
-          variables: {
-            code: reportCode,
-            fightIds: [Number(fight.id)],
-            startTime: nextPageTimestamp ?? fight.startTime,
-            endTime: fight.endTime,
-            hostilityType,
-            limit: EVENT_PAGE_LIMIT,
-          },
-        });
+        do {
+          signal.throwIfAborted();
+          if (pageCount >= EVENT_MAX_PAGES_PER_STREAM) {
+            throw new Error(
+              `Resource event pagination exceeded ${EVENT_MAX_PAGES_PER_STREAM} pages`,
+            );
+          }
+          const requestedStartTime = nextPageTimestamp ?? fight.startTime;
+          const response: GetResourceEventsQuery = await client.query({
+            query: GetResourceEventsDocument,
+            fetchPolicy: 'no-cache',
+            context: { fetchOptions: { signal } },
+            variables: {
+              code: reportCode,
+              fightIds: [Number(fight.id)],
+              startTime: requestedStartTime,
+              endTime: fight.endTime,
+              hostilityType,
+              limit: EVENT_PAGE_LIMIT,
+            },
+          });
+          pageCount += 1;
 
-        const page = response.reportData?.report?.events;
-        if (page?.data) {
-          allEvents = allEvents.concat(page.data);
-        }
-        nextPageTimestamp = page?.nextPageTimestamp ?? null;
-      } while (nextPageTimestamp);
+          const page = response.reportData?.report?.events;
+          if (page?.data?.length) {
+            streamEventCount += page.data.length;
+            if (streamEventCount > EVENT_MAX_EVENTS_PER_STREAM) {
+              throw new Error(
+                `Resource event pagination exceeded ${EVENT_MAX_EVENTS_PER_STREAM} events`,
+              );
+            }
+            eventChunks.push(page.data);
+          }
+          const followingTimestamp = page?.nextPageTimestamp ?? null;
+          if (
+            followingTimestamp != null &&
+            (!Number.isFinite(followingTimestamp) || followingTimestamp <= requestedStartTime)
+          ) {
+            throw new Error('Resource event pagination cursor did not advance');
+          }
+          nextPageTimestamp = followingTimestamp;
+        } while (nextPageTimestamp != null);
+      }
+    } catch (error) {
+      return rejectWithValue(
+        error instanceof Error ? error.message : 'Failed to fetch resource events',
+      );
     }
 
     logger.info('Resource events fetch completed', {
       reportCode,
       fightId: Number(fight.id),
-      totalEvents: allEvents.length,
+      totalEvents: eventChunks.reduce((count, chunk) => count + chunk.length, 0),
     });
 
-    return allEvents as ResourceChangeEvent[];
+    return eventChunks.flat() as ResourceChangeEvent[];
   },
   {
     condition: ({ reportCode, fight }, { getState }) => {
@@ -122,7 +171,7 @@ export const fetchResourceEvents = createAsyncThunk<
       const entry = state.entries[key];
 
       const lastFetchedTimestamp = entry?.cacheMetadata.lastFetchedTimestamp;
-      const isCached = Boolean(entry?.events.length);
+      const isCached = entry?.status === 'succeeded';
       const isFresh =
         typeof lastFetchedTimestamp === 'number' &&
         Date.now() - lastFetchedTimestamp < DATA_FETCH_CACHE_TIMEOUT;
