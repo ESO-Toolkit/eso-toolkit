@@ -54,10 +54,12 @@ jest.mock('../../../store/player_data/playerDataSlice', () => ({
 jest.mock('./InsightsPanelView', () => ({
   InsightsPanelView: ({
     dataState,
+    fightInitiator,
     onRetry,
     retryAvailability,
   }: {
     dataState: { kind: string };
+    fightInitiator: { kind: string; message?: string; name?: string };
     onRetry: () => void;
     retryAvailability: { canRetry: boolean; unavailableReason: string | null };
   }) => (
@@ -68,6 +70,9 @@ jest.mock('./InsightsPanelView', () => ({
       {retryAvailability.unavailableReason ? (
         <span>{retryAvailability.unavailableReason}</span>
       ) : null}
+      <output data-testid="fight-initiator-state">
+        {fightInitiator.kind === 'available' ? fightInitiator.name : fightInitiator.message}
+      </output>
     </>
   ),
 }));
@@ -111,6 +116,55 @@ describe('InsightsPanel retry', () => {
     mockUseEsoLogsClientContext.mockReturnValue({ client: mockDamageClient, isReady: true });
     mockUseCombatantInfoEvents.mockReturnValue(succeededCombatantInfoEvents);
     mockUsePlayerData.mockReturnValue(succeededPlayerData);
+  });
+
+  it('keeps the initiator state independent while damage events finish loading', () => {
+    const initiatorFight = { ...fight, friendlyPlayers: [42] };
+    mockUseDamageEvents.mockReturnValue({
+      damageEvents: [{ sourceID: 42, sourceIsFriendly: true, timestamp: 10 }],
+      damageEventsError: null,
+      damageEventsStatus: 'loading' as const,
+      isDamageEventsLoading: true,
+      selectedFight: initiatorFight,
+    });
+    mockUsePlayerData.mockReturnValue({
+      isPlayerDataLoading: false,
+      playerData: {
+        error: null,
+        playersById: { 42: { displayName: 'Initiating Player' } },
+        status: 'succeeded' as const,
+      },
+    });
+
+    const { rerender } = render(
+      <InsightsPanel context={{ reportCode: 'report-1', fightId: 1 }} fight={initiatorFight} />,
+    );
+
+    expect(screen.getByTestId('fight-initiator-state')).toHaveTextContent(
+      'Loading damage events to identify the fight initiator.',
+    );
+
+    mockUseDamageEvents.mockReturnValue({
+      damageEvents: [{ sourceID: 42, sourceIsFriendly: true, timestamp: 10 }],
+      damageEventsError: null,
+      damageEventsStatus: 'succeeded' as const,
+      isDamageEventsLoading: false,
+      selectedFight: initiatorFight,
+    });
+    mockUsePlayerData.mockReturnValue({
+      isPlayerDataLoading: false,
+      playerData: {
+        error: null,
+        playersById: { 42: { displayName: 'Initiating Player' } },
+        status: 'succeeded' as const,
+      },
+    });
+
+    rerender(
+      <InsightsPanel context={{ reportCode: 'report-1', fightId: 1 }} fight={initiatorFight} />,
+    );
+
+    expect(screen.getByTestId('fight-initiator-state')).toHaveTextContent('Initiating Player');
   });
 
   it('invalidates and directly refetches only the failed stream', () => {

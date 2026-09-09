@@ -37,11 +37,16 @@ const fight = {
 } as FightFragment;
 
 const availableRetry: InsightsRetryAvailability = { canRetry: true, unavailableReason: null };
+const unavailableFightInitiator = {
+  kind: 'unavailable' as const,
+  message: 'No initiator data is available.',
+};
 
 const renderPanel = (
   dataState: InsightsDataState,
   onRetry = jest.fn(),
   retryAvailability = availableRetry,
+  fightInitiator = unavailableFightInitiator,
 ) => {
   render(
     <ThemeProvider theme={createTheme()}>
@@ -50,7 +55,7 @@ const renderPanel = (
         durationMs={65_000}
         abilityEquipped={{}}
         buffActors={{}}
-        fightInitiator={null}
+        fightInitiator={fightInitiator}
         selectedPlayerId={null}
         dataState={dataState}
         onRetry={onRetry}
@@ -64,18 +69,105 @@ const renderPanel = (
 
 describe('InsightsPanelView data states', () => {
   it('keeps independent fight content visible while damage data is loading', () => {
-    renderPanel({
-      kind: 'loading',
-      errorMessage: null,
-      failedSources: [],
-      hasPendingSources: true,
-    });
+    renderPanel(
+      {
+        kind: 'loading',
+        errorMessage: null,
+        failedSources: [],
+        hasPendingSources: true,
+      },
+      undefined,
+      availableRetry,
+      {
+        kind: 'loading',
+        message: 'Loading damage events to identify the fight initiator.',
+      },
+    );
 
     expect(screen.getByRole('heading', { name: 'Fight Insights' })).toBeInTheDocument();
     expect(screen.getByText('Duration:')).toBeInTheDocument();
     expect(screen.getByText('1m 5.0s')).toBeInTheDocument();
+    expect(screen.getByText('Damage breakdown content')).toBeInTheDocument();
+    expect(screen.getByTestId('fight-initiator')).toHaveAttribute('aria-live', 'polite');
+    expect(screen.getByTestId('fight-initiator')).toHaveTextContent('Fight initiator: Loading');
+    expect(screen.getByTestId('fight-initiator')).toHaveTextContent(
+      'Loading damage events to identify the fight initiator.',
+    );
     expect(screen.getByRole('status')).toHaveTextContent('Loading detailed fight insights');
     expect(screen.getByTestId('insights-panel')).toHaveAttribute('aria-busy', 'true');
+  });
+
+  it('updates the initiator label when damage data completes', () => {
+    const { rerender } = render(
+      <ThemeProvider theme={createTheme()}>
+        <InsightsPanelView
+          fight={fight}
+          durationMs={65_000}
+          abilityEquipped={{}}
+          buffActors={{}}
+          fightInitiator={{
+            kind: 'loading',
+            message: 'Loading damage events to identify the fight initiator.',
+          }}
+          selectedPlayerId={null}
+          dataState={{
+            kind: 'loading',
+            errorMessage: null,
+            failedSources: [],
+            hasPendingSources: true,
+          }}
+          onRetry={jest.fn()}
+          retryAvailability={availableRetry}
+        />
+      </ThemeProvider>,
+    );
+
+    rerender(
+      <ThemeProvider theme={createTheme()}>
+        <InsightsPanelView
+          fight={fight}
+          durationMs={65_000}
+          abilityEquipped={{}}
+          buffActors={{}}
+          fightInitiator={{ kind: 'available', name: 'Initiating Player' }}
+          selectedPlayerId={null}
+          dataState={{
+            kind: 'ready',
+            errorMessage: null,
+            failedSources: [],
+            hasPendingSources: false,
+          }}
+          onRetry={jest.fn()}
+          retryAvailability={availableRetry}
+        />
+      </ThemeProvider>,
+    );
+
+    expect(screen.getByTestId('fight-initiator')).toHaveTextContent(
+      'Fight initiator: Initiating Player',
+    );
+    expect(screen.queryByText('Loading damage events to identify the fight initiator.')).toBeNull();
+  });
+
+  it('exposes an unavailable initiator state without hiding independent content', () => {
+    renderPanel(
+      {
+        kind: 'ready',
+        errorMessage: null,
+        failedSources: [],
+        hasPendingSources: false,
+      },
+      undefined,
+      availableRetry,
+      unavailableFightInitiator,
+    );
+
+    expect(screen.getByTestId('fight-initiator')).toHaveAttribute('aria-live', 'polite');
+    expect(screen.getByTestId('fight-initiator')).toHaveTextContent('Fight initiator: Unavailable');
+    expect(screen.getByTestId('fight-initiator')).toHaveTextContent(
+      'No initiator data is available.',
+    );
+    expect(screen.getByText('Damage breakdown content')).toBeInTheDocument();
   });
 
   it('announces explicit empty and partial states without hiding the panel', () => {
@@ -86,7 +178,7 @@ describe('InsightsPanelView data states', () => {
           durationMs={65_000}
           abilityEquipped={{}}
           buffActors={{}}
-          fightInitiator={null}
+          fightInitiator={{ kind: 'unavailable', message: 'No initiator data is available.' }}
           selectedPlayerId={null}
           dataState={{
             kind: 'empty',
@@ -110,7 +202,7 @@ describe('InsightsPanelView data states', () => {
           durationMs={65_000}
           abilityEquipped={{}}
           buffActors={{}}
-          fightInitiator={null}
+          fightInitiator={{ kind: 'unavailable', message: 'No initiator data is available.' }}
           selectedPlayerId={null}
           dataState={{
             kind: 'partial',
@@ -164,7 +256,7 @@ describe('InsightsPanelView data states', () => {
           durationMs={65_000}
           abilityEquipped={{}}
           buffActors={{}}
-          fightInitiator={null}
+          fightInitiator={{ kind: 'unavailable', message: 'No initiator data is available.' }}
           selectedPlayerId={null}
           dataState={{
             kind: 'stale',
@@ -188,7 +280,7 @@ describe('InsightsPanelView data states', () => {
           durationMs={65_000}
           abilityEquipped={{}}
           buffActors={{}}
-          fightInitiator={null}
+          fightInitiator={{ kind: 'unavailable', message: 'No initiator data is available.' }}
           selectedPlayerId={null}
           dataState={{
             kind: 'loading',
@@ -213,7 +305,7 @@ describe('InsightsPanelView data states', () => {
           durationMs={65_000}
           abilityEquipped={{}}
           buffActors={{}}
-          fightInitiator={null}
+          fightInitiator={{ kind: 'unavailable', message: 'No initiator data is available.' }}
           selectedPlayerId={null}
           dataState={{
             kind: 'ready',
