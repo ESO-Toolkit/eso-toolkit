@@ -4,7 +4,9 @@ import { useSelector } from 'react-redux';
 import { usePlayerData, useReportMasterData } from '../../../hooks';
 import { useDebuffEvents } from '../../../hooks/events/useDebuffEvents';
 import { useDebuffLookupTask } from '../../../hooks/workerTasks/useDebuffLookupTask';
+import { selectMasterDataErrorState } from '../../../store/master_data/masterDataSelectors';
 import { selectSelectedTargetId } from '../../../store/ui/uiSelectors';
+import { AnalyzerPanelState, resolveAnalyzerPanelState } from '../AnalyzerPanelState';
 
 import { DebuffsOverviewPanelView } from './DebuffsOverviewPanelView';
 
@@ -21,10 +23,12 @@ export interface DebuffOverviewData extends Record<string, unknown> {
 
 export const DebuffsOverviewPanel: React.FC = () => {
   const { debuffLookupData, isDebuffLookupLoading, debuffLookupError } = useDebuffLookupTask();
-  const { reportMasterData } = useReportMasterData();
-  const { debuffEvents } = useDebuffEvents();
-  const { playerData } = usePlayerData();
+  const { reportMasterData, isMasterDataLoading } = useReportMasterData();
+  const { debuffEvents, isDebuffEventsLoading, debuffEventsStatus, debuffEventsError } =
+    useDebuffEvents();
+  const { playerData, isPlayerDataLoading } = usePlayerData();
   const selectedTargetId = useSelector(selectSelectedTargetId);
+  const masterDataError = useSelector(selectMasterDataErrorState);
 
   // Local state for selected player filter
   const [selectedPlayerId, setSelectedPlayerId] = React.useState<number | null>(null);
@@ -179,15 +183,32 @@ export const DebuffsOverviewPanel: React.FC = () => {
     extraAbilityMapping,
   ]);
 
+  const hasRetainedData = debuffOverviewData.length > 0;
+  const failureDetail =
+    debuffLookupError ?? debuffEventsError ?? playerData?.error ?? masterDataError ?? undefined;
+  const state = resolveAnalyzerPanelState({
+    error: failureDetail,
+    hasData: hasRetainedData,
+    isComplete:
+      debuffLookupData !== null &&
+      debuffEventsStatus === 'succeeded' &&
+      playerData?.status === 'succeeded' &&
+      reportMasterData.loaded,
+    isLoading:
+      isDebuffLookupLoading || isDebuffEventsLoading || isPlayerDataLoading || isMasterDataLoading,
+  });
+
   return (
-    <DebuffsOverviewPanelView
-      debuffOverviewData={debuffOverviewData}
-      isLoading={isDebuffLookupLoading}
-      error={debuffLookupError}
-      selectedTargetId={selectedTargetId}
-      selectedPlayerId={selectedPlayerId}
-      availablePlayers={availablePlayers}
-      onPlayerChange={setSelectedPlayerId}
-    />
+    <AnalyzerPanelState detail={failureDetail} state={state} title="Debuffs overview">
+      {hasRetainedData && (
+        <DebuffsOverviewPanelView
+          debuffOverviewData={debuffOverviewData}
+          selectedTargetId={selectedTargetId}
+          selectedPlayerId={selectedPlayerId}
+          availablePlayers={availablePlayers}
+          onPlayerChange={setSelectedPlayerId}
+        />
+      )}
+    </AnalyzerPanelState>
   );
 };

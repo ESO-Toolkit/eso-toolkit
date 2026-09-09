@@ -1,7 +1,11 @@
 import React from 'react';
+import { useSelector } from 'react-redux';
 
 import { useReportMasterData } from '../../../hooks';
+import { useFriendlyBuffEvents } from '../../../hooks/events/useFriendlyBuffEvents';
 import { useBuffLookupTask } from '../../../hooks/workerTasks/useBuffLookupTask';
+import { selectMasterDataErrorState } from '../../../store/master_data/masterDataSelectors';
+import { AnalyzerPanelState, resolveAnalyzerPanelState } from '../AnalyzerPanelState';
 
 import { BuffsOverviewPanelView } from './BuffsOverviewPanelView';
 
@@ -17,7 +21,9 @@ export interface BuffOverviewData extends Record<string, unknown> {
 
 export const BuffsOverviewPanel: React.FC = () => {
   const { buffLookupData, isBuffLookupLoading, buffLookupError } = useBuffLookupTask();
-  const { reportMasterData } = useReportMasterData();
+  const { friendlyBuffEventsStatus, friendlyBuffEventsError } = useFriendlyBuffEvents();
+  const { reportMasterData, isMasterDataLoading } = useReportMasterData();
+  const masterDataError = useSelector(selectMasterDataErrorState);
 
   // Transform the BuffLookupData into BuffOverviewData
   const buffOverviewData: BuffOverviewData[] = React.useMemo(() => {
@@ -58,11 +64,21 @@ export const BuffsOverviewPanel: React.FC = () => {
     });
   }, [buffLookupData, reportMasterData?.abilitiesById]);
 
+  const hasRetainedData = buffOverviewData.length > 0;
+  const failureDetail = buffLookupError ?? friendlyBuffEventsError ?? masterDataError ?? undefined;
+  const state = resolveAnalyzerPanelState({
+    error: failureDetail,
+    hasData: hasRetainedData,
+    isComplete:
+      buffLookupData !== null &&
+      friendlyBuffEventsStatus === 'succeeded' &&
+      reportMasterData.loaded,
+    isLoading: isBuffLookupLoading || isMasterDataLoading,
+  });
+
   return (
-    <BuffsOverviewPanelView
-      buffOverviewData={buffOverviewData}
-      isLoading={isBuffLookupLoading}
-      error={buffLookupError}
-    />
+    <AnalyzerPanelState detail={failureDetail} state={state} title="Buffs overview">
+      {hasRetainedData && <BuffsOverviewPanelView buffOverviewData={buffOverviewData} />}
+    </AnalyzerPanelState>
   );
 };
