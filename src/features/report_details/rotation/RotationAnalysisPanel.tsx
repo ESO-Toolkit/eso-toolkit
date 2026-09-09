@@ -8,8 +8,11 @@ import { selectCombinedMasterData } from '../../../store/master_data/masterDataS
 import { selectResourceEventsEntryForContext } from '../../../store/selectors/eventsSelectors';
 import type { RootState } from '../../../store/storeWithHistory';
 import { ResourceChangeEvent, UnifiedCastEvent } from '../../../types/combatlogEvents';
-
-import { AnalyzerPanelState, resolveAnalyzerPanelState } from '../AnalyzerPanelState';
+import {
+  AnalyzerPanelState,
+  resolveAnalyzerPanelState,
+  type AnalyzerPanelStateKind,
+} from '../AnalyzerPanelState';
 
 import { RotationAnalysisPanelView } from './RotationAnalysisPanelView';
 
@@ -22,11 +25,19 @@ type FightWithResolvedWindow = RotationAnalysisPanelProps['fight'] & {
   startTime: number;
 };
 
-/** Timestamp zero is a valid pull boundary, not an absent fight window. */
+/**
+ * Timestamp zero is a valid pull boundary, but analysis requires a finite,
+ * positive fight duration. This keeps malformed report metadata from flowing
+ * into duration-derived metrics such as actions per minute.
+ */
 export const hasRotationFightWindow = (
   fight: RotationAnalysisPanelProps['fight'],
 ): fight is FightWithResolvedWindow =>
-  fight.startTime !== undefined && fight.endTime !== undefined;
+  fight.startTime !== undefined &&
+  fight.endTime !== undefined &&
+  Number.isFinite(fight.startTime) &&
+  Number.isFinite(fight.endTime) &&
+  fight.endTime > fight.startTime;
 
 interface RotationPanelLifecycleInput {
   castEventsError: string | null;
@@ -46,7 +57,7 @@ export const resolveRotationAnalysisPanelState = ({
   hasData,
   resourceEventsError,
   resourceEventsStatus,
-}: RotationPanelLifecycleInput) =>
+}: RotationPanelLifecycleInput): AnalyzerPanelStateKind =>
   resolveAnalyzerPanelState({
     error:
       castEventsError ??
