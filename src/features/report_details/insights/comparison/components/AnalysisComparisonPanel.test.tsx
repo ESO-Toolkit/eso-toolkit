@@ -75,6 +75,8 @@ describe('AnalysisComparisonPanel', () => {
     expect(screen.getByRole('heading', { name: 'Comparison context' })).toBeInTheDocument();
     expect(screen.getByText('ESO partition')).toBeInTheDocument();
     expect(screen.getByText('live-10.4.5')).toBeInTheDocument();
+    expect(screen.getByText('ESO update')).toBeInTheDocument();
+    expect(screen.getByText('update-10.4.5')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Provenance' })).toBeInTheDocument();
     expect(screen.getByText(/baseline-1 at 2026-09-08T20:00:00.000Z/)).toBeInTheDocument();
 
