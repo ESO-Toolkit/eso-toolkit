@@ -54,6 +54,7 @@ export default defineConfig({
     '**/stagger-arrows.spec.ts', // TODO: Investigate page loading failures
     '**/skeleton-detection-examples.spec.ts', // TODO: Investigate page loading failures
     '**/shattering-knife-simple.smoke.spec.ts', // Requires authentication setup
+    '**/build-editor-mobile.spec.ts', // Mobile-only coverage runs in the dedicated 390x844 config
   ],
 
   /* Output directory for test results */
