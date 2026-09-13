@@ -63,13 +63,13 @@ export interface PlayerCriticalDamageData {
 interface CriticalMultiplierInfo {
   abilityName: string;
   abilityId: number;
-  criticalDamage: number;
-  normalDamage: number;
-  criticalMultiplier: number;
+  criticalDamage: number | null;
+  normalDamage: number | null;
+  criticalMultiplier: number | null;
   foundPair: boolean;
   criticalTimestamp: number;
-  accountedCritDamagePercent: number;
-  unaccountedCritDamagePercent: number;
+  accountedCritDamagePercent: number | null;
+  unaccountedCritDamagePercent: number | null;
   activeSources: CriticalDamageSource[];
 }
 
@@ -165,6 +165,13 @@ export const getValidCriticalDamageDataPoints = (
 
 const metricValue = (value: number | null, fractionDigits: number): string =>
   value === null ? 'Unavailable' : value.toFixed(fractionDigits);
+
+const finiteValue = (value: number | null): number | null => (isFiniteNumber(value) ? value : null);
+
+const formatDamageAverage = (value: number | null): string => {
+  const finiteDamage = finiteValue(value);
+  return finiteDamage !== null && finiteDamage >= 0 ? finiteDamage.toLocaleString() : 'Unavailable';
+};
 
 export const getCriticalDamageMetricIntent = (
   value: number | null,
@@ -400,6 +407,39 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
       : null;
   const unavailableSamplesMessage =
     dataQualityMessage ?? 'No valid critical damage samples were received.';
+  const hasValidMultiplierDenominator =
+    criticalMultiplier !== null &&
+    isFiniteNumber(criticalMultiplier.normalDamage) &&
+    criticalMultiplier.normalDamage > 0;
+  const observedMultiplier =
+    hasValidMultiplierDenominator &&
+    isFiniteNumber(criticalMultiplier.criticalMultiplier) &&
+    criticalMultiplier.criticalMultiplier >= 0 &&
+    isFiniteNumber(criticalMultiplier.criticalMultiplier * 100)
+      ? criticalMultiplier.criticalMultiplier
+      : null;
+  const accountedCritDamagePercent =
+    hasValidMultiplierDenominator &&
+    isFiniteNumber(criticalMultiplier.accountedCritDamagePercent) &&
+    isFiniteNumber(criticalMultiplier.accountedCritDamagePercent + 50)
+      ? criticalMultiplier.accountedCritDamagePercent
+      : null;
+  const unaccountedCritDamagePercent =
+    hasValidMultiplierDenominator && isFiniteNumber(criticalMultiplier.unaccountedCritDamagePercent)
+      ? criticalMultiplier.unaccountedCritDamagePercent
+      : null;
+  const hasCompleteMultiplierAnalysis =
+    observedMultiplier !== null &&
+    accountedCritDamagePercent !== null &&
+    unaccountedCritDamagePercent !== null;
+  const multiplierUnavailableMessage =
+    criticalMultiplier === null
+      ? 'Critical multiplier analysis is unavailable because no matched normal and critical hit sample was found.'
+      : !hasValidMultiplierDenominator
+        ? 'Critical multiplier analysis is unavailable because a positive finite normal-damage average is required.'
+        : !hasCompleteMultiplierAnalysis
+          ? 'Some critical multiplier values are unavailable because the calculated data is incomplete or invalid.'
+          : null;
 
   return (
     <Accordion
@@ -530,83 +570,116 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
             )}
 
             {/* Critical Multiplier Information */}
-            {criticalMultiplier && (
-              <Paper
-                variant="outlined"
+            <Paper
+              variant="outlined"
+              sx={{
+                p: 2,
+                mb: 2,
+                background:
+                  'linear-gradient(135deg, rgba(175, 82, 222, 0.15) 0%, rgba(175, 82, 222, 0.08) 50%, rgba(175, 82, 222, 0.04) 100%)',
+                border: '1px solid rgba(175, 82, 222, 0.3)',
+                borderRadius: 2,
+                backdropFilter: 'blur(10px)',
+                WebkitBackdropFilter: 'blur(10px)',
+              }}
+            >
+              <Typography
+                variant="h6"
                 sx={{
-                  p: 2,
                   mb: 2,
-                  background:
-                    'linear-gradient(135deg, rgba(175, 82, 222, 0.15) 0%, rgba(175, 82, 222, 0.08) 50%, rgba(175, 82, 222, 0.04) 100%)',
-                  border: '1px solid rgba(175, 82, 222, 0.3)',
-                  borderRadius: 2,
-                  backdropFilter: 'blur(10px)',
-                  WebkitBackdropFilter: 'blur(10px)',
+                  textShadow:
+                    '0 2px 4px rgb(0 0 0 / 0%), 0 4px 8px rgba(0, 0, 0, 0.4), 0 8px 16px rgba(0, 0, 0, 0.2)',
                 }}
               >
-                <Typography
-                  variant="h6"
-                  sx={{
-                    mb: 2,
-                    textShadow:
-                      '0 2px 4px rgb(0 0 0 / 0%), 0 4px 8px rgba(0, 0, 0, 0.4), 0 8px 16px rgba(0, 0, 0, 0.2)',
-                  }}
-                >
-                  Critical Multiplier Analysis
-                </Typography>
-                <Typography variant="body2" sx={{ mb: 1 }}>
-                  <strong>Ability:</strong> {criticalMultiplier.abilityName}
-                </Typography>
-                <Typography variant="body2" sx={{ mb: 1 }}>
-                  <strong>Normal Damage (Avg):</strong>{' '}
-                  {criticalMultiplier.normalDamage.toLocaleString()}
-                </Typography>
-                <Typography variant="body2" sx={{ mb: 1 }}>
-                  <strong>Critical Damage (Avg):</strong>{' '}
-                  {criticalMultiplier.criticalDamage.toLocaleString()}
-                </Typography>
+                Critical Multiplier Analysis
+              </Typography>
 
-                <Typography variant="body2" sx={{ mb: 1 }}>
-                  <strong>Critical Multiplier:</strong>{' '}
-                  {criticalMultiplier.criticalMultiplier.toFixed(2)}x (Critical damage is{' '}
-                  {(criticalMultiplier.criticalMultiplier * 100).toFixed(0)}% of normal damage)
+              {multiplierUnavailableMessage && (
+                <Typography role="status" sx={{ mb: 2, color: 'warning.main' }}>
+                  {multiplierUnavailableMessage}
                 </Typography>
+              )}
 
-                <Typography variant="body2" sx={{ mb: 1, color: '#2e7d32', fontWeight: 'bold' }}>
-                  <strong>Accounted Critical Damage:</strong>{' '}
-                  {(criticalMultiplier.accountedCritDamagePercent + 50).toFixed(1)}% total
-                  <span style={{ color: '#666', marginLeft: '4px' }}>
-                    (50% base + {criticalMultiplier.accountedCritDamagePercent.toFixed(1)}% bonus)
-                  </span>
-                </Typography>
+              {criticalMultiplier && (
+                <Box>
+                  <Typography variant="body2" sx={{ mb: 1 }}>
+                    <strong>Ability:</strong> {criticalMultiplier.abilityName}
+                  </Typography>
+                  <Typography variant="body2" sx={{ mb: 1 }}>
+                    <strong>Normal Damage (Avg):</strong>{' '}
+                    {formatDamageAverage(criticalMultiplier.normalDamage)}
+                  </Typography>
+                  <Typography variant="body2" sx={{ mb: 1 }}>
+                    <strong>Critical Damage (Avg):</strong>{' '}
+                    {formatDamageAverage(criticalMultiplier.criticalDamage)}
+                  </Typography>
 
-                <Typography
-                  variant="body2"
-                  sx={{
-                    mb: 2,
-                    color:
-                      criticalMultiplier.unaccountedCritDamagePercent > 0 ? '#d32f2f' : '#2e7d32',
-                    fontWeight: 'bold',
-                  }}
-                >
-                  <strong>Unaccounted Critical Damage:</strong>{' '}
-                  {criticalMultiplier.unaccountedCritDamagePercent.toFixed(1)}%
-                  {criticalMultiplier.unaccountedCritDamagePercent > 0 &&
-                    ' (This could be from unknown sources like gear sets, mundus stones, or other effects)'}
-                </Typography>
+                  <Typography variant="body2" sx={{ mb: 1 }}>
+                    <strong>Critical Multiplier:</strong>{' '}
+                    {observedMultiplier === null
+                      ? 'Unavailable'
+                      : `${observedMultiplier.toFixed(2)}x (Critical damage is ${(
+                          observedMultiplier * 100
+                        ).toFixed(0)}% of normal damage)`}
+                  </Typography>
 
-                <Typography
-                  variant="body2"
-                  sx={{ color: 'text.secondary', mt: 2, fontStyle: 'italic' }}
-                >
-                  Critical damage bonuses are additive before being applied as a multiplier. For
-                  example, if you have 75% critical damage total (50% base + 25% from sources), your
-                  critical hits will do 175% of normal damage (1.75x multiplier). This analysis
-                  compares the actual multiplier observed in combat against what we expect from
-                  known additive sources.
-                </Typography>
-              </Paper>
-            )}
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      mb: 1,
+                      color:
+                        accountedCritDamagePercent === null ? 'text.secondary' : 'success.main',
+                      fontWeight: 'bold',
+                    }}
+                  >
+                    <strong>Accounted Critical Damage:</strong>{' '}
+                    {accountedCritDamagePercent === null ? (
+                      'Unavailable'
+                    ) : (
+                      <>
+                        {(accountedCritDamagePercent + 50).toFixed(1)}% total
+                        <Box component="span" sx={{ color: 'text.secondary', ml: 0.5 }}>
+                          (50% base + {accountedCritDamagePercent.toFixed(1)}% bonus)
+                        </Box>
+                      </>
+                    )}
+                  </Typography>
+
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      mb: 2,
+                      color:
+                        unaccountedCritDamagePercent === null
+                          ? 'text.secondary'
+                          : unaccountedCritDamagePercent > 0
+                            ? 'error.main'
+                            : 'success.main',
+                      fontWeight: 'bold',
+                    }}
+                  >
+                    <strong>Unaccounted Critical Damage:</strong>{' '}
+                    {unaccountedCritDamagePercent === null
+                      ? 'Unavailable'
+                      : `${unaccountedCritDamagePercent.toFixed(1)}%`}
+                    {unaccountedCritDamagePercent !== null &&
+                      unaccountedCritDamagePercent > 0 &&
+                      ' (This could be from unknown sources like gear sets, mundus stones, or other effects)'}
+                  </Typography>
+
+                  <Typography
+                    variant="body2"
+                    sx={{ color: 'text.secondary', mt: 2, fontStyle: 'italic' }}
+                  >
+                    Critical damage bonuses are additive before being applied as a multiplier. For
+                    example, if you have 75% critical damage total (50% base + 25% from sources),
+                    your critical hits will do 175% of normal damage (1.75x multiplier). This
+                    analysis compares the actual multiplier observed in combat against what we
+                    expect from known additive sources.
+                  </Typography>
+                </Box>
+              )}
+            </Paper>
 
             {/* Critical Damage vs Time Chart */}
             {hasValidSamples ? (
