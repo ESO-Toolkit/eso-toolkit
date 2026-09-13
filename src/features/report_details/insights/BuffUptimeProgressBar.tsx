@@ -39,6 +39,23 @@ export interface BuffUptime {
   groupAverageUptimePercentage?: number; // Group average uptime percentage for delta calculation
 }
 
+export type UptimePercentageIntegrity = 'valid' | 'unavailable' | 'invalid';
+
+/**
+ * Never make corrupt input look like a fully-valid 0% or 100% uptime.  The
+ * calculator owns the fight-window validation; this is a last line of defence
+ * for stale/cached or otherwise malformed presentation data.
+ */
+export const getUptimePercentageIntegrity = (
+  uptimePercentage: number | null | undefined,
+): UptimePercentageIntegrity => {
+  if (uptimePercentage === null || uptimePercentage === undefined) return 'unavailable';
+  if (!Number.isFinite(uptimePercentage) || uptimePercentage < 0 || uptimePercentage > 100) {
+    return 'invalid';
+  }
+  return 'valid';
+};
+
 interface BuffUptimeProgressBarProps {
   buff: BuffUptime;
   reportId: string | null;
@@ -154,7 +171,14 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
     };
   }, [buff]);
 
-  const pct = Math.max(0, Math.min(100, currentData.uptimePercentage));
+  const uptimeIntegrity = getUptimePercentageIntegrity(currentData.uptimePercentage);
+  const pct = uptimeIntegrity === 'valid' ? currentData.uptimePercentage : 0;
+  const uptimeLabel =
+    uptimeIntegrity === 'valid'
+      ? `${Math.round(pct)}% uptime`
+      : uptimeIntegrity === 'unavailable'
+        ? 'uptime unavailable'
+        : 'uptime data integrity error';
 
   // Calculate delta from group average if available
   // For stacked abilities (e.g., Heat Shock), use the per-stack group average from currentData
@@ -162,7 +186,11 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
   const delta = React.useMemo(() => {
     const groupAverage =
       currentData.groupAverageUptimePercentage ?? buff.groupAverageUptimePercentage;
-    if (groupAverage !== undefined) {
+    if (
+      uptimeIntegrity === 'valid' &&
+      groupAverage !== undefined &&
+      getUptimePercentageIntegrity(groupAverage) === 'valid'
+    ) {
       return currentData.uptimePercentage - groupAverage;
     }
     return null;
@@ -170,6 +198,7 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
     currentData.uptimePercentage,
     currentData.groupAverageUptimePercentage,
     buff.groupAverageUptimePercentage,
+    uptimeIntegrity,
   ]);
 
   const onMainClick = React.useCallback(
@@ -217,7 +246,7 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
       <Box
         role="button"
         tabIndex={0}
-        aria-label={`${buff.abilityName}: ${Math.round(pct)}% uptime`}
+        aria-label={`${buff.abilityName}: ${uptimeLabel}`}
         onClick={onMainClick}
         onKeyDown={(e: React.KeyboardEvent) => {
           if (e.key === 'Enter' || e.key === ' ') {
@@ -249,7 +278,10 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
               .slice()
               .sort((a, b) => a.stackLevel - b.stackLevel) // Sort lowest to highest so highest renders last (on top)
               .map((stackData) => {
-                const stackPct = Math.max(0, Math.min(100, stackData.uptimePercentage));
+                const stackPct =
+                  getUptimePercentageIntegrity(stackData.uptimePercentage) === 'valid'
+                    ? stackData.uptimePercentage
+                    : 0;
                 const maxStacks = buff.allStacksData!.length;
                 return (
                   <Box
@@ -396,7 +428,11 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
                   : '1px 1px 2px rgba(255,255,255,0.8), 0 0 4px rgba(255,255,255,0.6)',
             }}
           >
-            {Math.round(pct)}%
+            {uptimeIntegrity === 'valid'
+              ? `${Math.round(pct)}%`
+              : uptimeIntegrity === 'unavailable'
+                ? 'Unavailable'
+                : 'Data error'}
           </Typography>
           {/* Delta indicator - only show if groupAverage is provided */}
           {delta !== null && (
@@ -556,7 +592,9 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
                     color: theme.palette.mode === 'dark' ? '#e2e8f0' : '#475569',
                   }}
                 >
-                  {Math.round(stackData.uptimePercentage)}%
+                  {getUptimePercentageIntegrity(stackData.uptimePercentage) === 'valid'
+                    ? `${Math.round(stackData.uptimePercentage)}%`
+                    : 'Data error'}
                 </Typography>
               </Box>
             </React.Fragment>
@@ -570,12 +608,26 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
           <Box sx={{ width: '100%', mt: 1 }}>
             {buff.allStacksData
               .slice()
-              .sort((a, b) => b.uptimePercentage - a.uptimePercentage) // Sort highest first
+              .sort((a, b) => {
+                const aPercentage =
+                  getUptimePercentageIntegrity(a.uptimePercentage) === 'valid'
+                    ? a.uptimePercentage
+                    : -1;
+                const bPercentage =
+                  getUptimePercentageIntegrity(b.uptimePercentage) === 'valid'
+                    ? b.uptimePercentage
+                    : -1;
+                return bPercentage - aPercentage;
+              }) // Sort highest valid uptime first; retain corrupt samples for explicit display
               .map((stackData) => {
-                const stackPct = Math.max(0, Math.min(100, stackData.uptimePercentage));
+                const stackIntegrity = getUptimePercentageIntegrity(stackData.uptimePercentage);
+                const stackPct = stackIntegrity === 'valid' ? stackData.uptimePercentage : 0;
+                const stackGroupAverage = stackData.groupAverageUptimePercentage;
                 const stackDelta =
-                  stackData.groupAverageUptimePercentage !== undefined
-                    ? stackData.uptimePercentage - stackData.groupAverageUptimePercentage
+                  stackIntegrity === 'valid' &&
+                  typeof stackGroupAverage === 'number' &&
+                  getUptimePercentageIntegrity(stackGroupAverage) === 'valid'
+                    ? stackData.uptimePercentage - stackGroupAverage
                     : null;
 
                 return (
@@ -732,7 +784,7 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
                                 : '1px 1px 1px rgba(255,255,255,0.8)',
                           }}
                         >
-                          {Math.round(stackPct)}%
+                          {stackIntegrity === 'valid' ? `${Math.round(stackPct)}%` : 'Data error'}
                         </Typography>
 
                         {/* Delta indicator */}
