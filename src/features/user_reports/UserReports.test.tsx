@@ -305,6 +305,25 @@ describe('UserReports Component', () => {
       expect(screen.getAllByText('Jan 01, 2024 10:00').length).toBeGreaterThanOrEqual(2);
     });
 
+    it('filters rendered reports and the displayed total by title', async () => {
+      renderWithProviders(<UserReports />, { token: validToken });
+
+      await waitFor(() => {
+        expect(screen.getByText('Test Report 1')).toBeInTheDocument();
+        expect(screen.getByText('Test Report 2')).toBeInTheDocument();
+      });
+
+      fireEvent.change(screen.getByPlaceholderText('Search by title or zone...'), {
+        target: { value: 'Report 1' },
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText('Test Report 1')).toBeInTheDocument();
+        expect(screen.queryByText('Test Report 2')).not.toBeInTheDocument();
+        expect(screen.getByText('Showing 1 of 2 reports')).toBeInTheDocument();
+      });
+    });
+
     it('should pass userID parameter when fetching reports', async () => {
       renderWithProviders(<UserReports />, { token: validToken });
 
