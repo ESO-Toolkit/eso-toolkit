@@ -106,6 +106,10 @@ export interface FindingOwnershipTransition {
   at: string;
   from?: FindingAssignee;
   to?: FindingAssignee;
+  /** Accountable actor for this immutable ownership transition. */
+  changedBy: FindingActor;
+  /** Audit evidence supporting the ownership change. */
+  evidence: string;
   reason?: string;
 }
 
@@ -114,8 +118,16 @@ export interface FindingResolutionEvent {
   at: string;
   status: Exclude<FindingResolutionStatus, 'open'>;
   previousStatus: FindingResolutionStatus;
+  /** Accountable actor for this immutable resolution transition. */
+  changedBy: FindingActor;
+  /** Human-readable audit evidence supporting the status change. */
   note: string;
-  changedBy?: FindingActor;
+}
+
+export interface FindingOwnershipChange {
+  changedBy: FindingActor;
+  evidence: string;
+  reason?: string;
 }
 
 export interface PinnedFindingSeed {
@@ -200,7 +212,7 @@ export interface SharedFindingAssignee {
 }
 
 export interface SharedFindingResolutionEvent extends Omit<FindingResolutionEvent, 'changedBy'> {
-  changedBy?: FindingActor | SharedFindingActor;
+  changedBy: FindingActor | SharedFindingActor;
 }
 
 export interface SharedFindingTimeline {
@@ -243,6 +255,8 @@ export interface PrivacySafeFindingOwnershipTransition {
   afterAnchorMs: number;
   from?: SharedFindingAssignee;
   to?: SharedFindingAssignee;
+  changedBy: SharedFindingActor;
+  evidence: string;
   reason?: string;
 }
 
@@ -251,7 +265,7 @@ export interface PrivacySafeFindingResolutionEvent extends Omit<
   'at' | 'changedBy'
 > {
   afterAnchorMs: number;
-  changedBy?: SharedFindingActor;
+  changedBy: SharedFindingActor;
 }
 
 interface SharedPinnedFindingBase extends Omit<
@@ -276,6 +290,8 @@ export interface IdentifiedSharedPinnedFinding extends SharedPinnedFindingBase {
       at: string;
       from?: SharedFindingAssignee;
       to?: SharedFindingAssignee;
+      changedBy: FindingActor;
+      evidence: string;
       reason?: string;
     }>;
   };
@@ -436,6 +452,14 @@ const cloneActor = (actor: unknown, fieldName: string): FindingActor | undefined
     displayName: validateRequiredText(actor.displayName, `${fieldName} displayName`),
     ...(role === undefined ? {} : { role: validateRole(role, `${fieldName} role`) }),
   };
+};
+
+const cloneRequiredActor = (actor: unknown, fieldName: string): FindingActor => {
+  const cloned = cloneActor(actor, fieldName);
+  if (cloned === undefined) {
+    throw new Error(`${fieldName} is required`);
+  }
+  return cloned;
 };
 
 const ISO_DATE_PATTERN =
@@ -689,13 +713,13 @@ const cloneResolutionInput = (event: unknown): Omit<FindingResolutionEvent, 'pre
     throw new Error('Invalid finding resolution event');
   }
 
-  const changedBy = cloneActor(event.changedBy, 'resolution event changedBy');
+  const changedBy = cloneRequiredActor(event.changedBy, 'resolution event changedBy');
   return {
     id: validateRequiredText(event.id, 'resolution event id'),
     at: validateIsoDate(event.at, 'resolution event at'),
     status: event.status as Exclude<FindingResolutionStatus, 'open'>,
     note: validateRequiredText(event.note, 'resolution event note'),
-    ...(changedBy === undefined ? {} : { changedBy }),
+    changedBy,
   };
 };
 
@@ -722,10 +746,14 @@ const cloneOwnershipTransition = (transition: unknown): FindingOwnershipTransiti
   const from = cloneAssignee(transition.from);
   const to = cloneAssignee(transition.to);
   const reason = validateOptionalText(transition.reason, 'ownership transition reason');
+  const changedBy = cloneRequiredActor(transition.changedBy, 'ownership transition changedBy');
+  const evidence = validateRequiredText(transition.evidence, 'ownership transition evidence');
   return {
     at: validateIsoDate(transition.at, 'ownership transition at'),
     ...(from === undefined ? {} : { from }),
     ...(to === undefined ? {} : { to }),
+    changedBy,
+    evidence,
     ...(reason === undefined ? {} : { reason }),
   };
 };
@@ -894,7 +922,7 @@ export const assignFinding = (
   finding: PinnedFinding,
   assignee: FindingAssignee | undefined,
   at: string,
-  reason?: string,
+  change: FindingOwnershipChange,
 ): PinnedFinding => {
   const validatedAt = validateIsoDate(at, 'ownership transition at');
   const detached = cloneFinding(finding);
@@ -903,11 +931,15 @@ export const assignFinding = (
     throw new Error('Backdated ownership transition');
   }
   const validatedAssignee = cloneAssignee(assignee);
-  const validatedReason = validateOptionalText(reason, 'ownership transition reason');
+  const changedBy = cloneRequiredActor(change.changedBy, 'ownership actor');
+  const evidence = validateRequiredText(change.evidence, 'ownership evidence');
+  const validatedReason = validateOptionalText(change.reason, 'ownership transition reason');
   const transition: FindingOwnershipTransition = {
     at: validatedAt,
     ...(detached.ownership.current ? { from: { ...detached.ownership.current } } : {}),
     ...(validatedAssignee ? { to: validatedAssignee } : {}),
+    changedBy,
+    evidence,
     ...(validatedReason ? { reason: validatedReason } : {}),
   };
 
@@ -960,6 +992,14 @@ const redactActor = (actor: FindingActor | undefined): SharedFindingActor | unde
   return actor.role ? { role: actor.role } : {};
 };
 
+const redactRequiredActor = (actor: FindingActor): SharedFindingActor => {
+  const redacted = redactActor(actor);
+  if (redacted === undefined) {
+    throw new Error('Required finding actor cannot be redacted');
+  }
+  return redacted;
+};
+
 const redactAssignee = (
   assignee: FindingAssignee | undefined,
 ): SharedFindingAssignee | undefined => {
@@ -1008,6 +1048,7 @@ const identityIdentifiersFor = (finding: PinnedFinding): readonly string[] => {
   finding.ownership.history.forEach((transition) => {
     addAssigneeIdentifiers(identifiers, transition.from);
     addAssigneeIdentifiers(identifiers, transition.to);
+    addActorIdentifiers(identifiers, transition.changedBy);
   });
 
   return [...identifiers].filter(Boolean).sort((left, right) => right.length - left.length);
@@ -1207,9 +1248,11 @@ export const sharePinnedFinding = ((
       ownership: {
         current: detached.ownership.current && { ...detached.ownership.current },
         history: detached.ownership.history.map((transition) => ({
-          ...transition,
+          at: transition.at,
           ...(transition.from ? { from: { ...transition.from } } : {}),
           ...(transition.to ? { to: { ...transition.to } } : {}),
+          changedBy: { ...transition.changedBy },
+          evidence: redactText(transition.evidence, durableIdentifiers),
           ...(transition.reason
             ? { reason: redactText(transition.reason, durableIdentifiers) }
             : {}),
@@ -1219,7 +1262,7 @@ export const sharePinnedFinding = ((
         ...event,
         id: shareId(event.id, 'resolution', shareIdContext),
         note: redactText(event.note, durableIdentifiers),
-        ...(event.changedBy ? { changedBy: { ...event.changedBy } } : {}),
+        changedBy: { ...event.changedBy },
       })),
       sharedWith: { audience: 'raid-lead', includesPlayerIdentifiers: true },
     };
@@ -1274,6 +1317,8 @@ export const sharePinnedFinding = ((
         afterAnchorMs: elapsedAfterTimelineAnchor(transition.at, timelineContext),
         ...(transition.from ? { from: redactAssignee(transition.from) } : {}),
         ...(transition.to ? { to: redactAssignee(transition.to) } : {}),
+        changedBy: redactRequiredActor(transition.changedBy),
+        evidence: redactPrivacySafeText(transition.evidence, identityIdentifiers),
         ...(transition.reason
           ? { reason: redactPrivacySafeText(transition.reason, identityIdentifiers) }
           : {}),
@@ -1285,7 +1330,7 @@ export const sharePinnedFinding = ((
       status: event.status,
       previousStatus: event.previousStatus,
       note: redactPrivacySafeText(event.note, identityIdentifiers),
-      ...(event.changedBy ? { changedBy: redactActor(event.changedBy) } : {}),
+      changedBy: redactRequiredActor(event.changedBy),
     })),
     timeline: { anchor: 'earliest-recorded-finding-event' },
     sharedWith: { audience: validatedRecipient.audience, includesPlayerIdentifiers: false },

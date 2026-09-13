@@ -47,17 +47,17 @@ const seed: PinnedFindingSeed = {
 };
 const finding = pinFinding(seed, '2026-09-08T12:01:00.000Z');
 const assignedFinding = appendResolution(
-  assignFinding(
-    finding,
-    { kind: 'role', role: 'damage-dealer' },
-    '2026-09-08T12:02:00.000Z',
-    'Cover interrupts during the opening phase.',
-  ),
+  assignFinding(finding, { kind: 'role', role: 'damage-dealer' }, '2026-09-08T12:02:00.000Z', {
+    changedBy: { id: 'reviewer-1', displayName: 'Raid Lead', role: 'tank' },
+    evidence: 'Pull review action log',
+    reason: 'Cover interrupts during the opening phase.',
+  }),
   {
     id: 'resolution-1',
     at: '2026-09-08T12:03:00.000Z',
     status: 'acknowledged',
     note: 'The assignment was acknowledged.',
+    changedBy: { id: 'reviewer-1', displayName: 'Raid Lead', role: 'tank' },
   },
 );
 
@@ -99,14 +99,20 @@ describe('PinnedFindingsPanel', () => {
     expect(screen.getByRole('status')).toHaveTextContent('Player identifiers remain hidden');
   });
 
-  it('renders ownership and resolution lineage without player identifiers', () => {
+  it('renders accountable internal lineage while retaining privacy-safe sharing', () => {
     renderPanel({ status: 'ready', findings: [assignedFinding] });
 
     expect(screen.getByText('Ownership lineage')).toBeInTheDocument();
     expect(screen.getByText(/Unassigned.*role \(damage dealer\)/)).toBeInTheDocument();
     expect(screen.getByText(/Cover interrupts during the opening phase/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Raid Lead.*tank reviewer.*Pull review action log/),
+    ).toBeInTheDocument();
     expect(screen.getByText(/open.*acknowledged/)).toBeInTheDocument();
     expect(screen.getByText(/The assignment was acknowledged/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Raid Lead.*tank reviewer.*The assignment was acknowledged/),
+    ).toBeInTheDocument();
     expect(screen.queryByText('Ada')).not.toBeInTheDocument();
   });
 
@@ -224,6 +230,38 @@ describe('PinnedFindingsPanel', () => {
     expect(regions).toHaveLength(2);
     expect(new Set(regions.map((region) => region.getAttribute('aria-labelledby'))).size).toBe(2);
     expect(screen.getAllByRole('combobox', { name: 'Share recipient' })).toHaveLength(2);
+  });
+
+  it('keeps private sharing controls keyboard-focusable with named state in both theme modes', () => {
+    const onShare = jest.fn();
+    const { rerender } = render(
+      <ThemeProvider theme={createTheme({ palette: { mode: 'light' } })}>
+        <PinnedFindingsPanel
+          state={{ status: 'ready', findings: [assignedFinding] }}
+          onShare={onShare}
+        />
+      </ThemeProvider>,
+    );
+
+    const recipient = screen.getByRole('combobox', { name: 'Share recipient' });
+    const share = screen.getByRole('button', { name: /Prepare privacy-safe share/ });
+    recipient.focus();
+    expect(recipient).toHaveFocus();
+    expect(recipient).toHaveAccessibleName('Share recipient');
+    expect(share).toHaveAccessibleName(/Prepare privacy-safe share/);
+    expect(screen.getByText('Player identifiers hidden')).toBeInTheDocument();
+
+    rerender(
+      <ThemeProvider theme={createTheme({ palette: { mode: 'dark' } })}>
+        <PinnedFindingsPanel
+          state={{ status: 'ready', findings: [assignedFinding] }}
+          onShare={onShare}
+        />
+      </ThemeProvider>,
+    );
+
+    expect(screen.getByRole('combobox', { name: 'Share recipient' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: /Prepare privacy-safe share/ })).toBeEnabled();
   });
 
   it('renders an accessible empty state', () => {

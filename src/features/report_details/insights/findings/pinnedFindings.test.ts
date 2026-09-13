@@ -43,6 +43,20 @@ const seed: PinnedFindingSeed = {
   },
 };
 
+const reviewActor = { id: 'player-lead', displayName: 'Raid Lead', role: 'tank' } as const;
+
+const ownershipChange = (
+  reason = 'Ownership recorded during the pull review.',
+): {
+  changedBy: typeof reviewActor;
+  evidence: string;
+  reason: string;
+} => ({
+  changedBy: reviewActor,
+  evidence: 'Pull review action log',
+  reason,
+});
+
 describe('pinned findings model', () => {
   it('pins and unpins without losing finding evidence or provenance', () => {
     const pinned = pinFinding(seed, '2026-09-08T12:01:00.000Z');
@@ -111,12 +125,13 @@ describe('pinned findings model', () => {
       pinned,
       { kind: 'player', id: 'player-lead', displayName: 'Raid Lead', role: 'tank' },
       '2026-09-08T12:03:00.000Z',
-      'Raid lead will coordinate the correction.',
+      ownershipChange('Raid lead will coordinate the correction.'),
     );
     const reassigned = assignFinding(
       assigned,
       { kind: 'role', role: 'damage-dealer' },
       '2026-09-08T12:04:00.000Z',
+      ownershipChange(),
     );
 
     expect(pinned.ownership.history).toEqual([]);
@@ -125,8 +140,14 @@ describe('pinned findings model', () => {
     expect(reassigned.ownership.history[1]).toMatchObject({
       from: { id: 'player-lead', displayName: 'Raid Lead' },
       to: { kind: 'role', role: 'damage-dealer' },
+      changedBy: reviewActor,
+      evidence: 'Pull review action log',
     });
     expect(reassigned.ownership.current).toEqual({ kind: 'role', role: 'damage-dealer' });
+
+    (reassigned.ownership.history[0].changedBy as { displayName: string }).displayName =
+      'Mutated reviewer';
+    expect(assigned.ownership.history[0].changedBy.displayName).toBe('Raid Lead');
   });
 
   it('appends resolution history with transparent prior state', () => {
@@ -143,6 +164,7 @@ describe('pinned findings model', () => {
       at: '2026-09-08T12:06:00.000Z',
       status: 'resolved',
       note: 'Safe-side assignment was added to the pull plan.',
+      changedBy: reviewActor,
     });
 
     expect(pinned.resolutionHistory).toEqual([]);
@@ -164,6 +186,7 @@ describe('pinned findings model', () => {
         at: '2026-09-08T12:05:00.000Z',
         status: 'resolved',
         note: 'Cannot skip acknowledgement.',
+        changedBy: reviewActor,
       }),
     ).toThrow('Invalid resolution transition: open -> resolved');
 
@@ -172,6 +195,7 @@ describe('pinned findings model', () => {
       at: '2026-09-08T12:05:00.000Z',
       status: 'acknowledged',
       note: 'Reviewed.',
+      changedBy: reviewActor,
     });
 
     expect(() =>
@@ -180,8 +204,33 @@ describe('pinned findings model', () => {
         at: '2026-09-08T12:06:00.000Z',
         status: 'in-progress',
         note: 'Duplicate id.',
+        changedBy: reviewActor,
       }),
     ).toThrow('Duplicate resolution id: resolution-1');
+  });
+
+  it('requires accountable actors and evidence for ownership and resolution transitions', () => {
+    const pinned = pinFinding(seed, '2026-09-08T12:01:00.000Z');
+
+    expect(() =>
+      assignFinding(pinned, { kind: 'team' }, '2026-09-08T12:03:00.000Z', {
+        changedBy: reviewActor,
+        evidence: ' ',
+      }),
+    ).toThrow('Invalid ownership evidence');
+    expect(() =>
+      assignFinding(pinned, { kind: 'team' }, '2026-09-08T12:03:00.000Z', {
+        evidence: 'Pull review action log',
+      } as unknown as ReturnType<typeof ownershipChange>),
+    ).toThrow('ownership actor is required');
+    expect(() =>
+      appendResolution(pinned, {
+        id: 'unattributed-resolution',
+        at: '2026-09-08T12:05:00.000Z',
+        status: 'acknowledged',
+        note: 'A transition without an accountable reviewer is invalid.',
+      } as Parameters<typeof appendResolution>[1]),
+    ).toThrow('resolution event changedBy is required');
   });
 
   it('detaches nested resolution and ownership data on every update', () => {
@@ -190,6 +239,7 @@ describe('pinned findings model', () => {
       pinned,
       { kind: 'player', id: 'player-lead', displayName: 'Raid Lead', role: 'tank' },
       '2026-09-08T12:03:00.000Z',
+      ownershipChange(),
     );
     const acknowledged = appendResolution(assigned, {
       id: 'resolution-1',
@@ -207,10 +257,20 @@ describe('pinned findings model', () => {
   });
 
   it('always redacts player identifiers for external shares while retaining evidence context', () => {
-    const assigned = assignFinding(
-      pinFinding(seed, '2026-09-08T12:01:00.000Z'),
-      { kind: 'player', id: 'player-lead', displayName: 'Raid Lead', role: 'tank' },
-      '2026-09-08T12:03:00.000Z',
+    const assigned = appendResolution(
+      assignFinding(
+        pinFinding(seed, '2026-09-08T12:01:00.000Z'),
+        { kind: 'player', id: 'player-lead', displayName: 'Raid Lead', role: 'tank' },
+        '2026-09-08T12:03:00.000Z',
+        ownershipChange(),
+      ),
+      {
+        id: 'resolution-external-redaction',
+        at: '2026-09-08T12:04:00.000Z',
+        status: 'acknowledged',
+        note: 'Raid Lead reviewed the assignment.',
+        changedBy: reviewActor,
+      },
     );
     const shared = sharePinnedFinding(assigned, {
       audience: 'external',
@@ -225,6 +285,13 @@ describe('pinned findings model', () => {
     });
     expect(shared.evidence[0]).not.toHaveProperty('eventId');
     expect(shared.ownership.current).toEqual({ kind: 'player', role: 'tank' });
+    expect(shared.ownership.history[0]).toMatchObject({
+      changedBy: { role: 'tank' },
+      evidence: 'Pull review action log',
+    });
+    expect(shared.ownership.history[0].changedBy).not.toHaveProperty('id');
+    expect(shared.resolutionHistory[0].changedBy).toEqual({ role: 'tank' });
+    expect(shared.resolutionHistory[0].changedBy).not.toHaveProperty('displayName');
     expect(JSON.stringify(shared)).not.toContain('player-ada');
     expect(JSON.stringify(shared)).not.toContain('player-lead');
     expect(JSON.stringify(shared)).not.toContain('Ada');
@@ -239,6 +306,12 @@ describe('pinned findings model', () => {
       pinnedAfterAnchorMs: 60_000,
       changedAfterAnchorMs: 60_000,
     });
+
+    const raidLeadShare = sharePinnedFinding(assigned, {
+      audience: 'raid-lead',
+      allowPlayerIdentifiers: true,
+    });
+    expect(raidLeadShare.resolutionHistory[0].changedBy).toEqual(reviewActor);
   });
 
   it('exports non-identified shares with useful elapsed chronology but no wall-clock or report ids', () => {
@@ -258,6 +331,7 @@ describe('pinned findings model', () => {
         ),
         { kind: 'player', id: 'player-lead', displayName: 'Raid Lead', role: 'tank' },
         '2026-09-08T12:03:00.000Z',
+        ownershipChange(),
       ),
       {
         id: 'resolution-private-1',
@@ -512,15 +586,16 @@ describe('pinned findings model', () => {
       'Invalid ISO date for pin changedAt',
     );
     expect(() => unpinFinding(pinned, '2026-09-08T12:02:00+00:00')).not.toThrow();
-    expect(() => assignFinding(pinned, { kind: 'team' }, '2026-13-08T12:03:00.000Z')).toThrow(
-      'Invalid ISO date for ownership transition at',
-    );
+    expect(() =>
+      assignFinding(pinned, { kind: 'team' }, '2026-13-08T12:03:00.000Z', ownershipChange()),
+    ).toThrow('Invalid ISO date for ownership transition at');
     expect(() =>
       appendResolution(pinned, {
         id: 'resolution-invalid-date',
         at: '2026-09-08T25:05:00.000Z',
         status: 'acknowledged',
         note: 'Invalid date must not enter lineage.',
+        changedBy: reviewActor,
       }),
     ).toThrow('Invalid ISO date for resolution event at');
 
@@ -537,18 +612,24 @@ describe('pinned findings model', () => {
     const pinned = pinFinding(seed, '2026-09-08T12:01:00.000Z');
 
     expect(() => unpinFinding(pinned, '2026-09-08T12:00:00.000Z')).toThrow('Backdated pin change');
-    expect(() => assignFinding(pinned, { kind: 'team' }, '2026-09-08T12:00:00.000Z')).toThrow(
-      'Backdated ownership transition',
-    );
+    expect(() =>
+      assignFinding(pinned, { kind: 'team' }, '2026-09-08T12:00:00.000Z', ownershipChange()),
+    ).toThrow('Backdated ownership transition');
     expect(() =>
       appendResolution(pinned, {
         id: 'resolution-before-pin',
         at: '2026-09-08T12:00:00.000Z',
         status: 'acknowledged',
         note: 'This must not predate the pin.',
+        changedBy: reviewActor,
       }),
     ).toThrow('Backdated resolution event');
-    const assigned = assignFinding(pinned, { kind: 'team' }, '2026-09-08T12:03:00.000Z');
+    const assigned = assignFinding(
+      pinned,
+      { kind: 'team' },
+      '2026-09-08T12:03:00.000Z',
+      ownershipChange(),
+    );
     expect(() => unpinFinding(assigned, '2026-09-08T12:02:00.000Z')).toThrow(
       'Backdated pin change',
     );
@@ -557,7 +638,14 @@ describe('pinned findings model', () => {
       ...pinned,
       ownership: {
         current: { kind: 'team' },
-        history: [{ at: '2026-09-08T12:00:00.000Z', to: { kind: 'team' } }],
+        history: [
+          {
+            at: '2026-09-08T12:00:00.000Z',
+            to: { kind: 'team' },
+            changedBy: reviewActor,
+            evidence: 'Pull review action log',
+          },
+        ],
       },
     } as typeof pinned;
     expect(() => sharePinnedFinding(malformedOwnership, { audience: 'external' })).toThrow(
@@ -573,6 +661,7 @@ describe('pinned findings model', () => {
           status: 'acknowledged',
           previousStatus: 'open',
           note: 'This must not predate the pin.',
+          changedBy: reviewActor,
         },
       ],
     } as typeof pinned;
@@ -624,6 +713,7 @@ describe('pinned findings model', () => {
         pinned,
         { kind: 'invalid' } as unknown as { kind: 'team' },
         '2026-09-08T12:03:00.000Z',
+        ownershipChange(),
       ),
     ).toThrow('Invalid finding assignee');
     expect(() =>
@@ -632,6 +722,7 @@ describe('pinned findings model', () => {
         at: '2026-09-08T12:03:00.000Z',
         status: 'acknowledged',
         note: 'Invalid id.',
+        changedBy: reviewActor,
       }),
     ).toThrow('Invalid resolution event id');
     expect(() =>
@@ -678,6 +769,7 @@ describe('pinned findings model', () => {
           at: '2026-09-08T12:05:00.000Z',
           status: 'acknowledged',
           note: `${displayName} reviewed this finding.`,
+          changedBy: reviewActor,
         },
       );
 
@@ -726,6 +818,7 @@ describe('pinned findings model', () => {
         at: '2026-09-08T12:05:00.000Z',
         status: 'acknowledged',
         note: 'No identity is encoded in these durable ids.',
+        changedBy: reviewActor,
       },
     );
     const sharedOpaque = sharePinnedFinding(opaque, { audience: 'external' });
@@ -784,17 +877,17 @@ describe('pinned findings model', () => {
       },
       '2026-09-08T12:01:00.000Z',
     );
-    const assigned = assignFinding(
-      pinned,
-      { kind: 'team' },
-      '2026-09-08T12:03:00.000Z',
-      `Owner for ${findingId}`,
-    );
+    const assigned = assignFinding(pinned, { kind: 'team' }, '2026-09-08T12:03:00.000Z', {
+      changedBy: reviewActor,
+      evidence: `Action log for ${findingId}`,
+      reason: `Owner for ${findingId}`,
+    });
     const acknowledged = appendResolution(assigned, {
       id: resolutionId,
       at: '2026-09-08T12:05:00.000Z',
       status: 'acknowledged',
       note: `Resolution ${resolutionId} closes ${findingId}.`,
+      changedBy: reviewActor,
     });
 
     for (const recipient of [
@@ -812,9 +905,15 @@ describe('pinned findings model', () => {
       pinFinding(seed, '2026-09-08T12:01:00.000Z'),
       { kind: 'team' },
       '2026-09-08T12:04:00.000Z',
+      ownershipChange(),
     );
     expect(() =>
-      assignFinding(assigned, { kind: 'role', role: 'healer' }, '2026-09-08T12:03:00.000Z'),
+      assignFinding(
+        assigned,
+        { kind: 'role', role: 'healer' },
+        '2026-09-08T12:03:00.000Z',
+        ownershipChange(),
+      ),
     ).toThrow('Backdated ownership transition');
 
     const acknowledged = appendResolution(assigned, {
@@ -822,6 +921,7 @@ describe('pinned findings model', () => {
       at: '2026-09-08T12:06:00.000Z',
       status: 'acknowledged',
       note: 'Reviewed.',
+      changedBy: reviewActor,
     });
     expect(() =>
       appendResolution(acknowledged, {
@@ -829,6 +929,7 @@ describe('pinned findings model', () => {
         at: '2026-09-08T12:05:00.000Z',
         status: 'resolved',
         note: 'Backdated.',
+        changedBy: reviewActor,
       }),
     ).toThrow('Backdated resolution event');
   });
@@ -838,18 +939,21 @@ describe('pinned findings model', () => {
       pinFinding(seed, '2026-09-08T12:01:00.000Z'),
       { kind: 'team' },
       '2026-09-08T12:03:00.000Z',
+      ownershipChange(),
     );
     const acknowledged = appendResolution(assigned, {
       id: 'resolution-lineage-1',
       at: '2026-09-08T12:05:00.000Z',
       status: 'acknowledged',
       note: 'Reviewed.',
+      changedBy: reviewActor,
     });
     const progressed = appendResolution(acknowledged, {
       id: 'resolution-lineage-2',
       at: '2026-09-08T12:06:00.000Z',
       status: 'in-progress',
       note: 'In progress.',
+      changedBy: reviewActor,
     });
 
     expect(() =>
@@ -904,11 +1008,13 @@ describe('pinned findings model', () => {
       pinFinding(seed, '2026-09-08T12:01:00.000Z'),
       { kind: 'role', id: 'role-secret-id', displayName: 'Secret Healer', role: 'healer' },
       '2026-09-08T12:03:00.000Z',
+      ownershipChange(),
     );
     const teamAssigned = assignFinding(
       roleAssigned,
       { kind: 'team', id: 'team-secret-id', displayName: 'Secret Team' },
       '2026-09-08T12:04:00.000Z',
+      ownershipChange(),
     );
     const shared = sharePinnedFinding(teamAssigned, { audience: 'external' });
 
@@ -926,6 +1032,7 @@ describe('pinned findings model', () => {
       pinFinding(seed, '2026-09-08T12:01:00.000Z'),
       { kind: 'player', id: 'player-lead', displayName: 'Raid Lead', role: 'tank' },
       '2026-09-08T12:03:00.000Z',
+      ownershipChange(),
     );
     const source = appendResolution(assigned, {
       id: 'resolution-1',
