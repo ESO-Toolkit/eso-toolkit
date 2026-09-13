@@ -44,10 +44,53 @@ function tabFromHash(hash: string): TopTab {
   return (VALID_TABS as readonly string[]).includes(h) ? (h as TopTab) : 'stats';
 }
 
+interface CalculatorPanelsProps {
+  readonly tab: TopTab;
+  readonly showScribing: boolean;
+}
+
+// Panel content can be considerably more expensive than the tab strip. Keeping it in a deferred,
+// memoized subtree lets the selected tab state commit in the input render before panel work begins.
+const CalculatorPanels = React.memo<CalculatorPanelsProps>(({ tab, showScribing }) => (
+  <>
+    <Box className="u-tab-enter" sx={{ display: tab === 'stats' ? 'block' : 'none' }}>
+      <Calculator />
+    </Box>
+
+    {tab === 'ultimate' && (
+      <Container maxWidth="lg" sx={{ py: 3 }}>
+        <Suspense fallback={<UltimateCalculatorSkeleton />}>
+          <UltimateCalculator />
+        </Suspense>
+      </Container>
+    )}
+
+    {showScribing && (
+      <Box sx={{ display: tab === 'scribing' ? 'block' : 'none' }}>
+        <Suspense fallback={<ScribingSimulatorSkeleton />}>
+          {/* ScribingSimulator provides its own <Container> and entrance fade. Kept mounted so its
+              data is not reloaded, and the skeleton is not re-shown, on every switch back. */}
+          <ScribingSimulator />
+        </Suspense>
+      </Box>
+    )}
+  </>
+));
+
+CalculatorPanels.displayName = 'CalculatorPanels';
+
 export const CalculatorPage: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const tab = tabFromHash(location.hash);
+  const locationTab = tabFromHash(location.hash);
+  const [tab, setTab] = React.useState<TopTab>(locationTab);
+  const deferredTab = React.useDeferredValue(tab);
+
+  // A direct URL edit or browser history navigation remains authoritative. Clicks update local
+  // state first so the selected-tab affordance is not delayed behind Router navigation work.
+  React.useEffect(() => {
+    setTab(locationTab);
+  }, [locationTab]);
 
   // The Scribing tab lazy-loads on first visit, then stays mounted (toggled with
   // display:none, like the Stats tab) instead of being torn down on every tab
@@ -59,6 +102,7 @@ export const CalculatorPage: React.FC = () => {
   if (tab === 'scribing') scribingEverActiveRef.current = true;
 
   const handleChange = (_: React.SyntheticEvent, next: TopTab): void => {
+    setTab(next);
     // Route the tab through React Router so the URL hash stays the single source
     // of truth. Preserve the live query string (the Scribing tab mirrors its
     // build there) and use `replace` so switching tabs doesn't stack history.
@@ -150,36 +194,10 @@ export const CalculatorPage: React.FC = () => {
         </Tabs>
       </Container>
 
-      {/* Keep the stat calculator mounted (display:none) so switching back is
-          instant and its sticky-footer measurements aren't torn down. The
-          `u-tab-enter` entrance animation re-runs every time this wrapper flips
-          from display:none back to block (CSS animations restart on that
-          transition), so the Stats tab fades in on first load AND on every
-          switch-back — matching the Ultimate and Scribing tabs. It uses a
-          `backwards`-fill fade (no lingering transform) so the calculator's
-          sticky results footer is unaffected. */}
-      <Box className="u-tab-enter" sx={{ display: tab === 'stats' ? 'block' : 'none' }}>
-        <Calculator />
-      </Box>
-
-      {tab === 'ultimate' && (
-        <Container maxWidth="lg" sx={{ py: 3 }}>
-          <Suspense fallback={<UltimateCalculatorSkeleton />}>
-            <UltimateCalculator />
-          </Suspense>
-        </Container>
-      )}
-
-      {scribingEverActiveRef.current && (
-        <Box sx={{ display: tab === 'scribing' ? 'block' : 'none' }}>
-          <Suspense fallback={<ScribingSimulatorSkeleton />}>
-            {/* ScribingSimulator provides its own <Container> and entrance fade.
-                Kept mounted (display toggle) so its data isn't reloaded — and the
-                skeleton isn't re-shown — on every switch back to this tab. */}
-            <ScribingSimulator />
-          </Suspense>
-        </Box>
-      )}
+      {/* Keep the stat calculator mounted (display:none) so switching back is instant and its
+          sticky-footer measurements are not torn down. Deferring this subtree makes the tab pill
+          responsive even when a newly selected panel has expensive render work. */}
+      <CalculatorPanels tab={deferredTab} showScribing={scribingEverActiveRef.current} />
     </Box>
   );
 };

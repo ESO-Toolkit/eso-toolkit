@@ -1,8 +1,11 @@
 /**
  * Opt-in damage-statistics calculation-core benchmark.
  *
- * Run all required sizes with:
+ * Run calculation-core evidence for all required sizes with:
  *   npm run script -- scripts/benchmark-damage-statistics-worker.ts
+ *
+ * Include the production worker and entry-chunk budget check after a build:
+ *   npm run build && npm run script -- scripts/benchmark-damage-statistics-worker.ts --require-build
  *
  * This intentionally is not a Jest test: timings are evidence, not a flaky
  * pass/fail gate. It measures the clone-safe calculation registered by
@@ -10,6 +13,9 @@
  * The browser performance suite separately measures the real worker boundary.
  */
 import { performance } from 'node:perf_hooks';
+import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { join } from 'node:path';
+import { gzipSync } from 'node:zlib';
 
 import type { FightFragment } from '../src/graphql/gql/graphql';
 import type { DamageEvent, Resources } from '../src/types/combatlogEvents';
@@ -23,6 +29,8 @@ const PLAYER_IDS = [101, 102, 103, 104] as const;
 const TARGET_ID = 999;
 const EXCLUDED_TARGET_ID = 998;
 const DAMAGE_AMOUNT = 100;
+const MAX_EAGER_CHUNK_BYTES = 600 * 1024;
+const MAX_WORKER_CHUNK_BYTES = 600 * 1024;
 
 const EMPTY_RESOURCES: Resources = {
   hitPoints: 0,
@@ -54,6 +62,18 @@ interface BenchmarkResult {
   actualEventCount: number;
   correct: boolean;
   hasNaN: boolean;
+}
+
+interface BundleChunkEvidence {
+  name: string;
+  rawBytes: number;
+  gzipBytes: number;
+}
+
+interface BundleEvidence {
+  entryChunk: BundleChunkEvidence;
+  workerChunks: BundleChunkEvidence[];
+  totalJavaScriptBytes: number;
 }
 
 const FIGHT: FightFragment = {
@@ -152,8 +172,69 @@ function runBenchmark(eventCount: number): BenchmarkResult {
   };
 }
 
+function toChunkEvidence(name: string, assetsDirectory: string): BundleChunkEvidence {
+  const filePath = join(assetsDirectory, name);
+  return {
+    name,
+    rawBytes: statSync(filePath).size,
+    gzipBytes: gzipSync(readFileSync(filePath), { level: 9 }).length,
+  };
+}
+
+function collectBundleEvidence(required: boolean): BundleEvidence | null {
+  const assetsDirectory = join(process.cwd(), 'build', 'assets');
+  try {
+    const files = readdirSync(assetsDirectory).filter(
+      (file) => file.endsWith('.js') && !file.endsWith('.map'),
+    );
+    const chunks = files.map((file) => toChunkEvidence(file, assetsDirectory));
+    const entryChunk = chunks.find((chunk) => /^index-[\w-]+\.js$/.test(chunk.name));
+    const workerChunks = chunks.filter((chunk) =>
+      /(?:sharedworker|workerpool|worker-)/i.test(chunk.name),
+    );
+
+    if (!entryChunk || workerChunks.length === 0) {
+      throw new Error(
+        'Expected the production entry and damage-statistics worker chunks in build/assets.',
+      );
+    }
+
+    if (entryChunk.rawBytes > MAX_EAGER_CHUNK_BYTES) {
+      throw new Error(
+        `Entry chunk ${entryChunk.name} exceeds the ${MAX_EAGER_CHUNK_BYTES}-byte budget.`,
+      );
+    }
+    if (workerChunks.some((chunk) => chunk.rawBytes > MAX_WORKER_CHUNK_BYTES)) {
+      throw new Error(`A worker chunk exceeds the ${MAX_WORKER_CHUNK_BYTES}-byte budget.`);
+    }
+
+    return {
+      entryChunk,
+      workerChunks,
+      totalJavaScriptBytes: chunks.reduce((total, chunk) => total + chunk.rawBytes, 0),
+    };
+  } catch (error) {
+    if (!required && (error as NodeJS.ErrnoException).code === 'ENOENT') return null;
+    throw error;
+  }
+}
+
 const results = EVENT_COUNTS.map(runBenchmark);
-console.log(JSON.stringify({ benchmark: 'damage-statistics-calculation-core', results }));
+const bundle = collectBundleEvidence(process.argv.includes('--require-build'));
+console.log(
+  JSON.stringify({
+    schemaVersion: 1,
+    benchmark: 'damage-statistics-calculation-core',
+    fixture: 'four-player, selected-target damage events',
+    eventCounts: EVENT_COUNTS,
+    budgets: {
+      eagerChunkBytes: MAX_EAGER_CHUNK_BYTES,
+      workerChunkBytes: MAX_WORKER_CHUNK_BYTES,
+    },
+    bundle,
+    results,
+  }),
+);
 
 if (results.some((result) => !result.correct)) {
   process.exitCode = 1;

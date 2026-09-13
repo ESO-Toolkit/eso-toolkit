@@ -78,7 +78,7 @@ export default defineConfig({
         ...devices['Desktop Chrome'],
         // Disable browser cache for consistent measurements
         launchOptions: {
-          args: ['--disable-cache'],
+          args: ['--disable-cache', '--enable-precise-memory-info'],
         },
       },
     },
