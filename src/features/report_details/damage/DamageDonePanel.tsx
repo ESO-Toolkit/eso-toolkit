@@ -1,4 +1,4 @@
-import { Box, Typography } from '@mui/material';
+import { Alert, Box, Button, Typography } from '@mui/material';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 
@@ -18,12 +18,20 @@ import {
 import type { ReportFightContextInput } from '../../../store/contextTypes';
 import { selectActorsById } from '../../../store/master_data/masterDataSelectors';
 import { KnownAbilities } from '../../../types/abilities';
-import { calculateDamageStatisticsWithActivity } from '../../../utils/activePercentageUtils';
+import type { DamageStatisticsWithActivity } from '../../../utils/activePercentageUtils';
 import { msToSeconds } from '../../../utils/fightDuration';
 import { resolveActorName } from '../../../utils/resolveActorName';
 import type { DamageOverTimeResult } from '../../../workers/calculations/CalculateDamageOverTime';
 
 import { DamageDonePanelView } from './DamageDonePanelView';
+import { useDamageStatistics } from './useDamageStatistics';
+
+const EMPTY_DAMAGE_STATISTICS: DamageStatisticsWithActivity = {
+  damageByPlayer: {},
+  criticalDamageByPlayer: {},
+  damageEventsBySource: {},
+  activePercentages: {},
+};
 
 interface DamageDonePanelProps {
   context?: ReportFightContextInput;
@@ -124,11 +132,13 @@ export const DamageDonePanel: React.FC<DamageDonePanelProps> = ({ context }) => 
     isCastEventsLoading,
   ]);
 
-  // Memoize damage calculations to prevent unnecessary recalculations
-  const damageStatistics = useMemo(
-    () => calculateDamageStatisticsWithActivity(fight, damageEventsByPlayer, selectedTargetIds),
-    [fight, damageEventsByPlayer, selectedTargetIds],
-  );
+  const {
+    damageStatistics: calculatedDamageStatistics,
+    isLoading: isDamageStatisticsLoading,
+    error: damageStatisticsError,
+    retry: retryDamageStatistics,
+  } = useDamageStatistics({ fight, damageEventsByPlayer, selectedTargetIds });
+  const damageStatistics = calculatedDamageStatistics ?? EMPTY_DAMAGE_STATISTICS;
 
   const fightDurationMs = useMemo(() => {
     if (fight && fight.startTime != null && fight.endTime != null) {
@@ -318,8 +328,24 @@ export const DamageDonePanel: React.FC<DamageDonePanelProps> = ({ context }) => 
   );
 
   // Show table skeleton while data is being fetched
-  if (isLoading) {
+  if (isLoading || isDamageStatisticsLoading) {
     return <DamageDoneTableSkeleton rowCount={10} />;
+  }
+
+  if (damageStatisticsError) {
+    return (
+      <Alert
+        severity="error"
+        action={
+          <Button color="inherit" size="small" onClick={retryDamageStatistics}>
+            Try again
+          </Button>
+        }
+      >
+        Damage statistics could not be calculated in the background. Your current fight data has not
+        been replaced. Retry the analysis or reload the page.
+      </Alert>
+    );
   }
 
   // Render a styled empty state when there is no damage data to show
