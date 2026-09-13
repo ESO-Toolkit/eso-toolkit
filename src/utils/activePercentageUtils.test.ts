@@ -306,7 +306,7 @@ describe('activePercentageUtils', () => {
       ['NaN end time', 0, Number.NaN],
       ['infinite start time', Number.NEGATIVE_INFINITY, 10000],
       ['infinite end time', 0, Number.POSITIVE_INFINITY],
-    ])('returns an empty typed result for %s', (_description, startTime, endTime) => {
+    ])('preserves totals but omits activity for %s', (_description, startTime, endTime) => {
       const statistics = calculateDamageStatisticsWithActivity(
         { ...mockFight, startTime, endTime },
         {
@@ -323,9 +323,9 @@ describe('activePercentageUtils', () => {
       );
 
       expect(statistics).toEqual({
-        damageByPlayer: {},
-        criticalDamageByPlayer: {},
-        damageEventsBySource: {},
+        damageByPlayer: { 123: 100 },
+        criticalDamageByPlayer: { 123: 0 },
+        damageEventsBySource: { 123: 1 },
         activePercentages: {},
       });
       expect(Object.values(statistics).flatMap(Object.values).some(Number.isNaN)).toBe(false);
