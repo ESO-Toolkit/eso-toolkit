@@ -22,8 +22,8 @@ import { ReportActionBar } from '../../components/ReportActionBar';
 import { ReportFightsSkeleton } from '../../components/ReportFightsSkeleton';
 import { FightFragment, ReportFragment } from '../../graphql/gql/graphql';
 import { RootState } from '../../store/storeWithHistory';
-import { getDifficultyLabel } from '../../utils/trialClassification';
 import { createReportFightDetailsIntentHandlers } from '../../utils/reportRoutePreload';
+import { getDifficultyLabel } from '../../utils/trialClassification';
 
 import { BossAvatar } from './BossAvatar';
 import {
