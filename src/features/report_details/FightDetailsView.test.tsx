@@ -89,7 +89,7 @@ describe('FightDetailsView', () => {
 
     expect(screen.getByRole('button', { name: 'Previous fight' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Next fight' })).toBeDisabled();
-    expect(screen.getByRole('group', { name: 'Fight navigation mode' })).toBeInTheDocument();
+    expect(screen.getByRole('group', { name: 'Fight navigation scope' })).toBeInTheDocument();
     expect(screen.getByRole('status', { name: 'Fight 1 of 1' })).toBeInTheDocument();
     expect(screen.getByRole('tablist', { name: 'Fight detail sections' })).toBeInTheDocument();
 

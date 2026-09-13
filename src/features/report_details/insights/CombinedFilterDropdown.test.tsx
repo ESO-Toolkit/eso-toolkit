@@ -81,7 +81,7 @@ describe('CombinedFilterDropdown', () => {
     expect(trigger).toHaveAttribute('aria-haspopup', 'dialog');
 
     fireEvent.click(trigger);
-    const dialog = screen.getByRole('dialog', { name: 'Fight filters' });
+    const dialog = screen.getByRole('dialog', { name: 'Analyzer filters' });
     expect(dialog).toBeInTheDocument();
     expect(screen.getByRole('group', { name: 'Target filter' })).toBeInTheDocument();
     expect(screen.getByRole('radiogroup', { name: 'Player filter' })).toBeInTheDocument();
