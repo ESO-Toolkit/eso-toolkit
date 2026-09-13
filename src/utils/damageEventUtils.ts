@@ -105,19 +105,23 @@ export function getDamageEventsByPlayer(
 
   // Create lookup for charged atronach IDs if we have actor data
   const chargedAtronachIds = getChargedReportActors(actorsById);
+  // A damage stream commonly contains many events for the same source. Resolve the attribution
+  // and string key once per source instead of performing the charged-actor lookup and allocation
+  // for every event in the stream.
+  const playerIdBySourceId = new Map<number, string>();
 
   for (const event of damageEvents) {
     // Only process events that have a valid sourceID
     if (event.sourceID == null) continue;
 
-    let attributedPlayerId = event.sourceID;
-
-    // Check if this damage is from a charged atronach
-    if (event.sourceID in chargedAtronachIds) {
-      attributedPlayerId = chargedAtronachIds[event.sourceID];
+    let playerId = playerIdBySourceId.get(event.sourceID);
+    if (playerId === undefined) {
+      const chargedAtronachOwner = chargedAtronachIds[event.sourceID];
+      const attributedPlayerId =
+        chargedAtronachOwner === undefined ? event.sourceID : chargedAtronachOwner;
+      playerId = String(attributedPlayerId);
+      playerIdBySourceId.set(event.sourceID, playerId);
     }
-
-    const playerId = String(attributedPlayerId);
 
     // Initialize array for this player if it doesn't exist
     if (!damageEventsByPlayer[playerId]) {
