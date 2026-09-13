@@ -17,6 +17,17 @@ const __dirname = path.dirname(__filename);
 
 const CSP_INLINE_SCRIPT_HASH_MARKER = '__CSP_INLINE_SCRIPT_HASHES__';
 
+// Playwright writes results while Vite's dev server is running. On Windows,
+// chokidar can observe a report file during Playwright's rename/cleanup and
+// terminate the server with EBUSY. Keep all standard and suite-specific
+// Playwright artifact directories outside the development watch graph.
+const PLAYWRIGHT_ARTIFACT_WATCH_IGNORES = [
+  '**/test-results/**',
+  '**/test-results-*/**',
+  '**/playwright-report/**',
+  '**/playwright-report-*/**',
+];
+
 /**
  * GitHub Pages cannot attach response headers, so the app shell carries a
  * browser-enforced CSP meta tag as a defense-in-depth fallback. Keep the
@@ -266,6 +277,9 @@ ${downloadBtn}
       host: true,
       strictPort: strictPortConfig,
       allowedHosts: ['host.docker.internal'],
+      watch: {
+        ignored: PLAYWRIGHT_ARTIFACT_WATCH_IGNORES,
+      },
       // No blanket 'Access-Control-Allow-Origin': '*' here. The /roster-hub-api
       // proxy below makes every API call same-origin, so ACAO:* was unnecessary —
       // and with host:true (0.0.0.0) it let any page in the dev's browser (or any
