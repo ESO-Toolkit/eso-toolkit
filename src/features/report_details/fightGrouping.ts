@@ -70,8 +70,28 @@ export function wasKill(fight: FightFragment): boolean {
 
 /** Boss health % remaining at end of fight (0–100), or null if unknown. */
 export function bossHealthRemaining(fight: FightFragment): number | null {
-  if (fight.bossPercentage == null) return null;
+  if (fight.bossPercentage == null || !Number.isFinite(fight.bossPercentage)) return null;
   return Math.max(0, Math.min(100, fight.bossPercentage));
+}
+
+export interface FightOutcome {
+  status: 'kill' | 'wipe' | 'unknown';
+  bossHealthRemaining: number | null;
+}
+
+/** A display-safe outcome that never turns missing health into a fabricated percentage. */
+export function getFightOutcome(fight: FightFragment): FightOutcome {
+  const healthRemaining = bossHealthRemaining(fight);
+
+  if (wasKill(fight)) {
+    return { status: 'kill', bossHealthRemaining: healthRemaining };
+  }
+
+  if (fight.kill === false || (isBossFight(fight) && healthRemaining != null)) {
+    return { status: 'wipe', bossHealthRemaining: healthRemaining };
+  }
+
+  return { status: 'unknown', bossHealthRemaining: healthRemaining };
 }
 
 /**
