@@ -26,6 +26,7 @@ import { RosterHubSkeleton } from './components/RosterHubSkeleton';
 import { ScribingRedirect } from './components/ScribingRedirect';
 import { ScrollRestoration } from './components/ScrollRestoration';
 import { SiteBackground } from './components/shared';
+import { SkipLink } from './components/SkipLink';
 import { SmartCalculatorSkeleton } from './components/SmartCalculatorSkeleton';
 import { TextEditorSkeleton } from './components/TextEditorSkeleton';
 import { UltimateCalculatorSkeleton } from './components/UltimateCalculatorSkeleton';
@@ -420,38 +421,7 @@ const MainApp: React.FC = () => {
       <KalpaBanner />
       <HeaderBar />
       <Box sx={{ position: 'relative' }}>
-        <Box
-          component="a"
-          href="#main-content"
-          sx={{
-            position: 'absolute',
-            left: '-9999px',
-            top: 'auto',
-            width: 1,
-            height: 1,
-            overflow: 'hidden',
-            zIndex: 9999,
-            '&:focus': {
-              position: 'fixed',
-              top: 8,
-              left: 8,
-              width: 'auto',
-              height: 'auto',
-              overflow: 'visible',
-              bgcolor: 'primary.main',
-              color: 'primary.contrastText',
-              px: 2,
-              py: 1,
-              borderRadius: 1,
-              fontSize: '0.875rem',
-              fontWeight: 600,
-              textDecoration: 'none',
-              boxShadow: 4,
-            },
-          }}
-        >
-          Skip to main content
-        </Box>
+        <SkipLink />
         <LandingPage />
       </Box>
     </ReduxThemeProvider>
