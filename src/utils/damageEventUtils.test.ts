@@ -334,6 +334,23 @@ describe('damageEventUtils', () => {
         expect(result).toHaveProperty('0');
         expect(result['0']).toHaveLength(1);
       });
+
+      it('should preserve a charged atronach owner ID of zero', () => {
+        const actorsById = {
+          789: createMockActor(789, CHARGED_ATRONACH_GAME_ID, 'Pet', 0),
+        };
+        const damageEvents = [
+          { ...createMockDamageEvent(789, 999, 500), timestamp: 0 },
+          { ...createMockDamageEvent(789, 999, 750), timestamp: 0 },
+        ];
+
+        const result = getDamageEventsByPlayer(damageEvents, actorsById);
+
+        expect(result).toEqual({ '0': damageEvents });
+        expect(result['0']).toHaveLength(2);
+        expect(result['0'][0]).toBe(damageEvents[0]);
+        expect(result['0'][1]).toBe(damageEvents[1]);
+      });
     });
 
     describe('complex scenarios', () => {
