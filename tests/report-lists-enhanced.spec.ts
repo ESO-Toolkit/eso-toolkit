@@ -182,7 +182,7 @@ test.describe('My Reports', () => {
 
     await fixture.waitForRequest('getUserReports');
     await expect(page.getByText('Sunspire Practice', { exact: true })).toBeVisible();
-    await page.getByPlaceholder('Search by title or zone...').fill('Sunspire');
+    await page.getByPlaceholder('Search by title or zone...').fill('Sunspire Practice');
     await expect(page.getByText('Showing 1 of 2 reports', { exact: true })).toBeVisible();
     await expect(page.getByText('Sunspire Practice', { exact: true })).toBeVisible();
     await expect(page.getByText('Rockgrove Practice', { exact: true })).toBeHidden();

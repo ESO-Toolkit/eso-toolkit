@@ -149,7 +149,15 @@ export const installReportListsFixture = async (
     const body = request.postDataJSON() as {
       operationName?: string;
       variables?: Record<string, unknown>;
-    };
+    } | null;
+
+    // The broad route patterns also see bodyless requests (for example CORS
+    // preflights). Those are not GraphQL operations and should pass through;
+    // populated requests remain subject to strict fixture validation below.
+    if (!body) {
+      await route.continue();
+      return;
+    }
 
     const operationName = body.operationName ?? '';
     const variables = body.variables ?? {};
