@@ -28,6 +28,7 @@ const DecisionPanelSurface = styled('section')(({ theme }) => ({
 
 const rejectionCopy: Record<DecisionSummaryRejectionReason, string> = {
   'incomplete-evidence': 'Required evidence is incomplete, so no recommendation was inferred.',
+  'invalid-request': 'The decision request is invalid, so no recommendation was inferred.',
   'invalid-evidence': 'The supplied evidence is invalid and cannot support a recommendation.',
   'unavailable-evidence': 'The supporting evidence stream is unavailable.',
   'context-mismatch':
@@ -84,6 +85,10 @@ const formatRejectionLabel = (
   reason: DecisionSummaryRejectionReason,
   outcome: 'blocked' | 'warning',
 ): string => {
+  if (reason === 'invalid-request') {
+    return 'Invalid request';
+  }
+
   if (reason === 'unavailable-evidence') {
     return 'Unavailable evidence';
   }
@@ -203,7 +208,12 @@ export const DecisionSummaryPanel = ({
                   {item.responsible && (
                     <Typography variant="body2">
                       <strong>Owner:</strong>{' '}
-                      {[item.responsible.actorName, item.responsible.role]
+                      {[
+                        item.responsible.actorId === undefined
+                          ? undefined
+                          : `Actor ${item.responsible.actorId}`,
+                        item.responsible.role,
+                      ]
                         .filter((value): value is string => value !== undefined)
                         .join(' · ')}
                     </Typography>
