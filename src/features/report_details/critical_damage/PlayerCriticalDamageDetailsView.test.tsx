@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import type { ComponentProps } from 'react';
 
 import {
   buildEsoLogsSourceUrl,
@@ -49,6 +50,47 @@ jest.mock('../../../hooks/useEChartsTheme', () => ({
 
 const hooks = jest.requireMock('../../../hooks');
 const eChartsThemeHooks = jest.requireMock('../../../hooks/useEChartsTheme');
+
+type CriticalMultiplier = ComponentProps<
+  typeof PlayerCriticalDamageDetailsView
+>['criticalMultiplier'];
+
+const validCriticalMultiplier: NonNullable<CriticalMultiplier> = {
+  abilityName: 'Test Ability',
+  abilityId: 123,
+  criticalDamage: 1750,
+  normalDamage: 1000,
+  criticalMultiplier: 1.75,
+  foundPair: true,
+  criticalTimestamp: 1,
+  accountedCritDamagePercent: 25,
+  unaccountedCritDamagePercent: 0,
+  activeSources: [],
+};
+
+const renderCriticalMultiplier = (criticalMultiplier: CriticalMultiplier) =>
+  render(
+    <PlayerCriticalDamageDetailsView
+      id={1}
+      player={{ id: 1, name: 'Test Player' } as never}
+      name="Test Player"
+      expanded
+      isLoading={false}
+      criticalDamageData={{
+        playerId: 1,
+        playerName: 'Test Player',
+        dataPoints: [{ timestamp: 0, relativeTime: 0, criticalDamage: 100 }],
+        effectiveCriticalDamage: 100,
+        maximumCriticalDamage: 100,
+        timeAtCapPercentage: 0,
+        criticalDamageAlerts: [],
+        inactiveCombatIntervals: [],
+      }}
+      criticalDamageSources={[]}
+      criticalMultiplier={criticalMultiplier}
+      fightDurationMs={1000}
+    />,
+  );
 
 describe('PlayerCriticalDamageDetailsView data boundaries', () => {
   beforeEach(() => {
@@ -119,7 +161,76 @@ describe('PlayerCriticalDamageDetailsView data boundaries', () => {
 
     expect(screen.getAllByText(/Unavailable/)).toHaveLength(6);
     expect(screen.queryByText('Unavailable%')).not.toBeInTheDocument();
-    expect(screen.getByRole('status')).toHaveTextContent('No valid critical damage samples');
+    expect(
+      screen
+        .getAllByRole('status')
+        .some((status) => status.textContent?.includes('No valid critical damage samples')),
+    ).toBe(true);
     expect(screen.queryByTestId('critical-damage-chart')).not.toBeInTheDocument();
   });
+
+  it('renders an explicit unavailable state when no critical multiplier pair exists', () => {
+    renderCriticalMultiplier(null);
+
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'no matched normal and critical hit sample',
+    );
+    expect(screen.queryByText(/unknown sources/)).not.toBeInTheDocument();
+  });
+
+  it.each([null, Number.NaN, Number.POSITIVE_INFINITY])(
+    'renders an unavailable multiplier without formatting invalid value %s',
+    (criticalMultiplier) => {
+      renderCriticalMultiplier({ ...validCriticalMultiplier, criticalMultiplier });
+
+      expect(screen.getByText('Critical Multiplier:').parentElement).toHaveTextContent(
+        'Unavailable',
+      );
+      expect(screen.getByRole('status')).toHaveTextContent('incomplete or invalid');
+    },
+  );
+
+  it.each([
+    ['accounted', { accountedCritDamagePercent: null }, 'Accounted Critical Damage:'],
+    ['accounted', { accountedCritDamagePercent: Number.NaN }, 'Accounted Critical Damage:'],
+    [
+      'accounted',
+      { accountedCritDamagePercent: Number.POSITIVE_INFINITY },
+      'Accounted Critical Damage:',
+    ],
+    ['unaccounted', { unaccountedCritDamagePercent: null }, 'Unaccounted Critical Damage:'],
+    ['unaccounted', { unaccountedCritDamagePercent: Number.NaN }, 'Unaccounted Critical Damage:'],
+    [
+      'unaccounted',
+      { unaccountedCritDamagePercent: Number.POSITIVE_INFINITY },
+      'Unaccounted Critical Damage:',
+    ],
+  ])('renders invalid %s values as unavailable', (_label, override, fieldLabel) => {
+    renderCriticalMultiplier({ ...validCriticalMultiplier, ...override });
+
+    expect(screen.getByText(fieldLabel).parentElement).toHaveTextContent('Unavailable');
+    expect(screen.getByRole('status')).toHaveTextContent('incomplete or invalid');
+    expect(screen.queryByText(/unknown sources/)).not.toBeInTheDocument();
+  });
+
+  it.each([0, -1, Number.NaN, Number.POSITIVE_INFINITY, null])(
+    'does not calculate or grade multiplier data with invalid denominator %s',
+    (normalDamage) => {
+      renderCriticalMultiplier({ ...validCriticalMultiplier, normalDamage });
+
+      expect(screen.getByRole('status')).toHaveTextContent(
+        'positive finite normal-damage average is required',
+      );
+      expect(screen.getByText('Critical Multiplier:').parentElement).toHaveTextContent(
+        'Unavailable',
+      );
+      expect(screen.getByText('Accounted Critical Damage:').parentElement).toHaveTextContent(
+        'Unavailable',
+      );
+      expect(screen.getByText('Unaccounted Critical Damage:').parentElement).toHaveTextContent(
+        'Unavailable',
+      );
+      expect(screen.queryByText(/unknown sources/)).not.toBeInTheDocument();
+    },
+  );
 });
