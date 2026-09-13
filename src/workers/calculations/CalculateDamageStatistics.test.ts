@@ -5,6 +5,7 @@ import { calculateDamageStatisticsWithActivity } from '@/utils/activePercentageU
 import {
   calculateDamageStatistics,
   type DamageStatisticsCalculationTask,
+  type PackedDamageStatisticsCalculationTask,
 } from './CalculateDamageStatistics';
 
 const FIGHT: FightFragment = {
@@ -78,6 +79,61 @@ describe('calculateDamageStatistics', () => {
       activeTimeMs: 3000,
       activePercentage: 30,
     });
+  });
+
+  it('preserves raw calculation semantics for transferable packed events', () => {
+    const rawTask: DamageStatisticsCalculationTask = {
+      fight: FIGHT,
+      selectedTargetIds: [456],
+      damageEventsByPlayer: {
+        '123': [
+          createMockDamageEvent({
+            timestamp: 0,
+            sourceID: 123,
+            targetID: 456,
+            targetIsFriendly: false,
+            amount: 100,
+            hitType: 2,
+          }),
+          createMockDamageEvent({
+            timestamp: 5000,
+            sourceID: 999,
+            targetID: 456,
+            targetIsFriendly: false,
+            amount: 50,
+          }),
+          createMockDamageEvent({
+            timestamp: 12000,
+            sourceID: 123,
+            targetID: 456,
+            targetIsFriendly: false,
+            amount: 25,
+          }),
+          createMockDamageEvent({
+            timestamp: 6000,
+            sourceID: 123,
+            targetID: 789,
+            targetIsFriendly: false,
+            amount: 1000,
+          }),
+        ],
+      },
+    };
+    const packedTask: PackedDamageStatisticsCalculationTask = {
+      fight: rawTask.fight,
+      selectedTargetIds: rawTask.selectedTargetIds,
+      playerEvents: [
+        {
+          playerId: 123,
+          values: new Float64Array([
+            123, 456, 0, 100, 2, 0, 999, 456, 5000, 50, 1, 0, 123, 456, 12000, 25, 1, 0, 123, 789,
+            6000, 1000, 1, 0,
+          ]),
+        },
+      ],
+    };
+
+    expect(calculateDamageStatistics(packedTask)).toEqual(calculateDamageStatistics(rawTask));
   });
 
   it.each([

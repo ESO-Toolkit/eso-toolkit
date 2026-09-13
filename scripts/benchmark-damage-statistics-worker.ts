@@ -1,12 +1,13 @@
 /**
- * Opt-in damage-statistics worker benchmark.
+ * Opt-in damage-statistics calculation-core benchmark.
  *
  * Run all required sizes with:
  *   npm run script -- scripts/benchmark-damage-statistics-worker.ts
  *
  * This intentionally is not a Jest test: timings are evidence, not a flaky
- * pass/fail gate. It invokes the clone-safe calculation registered by
- * SharedWorker using the same payload shape sent across the worker boundary.
+ * pass/fail gate. It measures the clone-safe calculation registered by
+ * SharedWorker without worker startup, transport, or structured-clone costs.
+ * The browser performance suite separately measures the real worker boundary.
  */
 import { performance } from 'node:perf_hooks';
 
@@ -152,7 +153,7 @@ function runBenchmark(eventCount: number): BenchmarkResult {
 }
 
 const results = EVENT_COUNTS.map(runBenchmark);
-console.log(JSON.stringify({ benchmark: 'damage-statistics-worker-calculation', results }));
+console.log(JSON.stringify({ benchmark: 'damage-statistics-calculation-core', results }));
 
 if (results.some((result) => !result.correct)) {
   process.exitCode = 1;

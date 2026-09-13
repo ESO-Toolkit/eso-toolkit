@@ -1,5 +1,10 @@
 import { test, expect, devices } from '@playwright/test';
 
+const { defaultBrowserType: pixel5BrowserType, ...pixel5Emulation } = devices['Pixel 5'];
+const { defaultBrowserType: ipadBrowserType, ...ipadEmulation } = devices['iPad Pro 11'];
+void pixel5BrowserType;
+void ipadBrowserType;
+
 // Performance test configurations
 const PERFORMANCE_THRESHOLDS = {
   // Time to first meaningful paint
@@ -28,7 +33,7 @@ test.describe('Responsive Performance Tests', () => {
 
   // Core web vitals testing
   test.describe('Core Web Vitals - Mobile', () => {
-    test.use({ ...devices['Pixel 5'] });
+    test.use(pixel5Emulation);
 
     test('should meet Core Web Vitals thresholds', async ({ page }) => {
       // Enable performance monitoring
@@ -135,7 +140,7 @@ test.describe('Responsive Performance Tests', () => {
   });
 
   test.describe('Core Web Vitals - Tablet', () => {
-    test.use({ ...devices['iPad Pro'] });
+    test.use(ipadEmulation);
 
     test('should meet Core Web Vitals thresholds', async ({ page }) => {
       const startTime = Date.now();
@@ -309,7 +314,7 @@ test.describe('Responsive Performance Tests', () => {
 
   // Network performance testing
   test.describe('Network Performance', () => {
-    test.use({ ...devices['Pixel 5'] }); // Test on mobile where network is typically slower
+    test.use(pixel5Emulation); // Test on mobile where network is typically slower
 
     test('should load efficiently on slow connections', async ({ page }) => {
       // Simulate slow 3G connection
@@ -365,7 +370,7 @@ test.describe('Responsive Performance Tests', () => {
 
   // Interaction performance testing
   test.describe('Mobile Interaction Performance', () => {
-    test.use({ ...devices['Pixel 5'] });
+    test.use(pixel5Emulation);
 
     test('should respond quickly to touch interactions on mobile', async ({ page }) => {
       await page.goto(testUrl);
@@ -448,6 +453,76 @@ test.describe('Responsive Performance Tests', () => {
       // Scrolling should be reasonably smooth
       expect(scrollMetrics.smoothness).toBeGreaterThan(0.8); // At least 80% smoothness
       expect(scrollMetrics.scrollDuration).toBeLessThan(5000); // Complete within 5 seconds
+    });
+  });
+});
+
+test.describe('Damage statistics worker performance', () => {
+  test('keeps interaction responsive at supported event caps', async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== 'desktop-performance', 'Measured once on desktop Chromium');
+
+    await page.goto('/');
+    const measurements: Array<{
+      eventCount: number;
+      wallTime: number;
+      interactionDelay: number;
+      totalDamage: number;
+    }> = [];
+
+    for (const eventCount of [10_000, 100_000, 500_000]) {
+      const measurement = await page.evaluate(async (count) => {
+        const { runDamageStatistics } =
+          await import('/src/features/report_details/damage/runDamageStatistics.ts');
+        const damageEvents = Array.from({ length: count }, (_, index) => ({
+          type: 'damage',
+          sourceID: (index % 12) + 1,
+          targetID: index % 5 === 0 ? 100 : 200,
+          timestamp: index % 120000,
+          amount: 100,
+          hitType: index % 4 === 0 ? 2 : 1,
+          targetIsFriendly: false,
+        }));
+        const damageEventsByPlayer: Record<number, typeof damageEvents> = {};
+        for (const event of damageEvents) {
+          (damageEventsByPlayer[event.sourceID] ??= []).push(event);
+        }
+
+        let interactionDelay = Number.POSITIVE_INFINITY;
+        const interactionScheduledAt = performance.now();
+        const interaction = new Promise<void>((resolve) => {
+          setTimeout(() => {
+            interactionDelay = performance.now() - interactionScheduledAt;
+            resolve();
+          }, 0);
+        });
+
+        const startedAt = performance.now();
+        const result = await runDamageStatistics({
+          fight: { id: 1, startTime: 0, endTime: 120000 },
+          damageEventsByPlayer,
+          selectedTargetIds: [],
+        });
+        const wallTime = performance.now() - startedAt;
+        await interaction;
+
+        return {
+          eventCount: count,
+          wallTime,
+          interactionDelay,
+          totalDamage: Object.values(result.damageByPlayer).reduce(
+            (sum, value) => sum + Number(value),
+            0,
+          ),
+        };
+      }, eventCount);
+      measurements.push(measurement);
+      expect(measurement.totalDamage).toBe(eventCount * 100);
+      expect(measurement.interactionDelay).toBeLessThan(50);
+    }
+
+    await testInfo.attach('damage-worker-measurements.json', {
+      body: JSON.stringify(measurements, null, 2),
+      contentType: 'application/json',
     });
   });
 });
