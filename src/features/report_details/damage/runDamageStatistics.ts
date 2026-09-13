@@ -24,6 +24,9 @@ const PACKED_EVENT_WIDTH = 6;
 const PACKING_YIELD_INTERVAL = 2_000;
 
 type MaybeWorkerManager = Partial<typeof workerManager>;
+type SchedulerWithYield = {
+  yield?: () => Promise<void>;
+};
 
 export interface RunDamageStatisticsOptions {
   signal?: AbortSignal;
@@ -65,6 +68,31 @@ function awaitWithAbort<T>(operation: Promise<T>, signal: AbortSignal | undefine
 }
 
 function yieldToMainThread(): Promise<void> {
+  // scheduler.yield creates a continuation task instead of repeatedly nesting
+  // timers. Timers are clamped after a few yields, which made large packing
+  // operations both slow and capable of monopolising a frame before an input
+  // handler could run.
+  const scheduler = (globalThis as typeof globalThis & { scheduler?: SchedulerWithYield })
+    .scheduler;
+  if (typeof scheduler?.yield === 'function') return scheduler.yield();
+
+  // MessageChannel is the broadly available, non-timer continuation fallback.
+  // It lets the browser select other pending work between packing slices without
+  // relying on an increasingly clamped setTimeout(0).
+  if (typeof MessageChannel !== 'undefined') {
+    return new Promise((resolve) => {
+      const channel = new MessageChannel();
+      channel.port1.onmessage = () => {
+        channel.port1.close();
+        channel.port2.close();
+        resolve();
+      };
+      channel.port2.postMessage(undefined);
+    });
+  }
+
+  // This only serves non-browser/test hosts that implement neither scheduling
+  // primitive. Supported browsers take one of the branches above.
   return new Promise((resolve) => setTimeout(resolve, 0));
 }
 

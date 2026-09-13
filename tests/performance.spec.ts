@@ -458,71 +458,368 @@ test.describe('Responsive Performance Tests', () => {
 });
 
 test.describe('Damage statistics worker performance', () => {
-  test('keeps interaction responsive at supported event caps', async ({ page }, testInfo) => {
+  const workerThresholds = {
+    interactionToNextPaintMs: 50,
+    selectionCommitMs: 50,
+    maxFrameGapMs: 50,
+    maxLongTaskMs: 50,
+    maxHeapGrowthBytes: 512 * 1024 * 1024,
+  };
+
+  test('records reproducible worker evidence at supported event caps', async ({
+    page,
+  }, testInfo) => {
     test.skip(testInfo.project.name !== 'desktop-performance', 'Measured once on desktop Chromium');
 
-    await page.goto('/');
+    // This deliberately uses a real, populated route rather than the homepage. The heading only
+    // exists in the resolved lazy component, so the benchmark cannot pass against a route fallback.
+    await page.goto('/calculator#ultimate');
+    await expect(page).toHaveURL(/\/calculator#ultimate$/);
+    await expect(page.getByRole('heading', { name: 'Ultimate Calculator' })).toBeVisible();
+
     const measurements: Array<{
       eventCount: number;
-      wallTime: number;
-      interactionDelay: number;
+      sample: number;
+      calculationStartedAt: number;
+      resultReceivedAt: number;
+      calculationWallTimeMs: number;
+      packingAndDispatchMs: number;
+      structuredCloneDispatchMs: number;
+      workerWaitAndResultMs: number;
+      postResultRenderMs: number;
+      interactionToNextPaintMs: number;
+      // This is intentionally narrower than the raw rAF gap: it covers only gaps that overlap
+      // packing, synchronous Comlink dispatch, or the actual result-receipt boundary.
+      maxCalculationFrameGapMs: number;
+      maxFrameGapMs: number;
+      // Raw page Long Tasks remain in evidence. The 50 ms gate applies to the worker calculation
+      // boundary (packing, Comlink dispatch, and worker-result receipt), not unrelated rendering.
+      maxLongTaskMs: number;
+      maxCalculationLongTaskMs: number;
+      totalLongTaskMs: number;
+      longTasks: Array<{ duration: number; startTime: number; phase: string }>;
+      heapBeforeBytes: number | null;
+      heapAfterBytes: number | null;
+      peakHeapBytes: number | null;
+      heapGrowthBytes: number | null;
+      interactionTabLabel: string;
+      interactionOccurredDuringCalculation: boolean;
+      interactionSelectionChanged: boolean;
+      selectionCommitMs: number;
       totalDamage: number;
     }> = [];
 
-    for (const eventCount of [10_000, 100_000, 500_000]) {
-      const measurement = await page.evaluate(async (count) => {
-        const { runDamageStatistics } =
-          await import('/src/features/report_details/damage/runDamageStatistics.ts');
-        const damageEvents = Array.from({ length: count }, (_, index) => ({
-          type: 'damage',
-          sourceID: (index % 12) + 1,
-          targetID: index % 5 === 0 ? 100 : 200,
-          timestamp: index % 120000,
-          amount: 100,
-          hitType: index % 4 === 0 ? 2 : 1,
-          targetIsFriendly: false,
-        }));
-        const damageEventsByPlayer: Record<number, typeof damageEvents> = {};
-        for (const event of damageEvents) {
-          (damageEventsByPlayer[event.sourceID] ??= []).push(event);
-        }
+    // Worker startup and module evaluation are a one-time navigation cost, not an
+    // event-cap calculation cost. Prime the production worker before comparing
+    // supported event caps so each sample measures the same steady-state path.
+    await page.evaluate(async () => {
+      const { runDamageStatistics } =
+        await import('/src/features/report_details/damage/runDamageStatistics.ts');
+      const event = {
+        amount: 100,
+        hitType: 1,
+        sourceID: 101,
+        targetID: 999,
+        targetIsFriendly: false,
+        timestamp: 0,
+        type: 'damage' as const,
+      };
 
-        let interactionDelay = Number.POSITIVE_INFINITY;
-        const interactionScheduledAt = performance.now();
-        const interaction = new Promise<void>((resolve) => {
-          setTimeout(() => {
-            interactionDelay = performance.now() - interactionScheduledAt;
-            resolve();
-          }, 0);
-        });
+      await runDamageStatistics({
+        damageEventsByPlayer: { 101: [event] },
+        fight: { endTime: 120_000, id: 1, startTime: 0 },
+        selectedTargetIds: [],
+      });
+      await new Promise<void>((resolve) => {
+        requestAnimationFrame(() => requestAnimationFrame(resolve));
+      });
+    });
 
-        const startedAt = performance.now();
-        const result = await runDamageStatistics({
-          fight: { id: 1, startTime: 0, endTime: 120000 },
-          damageEventsByPlayer,
-          selectedTargetIds: [],
-        });
-        const wallTime = performance.now() - startedAt;
-        await interaction;
+    const samples = [10_000, 100_000, 500_000, 500_000, 500_000] as const;
+    for (const [sample, eventCount] of samples.entries()) {
+      const measurement = await page.evaluate(
+        async ({ count, sampleNumber }) => {
+          const { runDamageStatistics } =
+            await import('/src/features/report_details/damage/runDamageStatistics.ts');
+          const damageEvents = Array.from({ length: count }, (_, index) => ({
+            type: 'damage',
+            sourceID: (index % 12) + 1,
+            targetID: index % 5 === 0 ? 100 : 200,
+            timestamp: index % 120000,
+            amount: 100,
+            hitType: index % 4 === 0 ? 2 : 1,
+            targetIsFriendly: false,
+          }));
+          const damageEventsByPlayer: Record<number, typeof damageEvents> = {};
+          for (const event of damageEvents) {
+            (damageEventsByPlayer[event.sourceID] ??= []).push(event);
+          }
 
-        return {
-          eventCount: count,
-          wallTime,
-          interactionDelay,
-          totalDamage: Object.values(result.damageByPlayer).reduce(
-            (sum, value) => sum + Number(value),
-            0,
-          ),
-        };
-      }, eventCount);
+          const interactionTab = Array.from(
+            document.querySelectorAll<HTMLElement>('[role="tab"]'),
+          ).find(
+            (tab) =>
+              tab.getAttribute('aria-selected') !== 'true' &&
+              tab.getAttribute('aria-disabled') !== 'true' &&
+              tab.getClientRects().length > 0,
+          );
+          if (!interactionTab)
+            throw new Error(
+              'The resolved Calculator route did not render an enabled, unselected tab.',
+            );
+          const interactionTabLabel =
+            interactionTab.getAttribute('aria-label') ??
+            interactionTab.textContent?.trim() ??
+            'unnamed tab';
+
+          type MemoryPerformance = Performance & {
+            memory?: { usedJSHeapSize?: number };
+          };
+          const readHeap = (): number | null => {
+            const value = (performance as MemoryPerformance).memory?.usedJSHeapSize;
+            return typeof value === 'number' && Number.isFinite(value) ? value : null;
+          };
+
+          const longTasks: Array<{ duration: number; startTime: number }> = [];
+          let longTaskObserver: PerformanceObserver | null = null;
+          try {
+            longTaskObserver = new PerformanceObserver((entries) => {
+              for (const entry of entries.getEntries()) {
+                longTasks.push({ duration: entry.duration, startTime: entry.startTime });
+              }
+            });
+            longTaskObserver.observe({ type: 'longtask' });
+          } catch {
+            // Chromium provides Long Tasks. The evidence still includes the rAF probe on other engines.
+          }
+
+          const heapBeforeBytes = readHeap();
+          let peakHeapBytes = heapBeforeBytes;
+          const frameGaps: Array<{ duration: number; startTime: number; endTime: number }> = [];
+          let maxFrameGapMs = 0;
+          let lastFrameAt = performance.now();
+          let samplingFrames = true;
+          const sampleFrame = (now: number): void => {
+            const duration = now - lastFrameAt;
+            maxFrameGapMs = Math.max(maxFrameGapMs, duration);
+            frameGaps.push({ duration, startTime: lastFrameAt, endTime: now });
+            lastFrameAt = now;
+            const heap = readHeap();
+            if (heap !== null) peakHeapBytes = Math.max(peakHeapBytes ?? heap, heap);
+            if (samplingFrames) requestAnimationFrame(sampleFrame);
+          };
+          requestAnimationFrame(sampleFrame);
+
+          // Let the observer and frame sampler settle before the calculation window starts. Fixture
+          // creation deliberately happens before this observer, so fixture construction cannot be
+          // attributed to worker packing or result transfer.
+          await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+          maxFrameGapMs = 0;
+          frameGaps.length = 0;
+          lastFrameAt = performance.now();
+
+          const { workerManager } = await import('/src/workers/index.ts');
+          const originalExecuteTask = workerManager.executeTask;
+          let workerDispatchStartedAt: number | null = null;
+          let workerDispatchReturnedAt: number | null = null;
+          workerManager.executeTask = ((...args: Parameters<typeof workerManager.executeTask>) => {
+            workerDispatchStartedAt = performance.now();
+            const promise = originalExecuteTask.apply(workerManager, args);
+            workerDispatchReturnedAt = performance.now();
+            return promise;
+          }) as typeof workerManager.executeTask;
+
+          let interactionToNextPaintMs = Number.POSITIVE_INFINITY;
+          let calculationFinished = false;
+          let interactionOccurredDuringCalculation = false;
+          let interactionSelectionChanged = false;
+          let selectionCommitMs = Number.POSITIVE_INFINITY;
+          let resolveInteractionSelection: (() => void) | null = null;
+          const interactionSelectionSettled = new Promise<void>((resolve) => {
+            resolveInteractionSelection = resolve;
+          });
+          const onInteractionTabClick = (): void => {
+            const inputAt = performance.now();
+            interactionOccurredDuringCalculation = !calculationFinished;
+            requestAnimationFrame(() => {
+              interactionToNextPaintMs = performance.now() - inputAt;
+            });
+            const verifySelectionAtSecondRenderBoundary = (): void => {
+              interactionSelectionChanged = interactionTab.getAttribute('aria-selected') === 'true';
+              if (interactionSelectionChanged || performance.now() - inputAt >= 250) {
+                selectionCommitMs = performance.now() - inputAt;
+                resolveInteractionSelection?.();
+                return;
+              }
+              requestAnimationFrame(verifySelectionAtSecondRenderBoundary);
+            };
+            // Keep observing beyond the first paint: React Router can schedule the selected-tab
+            // commit after the urgent input frame. This remains bounded and records when the real
+            // state transition completed instead of accepting a timer-only proxy.
+            requestAnimationFrame(verifySelectionAtSecondRenderBoundary);
+          };
+          interactionTab.addEventListener('click', onInteractionTabClick, { once: true });
+
+          // A timer represents an input that arrived while packing is yielding. Calling the actual
+          // tab's handler exercises the urgent tab update and measures its next paint, not a timer-only
+          // proxy. The worker's transfer packing must yield for this to run before the result returns.
+          setTimeout(() => interactionTab.click(), 0);
+          const calculationStartedAt = performance.now();
+          let result: Awaited<ReturnType<typeof runDamageStatistics>>;
+          let resultReceivedAt: number;
+          try {
+            result = await runDamageStatistics({
+              fight: { id: 1, startTime: 0, endTime: 120000 },
+              damageEventsByPlayer,
+              selectedTargetIds: [],
+            });
+            resultReceivedAt = performance.now();
+          } finally {
+            workerManager.executeTask = originalExecuteTask;
+          }
+          const calculationWallTimeMs = resultReceivedAt - calculationStartedAt;
+          calculationFinished = true;
+
+          await new Promise<void>((resolve) => {
+            requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+          });
+          await interactionSelectionSettled;
+          const postResultRenderEndedAt = performance.now();
+          samplingFrames = false;
+          for (const entry of longTaskObserver?.takeRecords() ?? []) {
+            longTasks.push({ duration: entry.duration, startTime: entry.startTime });
+          }
+          longTaskObserver?.disconnect();
+          interactionTab.removeEventListener('click', onInteractionTabClick);
+
+          const heapAfterBytes = readHeap();
+          if (heapAfterBytes !== null)
+            peakHeapBytes = Math.max(peakHeapBytes ?? heapAfterBytes, heapAfterBytes);
+          const heapGrowthBytes =
+            heapBeforeBytes === null || peakHeapBytes === null
+              ? null
+              : peakHeapBytes - heapBeforeBytes;
+
+          const dispatchStartedAt = workerDispatchStartedAt ?? resultReceivedAt;
+          const dispatchReturnedAt = workerDispatchReturnedAt ?? dispatchStartedAt;
+          const intersects = (
+            startTime: number,
+            endTime: number,
+            rangeStart: number,
+            rangeEnd: number,
+          ): boolean => startTime < rangeEnd && endTime > rangeStart;
+          const containsResultReceipt = (startTime: number, endTime: number): boolean =>
+            startTime <= resultReceivedAt && endTime >= resultReceivedAt;
+          const phaseForTask = (startTime: number, duration: number): string => {
+            const endTime = startTime + duration;
+            if (endTime <= calculationStartedAt) return 'unrelated-before-calculation';
+            if (intersects(startTime, endTime, calculationStartedAt, dispatchStartedAt))
+              return 'packing';
+            if (intersects(startTime, endTime, dispatchStartedAt, dispatchReturnedAt))
+              return 'structured-clone-dispatch';
+            if (containsResultReceipt(startTime, endTime)) return 'result-transfer';
+            if (intersects(startTime, endTime, dispatchReturnedAt, resultReceivedAt))
+              return 'unrelated-during-worker-compute';
+            if (intersects(startTime, endTime, resultReceivedAt, postResultRenderEndedAt))
+              return 'post-result-render';
+            return 'unrelated-after-calculation';
+          };
+          const attributedLongTasks = longTasks.map(({ duration, startTime }) => ({
+            duration,
+            startTime,
+            phase: phaseForTask(startTime, duration),
+          }));
+          const calculationLongTasks = attributedLongTasks.filter(
+            ({ phase }) =>
+              phase === 'packing' ||
+              phase === 'structured-clone-dispatch' ||
+              phase === 'result-transfer',
+          );
+          const hasResultTransferLongTask = calculationLongTasks.some(
+            ({ phase }) => phase === 'result-transfer',
+          );
+          const calculationFrameGaps = frameGaps.filter(
+            ({ startTime, endTime }) =>
+              intersects(startTime, endTime, calculationStartedAt, dispatchReturnedAt) ||
+              (hasResultTransferLongTask && containsResultReceipt(startTime, endTime)),
+          );
+
+          return {
+            eventCount: count,
+            sample: sampleNumber,
+            calculationStartedAt,
+            resultReceivedAt,
+            calculationWallTimeMs,
+            packingAndDispatchMs: dispatchStartedAt - calculationStartedAt,
+            structuredCloneDispatchMs: dispatchReturnedAt - dispatchStartedAt,
+            workerWaitAndResultMs: resultReceivedAt - dispatchReturnedAt,
+            postResultRenderMs: postResultRenderEndedAt - resultReceivedAt,
+            interactionToNextPaintMs,
+            maxFrameGapMs,
+            maxCalculationFrameGapMs: Math.max(
+              0,
+              ...calculationFrameGaps.map(({ duration }) => duration),
+            ),
+            maxLongTaskMs: Math.max(0, ...attributedLongTasks.map(({ duration }) => duration)),
+            maxCalculationLongTaskMs: Math.max(
+              0,
+              ...calculationLongTasks.map(({ duration }) => duration),
+            ),
+            totalLongTaskMs: attributedLongTasks.reduce(
+              (total, { duration }) => total + duration,
+              0,
+            ),
+            longTasks: attributedLongTasks,
+            heapBeforeBytes,
+            heapAfterBytes,
+            peakHeapBytes,
+            heapGrowthBytes,
+            interactionTabLabel,
+            interactionOccurredDuringCalculation,
+            interactionSelectionChanged,
+            selectionCommitMs,
+            totalDamage: Object.values(result.damageByPlayer).reduce(
+              (sum, value) => sum + Number(value),
+              0,
+            ),
+          };
+        },
+        { count: eventCount, sampleNumber: sample + 1 },
+      );
       measurements.push(measurement);
-      expect(measurement.totalDamage).toBe(eventCount * 100);
-      expect(measurement.interactionDelay).toBeLessThan(50);
     }
 
-    await testInfo.attach('damage-worker-measurements.json', {
-      body: JSON.stringify(measurements, null, 2),
+    await testInfo.attach('damage-worker-browser-evidence.json', {
+      body: JSON.stringify(
+        {
+          schemaVersion: 1,
+          benchmark: 'damage-statistics-worker-boundary',
+          fixture:
+            'twelve-player, populated Calculator route, actual enabled unselected-tab interaction',
+          eventCounts: [10_000, 100_000, 500_000],
+          thresholds: workerThresholds,
+          measurements,
+        },
+        null,
+        2,
+      ),
       contentType: 'application/json',
     });
+
+    console.log(`DAMAGE_WORKER_BROWSER_EVIDENCE=${JSON.stringify(measurements)}`);
+
+    const assertionFailure = measurements.find(
+      (measurement) =>
+        measurement.totalDamage !== measurement.eventCount * 100 ||
+        !measurement.interactionOccurredDuringCalculation ||
+        !measurement.interactionSelectionChanged ||
+        measurement.interactionToNextPaintMs >= workerThresholds.interactionToNextPaintMs ||
+        measurement.selectionCommitMs >= workerThresholds.selectionCommitMs ||
+        measurement.maxCalculationFrameGapMs >= workerThresholds.maxFrameGapMs ||
+        measurement.maxCalculationLongTaskMs > workerThresholds.maxLongTaskMs ||
+        (measurement.heapGrowthBytes !== null &&
+          measurement.heapGrowthBytes >= workerThresholds.maxHeapGrowthBytes),
+    );
+    expect(assertionFailure, JSON.stringify(measurements)).toBeUndefined();
   });
 });

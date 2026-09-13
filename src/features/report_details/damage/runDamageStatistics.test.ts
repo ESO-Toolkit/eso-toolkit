@@ -11,9 +11,19 @@ const manager = workerManager as typeof workerManager & {
   executeTask?: jest.Mock;
 };
 const originalWorker = Object.getOwnPropertyDescriptor(globalThis, 'Worker');
+const originalScheduler = Object.getOwnPropertyDescriptor(globalThis, 'scheduler');
+const originalMessageChannel = Object.getOwnPropertyDescriptor(globalThis, 'MessageChannel');
 
 function setWorker(value: unknown): void {
   Object.defineProperty(globalThis, 'Worker', {
+    configurable: true,
+    writable: true,
+    value,
+  });
+}
+
+function setScheduler(value: unknown): void {
+  Object.defineProperty(globalThis, 'scheduler', {
     configurable: true,
     writable: true,
     value,
@@ -74,6 +84,16 @@ describe('runDamageStatistics', () => {
     } else {
       Reflect.deleteProperty(globalThis, 'Worker');
     }
+    if (originalScheduler) {
+      Object.defineProperty(globalThis, 'scheduler', originalScheduler);
+    } else {
+      Reflect.deleteProperty(globalThis, 'scheduler');
+    }
+    if (originalMessageChannel) {
+      Object.defineProperty(globalThis, 'MessageChannel', originalMessageChannel);
+    } else {
+      Reflect.deleteProperty(globalThis, 'MessageChannel');
+    }
     jest.restoreAllMocks();
   });
 
@@ -112,6 +132,81 @@ describe('runDamageStatistics', () => {
       'damage-statistics',
       { signal: controller.signal },
     );
+  });
+
+  it('uses scheduler.yield between large packing slices instead of timer-clamped yields', async () => {
+    process.env.NODE_ENV = 'production';
+    setWorker(class WorkerStub {});
+    const yieldToBrowser = jest.fn<Promise<void>, []>().mockResolvedValue();
+    setScheduler({ yield: yieldToBrowser });
+    manager.executeTask = jest.fn().mockResolvedValue({ damageByPlayer: {} });
+    const largeInput: DamageStatisticsCalculationTask = {
+      ...INPUT,
+      damageEventsByPlayer: {
+        '123': Array.from({ length: 2_001 }, (_, index) =>
+          createMockDamageEvent({
+            timestamp: index,
+            sourceID: 123,
+            targetID: 456,
+            targetIsFriendly: false,
+            amount: 100,
+          }),
+        ),
+      },
+    };
+
+    await runDamageStatistics(largeInput);
+
+    expect(yieldToBrowser).toHaveBeenCalledTimes(1);
+    expect(manager.executeTask).toHaveBeenCalledTimes(1);
+  });
+
+  it('uses the MessageChannel scheduling fallback and still observes cancellation between slices', async () => {
+    process.env.NODE_ENV = 'production';
+    setWorker(class WorkerStub {});
+    Reflect.deleteProperty(globalThis, 'scheduler');
+    const postMessage = jest.fn();
+    class MessageChannelStub {
+      port1 = {
+        close: jest.fn(),
+        onmessage: null as ((event: MessageEvent) => void) | null,
+      };
+
+      port2 = {
+        close: jest.fn(),
+        postMessage: (...args: unknown[]) => {
+          postMessage(...args);
+          queueMicrotask(() => this.port1.onmessage?.(new MessageEvent('message')));
+        },
+      };
+    }
+    Object.defineProperty(globalThis, 'MessageChannel', {
+      configurable: true,
+      writable: true,
+      value: MessageChannelStub,
+    });
+    manager.executeTask = jest.fn().mockResolvedValue({ damageByPlayer: {} });
+    const controller = new AbortController();
+    const largeInput: DamageStatisticsCalculationTask = {
+      ...INPUT,
+      damageEventsByPlayer: {
+        '123': Array.from({ length: 4_001 }, (_, index) =>
+          createMockDamageEvent({
+            timestamp: index,
+            sourceID: 123,
+            targetID: 456,
+            targetIsFriendly: false,
+            amount: 100,
+          }),
+        ),
+      },
+    };
+    const result = runDamageStatistics(largeInput, { signal: controller.signal });
+    controller.abort();
+
+    await expect(result).rejects.toMatchObject({ name: 'AbortError' });
+    expect(postMessage).toHaveBeenCalledTimes(1);
+    expect(manager.executeTask).not.toHaveBeenCalled();
   });
 
   it('does not start a worker when the signal was already cancelled', async () => {
