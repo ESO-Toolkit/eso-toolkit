@@ -76,6 +76,9 @@ describe('CalculatorPage', () => {
 
   it('shows all three top-level tabs and defaults to Stats', () => {
     renderPage();
+    expect(
+      screen.getAllByRole('heading', { level: 1, name: 'ESO Toolkit Calculator' }),
+    ).toHaveLength(1);
     expect(screen.getByRole('tab', { name: /Stats/i })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /Ultimate/i })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /Scribing/i })).toBeInTheDocument();

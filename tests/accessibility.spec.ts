@@ -514,8 +514,11 @@ test.describe('Accessibility', () => {
         await page.goto(route.path);
         await waitForPageReady(page);
 
-        const h1Count = await page.locator('h1').count();
-        expect(h1Count).toBe(1);
+        const pageHeading = page.locator('h1');
+        await expect(pageHeading).toHaveCount(1);
+        if (route.path.startsWith('/calculator')) {
+          await expect(pageHeading).toHaveAccessibleName('ESO Toolkit Calculator');
+        }
       });
     }
 
