@@ -327,9 +327,17 @@ export const ReportFightHeader: React.FC = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const focusVisibleSx = {
+    // Keep a clear focus ring for keyboard and assistive-technology focus across browsers. Some
+    // engines do not apply :focus-visible to programmatically focused links/buttons.
+    '&:focus': {
+      outline: `3px solid ${theme.palette.primary.main} !important`,
+      outlineOffset: '2px !important',
+      boxShadow: `0 0 0 3px ${theme.palette.primary.main} !important`,
+    },
     '&:focus-visible': {
       outline: `3px solid ${theme.palette.primary.main}`,
       outlineOffset: '2px',
+      boxShadow: `0 0 0 3px ${theme.palette.primary.main}`,
     },
   };
 
