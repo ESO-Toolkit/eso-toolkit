@@ -21,8 +21,11 @@ interface DamageTypeBreakdown {
   displayName: string;
   totalDamage: number;
   hitCount: number;
+  eligibleHitCount: number;
   criticalHits: number;
-  criticalRate: number;
+  criticalRate: number | null;
+  criticalDamage: number;
+  criticalDamageShare: number | null;
   averageDamage: number;
 }
 
@@ -76,15 +79,28 @@ export const DamageTypeBreakdownPanel: React.FC<DamageTypeBreakdownPanelProps> =
       (meta) => categorized[meta.key].totalDamage > 0,
     ).map((meta) => {
       const bucket = categorized[meta.key];
-      const criticalRate = bucket.hitCount > 0 ? (bucket.criticalHits / bucket.hitCount) * 100 : 0;
+      const eligibleBucket = eligibleCategorized[meta.key];
+      const criticalBucket = criticalCategorized[meta.key];
+      const hasUnknownHitTypes = unknownHitTypeCategorized[meta.key].hitCount > 0;
+      const criticalRate =
+        eligibleBucket.hitCount > 0
+          ? (criticalBucket.hitCount / eligibleBucket.hitCount) * 100
+          : null;
+      const criticalDamageShare =
+        bucket.totalDamage > 0 && !hasUnknownHitTypes
+          ? (criticalBucket.totalDamage / bucket.totalDamage) * 100
+          : null;
       const averageDamage = bucket.hitCount > 0 ? bucket.totalDamage / bucket.hitCount : 0;
       return {
         damageType: meta.damageType,
         displayName: meta.displayName,
         totalDamage: bucket.totalDamage,
         hitCount: Math.round(bucket.hitCount),
-        criticalHits: Math.round(bucket.criticalHits),
+        eligibleHitCount: Math.round(eligibleBucket.hitCount),
+        criticalHits: Math.round(criticalBucket.hitCount),
         criticalRate,
+        criticalDamage: criticalBucket.totalDamage,
+        criticalDamageShare,
         averageDamage,
       };
     });

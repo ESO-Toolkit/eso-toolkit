@@ -21,8 +21,11 @@ interface DamageTypeBreakdown {
   displayName: string;
   totalDamage: number;
   hitCount: number;
+  eligibleHitCount: number;
   criticalHits: number;
-  criticalRate: number;
+  criticalRate: number | null;
+  criticalDamage: number;
+  criticalDamageShare: number | null;
   averageDamage: number;
 }
 
