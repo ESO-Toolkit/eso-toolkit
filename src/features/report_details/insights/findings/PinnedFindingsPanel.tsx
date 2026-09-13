@@ -65,6 +65,11 @@ const formatAssignee = (assignee?: SharedFindingAssignee): string => {
   return assignee.role ? `${assignee.kind} (${formatRole(assignee.role)})` : assignee.kind;
 };
 
+const formatLineageActor = (actor: { displayName?: string; role?: string }): string => {
+  const role = actor.role ? `${formatRole(actor.role)} reviewer` : 'Authorized reviewer';
+  return actor.displayName ? `${actor.displayName} (${role})` : role;
+};
+
 const formatElapsedTimestamp = (timestampMs: number): string => {
   const seconds = Math.floor(timestampMs / 1000);
   return `${seconds}s into encounter`;
@@ -275,14 +280,19 @@ export const PinnedFindingsPanel = ({
                     <Typography variant="subtitle2">Resolution lineage</Typography>
                     {shared.resolutionHistory.length ? (
                       <Stack component="ol" spacing={0.5} sx={{ m: 0, pl: 2 }}>
-                        {shared.resolutionHistory.map((event) => (
-                          <Box component="li" key={event.id}>
-                            <Typography variant="body2" sx={{ overflowWrap: 'anywhere' }}>
-                              {event.previousStatus} → {event.status} ·{' '}
-                              {formatLifecycleOffset(event.afterAnchorMs)} · {event.note}
-                            </Typography>
-                          </Box>
-                        ))}
+                        {shared.resolutionHistory.map((event, eventIndex) => {
+                          const actor =
+                            finding.resolutionHistory[eventIndex]?.changedBy ?? event.changedBy;
+                          return (
+                            <Box component="li" key={event.id}>
+                              <Typography variant="body2" sx={{ overflowWrap: 'anywhere' }}>
+                                {event.previousStatus} → {event.status} ·{' '}
+                                {formatLifecycleOffset(event.afterAnchorMs)} ·{' '}
+                                {formatLineageActor(actor)} · {event.note}
+                              </Typography>
+                            </Box>
+                          );
+                        })}
                       </Stack>
                     ) : (
                       <Typography variant="body2">Open · no updates yet</Typography>
@@ -293,15 +303,24 @@ export const PinnedFindingsPanel = ({
                   <Typography variant="subtitle2">Ownership lineage</Typography>
                   {shared.ownership.history.length ? (
                     <Stack component="ol" spacing={0.5} sx={{ m: 0, pl: 2 }}>
-                      {shared.ownership.history.map((transition, transitionIndex) => (
-                        <Box component="li" key={`${transition.afterAnchorMs}-${transitionIndex}`}>
-                          <Typography variant="body2" sx={{ overflowWrap: 'anywhere' }}>
-                            {formatAssignee(transition.from)} → {formatAssignee(transition.to)} ·{' '}
-                            {formatLifecycleOffset(transition.afterAnchorMs)}
-                            {transition.reason ? ` · ${transition.reason}` : ''}
-                          </Typography>
-                        </Box>
-                      ))}
+                      {shared.ownership.history.map((transition, transitionIndex) => {
+                        const actor =
+                          finding.ownership.history[transitionIndex]?.changedBy ??
+                          transition.changedBy;
+                        return (
+                          <Box
+                            component="li"
+                            key={`${transition.afterAnchorMs}-${transitionIndex}`}
+                          >
+                            <Typography variant="body2" sx={{ overflowWrap: 'anywhere' }}>
+                              {formatAssignee(transition.from)} → {formatAssignee(transition.to)} ·{' '}
+                              {formatLifecycleOffset(transition.afterAnchorMs)} ·{' '}
+                              {formatLineageActor(actor)} · {transition.evidence}
+                              {transition.reason ? ` · ${transition.reason}` : ''}
+                            </Typography>
+                          </Box>
+                        );
+                      })}
                     </Stack>
                   ) : (
                     <Typography variant="body2">No ownership updates yet</Typography>
