@@ -130,15 +130,6 @@ export function calculateDamageStatisticsWithActivity(
   const activityTimestampsByPlayer: ActivityTimestampsByPlayer = {};
   const timing = fight ? getFightTiming(fight) : null;
 
-  if (fight && !timing) {
-    return {
-      damageByPlayer,
-      criticalDamageByPlayer,
-      damageEventsBySource,
-      activePercentages: {},
-    };
-  }
-
   for (const [playerIdStr, events] of Object.entries(damageEventsByPlayer)) {
     const playerId = Number(playerIdStr);
     let totalDamage = 0;
