@@ -1,5 +1,5 @@
 import { configureStore } from '@reduxjs/toolkit';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { Provider } from 'react-redux';
@@ -53,6 +53,21 @@ const fight = {
   bossPercentage: 0,
   gameZone: { __typename: 'GameZone', id: 1121, name: 'Sunspire' },
 } as FightFragment;
+
+const makeBossFight = (id: number, bossPercentage: number | null | undefined): FightFragment =>
+  ({
+    __typename: 'ReportFight',
+    id,
+    name: 'Yolnahkriin',
+    difficulty: 121,
+    startTime: id * 100_000,
+    endTime: id * 100_000 + 60_000,
+    kill: null,
+    encounterID: 21,
+    originalEncounterID: null,
+    bossPercentage,
+    gameZone: { __typename: 'GameZone', id: 1121, name: 'Sunspire' },
+  }) as FightFragment;
 
 type ViewProps = React.ComponentProps<typeof ReportFightsView>;
 
@@ -175,4 +190,45 @@ describe('ReportFightsView no-fights states', () => {
       expect(onFightIntent).toHaveBeenCalledWith(intent);
     },
   );
+});
+
+describe('ReportFightsView outcome cards', () => {
+  it.each([
+    ['null', null],
+    ['missing', undefined],
+    ['NaN', Number.NaN],
+    ['Infinity', Number.POSITIVE_INFINITY],
+  ])('renders %s boss health as UNKNOWN with no fabricated progress', (_, bossPercentage) => {
+    const fight = makeBossFight(1, bossPercentage);
+    renderView({
+      fights: [fight],
+      reportData: { ...emptyReport, fights: [fight] } as ReportFragment,
+    });
+
+    const card = screen.getByTestId(`fight-button-${fight.id}`);
+    expect(card).toHaveAttribute('data-fight-outcome', 'unknown');
+    expect(within(card).getByText('UNKNOWN')).toBeInTheDocument();
+    expect(within(card).queryByText('KILL')).not.toBeInTheDocument();
+    expect(within(card).queryByText('0%')).not.toBeInTheDocument();
+    expect(screen.queryByTestId(`fight-progress-${fight.id}`)).not.toBeInTheDocument();
+    expect(screen.queryByTestId(`fight-progress-bar-${fight.id}`)).not.toBeInTheDocument();
+  });
+
+  it('keeps valid kill and wipe progress distinct from unknown outcomes', () => {
+    const kill = { ...makeBossFight(1, null), kill: true } as FightFragment;
+    const wipe = { ...makeBossFight(2, 40), kill: false } as FightFragment;
+    renderView({
+      fights: [kill, wipe],
+      reportData: { ...emptyReport, fights: [kill, wipe] } as ReportFragment,
+    });
+
+    const killCard = screen.getByTestId(`fight-button-${kill.id}`);
+    const wipeCard = screen.getByTestId(`fight-button-${wipe.id}`);
+    expect(killCard).toHaveAttribute('data-fight-outcome', 'kill');
+    expect(within(killCard).getByText('KILL')).toBeInTheDocument();
+    expect(screen.getByTestId(`fight-progress-${kill.id}`)).toBeInTheDocument();
+    expect(wipeCard).toHaveAttribute('data-fight-outcome', 'wipe');
+    expect(within(wipeCard).getByText('40%')).toBeInTheDocument();
+    expect(screen.getByTestId(`fight-progress-bar-${wipe.id}`)).toBeInTheDocument();
+  });
 });

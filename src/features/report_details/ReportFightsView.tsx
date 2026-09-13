@@ -29,6 +29,7 @@ import { BossAvatar } from './BossAvatar';
 import {
   bossHealthRemaining,
   buildRunEncounters,
+  getFightOutcome,
   groupFightsIntoRuns,
   isBossFight,
   isResetPull,
@@ -523,52 +524,55 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
     // Handle both boss fights and trash fights (encounterID-based, see fightGrouping.isBossFight)
     const fightIsBoss = isBossFight(fight);
 
-    let isWipe: boolean;
-    let bossHealthPercent: number;
-    let backgroundFillPercent: number;
+    const outcome = getFightOutcome(fight);
+    const isWipe = outcome.status === 'wipe';
+    const isUnknown = outcome.status === 'unknown';
+    const bossHealthPercent =
+      outcome.bossHealthRemaining == null ? null : Math.round(outcome.bossHealthRemaining);
 
-    if (fightIsBoss) {
-      // Boss fight logic — use the API's authoritative `kill` flag (see fightGrouping.wasKill).
-      // This replaces the old `bossPercentage`-based heuristic + false-positive detection.
-      const bossWasKilled = wasKill(fight);
-      isWipe = !bossWasKilled;
-      const remaining = bossHealthRemaining(fight);
-      bossHealthPercent = remaining != null ? Math.round(remaining) : 0;
+    // A missing/non-finite health value has no defensible progress value. Keep
+    // it absent instead of fabricating either a full clear or zero health.
+    const backgroundFillPercent =
+      outcome.status === 'kill'
+        ? 100
+        : isWipe && bossHealthPercent != null
+          ? 100 - bossHealthPercent
+          : null;
 
-      // Fill represents progress (damage dealt): kills = full, wipes = 100 - health remaining
-      backgroundFillPercent = bossWasKilled ? 100 : 100 - bossHealthPercent;
-    } else {
-      // Trash fight logic - use the kill field to determine success/wipe
-      // kill === true means success, kill === false means wipe, kill === null means unknown (treat as successful)
-      const wasKilled = fight.kill === true || fight.kill === null;
-      isWipe = fight.kill === false;
-      bossHealthPercent = 0;
-      backgroundFillPercent = wasKilled ? 100 : 0; // Full bar if successful, empty if wipe
-    }
+    const neutralColor = darkMode ? '#94a3b8' : '#64748b';
+    const wipeHealthColor =
+      bossHealthPercent == null ? neutralColor : getWipeHealthGradientColor(bossHealthPercent);
 
     // Accent bar color — smooth gradient by boss health % for wipes,
     // green for kills (green = complete).
-    const accentBarColor = isWipe
-      ? getWipeHealthGradientColor(bossHealthPercent)
-      : darkMode
-        ? '#4ade80'
-        : '#10b981';
+    const accentBarColor = isUnknown
+      ? neutralColor
+      : isWipe
+        ? wipeHealthColor
+        : darkMode
+          ? '#4ade80'
+          : '#10b981';
 
     const accentGlow = accentBarColor + '66';
 
     // Status color — for wipes, match the smooth accent gradient so the %
     // text gradually shifts with boss HP remaining
-    const statusColor = isWipe
-      ? getWipeHealthGradientColor(bossHealthPercent)
-      : darkMode
-        ? '#4ade80'
-        : '#059669';
+    const statusColor =
+      isUnknown || (isWipe && bossHealthPercent == null)
+        ? neutralColor
+        : isWipe
+          ? wipeHealthColor
+          : darkMode
+            ? '#4ade80'
+            : '#059669';
 
     // Glass background tint based on status
     const glassBg = darkMode
-      ? isWipe
-        ? 'rgba(255, 60, 60, 0.06)'
-        : 'rgba(74, 222, 128, 0.06)'
+      ? isUnknown || (isWipe && bossHealthPercent == null)
+        ? 'rgba(148, 163, 184, 0.06)'
+        : isWipe
+          ? 'rgba(255, 60, 60, 0.06)'
+          : 'rgba(74, 222, 128, 0.06)'
       : 'rgba(255, 255, 255, 0.6)';
 
     const borderColor = darkMode ? `${accentBarColor}30` : `${accentBarColor}20`;
@@ -577,6 +581,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
       <ListItem key={fight.id} sx={{ p: 0 }}>
         <ListItemButton
           data-testid={`fight-button-${fight.id}`}
+          data-fight-outcome={outcome.status}
           selected={fightId === String(fight.id)}
           onClick={() => handleFightSelect(fight.id)}
           onPointerEnter={() => onFightIntent?.('pointer')}
@@ -636,23 +641,27 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
           }}
         >
           {/* Progress gradient background */}
-          <Box
-            sx={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              bottom: 0,
-              right: `${100 - backgroundFillPercent}%`,
-              background: isWipe
-                ? getWipeHealthGradientBackground(bossHealthPercent, darkMode)
-                : !fightIsBoss
-                  ? getThemeColors.trashGradient
-                  : getThemeColors.killGradient,
-              borderRadius: '8px',
-              opacity: darkMode ? 0.65 : 0.85,
-              zIndex: 0,
-            }}
-          />
+          {backgroundFillPercent != null && (
+            <Box
+              data-testid={`fight-progress-${fight.id}`}
+              sx={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                bottom: 0,
+                right: `${100 - backgroundFillPercent}%`,
+                background:
+                  isWipe && bossHealthPercent != null
+                    ? getWipeHealthGradientBackground(bossHealthPercent, darkMode)
+                    : !fightIsBoss
+                      ? getThemeColors.trashGradient
+                      : getThemeColors.killGradient,
+                borderRadius: '8px',
+                opacity: darkMode ? 0.65 : 0.85,
+                zIndex: 0,
+              }}
+            />
+          )}
           {/* Left accent bar */}
           <Box
             sx={{
@@ -716,8 +725,8 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
               >
                 #{idx + 1}
               </Typography>
-              {/* Status badge — boss fights only */}
-              {fightIsBoss && (
+              {/* Unknown trash also needs an explicit state instead of looking complete. */}
+              {(fightIsBoss || isUnknown) && (
                 <Box
                   sx={{
                     display: 'inline-flex',
@@ -731,18 +740,24 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                 >
                   <Typography
                     sx={{
-                      fontSize: isWipe ? '0.75rem' : '0.65rem',
+                      fontSize: isWipe && bossHealthPercent != null ? '0.75rem' : '0.65rem',
                       fontWeight: 800,
                       fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
                       color: statusColor,
                       lineHeight: 1,
-                      letterSpacing: isWipe ? '0.04em' : '0.12em',
+                      letterSpacing: isWipe && bossHealthPercent != null ? '0.04em' : '0.12em',
                       textTransform: 'uppercase',
                       textShadow: darkMode ? `0 0 8px ${statusColor}88` : 'none',
                     }}
                   >
-                    {isWipe ? (
-                      bossHealthPercent + '%'
+                    {isUnknown ? (
+                      'UNKNOWN'
+                    ) : isWipe ? (
+                      bossHealthPercent == null ? (
+                        'WIPE'
+                      ) : (
+                        bossHealthPercent + '%'
+                      )
                     ) : (
                       <>
                         <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
@@ -823,8 +838,9 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                 </Typography>
               )}
               {/* Progress micro-bar — wipes only, shows damage progress */}
-              {isWipe ? (
+              {isWipe && backgroundFillPercent != null ? (
                 <Box
+                  data-testid={`fight-progress-bar-${fight.id}`}
                   sx={{
                     width: { xs: 28, sm: 40 },
                     height: 3,
@@ -1080,13 +1096,11 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                     }}
                   >
                     {(() => {
-                      // Count killed encounters using the authoritative kill detection.
+                      // Count only display-safe kills. Unknown outcomes must not
+                      // inflate the run completion indicator.
                       const killedBosses = trialRun.encounters.reduce((count, encounter) => {
-                        const hasKill = encounter.bossFights.some((fight) =>
-                          isBossFight(fight)
-                            ? wasKill(fight)
-                            : // Trash: kill === null means unknown (treat as successful)
-                              fight.kill === true || fight.kill === null,
+                        const hasKill = encounter.bossFights.some(
+                          (fight) => getFightOutcome(fight).status === 'kill',
                         );
                         return count + (hasKill ? 1 : 0);
                       }, 0);
