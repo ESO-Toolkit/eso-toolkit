@@ -8,6 +8,11 @@ import {
 import { BuffLookupData, createBuffLookup } from '../../../utils/BuffLookupUtils';
 import { calculateDynamicCriticalDamageAtTimestamp } from '../../../utils/CritDamageUtils';
 
+import {
+  getFightDurationMs,
+  resolveCriticalDamageSourceInclusion,
+} from './PlayerCriticalDamageDetails';
+
 interface TestDataPoint {
   timestamp: number;
   criticalDamage: number;
@@ -15,6 +20,12 @@ interface TestDataPoint {
 }
 
 describe('PlayerCriticalDamageDetails Integration', () => {
+  it('preserves a zero fight timestamp and keeps missing source activity unknown', () => {
+    expect(getFightDurationMs({ startTime: 0, endTime: 1000 } as never)).toBe(1000);
+    expect(resolveCriticalDamageSourceInclusion(undefined)).toBe('unknown');
+    expect(resolveCriticalDamageSourceInclusion({ wasActive: false } as never)).toBe('excluded');
+  });
+
   // Mock objects needed for calculateDynamicCriticalDamageAtTimestamp
   const mockCombatantInfo: CombatantInfoEvent = {
     timestamp: 1000,
