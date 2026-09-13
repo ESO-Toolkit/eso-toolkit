@@ -398,7 +398,7 @@ export const DamageDonePanel: React.FC<DamageDonePanelProps> = ({ context }) => 
     [actorsById],
   );
 
-  const panelError =
+  const rawPanelError =
     damageStatisticsError ??
     reportEntry?.error ??
     damageEntry?.error ??
@@ -408,6 +408,8 @@ export const DamageDonePanel: React.FC<DamageDonePanelProps> = ({ context }) => 
     castEntry?.error ??
     damageOverTimeError ??
     null;
+  const panelError =
+    rawPanelError instanceof Error ? rawPanelError.message : (rawPanelError ?? null);
   const hasData = damageRows.length > 0;
   const panelState = resolveDamageDonePanelState({
     error: panelError,

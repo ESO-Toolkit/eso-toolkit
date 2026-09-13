@@ -10,12 +10,11 @@ import type {
 } from '../../../workers/calculations/CalculateStatusEffectUptimes';
 
 import {
+  averageValidUptimeSamples,
   getStatusEffectUptimesForPanel,
   getStatusEffectUptimesUnavailableMessage,
   isStatusEffectUptimesResultPending,
 } from './StatusEffectUptimesPanel';
-
-import { averageValidUptimeSamples } from './StatusEffectUptimesPanel';
 
 describe('StatusEffectUptimesPanel Target Segmentation Integration', () => {
   const TARGET_ID_1 = 200;

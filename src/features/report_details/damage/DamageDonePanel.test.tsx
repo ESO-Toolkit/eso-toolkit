@@ -24,9 +24,6 @@ const mockDamageEventsByPlayer = {
 const mockSelectedTargetIds = new Set<number>();
 
 jest.mock('react-redux', () => ({ useSelector: () => ({ 1: mockActor }) }));
-jest.mock('../../../components/DamageDoneTableSkeleton', () => ({
-  DamageDoneTableSkeleton: () => <div data-testid="damage-skeleton">Loading damage</div>,
-}));
 jest.mock('../../../components/PlayerCardModal', () => ({ PlayerCardModal: () => null }));
 jest.mock('./DamageDonePanelView', () => ({
   DamageDonePanelView: ({ damageRows }: { damageRows: Array<{ name: string; total: number }> }) => (
@@ -88,16 +85,17 @@ describe('DamageDonePanel background calculation', () => {
 
     render(<DamageDonePanel />);
 
-    expect(screen.getByTestId('damage-skeleton')).toBeInTheDocument();
+    expect(screen.getByRole('progressbar', { name: 'Damage done: loading' })).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('Loading data.');
     await waitFor(() => expect(mockRunDamageStatistics).toHaveBeenCalledTimes(1));
 
     await act(async () => failed.reject(new Error('worker unavailable')));
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      'Damage statistics could not be calculated in the background',
+      'The latest refresh failed. Retained data may be out of date. worker unavailable',
     );
 
     fireEvent.click(screen.getByRole('button', { name: /try again/i }));
-    expect(screen.getByTestId('damage-skeleton')).toBeInTheDocument();
+    expect(screen.getByRole('progressbar', { name: 'Damage done: loading' })).toBeInTheDocument();
     await waitFor(() => expect(mockRunDamageStatistics).toHaveBeenCalledTimes(2));
 
     await act(async () =>

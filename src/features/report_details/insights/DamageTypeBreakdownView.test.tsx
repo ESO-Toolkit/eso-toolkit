@@ -15,6 +15,7 @@ const renderView = (
   render(
     <ThemeProvider theme={createTheme()}>
       <DamageTypeBreakdownView
+        state="ready"
         damageTypeBreakdown={[
           {
             damageType: DamageTypeFlags.MAGIC,
@@ -30,7 +31,6 @@ const renderView = (
           },
         ]}
         totalDamage={emptyDenominators ? 0 : 1000}
-        isLoading={false}
       />
     </ThemeProvider>,
   );

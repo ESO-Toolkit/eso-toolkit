@@ -28,10 +28,10 @@ import { AnalysisComparisonPanel } from './comparison/components/AnalysisCompari
 import { DamageBreakdownPanel } from './DamageBreakdownPanel';
 import { DamageTypeBreakdownPanel } from './DamageTypeBreakdownPanel';
 import { DebuffUptimesPanel } from './DebuffUptimesPanel';
-import type { InsightsDataState, InsightsRetryAvailability } from './insightsDataState';
 import { DecisionSummaryPanel } from './decision/components/DecisionSummaryPanel';
 import { buildPrioritizedDecisionSummary, type DecisionScope } from './decision/decisionSummary';
 import { PinnedFindingsPanel, type PinnedFindingsPanelState } from './findings/PinnedFindingsPanel';
+import type { InsightsDataState, InsightsRetryAvailability } from './insightsDataState';
 import { StatusEffectUptimesPanel } from './StatusEffectUptimesPanel';
 
 export type InsightsWorkflowState = 'loading' | 'partial' | 'stale' | 'failed' | 'unavailable';

@@ -13,6 +13,7 @@ const renderView = (
   render(
     <ThemeProvider theme={createTheme()}>
       <DamageBreakdownView
+        state="ready"
         damageBreakdown={[
           {
             abilityGameID: '100',
@@ -28,7 +29,6 @@ const renderView = (
           },
         ]}
         totalDamage={emptyDenominators ? 0 : 1000}
-        isLoading={false}
       />
     </ThemeProvider>,
   );

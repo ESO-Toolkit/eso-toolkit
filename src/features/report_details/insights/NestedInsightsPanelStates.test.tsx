@@ -40,8 +40,11 @@ const views: Array<[string, ViewFactory]> = [
                   abilityName: 'Retained Effect',
                   totalDamage: 100,
                   hitCount: 1,
+                  eligibleHitCount: 1,
                   criticalHits: 0,
                   criticalRate: 0,
+                  criticalDamage: 0,
+                  criticalDamageShare: 0,
                   averageDamage: 100,
                 },
               ]
@@ -64,8 +67,11 @@ const views: Array<[string, ViewFactory]> = [
                   displayName: 'Retained Effect',
                   totalDamage: 100,
                   hitCount: 1,
+                  eligibleHitCount: 1,
                   criticalHits: 0,
                   criticalRate: 0,
+                  criticalDamage: 0,
+                  criticalDamageShare: 0,
                   averageDamage: 100,
                 },
               ]
