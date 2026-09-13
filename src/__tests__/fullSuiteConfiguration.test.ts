@@ -32,5 +32,21 @@ describe('full Playwright suite configuration', () => {
     expect(listedTests).toContain('[chromium]');
     expect(listedTests).toContain('[firefox]');
     expect(listedTests).toContain('[webkit]');
+    expect(listedTests).not.toContain('build-editor-mobile.spec.ts');
+  });
+
+  it('keeps the mobile build-editor suite in its dedicated mobile matrix', () => {
+    const playwrightCli = path.join(process.cwd(), 'node_modules', '@playwright', 'test', 'cli.js');
+    const playwrightEnvironment = { ...process.env };
+    delete playwrightEnvironment.JEST_WORKER_ID;
+    const listedTests = execFileSync(
+      process.execPath,
+      [playwrightCli, 'test', '--config=playwright/mobile.config.ts', '--list'],
+      { cwd: process.cwd(), encoding: 'utf8', env: playwrightEnvironment },
+    );
+
+    expect(listedTests).toContain('build-editor-mobile.spec.ts');
+    expect(listedTests).toContain('[mobile-chrome]');
+    expect(listedTests).toContain('[mobile-chrome-perf-low]');
   });
 });
