@@ -1,4 +1,70 @@
-import { test, expect, devices } from '@playwright/test';
+import { expect, Page, test, devices } from '@playwright/test';
+
+import { setupTestPage } from './setup/global-test-setup';
+
+const REPORT_CODE = process.env.E2E_REPORT_CODE ?? 'F4f2bMwWtgVKxjB9';
+const ANALYZER_URL = `/report/${REPORT_CODE}/fight/5/insights`;
+
+async function openAnalyzer(page: Page): Promise<void> {
+  await setupTestPage(page);
+  await page.addInitScript(() => {
+    const part = (value: string) => btoa(value).replace(/=+$/, '');
+    const token = `${part('{"alg":"HS256","typ":"JWT"}')}.${part(JSON.stringify({ sub: '999', exp: Math.floor(Date.now() / 1000) + 3600 }))}.test`;
+    sessionStorage.setItem('access_token', token);
+    localStorage.setItem('access_token', token);
+  });
+  await page.route(/\/api\/v2\/user(?:\?|$)/, (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        data: {
+          userData: {
+            currentUser: {
+              id: 999,
+              name: 'TestUser',
+              naDisplayName: 'TestUser-NA',
+              euDisplayName: null,
+            },
+          },
+        },
+      }),
+    }),
+  );
+  await page.route(/\/graphql(?:\?|$)/, async (route) => {
+    const body = route.request().postData() ?? '';
+    const response = body.includes('currentUser')
+      ? {
+          data: {
+            userData: {
+              currentUser: {
+                id: 999,
+                name: 'TestUser',
+                naDisplayName: 'TestUser-NA',
+                euDisplayName: null,
+              },
+            },
+          },
+        }
+      : body.includes('masterData')
+        ? { data: { reportData: { report: { masterData: { actors: [], abilities: [] } } } } }
+        : body.includes('playerDetails')
+          ? { data: { reportData: { report: { playerDetails: { data: { playerDetails: [] } } } } } }
+          : { data: { reportData: { report: { events: { data: [], nextPageTimestamp: null } } } } };
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(response),
+    });
+  });
+  const response = await page.goto(ANALYZER_URL, { waitUntil: 'domcontentloaded' });
+  expect(response?.status()).toBe(200);
+  await expect(page).toHaveURL(new RegExp(`/report/${REPORT_CODE}/fight/5/insights$`));
+  await expect(page.getByTestId('fight-details-loaded')).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByTestId('fight-tab-content-container')).toBeVisible();
+  await expect(page.getByTestId('insights-panel')).toBeVisible();
+  await expect(page.getByTestId('insights-skeleton-layout')).toHaveCount(0);
+}
 
 // Performance test configurations
 const PERFORMANCE_THRESHOLDS = {
@@ -23,9 +89,6 @@ const PERFORMANCE_THRESHOLDS = {
 };
 
 test.describe('Responsive Performance Tests', () => {
-  const testReportId = process.env.E2E_REPORT_CODE ?? 'F4f2bMwWtgVKxjB9';
-  const testUrl = `/r/${testReportId}`;
-
   // Core web vitals testing
   test.describe('Core Web Vitals - Mobile', () => {
     test.use({ ...devices['Pixel 5'] });
@@ -81,10 +144,9 @@ test.describe('Responsive Performance Tests', () => {
 
       // Navigate to page and start measuring
       const startTime = Date.now();
-      await page.goto(testUrl, { waitUntil: 'domcontentloaded' });
+      await openAnalyzer(page);
 
       // Wait for page to fully load
-      await page.waitForLoadState('networkidle');
       await page.waitForTimeout(2000); // Allow for animations
 
       const totalLoadTime = Date.now() - startTime;
@@ -139,8 +201,7 @@ test.describe('Responsive Performance Tests', () => {
 
     test('should meet Core Web Vitals thresholds', async ({ page }) => {
       const startTime = Date.now();
-      await page.goto(testUrl, { waitUntil: 'domcontentloaded' });
-      await page.waitForLoadState('networkidle');
+      await openAnalyzer(page);
       await page.waitForTimeout(2000);
       const loadTime = Date.now() - startTime;
 
@@ -153,8 +214,7 @@ test.describe('Responsive Performance Tests', () => {
 
     test('should meet Core Web Vitals thresholds', async ({ page }) => {
       const startTime = Date.now();
-      await page.goto(testUrl, { waitUntil: 'domcontentloaded' });
-      await page.waitForLoadState('networkidle');
+      await openAnalyzer(page);
       await page.waitForTimeout(2000);
       const loadTime = Date.now() - startTime;
 
@@ -165,8 +225,7 @@ test.describe('Responsive Performance Tests', () => {
   // Responsive layout performance
   test.describe('Responsive Layout Performance', () => {
     test('should handle rapid viewport resizing efficiently', async ({ page }) => {
-      await page.goto(testUrl);
-      await page.waitForLoadState('networkidle');
+      await openAnalyzer(page);
 
       const resizeTimes: number[] = [];
 
@@ -199,8 +258,7 @@ test.describe('Responsive Performance Tests', () => {
     });
 
     test('should not block main thread during responsive changes', async ({ page }) => {
-      await page.goto(testUrl);
-      await page.waitForLoadState('networkidle');
+      await openAnalyzer(page);
 
       // Monitor main thread blocking during responsive operations
       const mainThreadBlocking = await page.evaluate(async () => {
@@ -249,8 +307,7 @@ test.describe('Responsive Performance Tests', () => {
   // Memory performance testing
   test.describe('Memory Performance', () => {
     test('should not leak memory during responsive operations', async ({ page }) => {
-      await page.goto(testUrl);
-      await page.waitForLoadState('networkidle');
+      await openAnalyzer(page);
 
       const memorySnapshots: number[] = [];
 
@@ -320,8 +377,7 @@ test.describe('Responsive Performance Tests', () => {
       });
 
       const startTime = Date.now();
-      await page.goto(testUrl);
-      await page.waitForLoadState('networkidle');
+      await openAnalyzer(page);
       const loadTime = Date.now() - startTime;
 
       // Should still load within reasonable time even on slow connection
@@ -341,8 +397,7 @@ test.describe('Responsive Performance Tests', () => {
         await route.continue();
       });
 
-      await page.goto(testUrl);
-      await page.waitForLoadState('networkidle');
+      await openAnalyzer(page);
 
       // Analyze resource loading order
       const cssResources = resourceLoadOrder.filter((url) => url.includes('.css'));
@@ -368,10 +423,9 @@ test.describe('Responsive Performance Tests', () => {
     test.use({ ...devices['Pixel 5'] });
 
     test('should respond quickly to touch interactions on mobile', async ({ page }) => {
-      await page.goto(testUrl);
-      await page.waitForSelector('[data-testid="fight-card"]', { timeout: 10000 });
+      await openAnalyzer(page);
 
-      const fightCards = page.locator('[data-testid="fight-card"]');
+      const fightCards = page.locator('[data-testid="fight-tab-content-container"]');
       const firstCard = fightCards.first();
 
       // Measure interaction response time
@@ -400,8 +454,7 @@ test.describe('Responsive Performance Tests', () => {
     });
 
     test('should handle scrolling smoothly on mobile', async ({ page }) => {
-      await page.goto(testUrl);
-      await page.waitForSelector('[data-testid="fight-card"]', { timeout: 10000 });
+      await openAnalyzer(page);
 
       // Measure scroll performance
       const scrollMetrics = await page.evaluate(async () => {
