@@ -89,7 +89,7 @@ test.describe('Roster Hub', () => {
   test('should display the filter bar with trial dropdown and tag chips', async ({ page }) => {
     await openRosterHub(page, MOCK_ROSTER.title);
 
-    // MUI Select renders as role="combobox" — no accessible label on this select
+    // MUI Select exposes the trial filter as an accessible combobox.
     await expect(page.getByRole('combobox').first()).toBeVisible();
 
     // Preset tags are button controls with aria-pressed state.
@@ -194,14 +194,20 @@ test.describe('Roster Hub', () => {
     await openRosterHub(page);
 
     // Register the request assertion before changing the select so the event is never missed.
-    // Keyboard selection avoids the cookie dialog backdrop obscuring lower menu options.
+    // Dismiss the optional-cookie banner so the semantic option remains interactable.
+    const declineCookies = page.getByRole('button', { name: /Decline all optional cookies/i });
+    if (await declineCookies.isVisible()) {
+      await declineCookies.click();
+    }
+
     const [req] = await Promise.all([
       page.waitForRequest((r) => r.url().includes('trial=SS')),
       (async () => {
         const trialSelect = page.getByRole('combobox').first();
         await trialSelect.click();
-        await trialSelect.press('End');
-        await trialSelect.press('Enter');
+        const sunspireOption = page.getByRole('option', { name: 'Sunspire', exact: true });
+        await expect(sunspireOption).toBeVisible();
+        await sunspireOption.click();
       })(),
     ]);
 
