@@ -166,10 +166,21 @@ export const getValidCriticalDamageDataPoints = (
 const metricValue = (value: number | null, fractionDigits: number): string =>
   value === null ? 'Unavailable' : value.toFixed(fractionDigits);
 
-const metricIntent = (value: number | null): 'success' | 'warning' | 'danger' | 'neutral' => {
+export const getCriticalDamageMetricIntent = (
+  value: number | null,
+): 'success' | 'warning' | 'danger' | 'neutral' => {
   if (value === null) return 'neutral';
   if (value >= 125) return 'success';
   if (value >= 100) return 'warning';
+  return 'danger';
+};
+
+export const getTimeAtCapMetricIntent = (
+  value: number | null,
+): 'success' | 'warning' | 'danger' | 'neutral' => {
+  if (value === null) return 'neutral';
+  if (value >= 80) return 'success';
+  if (value >= 50) return 'warning';
   return 'danger';
 };
 
@@ -444,21 +455,21 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
                 label="Max"
                 value={metricValue(maxCriticalDamage, 0)}
                 suffix={maxCriticalDamage === null ? undefined : '%'}
-                intent={metricIntent(maxCriticalDamage)}
+                intent={getCriticalDamageMetricIntent(maxCriticalDamage)}
                 size="md"
               />
               <MetricPill
                 label="Active"
                 value={metricValue(effectiveCriticalDamage, 1)}
                 suffix={effectiveCriticalDamage === null ? undefined : '%'}
-                intent={metricIntent(effectiveCriticalDamage)}
+                intent={getCriticalDamageMetricIntent(effectiveCriticalDamage)}
                 size="md"
               />
               <MetricPill
                 label="At Cap"
                 value={metricValue(timeAtCapPercentage, 0)}
                 suffix={timeAtCapPercentage === null ? undefined : '%'}
-                intent={metricIntent(timeAtCapPercentage)}
+                intent={getTimeAtCapMetricIntent(timeAtCapPercentage)}
                 size="md"
               />
             </Box>
@@ -484,21 +495,21 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
                   label="Max"
                   value={metricValue(maxCriticalDamage, 0)}
                   suffix={maxCriticalDamage === null ? undefined : '%'}
-                  intent={metricIntent(maxCriticalDamage)}
+                  intent={getCriticalDamageMetricIntent(maxCriticalDamage)}
                   size="sm"
                 />
                 <MetricPill
                   label="Active"
                   value={metricValue(effectiveCriticalDamage, 1)}
                   suffix={effectiveCriticalDamage === null ? undefined : '%'}
-                  intent={metricIntent(effectiveCriticalDamage)}
+                  intent={getCriticalDamageMetricIntent(effectiveCriticalDamage)}
                   size="sm"
                 />
                 <MetricPill
                   label="At Cap"
                   value={metricValue(timeAtCapPercentage, 0)}
                   suffix={timeAtCapPercentage === null ? undefined : '%'}
-                  intent={metricIntent(timeAtCapPercentage)}
+                  intent={getTimeAtCapMetricIntent(timeAtCapPercentage)}
                   size="sm"
                 />
               </Box>
