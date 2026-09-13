@@ -60,6 +60,52 @@ export function getStatusEffectUptimesUnavailableMessage(
   }
 }
 
+export interface UptimeSample {
+  totalDuration: number;
+  uptime: number;
+  applications: number;
+}
+
+const isValidUptimeSample = (sample: UptimeSample | undefined): sample is UptimeSample =>
+  sample !== undefined &&
+  Number.isFinite(sample.totalDuration) &&
+  sample.totalDuration >= 0 &&
+  Number.isFinite(sample.uptime) &&
+  sample.uptime >= 0 &&
+  Number.isFinite(sample.applications) &&
+  sample.applications >= 0;
+
+export const averageValidUptimeSamples = (
+  samples: readonly (UptimeSample | undefined)[],
+  fightDuration: number,
+): (UptimeSample & { uptimePercentage: number }) | undefined => {
+  if (!Number.isFinite(fightDuration) || fightDuration <= 0) {
+    return undefined;
+  }
+
+  const validSamples = samples.filter(isValidUptimeSample);
+  if (validSamples.length === 0) {
+    return undefined;
+  }
+
+  const totalDuration = validSamples.reduce((sum, sample) => sum + sample.totalDuration, 0);
+  const uptime = validSamples.reduce((sum, sample) => sum + sample.uptime, 0);
+  const applications = validSamples.reduce((sum, sample) => sum + sample.applications, 0);
+  const averageTotalDuration = totalDuration / validSamples.length;
+  const uptimePercentage = (averageTotalDuration / fightDuration) * 100;
+
+  if (!Number.isFinite(uptimePercentage) || uptimePercentage < 0 || uptimePercentage > 100) {
+    return undefined;
+  }
+
+  return {
+    totalDuration: averageTotalDuration,
+    uptime: uptime / validSamples.length,
+    applications,
+    uptimePercentage,
+  };
+};
+
 export const StatusEffectUptimesPanel: React.FC<StatusEffectUptimesPanelProps> = ({
   fight,
   selectedPlayerId,
@@ -97,6 +143,9 @@ export const StatusEffectUptimesPanel: React.FC<StatusEffectUptimesPanelProps> =
     Number.isFinite(fightStartTime) &&
     Number.isFinite(fightEndTime) &&
     fightEndTime > fightStartTime;
+  const fightWindowError = hasValidFightWindow
+    ? null
+    : 'Uptime data is unavailable because this fight has an invalid time window.';
 
   const realTargetFilter = React.useMemo(() => {
     if (selectedTargetIds.size === 0 || selectedTargetIds.has(ALL_TARGETS_SENTINEL)) {
@@ -145,7 +194,11 @@ export const StatusEffectUptimesPanel: React.FC<StatusEffectUptimesPanelProps> =
     }
 
     // Cache fight duration calculation
-    const fightDuration = hasValidFightWindow ? fightEndTime - fightStartTime : 1;
+    if (!hasValidFightWindow) {
+      return [];
+    }
+
+    const fightDuration = fightEndTime - fightStartTime;
 
     // If "All Targets" is selected, include all available targets
     const shouldIncludeAllTargets = selectedTargetIds.has(ALL_TARGETS_SENTINEL);
@@ -195,31 +248,17 @@ export const StatusEffectUptimesPanel: React.FC<StatusEffectUptimesPanelProps> =
         return; // Skip this status effect
       }
 
-      // Calculate aggregated values
-      let totalDuration = 0;
-      let totalUptime = 0;
-      let totalApplications = 0;
-      const targetCount = targetsToInclude.length;
-
-      for (let j = 0; j < targetCount; j++) {
-        const data = targetData[targetsToInclude[j]];
-        if (data) {
-          totalDuration += data.totalDuration;
-          totalUptime += data.uptime;
-          totalApplications += data.applications;
-        }
+      const aggregatedUptime = averageValidUptimeSamples(
+        targetsToInclude.map((targetId) => targetData[targetId]),
+        fightDuration,
+      );
+      if (!aggregatedUptime) {
+        return;
       }
-
-      const avgTotalDuration = totalDuration / targetCount;
-      const avgUptime = totalUptime / targetCount;
-      const avgUptimePercentage = (avgTotalDuration / fightDuration) * 100;
 
       results.push({
         ...baseData,
-        totalDuration: avgTotalDuration,
-        uptime: avgUptime,
-        uptimePercentage: avgUptimePercentage,
-        applications: totalApplications,
+        ...aggregatedUptime,
       });
     });
 
@@ -288,31 +327,17 @@ export const StatusEffectUptimesPanel: React.FC<StatusEffectUptimesPanelProps> =
         return; // Skip this effect - no matching targets/sources
       }
 
-      // Calculate aggregated values for the player's contributions
-      let totalDuration = 0;
-      let totalUptime = 0;
-      let totalApplications = 0;
-      const targetCount = targetsToInclude.length;
-
-      for (let j = 0; j < targetCount; j++) {
-        const data = playerData[targetsToInclude[j]];
-        if (data) {
-          totalDuration += data.totalDuration;
-          totalUptime += data.uptime;
-          totalApplications += data.applications;
-        }
+      const aggregatedUptime = averageValidUptimeSamples(
+        targetsToInclude.map((targetId) => playerData[targetId]),
+        fightDuration,
+      );
+      if (!aggregatedUptime) {
+        return;
       }
-
-      const avgTotalDuration = totalDuration / targetCount;
-      const avgUptime = totalUptime / targetCount;
-      const avgUptimePercentage = (avgTotalDuration / fightDuration) * 100;
 
       results.push({
         ...originalUptime,
-        totalDuration: avgTotalDuration,
-        uptime: avgUptime,
-        uptimePercentage: avgUptimePercentage,
-        applications: totalApplications,
+        ...aggregatedUptime,
       });
     });
 
@@ -336,7 +361,7 @@ export const StatusEffectUptimesPanel: React.FC<StatusEffectUptimesPanelProps> =
     // When a player is selected, we need to show their data compared to group average.
     // playerFilteredStatusEffectUptimes already contains the player's data either way;
     // when a player is selected we additionally attach the group average below.
-    const usePlayerData = selectedPlayerId && selectedFriendlyPlayerId;
+    const usePlayerData = selectedPlayerId != null && selectedFriendlyPlayerId != null;
 
     const enhanced = playerFilteredStatusEffectUptimes.map((uptime) => {
       const ability = reportMasterData.abilitiesById[uptime.abilityGameID as string];
@@ -399,20 +424,13 @@ export const StatusEffectUptimesPanel: React.FC<StatusEffectUptimesPanelProps> =
             return;
           }
 
-          // Calculate this player's average uptime
-          let totalDuration = 0;
-          const targetCount = targetsToInclude.length;
-
-          for (let j = 0; j < targetCount; j++) {
-            const data = playerData[targetsToInclude[j]];
-            if (data) {
-              totalDuration += data.totalDuration;
-            }
+          const playerUptime = averageValidUptimeSamples(
+            targetsToInclude.map((targetId) => playerData[targetId]),
+            fightDuration,
+          );
+          if (playerUptime) {
+            playerUptimePercentages.push(playerUptime.uptimePercentage);
           }
-
-          const avgTotalDuration = totalDuration / targetCount;
-          const playerUptimePercentage = (avgTotalDuration / fightDuration) * 100;
-          playerUptimePercentages.push(playerUptimePercentage);
         });
 
         // Calculate the average of all player uptimes
@@ -507,7 +525,7 @@ export const StatusEffectUptimesPanel: React.FC<StatusEffectUptimesPanelProps> =
   const requestError =
     statusEffectUptimesError ?? hostileBuffLookupError ?? debuffLookupError ?? null;
   const panelState = resolveAnalyzerPanelState({
-    error: requestError,
+    error: requestError ?? unavailableMessage ?? fightWindowError,
     hasData: enhancedStatusEffectUptimes.length > 0,
     isComplete:
       statusEffectUptimesData != null &&
@@ -527,6 +545,7 @@ export const StatusEffectUptimesPanel: React.FC<StatusEffectUptimesPanelProps> =
         stateDetail={
           requestError ??
           unavailableMessage ??
+          fightWindowError ??
           (panelState === 'stale'
             ? 'Status effect data is incomplete. Showing the latest available values.'
             : undefined)

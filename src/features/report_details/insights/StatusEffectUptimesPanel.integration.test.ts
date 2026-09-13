@@ -15,6 +15,8 @@ import {
   isStatusEffectUptimesResultPending,
 } from './StatusEffectUptimesPanel';
 
+import { averageValidUptimeSamples } from './StatusEffectUptimesPanel';
+
 describe('StatusEffectUptimesPanel Target Segmentation Integration', () => {
   const TARGET_ID_1 = 200;
   const TARGET_ID_2 = 201;
@@ -56,25 +58,17 @@ describe('StatusEffectUptimesPanel Target Segmentation Integration', () => {
           return null; // No data for any selected targets
         }
 
-        // Calculate averages across selected targets
-        const totalDuration = relevantTargets.reduce(
-          (sum, targetId) => sum + statusEffect.targetData[targetId].totalDuration,
-          0,
+        const average = averageValidUptimeSamples(
+          relevantTargets.map((targetId) => statusEffect.targetData[targetId]),
+          fightDurationMs,
         );
-        const totalApplications = relevantTargets.reduce(
-          (sum, targetId) => sum + statusEffect.targetData[targetId].applications,
-          0,
-        );
-
-        const avgDuration = totalDuration / relevantTargets.length;
-        const summedApplications = totalApplications; // Sum applications across targets
-        const avgUptimePercentage = (avgDuration / fightDurationMs) * 100;
+        if (!average) {
+          return null;
+        }
 
         return {
           ...statusEffect,
-          totalDuration: avgDuration,
-          applications: summedApplications,
-          uptimePercentage: avgUptimePercentage,
+          ...average,
         };
       })
       .filter((item) => item !== null);
@@ -265,6 +259,39 @@ describe('StatusEffectUptimesPanel Target Segmentation Integration', () => {
   });
 
   describe('Data Validation', () => {
+    it('preserves timestamp-zero samples and excludes missing samples from the average', () => {
+      const average = averageValidUptimeSamples(
+        [
+          { totalDuration: 5_000, uptime: 5, applications: 1 },
+          undefined,
+          { totalDuration: 0, uptime: 0, applications: 0 },
+        ],
+        10_000,
+      );
+
+      expect(average).toEqual({
+        totalDuration: 2_500,
+        uptime: 2.5,
+        applications: 1,
+        uptimePercentage: 25,
+      });
+    });
+
+    it('returns unavailable for invalid fight durations and ignores malformed samples', () => {
+      expect(
+        averageValidUptimeSamples([{ totalDuration: 1_000, uptime: 1, applications: 1 }], NaN),
+      ).toBeUndefined();
+      expect(
+        averageValidUptimeSamples(
+          [{ totalDuration: Infinity, uptime: 1, applications: 1 }],
+          10_000,
+        ),
+      ).toBeUndefined();
+      expect(
+        averageValidUptimeSamples([{ totalDuration: 10_001, uptime: 1, applications: 1 }], 10_000),
+      ).toBeUndefined();
+    });
+
     it('should handle valid target-segmented data structure', () => {
       // Verify the data structure matches expected interface
       mockTargetSegmentedData.forEach((statusEffect) => {

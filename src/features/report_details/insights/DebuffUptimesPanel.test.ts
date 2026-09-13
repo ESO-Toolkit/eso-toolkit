@@ -12,9 +12,53 @@ import { DebuffEvent } from '../../../types/combatlogEvents';
 import { createDebuffLookup } from '../../../utils/BuffLookupUtils';
 import { computeBuffUptimes } from '../../../utils/buffUptimeCalculator';
 
-import { IMPORTANT_DEBUFF_ABILITIES } from './DebuffUptimesPanel';
+import {
+  averagePresentUptimePercentages,
+  computeGroupedMaimUptime,
+  IMPORTANT_DEBUFF_ABILITIES,
+} from './DebuffUptimesPanel';
 
 describe('DebuffUptimesPanel', () => {
+  describe('uptime integrity', () => {
+    it('keeps an interval that begins at timestamp zero', () => {
+      const uptime = computeGroupedMaimUptime({
+        debuffsLookup: {
+          buffIntervals: {
+            '1': [{ start: 0, end: 5_000, targetID: 10, sourceID: 20 }],
+          },
+        },
+        abilityIds: new Set([1]),
+        displayName: 'Major Maim',
+        icon: 'maim.png',
+        fightStartTime: 0,
+        fightEndTime: 10_000,
+        fightDuration: 10_000,
+      });
+
+      expect(uptime?.uptimePercentage).toBe(50);
+    });
+
+    it('returns no uptime for an invalid fight duration', () => {
+      expect(
+        computeGroupedMaimUptime({
+          debuffsLookup: {
+            buffIntervals: { '1': [{ start: 0, end: 5_000, targetID: 10, sourceID: 20 }] },
+          },
+          abilityIds: new Set([1]),
+          displayName: 'Major Maim',
+          icon: 'maim.png',
+          fightStartTime: 0,
+          fightEndTime: 10_000,
+          fightDuration: Infinity,
+        }),
+      ).toBeNull();
+    });
+
+    it('averages only present valid samples without converting absence into zero', () => {
+      expect(averagePresentUptimePercentages([50, undefined, 0, NaN, 101])).toBe(25);
+    });
+  });
+
   describe('IMPORTANT_DEBUFF_ABILITIES', () => {
     it('should include the Nazaray monster set debuff (167065)', () => {
       expect(IMPORTANT_DEBUFF_ABILITIES.has(KnownAbilities.NAZARAY_DEBUFF)).toBe(true);
