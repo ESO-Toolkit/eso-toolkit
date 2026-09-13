@@ -50,9 +50,9 @@ export interface PlayerCriticalDamageData {
   playerId: number;
   playerName: string;
   dataPoints: CriticalDamageDataPoint[];
-  effectiveCriticalDamage: number;
-  maximumCriticalDamage: number;
-  timeAtCapPercentage: number;
+  effectiveCriticalDamage: number | null;
+  maximumCriticalDamage: number | null;
+  timeAtCapPercentage: number | null;
   criticalDamageAlerts: CriticalDamageAlert[];
   inactiveCombatIntervals: Array<{ start: number; end: number }>;
   /** Active combat intervals (absolute timestamps). Used to keep time-at-cap filtered to
@@ -86,9 +86,11 @@ interface PlayerCriticalDamageDetailsViewProps {
   criticalMultiplier: CriticalMultiplierInfo | null;
   fightDurationMs: number;
   /** Report code for building "View on ESO Logs" deep links. */
-  reportId?: string | null;
+  reportId?: string | number | null;
   /** Fight id for building "View on ESO Logs" deep links. */
-  fightId?: string | null;
+  fightId?: string | number | null;
+  /** Explains missing or omitted measurements without replacing valid values with zero. */
+  dataQualityMessage?: string;
   onExpandChange?: (event: React.SyntheticEvent, isExpanded: boolean) => void;
   phaseTransitionInfo?: PhaseTransitionInfo;
 }
@@ -98,19 +100,26 @@ interface PlayerCriticalDamageDetailsViewProps {
  * to the current report, fight and player. Returns undefined when the report or
  * fight context is unavailable so callers can omit the link entirely.
  */
-const buildEsoLogsSourceUrl = (
-  reportId: string | null | undefined,
-  fightId: string | null | undefined,
+export const buildEsoLogsSourceUrl = (
+  reportId: string | number | null | undefined,
+  fightId: string | number | null | undefined,
   abilityId: number,
   playerId: number,
   isDebuff: boolean,
 ): string | undefined => {
-  if (!reportId || !fightId) {
+  if (
+    reportId === null ||
+    reportId === undefined ||
+    reportId === '' ||
+    fightId === null ||
+    fightId === undefined ||
+    fightId === ''
+  ) {
     return undefined;
   }
 
   const params = new URLSearchParams({
-    fight: fightId,
+    fight: String(fightId),
     type: 'auras',
     hostility: isDebuff ? '1' : '0',
     ability: String(abilityId),
@@ -128,7 +137,40 @@ const buildEsoLogsSourceUrl = (
     params.set('target', String(playerId));
   }
 
-  return `https://www.esologs.com/reports/${encodeURIComponent(reportId)}?${params.toString()}`;
+  return `https://www.esologs.com/reports/${encodeURIComponent(String(reportId))}?${params.toString()}`;
+};
+
+const isFiniteNumber = (value: unknown): value is number =>
+  typeof value === 'number' && Number.isFinite(value);
+
+const isValidCombatInterval = (interval: unknown): interval is { start: number; end: number } =>
+  !!interval &&
+  typeof interval === 'object' &&
+  isFiniteNumber((interval as Record<string, unknown>).start) &&
+  isFiniteNumber((interval as Record<string, unknown>).end);
+
+export const getValidCriticalDamageDataPoints = (
+  dataPoints: unknown,
+): CriticalDamageDataPoint[] => {
+  if (!Array.isArray(dataPoints)) return [];
+  return dataPoints.filter(
+    (point): point is CriticalDamageDataPoint =>
+      !!point &&
+      typeof point === 'object' &&
+      isFiniteNumber((point as Record<string, unknown>).timestamp) &&
+      isFiniteNumber((point as Record<string, unknown>).relativeTime) &&
+      isFiniteNumber((point as Record<string, unknown>).criticalDamage),
+  );
+};
+
+const metricValue = (value: number | null, fractionDigits: number): string =>
+  value === null ? 'Unavailable' : value.toFixed(fractionDigits);
+
+const metricIntent = (value: number | null): 'success' | 'warning' | 'danger' | 'neutral' => {
+  if (value === null) return 'neutral';
+  if (value >= 125) return 'success';
+  if (value >= 100) return 'warning';
+  return 'danger';
 };
 
 export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetailsViewProps> = ({
@@ -147,6 +189,7 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
   fightId,
   onExpandChange,
   phaseTransitionInfo,
+  dataQualityMessage,
 }) => {
   const roleColors = useRoleColors();
 
@@ -159,7 +202,7 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
       return {
         id: sourceId,
         name: source.name,
-        wasActive: source.wasActive,
+        wasActive: source.wasActive === true,
         description: source.description,
         sourceType: source.source,
         interactive: isInteractive,
@@ -181,19 +224,27 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
 
   const { theme } = useEChartsTheme();
 
-  const chartData = React.useMemo(() => {
-    return (
-      criticalDamageData?.dataPoints.map((point) => [point.relativeTime, point.criticalDamage]) ||
-      []
-    );
+  const validDataPoints = React.useMemo(() => {
+    return getValidCriticalDamageDataPoints(criticalDamageData?.dataPoints);
   }, [criticalDamageData?.dataPoints]);
 
+  const chartData = React.useMemo(() => {
+    return validDataPoints.map((point) => [point.relativeTime, point.criticalDamage]);
+  }, [validDataPoints]);
+
+  const validInactiveCombatIntervals = React.useMemo(() => {
+    const intervals = criticalDamageData?.inactiveCombatIntervals;
+    return Array.isArray(intervals) ? intervals.filter(isValidCombatInterval) : [];
+  }, [criticalDamageData?.inactiveCombatIntervals]);
+
   const phaseMarkLines = usePhaseMarkLines(phaseTransitionInfo);
-  const inactiveMarkAreas = useInactiveMarkAreas(criticalDamageData?.inactiveCombatIntervals);
+  const inactiveMarkAreas = useInactiveMarkAreas(validInactiveCombatIntervals);
 
   const chartOption = React.useMemo(() => {
     const lineColor = '#d32f2f';
-    const fightDuration = msToSeconds(fightDurationMs);
+    const fightDuration = msToSeconds(
+      isFiniteNumber(fightDurationMs) ? Math.max(0, fightDurationMs) : 0,
+    );
 
     const targetLine = buildGoalMarkLine(125, 'Target: 125%', '#2e7d32');
     const markLineData = [targetLine];
@@ -324,10 +375,20 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
     );
   }
 
-  const maxCriticalDamage = Math.max(
-    ...criticalDamageData.dataPoints.map((point) => point.criticalDamage),
-    0,
-  );
+  const hasValidSamples = validDataPoints.length > 0;
+  const maxCriticalDamage = hasValidSamples
+    ? Math.max(...validDataPoints.map((point) => point.criticalDamage))
+    : null;
+  const effectiveCriticalDamage =
+    hasValidSamples && isFiniteNumber(criticalDamageData.effectiveCriticalDamage)
+      ? criticalDamageData.effectiveCriticalDamage
+      : null;
+  const timeAtCapPercentage =
+    hasValidSamples && isFiniteNumber(criticalDamageData.timeAtCapPercentage)
+      ? criticalDamageData.timeAtCapPercentage
+      : null;
+  const unavailableSamplesMessage =
+    dataQualityMessage ?? 'No valid critical damage samples were received.';
 
   return (
     <Accordion
@@ -381,35 +442,23 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
             <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 2.5, alignItems: 'center' }}>
               <MetricPill
                 label="Max"
-                value={maxCriticalDamage}
-                suffix="%"
-                intent={maxCriticalDamage >= 125 ? 'success' : 'danger'}
+                value={metricValue(maxCriticalDamage, 0)}
+                suffix={maxCriticalDamage === null ? undefined : '%'}
+                intent={metricIntent(maxCriticalDamage)}
                 size="md"
               />
               <MetricPill
                 label="Active"
-                value={criticalDamageData.effectiveCriticalDamage.toFixed(1)}
-                suffix="%"
-                intent={
-                  criticalDamageData.effectiveCriticalDamage >= 125
-                    ? 'success'
-                    : criticalDamageData.effectiveCriticalDamage >= 100
-                      ? 'warning'
-                      : 'danger'
-                }
+                value={metricValue(effectiveCriticalDamage, 1)}
+                suffix={effectiveCriticalDamage === null ? undefined : '%'}
+                intent={metricIntent(effectiveCriticalDamage)}
                 size="md"
               />
               <MetricPill
                 label="At Cap"
-                value={criticalDamageData.timeAtCapPercentage.toFixed(0)}
-                suffix="%"
-                intent={
-                  criticalDamageData.timeAtCapPercentage >= 80
-                    ? 'success'
-                    : criticalDamageData.timeAtCapPercentage >= 50
-                      ? 'warning'
-                      : 'danger'
-                }
+                value={metricValue(timeAtCapPercentage, 0)}
+                suffix={timeAtCapPercentage === null ? undefined : '%'}
+                intent={metricIntent(timeAtCapPercentage)}
                 size="md"
               />
             </Box>
@@ -433,35 +482,23 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
               >
                 <MetricPill
                   label="Max"
-                  value={maxCriticalDamage}
-                  suffix="%"
-                  intent={maxCriticalDamage >= 125 ? 'success' : 'danger'}
+                  value={metricValue(maxCriticalDamage, 0)}
+                  suffix={maxCriticalDamage === null ? undefined : '%'}
+                  intent={metricIntent(maxCriticalDamage)}
                   size="sm"
                 />
                 <MetricPill
                   label="Active"
-                  value={criticalDamageData.effectiveCriticalDamage.toFixed(1)}
-                  suffix="%"
-                  intent={
-                    criticalDamageData.effectiveCriticalDamage >= 125
-                      ? 'success'
-                      : criticalDamageData.effectiveCriticalDamage >= 100
-                        ? 'warning'
-                        : 'danger'
-                  }
+                  value={metricValue(effectiveCriticalDamage, 1)}
+                  suffix={effectiveCriticalDamage === null ? undefined : '%'}
+                  intent={metricIntent(effectiveCriticalDamage)}
                   size="sm"
                 />
                 <MetricPill
                   label="At Cap"
-                  value={criticalDamageData.timeAtCapPercentage.toFixed(0)}
-                  suffix="%"
-                  intent={
-                    criticalDamageData.timeAtCapPercentage >= 80
-                      ? 'success'
-                      : criticalDamageData.timeAtCapPercentage >= 50
-                        ? 'warning'
-                        : 'danger'
-                  }
+                  value={metricValue(timeAtCapPercentage, 0)}
+                  suffix={timeAtCapPercentage === null ? undefined : '%'}
+                  intent={metricIntent(timeAtCapPercentage)}
                   size="sm"
                 />
               </Box>
@@ -474,6 +511,12 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
               loading={isLoading}
               onToggleSource={onSourceToggle}
             />
+
+            {dataQualityMessage && (
+              <Typography role="status" sx={{ mb: 2, color: 'warning.main' }}>
+                {dataQualityMessage}
+              </Typography>
+            )}
 
             {/* Critical Multiplier Information */}
             {criticalMultiplier && (
@@ -555,39 +598,45 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
             )}
 
             {/* Critical Damage vs Time Chart */}
-            <Paper
-              variant="outlined"
-              sx={{
-                p: 2,
-                mb: 2,
-                background:
-                  'linear-gradient(135deg, rgba(0, 122, 255, 0.15) 0%, rgba(0, 122, 255, 0.08) 50%, rgba(0, 122, 255, 0.04) 100%)',
-                border: '1px solid rgba(0, 122, 255, 0.3)',
-                borderRadius: 2,
-                backdropFilter: 'blur(10px)',
-                WebkitBackdropFilter: 'blur(10px)',
-              }}
-            >
-              <Typography
-                variant="h6"
+            {hasValidSamples ? (
+              <Paper
+                variant="outlined"
                 sx={{
+                  p: 2,
                   mb: 2,
-                  textShadow:
-                    '0 2px 4px rgb(0 0 0 / 0%), 0 4px 8px rgba(0, 0, 0, 0.4), 0 8px 16px rgba(0, 0, 0, 0.2)',
+                  background:
+                    'linear-gradient(135deg, rgba(0, 122, 255, 0.15) 0%, rgba(0, 122, 255, 0.08) 50%, rgba(0, 122, 255, 0.04) 100%)',
+                  border: '1px solid rgba(0, 122, 255, 0.3)',
+                  borderRadius: 2,
+                  backdropFilter: 'blur(10px)',
+                  WebkitBackdropFilter: 'blur(10px)',
                 }}
               >
-                Critical Damage vs Time
+                <Typography
+                  variant="h6"
+                  sx={{
+                    mb: 2,
+                    textShadow:
+                      '0 2px 4px rgb(0 0 0 / 0%), 0 4px 8px rgba(0, 0, 0, 0.4), 0 8px 16px rgba(0, 0, 0, 0.2)',
+                  }}
+                >
+                  Critical Damage vs Time
+                </Typography>
+                <EChart option={chartOption} height={300} group="fightReport" />
+                <Typography
+                  variant="caption"
+                  sx={{ color: 'text.secondary', mt: 1, display: 'block' }}
+                >
+                  Shows critical damage changes over the duration of the fight. Data downsampled to
+                  0.5-second intervals (highest value per interval). Data points:{' '}
+                  {validDataPoints.length}
+                </Typography>
+              </Paper>
+            ) : (
+              <Typography role="status" sx={{ color: 'warning.main' }}>
+                {unavailableSamplesMessage}
               </Typography>
-              <EChart option={chartOption} height={300} group="fightReport" />
-              <Typography
-                variant="caption"
-                sx={{ color: 'text.secondary', mt: 1, display: 'block' }}
-              >
-                Shows critical damage changes over the duration of the fight. Data downsampled to
-                0.5-second intervals (highest value per interval). Data points:{' '}
-                {criticalDamageData.dataPoints.length}
-              </Typography>
-            </Paper>
+            )}
           </Box>
         )}
       </AccordionDetails>
