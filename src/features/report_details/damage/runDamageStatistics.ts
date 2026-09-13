@@ -7,14 +7,21 @@
  * component tests because its worker module is intentionally lightweight.
  */
 
+import { transfer } from 'comlink';
+
+import type { DamageEvent } from '../../../types/combatlogEvents';
 import { calculateDamageStatisticsWithActivity } from '../../../utils/activePercentageUtils';
 import { workerManager } from '../../../workers';
 import {
   type DamageStatisticsCalculationResult,
   type DamageStatisticsCalculationTask,
+  type PackedDamagePlayerEvents,
+  type PackedDamageStatisticsCalculationTask,
 } from '../../../workers/calculations/CalculateDamageStatistics';
 
 const POOL_NAME = 'damage-statistics';
+const PACKED_EVENT_WIDTH = 6;
+const PACKING_YIELD_INTERVAL = 2_000;
 
 type MaybeWorkerManager = Partial<typeof workerManager>;
 
@@ -57,6 +64,49 @@ function awaitWithAbort<T>(operation: Promise<T>, signal: AbortSignal | undefine
   });
 }
 
+function yieldToMainThread(): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, 0));
+}
+
+async function packPlayerEvents(
+  playerId: number,
+  events: readonly DamageEvent[],
+  signal: AbortSignal | undefined,
+): Promise<PackedDamagePlayerEvents> {
+  const values = new Float64Array(events.length * PACKED_EVENT_WIDTH);
+
+  for (let index = 0; index < events.length; index += 1) {
+    if (index > 0 && index % PACKING_YIELD_INTERVAL === 0) {
+      await yieldToMainThread();
+      throwIfAborted(signal);
+    }
+
+    const event = events[index];
+    const offset = index * PACKED_EVENT_WIDTH;
+    values[offset] = event.sourceID;
+    values[offset + 1] = event.targetID;
+    values[offset + 2] = event.timestamp;
+    values[offset + 3] = 'amount' in event ? Number(event.amount) || 0 : 0;
+    values[offset + 4] = event.hitType ?? 0;
+    values[offset + 5] = event.targetIsFriendly ? 1 : 0;
+  }
+
+  return { playerId, values };
+}
+
+async function packTask(
+  input: DamageStatisticsCalculationTask,
+  signal: AbortSignal | undefined,
+): Promise<PackedDamageStatisticsCalculationTask> {
+  const playerEvents: PackedDamagePlayerEvents[] = [];
+
+  for (const [playerId, events] of Object.entries(input.damageEventsByPlayer)) {
+    playerEvents.push(await packPlayerEvents(Number(playerId), events, signal));
+  }
+
+  return { fight: input.fight, playerEvents, selectedTargetIds: input.selectedTargetIds };
+}
+
 export async function runDamageStatistics(
   input: DamageStatisticsCalculationTask,
   { signal }: RunDamageStatisticsOptions = {},
@@ -91,8 +141,15 @@ export async function runDamageStatistics(
   }
 
   try {
+    const packedInput = await packTask(input, signal);
+    const transferableInput = transfer(
+      packedInput,
+      packedInput.playerEvents.map(({ values }) => values.buffer),
+    );
     const result = await awaitWithAbort(
-      manager.executeTask('calculateDamageStatistics', input, undefined, POOL_NAME, { signal }),
+      manager.executeTask('calculateDamageStatistics', transferableInput, undefined, POOL_NAME, {
+        signal,
+      }),
       signal,
     );
     throwIfAborted(signal);

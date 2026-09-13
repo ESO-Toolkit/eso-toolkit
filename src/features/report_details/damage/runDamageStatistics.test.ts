@@ -101,7 +101,13 @@ describe('runDamageStatistics', () => {
     await expect(result).rejects.toMatchObject({ name: 'AbortError' });
     expect(manager.executeTask).toHaveBeenCalledWith(
       'calculateDamageStatistics',
-      INPUT,
+      expect.objectContaining({
+        fight: INPUT.fight,
+        selectedTargetIds: INPUT.selectedTargetIds,
+        playerEvents: [
+          expect.objectContaining({ playerId: 123, values: expect.any(Float64Array) }),
+        ],
+      }),
       undefined,
       'damage-statistics',
       { signal: controller.signal },
