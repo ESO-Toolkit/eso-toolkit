@@ -2,6 +2,7 @@ import { PlayerDetailsWithRole } from '../../store/player_data/playerDataSlice';
 import { createMockCombatantInfoEvent } from '../../test/utils/combatLogMockFactories';
 import { KnownAbilities } from '../../types/abilities';
 import type { DamageEvent } from '../../types/combatlogEvents';
+import * as PenetrationUtils from '../../utils/PenetrationUtils';
 
 import { calculatePenetrationData } from './CalculatePenetration';
 
@@ -167,6 +168,7 @@ describe('CalculatePenetration', () => {
       expect(result[playerKey].playerName).toBe('Test Player');
       expect(result[playerKey].dataPoints).toHaveLength(10); // 10 second fight
       expect(result[playerKey].playerBasePenetration).toBeGreaterThanOrEqual(0);
+      expect(result[playerKey].availability).toBe('complete');
     });
 
     it('should calculate penetration data points over time', () => {
@@ -476,6 +478,118 @@ describe('CalculatePenetration', () => {
       expect(playerData.dataPoints[0].timestamp).toBe(FIGHT_START);
     });
 
+    it.each([
+      ['non-finite start time', Number.NaN, FIGHT_END],
+      ['non-finite end time', FIGHT_START, Number.POSITIVE_INFINITY],
+      ['zero duration', FIGHT_START, FIGHT_START],
+      ['negative duration', FIGHT_END, FIGHT_START],
+    ])('returns unavailable data for an invalid fight window: %s', (_label, startTime, endTime) => {
+      const result = calculatePenetrationData({
+        fight: { startTime, endTime },
+        players: { [PLAYER_ID]: createMockPlayer() },
+        combatantInfoEvents: {
+          [PLAYER_ID]: createMockCombatantInfoEvent({
+            sourceID: PLAYER_ID,
+            timestamp: FIGHT_START,
+          }),
+        },
+        friendlyBuffsLookup: createMockBuffLookupData({}),
+        debuffsLookup: createMockBuffLookupData({}),
+        selectedTargetIds: [TARGET_ID],
+        damageEvents: createMockDamageEvents(),
+      });
+
+      expect(result[PLAYER_ID]).toMatchObject({
+        availability: 'unavailable',
+        unavailableReason: 'invalid-fight-window',
+        max: null,
+        effective: null,
+        timeAtCapPercentage: null,
+        dataPoints: [],
+      });
+    });
+
+    it('bounds corrupt huge fight windows instead of entering an unbounded sampling loop', () => {
+      const result = calculatePenetrationData({
+        fight: { startTime: FIGHT_START, endTime: FIGHT_START + 6 * 60 * 60 * 1000 + 1 },
+        players: { [PLAYER_ID]: createMockPlayer() },
+        combatantInfoEvents: {
+          [PLAYER_ID]: createMockCombatantInfoEvent({
+            sourceID: PLAYER_ID,
+            timestamp: FIGHT_START,
+          }),
+        },
+        friendlyBuffsLookup: createMockBuffLookupData({}),
+        debuffsLookup: createMockBuffLookupData({}),
+        selectedTargetIds: [TARGET_ID],
+        damageEvents: createMockDamageEvents(),
+      });
+
+      expect(result[PLAYER_ID]).toMatchObject({
+        availability: 'unavailable',
+        unavailableReason: 'fight-duration-exceeds-supported-limit',
+        dataPoints: [],
+      });
+    });
+
+    it('preserves a measured zero rather than treating it as unavailable', () => {
+      jest.spyOn(PenetrationUtils, 'calculateStaticPenetration').mockReturnValue(0);
+      jest.spyOn(PenetrationUtils, 'calculateDynamicPenetrationAtTimestamp').mockReturnValue(0);
+      jest.spyOn(PenetrationUtils, 'getArenaWeaponPenetrationForBar').mockReturnValue(0);
+
+      const result = calculatePenetrationData({
+        fight: { startTime: FIGHT_START, endTime: FIGHT_END },
+        players: { [PLAYER_ID]: createMockPlayer() },
+        combatantInfoEvents: {
+          [PLAYER_ID]: createMockCombatantInfoEvent({
+            sourceID: PLAYER_ID,
+            timestamp: FIGHT_START,
+          }),
+        },
+        friendlyBuffsLookup: createMockBuffLookupData({}),
+        debuffsLookup: createMockBuffLookupData({}),
+        selectedTargetIds: [TARGET_ID],
+        damageEvents: createMockDamageEvents(),
+      });
+
+      expect(result[PLAYER_ID]).toMatchObject({
+        availability: 'complete',
+        max: 0,
+        effective: 0,
+        timeAtCapPercentage: 0,
+      });
+    });
+
+    it('returns partial data without numeric metrics when a source sample is invalid', () => {
+      const result = calculatePenetrationData({
+        fight: { startTime: FIGHT_START, endTime: FIGHT_END },
+        players: { [PLAYER_ID]: createMockPlayer() },
+        combatantInfoEvents: {
+          [PLAYER_ID]: createMockCombatantInfoEvent({
+            sourceID: PLAYER_ID,
+            timestamp: FIGHT_START,
+          }),
+        },
+        friendlyBuffsLookup: createMockBuffLookupData({}),
+        debuffsLookup: createMockBuffLookupData({}),
+        selectedTargetIds: [TARGET_ID],
+        damageEvents: createMockDamageEvents(),
+        swapEventsByPlayerId: {
+          [PLAYER_ID]: [{ timestamp: Number.NaN } as never],
+        },
+      });
+
+      expect(result[PLAYER_ID]).toMatchObject({
+        availability: 'partial',
+        unavailableReason: 'invalid-penetration-samples',
+        max: null,
+        effective: null,
+        timeAtCapPercentage: null,
+      });
+      expect(result[PLAYER_ID].validSampleCount).toBeGreaterThan(0);
+      expect(result[PLAYER_ID].invalidSampleCount).toBeGreaterThan(0);
+    });
+
     it('should handle multiple selected targets', () => {
       const TARGET_ID_2 = 201;
       const players = {
@@ -778,6 +892,13 @@ describe('CalculatePenetration', () => {
         expect(playerData.inactiveCombatIntervals).toHaveLength(1);
         expect(playerData.inactiveCombatIntervals[0].start).toBe(0);
         expect(playerData.inactiveCombatIntervals[0].end).toBe(10); // 10 second fight
+        expect(playerData).toMatchObject({
+          availability: 'unavailable',
+          unavailableReason: 'no-active-combat-samples',
+          max: null,
+          effective: null,
+          timeAtCapPercentage: null,
+        });
       });
 
       it('should have no inactive intervals for continuous combat', () => {
