@@ -18,6 +18,17 @@ import { OnProgressCallback } from '../Utils';
 
 const PENETRATION_CAP = 18200;
 const VOXEL_SIZE_SECONDS = 1;
+// A six-hour fight is well beyond a legitimate encounter and caps the worker's
+// one-second sampling loop when upstream fight data is corrupt.
+const MAX_FIGHT_DURATION_SECONDS = 6 * 60 * 60;
+
+export type PenetrationDataAvailability = 'complete' | 'partial' | 'unavailable';
+
+export type PenetrationDataUnavailableReason =
+  | 'invalid-fight-window'
+  | 'fight-duration-exceeds-supported-limit'
+  | 'no-active-combat-samples'
+  | 'invalid-penetration-samples';
 
 export interface PenetrationDataPoint {
   timestamp: number;
@@ -29,11 +40,16 @@ export interface PlayerPenetrationData {
   playerId: string;
   playerName: string;
   dataPoints: PenetrationDataPoint[];
-  max: number;
-  effective: number;
-  timeAtCapPercentage: number;
+  /** Numeric metrics are only trustworthy for a complete active-combat sample. */
+  max: number | null;
+  effective: number | null;
+  timeAtCapPercentage: number | null;
+  availability: PenetrationDataAvailability;
+  unavailableReason?: PenetrationDataUnavailableReason;
+  validSampleCount: number;
+  invalidSampleCount: number;
   penetrationSources: PenetrationSourceWithActiveState[];
-  playerBasePenetration: number;
+  playerBasePenetration: number | null;
   /** Inactive combat intervals (gaps in boss damage) in seconds relative to fight start */
   inactiveCombatIntervals: Array<{ start: number; end: number }>;
 }
@@ -52,6 +68,28 @@ export interface PenetrationCalculationTask {
   /** SWAP_WEAPONS cast events grouped by player ID, sorted by timestamp ascending */
   swapEventsByPlayerId?: Record<number, UnifiedCastEvent[]>;
 }
+
+const isFiniteNumber = (value: unknown): value is number =>
+  typeof value === 'number' && Number.isFinite(value);
+
+const createUnavailablePlayerData = (
+  player: PlayerDetailsWithRole,
+  reason: PenetrationDataUnavailableReason,
+): PlayerPenetrationData => ({
+  playerId: player.id.toString(),
+  playerName: player.name,
+  dataPoints: [],
+  max: null,
+  effective: null,
+  timeAtCapPercentage: null,
+  availability: 'unavailable',
+  unavailableReason: reason,
+  validSampleCount: 0,
+  invalidSampleCount: 0,
+  penetrationSources: [],
+  playerBasePenetration: null,
+  inactiveCombatIntervals: [],
+});
 
 export function calculatePenetrationData(
   data: PenetrationCalculationTask,
@@ -72,19 +110,43 @@ export function calculatePenetrationData(
   const deserializedFriendlyBuffsLookup = friendlyBuffsLookup;
   const deserializedDebuffsLookup = debuffsLookup;
 
-  // Calculate active combat time based on when bosses are taking damage
-  const activeCombatTimeResult = calculateActiveCombatTime(
-    damageEvents,
-    fight.startTime,
-    fight.endTime,
-    selectedTargetIds.length > 0 ? selectedTargetIds : undefined,
-  );
-
-  onProgress?.(0);
-
   const fightStart = fight.startTime;
   const fightEnd = fight.endTime;
   const fightDurationSeconds = (fightEnd - fightStart) / 1000;
+
+  onProgress?.(0);
+
+  const unavailableReason: PenetrationDataUnavailableReason | undefined =
+    !isFiniteNumber(fightStart) ||
+    !isFiniteNumber(fightEnd) ||
+    !isFiniteNumber(fightDurationSeconds) ||
+    fightEnd <= fightStart
+      ? 'invalid-fight-window'
+      : fightDurationSeconds > MAX_FIGHT_DURATION_SECONDS
+        ? 'fight-duration-exceeds-supported-limit'
+        : undefined;
+
+  if (unavailableReason) {
+    const unavailableData = Object.values(players).reduce<Record<string, PlayerPenetrationData>>(
+      (result, player) => {
+        result[player.id.toString()] = createUnavailablePlayerData(player, unavailableReason);
+        return result;
+      },
+      {},
+    );
+    onProgress?.(1);
+    return unavailableData;
+  }
+
+  // Calculate active combat time only after validating the fight window. Invalid
+  // timestamps previously reached this helper and later became misleading zeroes.
+  const activeCombatTimeResult = calculateActiveCombatTime(
+    damageEvents,
+    fightStart,
+    fightEnd,
+    selectedTargetIds.length > 0 ? selectedTargetIds : undefined,
+  );
+
   const numVoxels = Math.ceil(fightDurationSeconds / VOXEL_SIZE_SECONDS);
 
   // Pre-calculate player data that doesn't change over time
@@ -127,7 +189,7 @@ export function calculatePenetrationData(
         playerBasePenetration,
         swapEvents,
         dataPoints: [] as PenetrationDataPoint[],
-        timeAtCapCount: 0,
+        invalidSampleCount: swapEvents.filter((event) => !isFiniteNumber(event.timestamp)).length,
       };
     })
     .filter((data): data is NonNullable<typeof data> => data !== null);
@@ -176,15 +238,20 @@ export function calculatePenetrationData(
       const totalPenetration =
         playerData.playerBasePenetration + totalDynamicPenetration + arenaWeaponPenetration;
 
-      playerData.dataPoints.push({
-        timestamp: voxelTimestamp,
-        penetration: totalPenetration,
-        relativeTime: i * VOXEL_SIZE_SECONDS,
-      });
-
-      // Count time at cap
-      if (totalPenetration >= PENETRATION_CAP) {
-        playerData.timeAtCapCount++;
+      if (
+        !isFiniteNumber(playerData.playerBasePenetration) ||
+        !isFiniteNumber(targetDebuffPenetration) ||
+        !isFiniteNumber(playerBuffPenetration) ||
+        !isFiniteNumber(arenaWeaponPenetration) ||
+        !isFiniteNumber(totalPenetration)
+      ) {
+        playerData.invalidSampleCount++;
+      } else {
+        playerData.dataPoints.push({
+          timestamp: voxelTimestamp,
+          penetration: totalPenetration,
+          relativeTime: i * VOXEL_SIZE_SECONDS,
+        });
       }
     });
 
@@ -246,24 +313,36 @@ export function calculatePenetrationData(
       activeCombatTimeResult.activeCombatIntervals,
     );
 
-    // Calculate time at cap based on active combat periods only
+    const hasActiveSamples = activeDataPoints.length > 0;
+    const availability: PenetrationDataAvailability = !hasActiveSamples
+      ? 'unavailable'
+      : playerData.invalidSampleCount > 0
+        ? 'partial'
+        : 'complete';
+    const unavailableReason: PenetrationDataUnavailableReason | undefined = !hasActiveSamples
+      ? playerData.invalidSampleCount > 0
+        ? 'invalid-penetration-samples'
+        : 'no-active-combat-samples'
+      : playerData.invalidSampleCount > 0
+        ? 'invalid-penetration-samples'
+        : undefined;
+
+    // A zero is a valid measurement. Only missing/invalid active samples become
+    // null, so consumers cannot accidentally grade unknown data as a failure.
     const timeAtCapCount = activeDataPoints.filter(
       (point) => point.penetration >= PENETRATION_CAP,
     ).length;
     const timeAtCapPercentage =
-      activeDataPoints.length > 0 ? (timeAtCapCount / activeDataPoints.length) * 100 : 0;
-
-    const maxPenetration = Math.max(...playerData.dataPoints.map((point) => point.penetration), 0);
-
-    // Calculate effective penetration based on active combat time only
+      availability === 'complete' ? (timeAtCapCount / activeDataPoints.length) * 100 : null;
+    const maxPenetration =
+      availability === 'complete'
+        ? Math.max(...playerData.dataPoints.map((point) => point.penetration))
+        : null;
     const effectivePenetration =
-      activeDataPoints.length > 0
+      availability === 'complete'
         ? activeDataPoints.reduce((sum, point) => sum + point.penetration, 0) /
           activeDataPoints.length
-        : playerData.dataPoints.length > 0
-          ? playerData.dataPoints.reduce((sum, point) => sum + point.penetration, 0) /
-            playerData.dataPoints.length
-          : 0;
+        : null;
 
     playerDataRecord[playerData.playerId] = {
       playerId: playerData.playerId,
@@ -272,6 +351,10 @@ export function calculatePenetrationData(
       max: maxPenetration,
       effective: effectivePenetration,
       timeAtCapPercentage,
+      availability,
+      unavailableReason,
+      validSampleCount: activeDataPoints.length,
+      invalidSampleCount: playerData.invalidSampleCount,
       penetrationSources: playerData.allSources,
       playerBasePenetration: playerData.playerBasePenetration,
       inactiveCombatIntervals,

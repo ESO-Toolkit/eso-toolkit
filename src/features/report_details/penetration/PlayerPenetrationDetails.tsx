@@ -3,27 +3,9 @@ import React from 'react';
 import { FightFragment } from '../../../graphql/gql/graphql';
 import type { PhaseTransitionInfo } from '../../../hooks/usePhaseTransitions';
 import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
-import { PenetrationSourceWithActiveState } from '../../../utils/PenetrationUtils';
+import type { PlayerPenetrationData } from '../../../workers/calculations/CalculatePenetration';
 
 import { PlayerPenetrationDetailsView } from './PlayerPenetrationDetailsView';
-
-interface PenetrationDataPoint {
-  timestamp: number;
-  penetration: number;
-  relativeTime: number; // Time since fight start in seconds
-}
-
-interface PlayerPenetrationData {
-  playerId: string;
-  playerName: string;
-  dataPoints: PenetrationDataPoint[];
-  max: number;
-  effective: number;
-  timeAtCapPercentage: number;
-  penetrationSources: PenetrationSourceWithActiveState[];
-  playerBasePenetration: number;
-  inactiveCombatIntervals: Array<{ start: number; end: number }>;
-}
 
 interface PlayerPenetrationDetailsProps {
   id: string;
@@ -57,7 +39,7 @@ export const PlayerPenetrationDetails: React.FC<PlayerPenetrationDetailsProps> =
       player={player}
       penetrationData={penetrationData}
       penetrationSources={penetrationData?.penetrationSources || []}
-      playerBasePenetration={penetrationData?.playerBasePenetration || 0}
+      playerBasePenetration={penetrationData?.playerBasePenetration ?? null}
       fightDurationMs={fight.endTime - fight.startTime}
       onExpandChange={onExpandChange}
       phaseTransitionInfo={phaseTransitionInfo}

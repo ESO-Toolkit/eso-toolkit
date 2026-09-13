@@ -5,6 +5,7 @@ import {
   Accordion,
   AccordionSummary,
   AccordionDetails,
+  Alert,
   Paper,
 } from '@mui/material';
 import React from 'react';
@@ -22,34 +23,10 @@ import { buildGoalMarkLine } from '../../../utils/echartsAnnotationUtils';
 import { glowLineStyle, gradientAreaStyle, steppedLineDefaults } from '../../../utils/echartsTheme';
 import { msToSeconds } from '../../../utils/fightDuration';
 import { resolveActorName } from '../../../utils/resolveActorName';
+import type { PlayerPenetrationData } from '../../../workers/calculations/CalculatePenetration';
 
-interface PenetrationDataPoint {
-  timestamp: number;
-  penetration: number;
-  relativeTime: number; // Time since fight start in seconds
-}
-
-export interface PlayerPenetrationData {
-  playerId: string;
-  playerName: string;
-  dataPoints: PenetrationDataPoint[];
-  max: number;
-  effective: number;
-  timeAtCapPercentage: number;
-  inactiveCombatIntervals: Array<{ start: number; end: number }>;
-}
-
-interface PenetrationSource {
-  name: string;
-  value: number;
-  wasActive: boolean;
-  description: string;
-  link?: string; // Optional external link for detailed analysis
-}
-
-export interface PenetrationSourceWithActiveState extends PenetrationSource {
-  wasActive: boolean;
-}
+const isFiniteMetric = (value: number | null): value is number =>
+  typeof value === 'number' && Number.isFinite(value);
 
 interface PlayerPenetrationDetailsViewProps {
   id: string;
@@ -58,8 +35,8 @@ interface PlayerPenetrationDetailsViewProps {
   expanded: boolean;
   isLoading: boolean;
   penetrationData: PlayerPenetrationData | null;
-  penetrationSources: PenetrationSourceWithActiveState[];
-  playerBasePenetration: number;
+  penetrationSources: PlayerPenetrationData['penetrationSources'];
+  playerBasePenetration: number | null;
   fightDurationMs: number;
   onExpandChange?: (event: React.SyntheticEvent, isExpanded: boolean) => void;
   phaseTransitionInfo?: PhaseTransitionInfo;
@@ -79,6 +56,41 @@ export const PlayerPenetrationDetailsView: React.FC<PlayerPenetrationDetailsView
   phaseTransitionInfo,
 }) => {
   const roleColors = useRoleColors();
+  const metrics = React.useMemo(() => {
+    if (
+      penetrationData?.availability !== 'complete' ||
+      !isFiniteMetric(penetrationData.max) ||
+      !isFiniteMetric(penetrationData.effective) ||
+      !isFiniteMetric(penetrationData.timeAtCapPercentage)
+    ) {
+      return null;
+    }
+
+    return {
+      max: penetrationData.max,
+      effective: penetrationData.effective,
+      timeAtCapPercentage: penetrationData.timeAtCapPercentage,
+    };
+  }, [penetrationData]);
+
+  const availabilityMessage = React.useMemo(() => {
+    if (!penetrationData || penetrationData.availability === 'complete') return null;
+
+    if (penetrationData.availability === 'partial') {
+      return 'Penetration data is partial because one or more samples were invalid. Numeric penetration grades are hidden.';
+    }
+
+    switch (penetrationData.unavailableReason) {
+      case 'invalid-fight-window':
+        return 'Penetration data is unavailable because the fight window is invalid.';
+      case 'fight-duration-exceeds-supported-limit':
+        return 'Penetration data is unavailable because the fight duration exceeds the supported limit.';
+      case 'invalid-penetration-samples':
+        return 'Penetration data is unavailable because one or more penetration samples were invalid.';
+      default:
+        return 'Penetration data is unavailable because no active combat samples were recorded.';
+    }
+  }, [penetrationData]);
 
   // Transform penetration sources to StatChecklistSource format for consistency
   const statChecklistSources = React.useMemo(() => {
@@ -86,7 +98,6 @@ export const PlayerPenetrationDetailsView: React.FC<PlayerPenetrationDetailsView
       name: source.name,
       wasActive: source.wasActive,
       description: source.description,
-      link: source.link,
       // Penetration sources don't currently preserve source type information
       // They rely on description text detection for unimplemented sources
     }));
@@ -105,17 +116,19 @@ export const PlayerPenetrationDetailsView: React.FC<PlayerPenetrationDetailsView
 
   const chartOption = React.useMemo(() => {
     const lineColor = '#1976d2';
-    const fightDuration = msToSeconds(fightDurationMs);
+    const fightDuration = Number.isFinite(fightDurationMs) ? msToSeconds(fightDurationMs) : 0;
 
     const goalLine = buildGoalMarkLine(18200, 'Goal: 18,200', '#ff6b6b');
-    const baseLine = buildGoalMarkLine(
-      playerBasePenetration,
-      `Base: ${playerBasePenetration.toLocaleString()}`,
-      '#2196f3',
-      { position: 'insideStartTop' },
-    );
-
-    const markLineData = [goalLine, baseLine];
+    const baseLine =
+      playerBasePenetration !== null && Number.isFinite(playerBasePenetration)
+        ? buildGoalMarkLine(
+            playerBasePenetration,
+            `Base: ${playerBasePenetration.toLocaleString()}`,
+            '#2196f3',
+            { position: 'insideStartTop' },
+          )
+        : null;
+    const markLineData = baseLine ? [goalLine, baseLine] : [goalLine];
     if (phaseMarkLines?.data) {
       markLineData.push(...phaseMarkLines.data);
     }
@@ -295,28 +308,28 @@ export const PlayerPenetrationDetailsView: React.FC<PlayerPenetrationDetailsView
               {resolveActorName(player)}
             </Typography>
           </Box>
-          {!isLoading && (
+          {!isLoading && metrics && (
             <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 2.5, alignItems: 'center' }}>
               <MetricPill
                 label="Max"
-                value={penetrationData.max}
-                intent={penetrationData.max > 18200 ? 'success' : 'danger'}
+                value={metrics.max}
+                intent={metrics.max > 18200 ? 'success' : 'danger'}
                 size="md"
               />
               <MetricPill
                 label="Active"
-                value={penetrationData.effective.toFixed(0)}
-                intent={penetrationData.effective > 18200 ? 'info' : 'warning'}
+                value={metrics.effective.toFixed(0)}
+                intent={metrics.effective > 18200 ? 'info' : 'warning'}
                 size="md"
               />
               <MetricPill
                 label="At Cap"
-                value={penetrationData.timeAtCapPercentage.toFixed(0)}
+                value={metrics.timeAtCapPercentage.toFixed(0)}
                 suffix="%"
                 intent={
-                  penetrationData.timeAtCapPercentage >= 80
+                  metrics.timeAtCapPercentage >= 80
                     ? 'success'
-                    : penetrationData.timeAtCapPercentage >= 50
+                    : metrics.timeAtCapPercentage >= 50
                       ? 'warning'
                       : 'danger'
                 }
@@ -331,7 +344,7 @@ export const PlayerPenetrationDetailsView: React.FC<PlayerPenetrationDetailsView
         {expanded && (
           <Box>
             {/* Mobile Metrics - Only visible on mobile */}
-            {!isLoading && (
+            {!isLoading && metrics && (
               <Box
                 sx={{
                   display: { xs: 'flex', md: 'none' },
@@ -343,24 +356,24 @@ export const PlayerPenetrationDetailsView: React.FC<PlayerPenetrationDetailsView
               >
                 <MetricPill
                   label="Max"
-                  value={penetrationData.max}
-                  intent={penetrationData.max > 18200 ? 'success' : 'danger'}
+                  value={metrics.max}
+                  intent={metrics.max > 18200 ? 'success' : 'danger'}
                   size="sm"
                 />
                 <MetricPill
                   label="Active"
-                  value={penetrationData.effective.toFixed(0)}
-                  intent={penetrationData.effective > 18200 ? 'info' : 'warning'}
+                  value={metrics.effective.toFixed(0)}
+                  intent={metrics.effective > 18200 ? 'info' : 'warning'}
                   size="sm"
                 />
                 <MetricPill
                   label="At Cap"
-                  value={penetrationData.timeAtCapPercentage.toFixed(0)}
+                  value={metrics.timeAtCapPercentage.toFixed(0)}
                   suffix="%"
                   intent={
-                    penetrationData.timeAtCapPercentage >= 80
+                    metrics.timeAtCapPercentage >= 80
                       ? 'success'
-                      : penetrationData.timeAtCapPercentage >= 50
+                      : metrics.timeAtCapPercentage >= 50
                         ? 'warning'
                         : 'danger'
                   }
@@ -369,49 +382,63 @@ export const PlayerPenetrationDetailsView: React.FC<PlayerPenetrationDetailsView
               </Box>
             )}
 
-            {/* Penetration Sources Checklist */}
-            <StatChecklist
-              sources={statChecklistSources}
-              title="Penetration Sources"
-              loading={isLoading}
-            />
+            {availabilityMessage && (
+              <Alert
+                severity={penetrationData.availability === 'partial' ? 'warning' : 'info'}
+                role="status"
+                sx={{ mb: 3 }}
+              >
+                {availabilityMessage}
+              </Alert>
+            )}
 
-            {/* Penetration vs Time Chart */}
-            <Paper
-              variant="outlined"
-              sx={{
-                p: 2,
-                mb: 2,
-                background:
-                  'linear-gradient(135deg, rgba(0, 122, 255, 0.15) 0%, rgba(0, 122, 255, 0.08) 50%, rgba(0, 122, 255, 0.04) 100%)',
-                border: '1px solid rgba(0, 122, 255, 0.3)',
-                borderRadius: 2,
-                backdropFilter: 'blur(10px)',
-                WebkitBackdropFilter: 'blur(10px)',
-              }}
-            >
-              <Typography
-                variant="h6"
-                sx={{
-                  mb: 2,
-                  textShadow:
-                    '0 2px 4px rgb(0 0 0 / 0%), 0 4px 8px rgba(0, 0, 0, 0.4), 0 8px 16px rgba(0, 0, 0, 0.2)',
-                }}
-              >
-                Penetration vs Time
-              </Typography>
-              <Box role="img" aria-label="Penetration over time chart">
-                <EChart option={chartOption} height={300} group="fightReport" />
-              </Box>
-              <Typography
-                variant="caption"
-                sx={{ color: 'text.secondary', mt: 1, display: 'block' }}
-              >
-                Shows penetration changes over the duration of the fight. Data voxelized to 1-second
-                intervals (highest value per interval). Data points:{' '}
-                {penetrationData.dataPoints.length}
-              </Typography>
-            </Paper>
+            {penetrationData.availability !== 'unavailable' && (
+              <>
+                {/* Penetration Sources Checklist */}
+                <StatChecklist
+                  sources={statChecklistSources}
+                  title="Penetration Sources"
+                  loading={isLoading}
+                />
+
+                {/* Penetration vs Time Chart */}
+                <Paper
+                  variant="outlined"
+                  sx={{
+                    p: 2,
+                    mb: 2,
+                    background:
+                      'linear-gradient(135deg, rgba(0, 122, 255, 0.15) 0%, rgba(0, 122, 255, 0.08) 50%, rgba(0, 122, 255, 0.04) 100%)',
+                    border: '1px solid rgba(0, 122, 255, 0.3)',
+                    borderRadius: 2,
+                    backdropFilter: 'blur(10px)',
+                    WebkitBackdropFilter: 'blur(10px)',
+                  }}
+                >
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      mb: 2,
+                      textShadow:
+                        '0 2px 4px rgb(0 0 0 / 0%), 0 4px 8px rgba(0, 0, 0, 0.4), 0 8px 16px rgba(0, 0, 0, 0.2)',
+                    }}
+                  >
+                    Penetration vs Time
+                  </Typography>
+                  <Box role="img" aria-label="Penetration over time chart">
+                    <EChart option={chartOption} height={300} group="fightReport" />
+                  </Box>
+                  <Typography
+                    variant="caption"
+                    sx={{ color: 'text.secondary', mt: 1, display: 'block' }}
+                  >
+                    Shows penetration changes over the duration of the fight. Data voxelized to
+                    1-second intervals (highest value per interval). Data points:{' '}
+                    {penetrationData.dataPoints.length}
+                  </Typography>
+                </Paper>
+              </>
+            )}
           </Box>
         )}
       </AccordionDetails>
