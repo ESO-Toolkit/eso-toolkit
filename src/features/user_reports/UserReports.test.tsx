@@ -6,6 +6,7 @@ import { MemoryRouter } from 'react-router-dom';
 import '@testing-library/jest-dom';
 
 import { LoggerProvider } from '../../contexts/LoggerContext';
+import { GetCurrentUserDocument, GetUserReportsDocument } from '../../graphql/gql/graphql';
 import { createMockStore } from '../../test/utils/createMockStore';
 
 import { UserReports } from './UserReports';
@@ -83,7 +84,22 @@ jest.mock('../../graphql/gql/graphql', () => ({
   GetUserReportsDocument: { __mock: 'GetUserReportsDocument' },
 }));
 
-const mockGetCurrentUserDocument = { __mock: 'GetCurrentUserDocument' };
+const mockGetCurrentUserDocument = GetCurrentUserDocument;
+const mockGetUserReportsDocument = GetUserReportsDocument;
+
+const sequentialReportsQuery = (responses: unknown[]) => {
+  let responseIndex = 0;
+  return ({ query }: { query: unknown }) => {
+    if (query !== mockGetUserReportsDocument) {
+      return Promise.reject(new Error('Unexpected GraphQL query in UserReports test'));
+    }
+    const response = responses[responseIndex++];
+    if (response === undefined) {
+      return Promise.reject(new Error('Unexpected extra reports page in UserReports test'));
+    }
+    return Promise.resolve(response);
+  };
+};
 
 const mockUserData = {
   userData: {
@@ -158,9 +174,12 @@ const renderWithProviders = (
   const store = createMockStore();
 
   // Setup client query responses
-  mockClient.query.mockImplementation((params) => {
+  mockClient.query.mockImplementation((params: { query: unknown }) => {
     if (params.query === mockGetCurrentUserDocument) {
       return Promise.resolve(userData);
+    }
+    if (params.query !== mockGetUserReportsDocument) {
+      return Promise.reject(new Error('Unexpected GraphQL query in UserReports test'));
     }
     if (reportsError) {
       const errorInstance =
@@ -461,7 +480,8 @@ describe('UserReports Component', () => {
         if (params.query === mockGetCurrentUserDocument) {
           return Promise.resolve(mockUserData);
         }
-        return Promise.resolve(mockReportsData);
+        if (params.query === mockGetUserReportsDocument) return Promise.resolve(mockReportsData);
+        return Promise.reject(new Error('Unexpected GraphQL query in UserReports test'));
       });
 
       const refreshButton = screen.getByRole('button', { name: /refresh/i });
@@ -514,11 +534,11 @@ describe('UserReports Component', () => {
       const store = createMockStore();
       mockLocalStorage.getItem.mockReturnValue(validToken);
       (useAuth as jest.Mock).mockReturnValue(loggedInAuth());
-      mockClient.query.mockImplementation((params) =>
-        Promise.resolve(
-          params.query === mockGetCurrentUserDocument ? mockUserData : mockReportsData,
-        ),
-      );
+      mockClient.query.mockImplementation((params: { query: unknown }) => {
+        if (params.query === mockGetCurrentUserDocument) return Promise.resolve(mockUserData);
+        if (params.query === mockGetUserReportsDocument) return Promise.resolve(mockReportsData);
+        return Promise.reject(new Error('Unexpected GraphQL query in UserReports test'));
+      });
 
       // First visit warms the Redux store (initial load is cache-first, never forced).
       const first = render(treeFor(store));
@@ -547,8 +567,11 @@ describe('UserReports Component', () => {
       mockLocalStorage.getItem.mockReturnValue(validToken);
       (useAuth as jest.Mock).mockReturnValue(loggedInAuth());
       // Initial load succeeds (cache-first); the forced revalidation rejects.
-      mockClient.query.mockImplementation((params) => {
+      mockClient.query.mockImplementation((params: { query: unknown; fetchPolicy?: string }) => {
         if (params.query === mockGetCurrentUserDocument) return Promise.resolve(mockUserData);
+        if (params.query !== mockGetUserReportsDocument) {
+          return Promise.reject(new Error('Unexpected GraphQL query in UserReports test'));
+        }
         if (params.fetchPolicy === 'network-only') return Promise.reject(new Error('network down'));
         return Promise.resolve(mockReportsData);
       });
@@ -620,9 +643,12 @@ describe('UserReports Component', () => {
 
     it('should display error message when fetching reports fails', async () => {
       // Set up mock to reject on first call
-      mockClient.query.mockImplementation((params) => {
+      mockClient.query.mockImplementation((params: { query: unknown }) => {
         if (params.query === mockGetCurrentUserDocument) {
           return Promise.resolve(mockUserData);
+        }
+        if (params.query !== mockGetUserReportsDocument) {
+          return Promise.reject(new Error('Unexpected GraphQL query in UserReports test'));
         }
         // Reject reports fetch
         return Promise.reject(new Error('Reports API Error'));
@@ -685,43 +711,46 @@ describe('UserReports Component', () => {
         }));
 
       // Mock sequential API calls for fetchAllUserReports (25 reports across 3 pages)
-      mockClient.query
-        .mockResolvedValueOnce({
-          reportData: {
-            reports: {
-              data: createPageData(1, 10),
-              current_page: 1,
-              per_page: 10,
-              last_page: 3,
-              has_more_pages: true,
-              total: 25,
+      mockClient.query.mockImplementation(
+        sequentialReportsQuery([
+          {
+            reportData: {
+              reports: {
+                data: createPageData(1, 10),
+                current_page: 1,
+                per_page: 10,
+                last_page: 3,
+                has_more_pages: true,
+                total: 25,
+              },
             },
           },
-        })
-        .mockResolvedValueOnce({
-          reportData: {
-            reports: {
-              data: createPageData(2, 10),
-              current_page: 2,
-              per_page: 10,
-              last_page: 3,
-              has_more_pages: true,
-              total: 25,
+          {
+            reportData: {
+              reports: {
+                data: createPageData(2, 10),
+                current_page: 2,
+                per_page: 10,
+                last_page: 3,
+                has_more_pages: true,
+                total: 25,
+              },
             },
           },
-        })
-        .mockResolvedValueOnce({
-          reportData: {
-            reports: {
-              data: createPageData(3, 5),
-              current_page: 3,
-              per_page: 10,
-              last_page: 3,
-              has_more_pages: false,
-              total: 25,
+          {
+            reportData: {
+              reports: {
+                data: createPageData(3, 5),
+                current_page: 3,
+                per_page: 10,
+                last_page: 3,
+                has_more_pages: false,
+                total: 25,
+              },
             },
           },
-        });
+        ]),
+      );
 
       const mockAuthValue = {
         accessToken: validToken,
@@ -794,67 +823,70 @@ describe('UserReports Component', () => {
         }));
 
       // Mock sequential API calls for fetchAllUserReports
-      mockClient.query
-        .mockResolvedValueOnce({
-          reportData: {
-            reports: {
-              data: createPageData(1),
-              current_page: 1,
-              per_page: 10,
-              last_page: 5,
-              has_more_pages: true,
-              total: 50,
+      mockClient.query.mockImplementation(
+        sequentialReportsQuery([
+          {
+            reportData: {
+              reports: {
+                data: createPageData(1),
+                current_page: 1,
+                per_page: 10,
+                last_page: 5,
+                has_more_pages: true,
+                total: 50,
+              },
             },
           },
-        })
-        .mockResolvedValueOnce({
-          reportData: {
-            reports: {
-              data: createPageData(2),
-              current_page: 2,
-              per_page: 10,
-              last_page: 5,
-              has_more_pages: true,
-              total: 50,
+          {
+            reportData: {
+              reports: {
+                data: createPageData(2),
+                current_page: 2,
+                per_page: 10,
+                last_page: 5,
+                has_more_pages: true,
+                total: 50,
+              },
             },
           },
-        })
-        .mockResolvedValueOnce({
-          reportData: {
-            reports: {
-              data: createPageData(3),
-              current_page: 3,
-              per_page: 10,
-              last_page: 5,
-              has_more_pages: true,
-              total: 50,
+          {
+            reportData: {
+              reports: {
+                data: createPageData(3),
+                current_page: 3,
+                per_page: 10,
+                last_page: 5,
+                has_more_pages: true,
+                total: 50,
+              },
             },
           },
-        })
-        .mockResolvedValueOnce({
-          reportData: {
-            reports: {
-              data: createPageData(4),
-              current_page: 4,
-              per_page: 10,
-              last_page: 5,
-              has_more_pages: true,
-              total: 50,
+          {
+            reportData: {
+              reports: {
+                data: createPageData(4),
+                current_page: 4,
+                per_page: 10,
+                last_page: 5,
+                has_more_pages: true,
+                total: 50,
+              },
             },
           },
-        })
-        .mockResolvedValueOnce({
-          reportData: {
-            reports: {
-              data: createPageData(5),
-              current_page: 5,
-              per_page: 10,
-              last_page: 5,
-              has_more_pages: false,
-              total: 50,
+          {
+            reportData: {
+              reports: {
+                data: createPageData(5),
+                current_page: 5,
+                per_page: 10,
+                last_page: 5,
+                has_more_pages: false,
+                total: 50,
+              },
             },
           },
-        });
+        ]),
+      );
 
       // Setup auth mock
       const mockAuthValue = {
@@ -936,43 +968,46 @@ describe('UserReports Component', () => {
       }));
 
       // Mock client to return different pages
-      mockClient.query
-        .mockResolvedValueOnce({
-          reportData: {
-            reports: {
-              data: page1Data,
-              current_page: 1,
-              per_page: 10,
-              last_page: 3,
-              has_more_pages: true,
-              total: 30,
+      mockClient.query.mockImplementation(
+        sequentialReportsQuery([
+          {
+            reportData: {
+              reports: {
+                data: page1Data,
+                current_page: 1,
+                per_page: 10,
+                last_page: 3,
+                has_more_pages: true,
+                total: 30,
+              },
             },
           },
-        })
-        .mockResolvedValueOnce({
-          reportData: {
-            reports: {
-              data: page2Data,
-              current_page: 2,
-              per_page: 10,
-              last_page: 3,
-              has_more_pages: true,
-              total: 30,
+          {
+            reportData: {
+              reports: {
+                data: page2Data,
+                current_page: 2,
+                per_page: 10,
+                last_page: 3,
+                has_more_pages: true,
+                total: 30,
+              },
             },
           },
-        })
-        .mockResolvedValueOnce({
-          reportData: {
-            reports: {
-              data: page3Data,
-              current_page: 3,
-              per_page: 10,
-              last_page: 3,
-              has_more_pages: false,
-              total: 30,
+          {
+            reportData: {
+              reports: {
+                data: page3Data,
+                current_page: 3,
+                per_page: 10,
+                last_page: 3,
+                has_more_pages: false,
+                total: 30,
+              },
             },
           },
-        });
+        ]),
+      );
 
       const mockAuthValue = {
         accessToken: validToken,
@@ -1111,13 +1146,19 @@ describe('UserReports Component', () => {
     // Returns reports scoped to the requested userID, mirroring the real API
     // (getUserReports is keyed by userID). Empty for any unknown user.
     const queryByUser =
-      (reportsByUser: Record<number, unknown>) => (params: { variables?: { userID?: number } }) => {
+      (reportsByUser: Record<number, unknown>) =>
+      (params: { query: unknown; variables?: { userID?: number } }) => {
+        if (params.query === mockGetCurrentUserDocument) {
+          return Promise.resolve(mockUserData);
+        }
+        if (params.query !== mockGetUserReportsDocument) {
+          return Promise.reject(new Error('Unexpected GraphQL query in UserReports test'));
+        }
         const userID = params.variables?.userID;
         if (userID !== undefined && reportsByUser[userID]) {
           return Promise.resolve(reportsByUser[userID]);
         }
-        // Fallback (e.g. the current-user query, which the auth mock bypasses).
-        return Promise.resolve(mockUserData);
+        return Promise.reject(new Error(`Unexpected user ID in UserReports test: ${userID}`));
       };
 
     it("refetches for the new user and never renders the previous user's rows after an in-session switch", async () => {

@@ -146,17 +146,10 @@ export const installReportListsFixture = async (
   }
 
   const handle = async (request: Request, route: Route): Promise<void> => {
-    let body: { operationName?: string; variables?: Record<string, unknown> };
-    try {
-      body = request.postDataJSON() as {
-        operationName?: string;
-        variables?: Record<string, unknown>;
-      };
-    } catch {
-      errors.push(`Malformed GraphQL request: ${request.url()}`);
-      await route.abort();
-      return;
-    }
+    const body = request.postDataJSON() as {
+      operationName?: string;
+      variables?: Record<string, unknown>;
+    };
 
     const operationName = body.operationName ?? '';
     const variables = body.variables ?? {};
