@@ -16,7 +16,7 @@ const baseURL = externalBaseUrl || `http://localhost:${port}`;
  */
 export default defineConfig({
   testDir: '../tests',
-  testMatch: ['**/analyzer-route.smoke.spec.ts'],
+  testMatch: ['**/analyzer-route.smoke.spec.ts', '**/analyzer-route.accessibility.spec.ts'],
   fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: 0,
@@ -41,6 +41,14 @@ export default defineConfig({
     {
       name: 'mobile-chromium-390x844',
       use: { ...devices['iPhone 12'], browserName: 'chromium' },
+    },
+    {
+      name: 'mobile-firefox-390x844',
+      use: { ...devices['Desktop Firefox'], viewport: { width: 390, height: 844 } },
+    },
+    {
+      name: 'mobile-webkit-390x844',
+      use: { ...devices['Desktop Safari'], viewport: { width: 390, height: 844 } },
     },
   ],
   webServer: externalBaseUrl
