@@ -40,7 +40,7 @@ const populatedSummary: DecisionSummary = {
       observedBehavior: 'No interrupt arrived before the cast completed.',
       expectedBehavior: 'An assigned player interrupts the cast.',
       estimatedImpact: 12_500,
-      responsible: { actorName: 'Lyris', role: 'damage' },
+      responsible: { actorId: 'actor-7', role: 'damage' },
       priority: { rank: 1, stableOrder: 0 },
     },
   ],
@@ -74,7 +74,7 @@ describe('DecisionSummaryPanel', () => {
     ).toBeInTheDocument();
     expect(screen.getByText('Boss cast at 42 seconds.')).toBeInTheDocument();
     expect(screen.getByText('Assign an interrupt before the next pull.')).toBeInTheDocument();
-    expect(screen.getByText('Lyris · damage')).toBeInTheDocument();
+    expect(screen.getByText('Actor actor-7 · damage')).toBeInTheDocument();
   });
 
   it('gives multiple panel instances distinct accessible labels', () => {
@@ -206,5 +206,19 @@ describe('DecisionSummaryPanel', () => {
 
     expect(screen.getByRole('status')).toHaveTextContent('Decision candidates were rejected');
     expect(screen.getByRole('status')).toHaveTextContent('No recommendation was inferred');
+  });
+
+  it('explains invalid requests without exposing player display names', () => {
+    renderPanel({
+      ...populatedSummary,
+      items: [],
+      rejected: [{ candidateId: null, reason: 'invalid-request', outcome: 'blocked' }],
+    });
+
+    expect(screen.getByRole('status')).toHaveTextContent('Decision candidates were rejected');
+    expect(screen.getByRole('listitem')).toHaveTextContent(
+      'Invalid request: The decision request is invalid, so no recommendation was inferred.',
+    );
+    expect(screen.queryByText(/Lyris/)).not.toBeInTheDocument();
   });
 });
