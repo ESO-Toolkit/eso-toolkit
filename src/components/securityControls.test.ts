@@ -30,8 +30,7 @@ const getPropertyInitializer = (
 
   const property = expression.properties.find(
     (candidate): candidate is ts.PropertyAssignment =>
-      ts.isPropertyAssignment(candidate) &&
-      candidate.name.getText() === propertyName,
+      ts.isPropertyAssignment(candidate) && candidate.name.getText() === propertyName,
   );
 
   return property?.initializer;
@@ -65,10 +64,7 @@ const findDangerousHtmlSinks = (sourceFile: ts.SourceFile): number => {
   let sinkCount = 0;
 
   const visit = (node: ts.Node): void => {
-    if (
-      ts.isJsxAttribute(node) &&
-      node.name.getText(sourceFile) === 'dangerouslySetInnerHTML'
-    ) {
+    if (ts.isJsxAttribute(node) && node.name.getText(sourceFile) === 'dangerouslySetInnerHTML') {
       sinkCount += 1;
     }
 
@@ -133,8 +129,7 @@ describe('rich-text security controls', () => {
   it('keeps Calculator dangerous HTML rendering behind DOMPurify', () => {
     const calculatorSource = loadComponentSource('Calculator.tsx');
     const dangerousHtmlSinks = findDangerousHtmlSinks(calculatorSource);
-    const sanitizedDangerousHtmlSinks =
-      findSanitizedDangerousHtmlSinks(calculatorSource);
+    const sanitizedDangerousHtmlSinks = findSanitizedDangerousHtmlSinks(calculatorSource);
 
     expect(dangerousHtmlSinks).toBe(1);
     expect(sanitizedDangerousHtmlSinks).toBe(dangerousHtmlSinks);
@@ -143,11 +138,9 @@ describe('rich-text security controls', () => {
   it('keeps every TextEditor HTML sink behind DOMPurify', () => {
     const textEditorSource = loadComponentSource('TextEditor.tsx');
     const dangerousHtmlSinks = findDangerousHtmlSinks(textEditorSource);
-    const sanitizedDangerousHtmlSinks =
-      findSanitizedDangerousHtmlSinks(textEditorSource);
+    const sanitizedDangerousHtmlSinks = findSanitizedDangerousHtmlSinks(textEditorSource);
     const innerHtmlAssignments = findInnerHtmlAssignments(textEditorSource);
-    const sanitizedInnerHtmlAssignments =
-      findSanitizedInnerHtmlAssignments(textEditorSource);
+    const sanitizedInnerHtmlAssignments = findSanitizedInnerHtmlAssignments(textEditorSource);
 
     expect(dangerousHtmlSinks).toBe(1);
     expect(sanitizedDangerousHtmlSinks).toBe(dangerousHtmlSinks);

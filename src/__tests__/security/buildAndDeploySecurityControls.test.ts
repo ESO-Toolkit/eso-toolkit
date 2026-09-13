@@ -30,9 +30,7 @@ describe('build and deploy sourcemap handling', () => {
     expect(rollbarUpload.index).toBeGreaterThanOrEqual(0);
     expect(sourcemapRemoval.index).toBeGreaterThan(rollbarUpload.index);
     expect(pagesUpload.index).toBeGreaterThan(sourcemapRemoval.index);
-    expect(sourcemapRemoval.content).toMatch(
-      /find build -type f -name ['"]\*\.map['"] -delete/,
-    );
+    expect(sourcemapRemoval.content).toMatch(/find build -type f -name ['"]\*\.map['"] -delete/);
     expect(pagesUpload.content).toContain('actions/upload-pages-artifact');
   });
 });
