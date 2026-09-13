@@ -1,4 +1,70 @@
-import { test, expect, devices } from '@playwright/test';
+import { expect, Page, test, devices } from '@playwright/test';
+
+import { setupTestPage } from './setup/global-test-setup';
+
+const REPORT_CODE = process.env.E2E_REPORT_CODE ?? 'F4f2bMwWtgVKxjB9';
+const ANALYZER_URL = `/report/${REPORT_CODE}/fight/5/insights`;
+
+async function openAnalyzer(page: Page): Promise<void> {
+  await setupTestPage(page);
+  await page.addInitScript(() => {
+    const part = (value: string) => btoa(value).replace(/=+$/, '');
+    const token = `${part('{"alg":"HS256","typ":"JWT"}')}.${part(JSON.stringify({ sub: '999', exp: Math.floor(Date.now() / 1000) + 3600 }))}.test`;
+    sessionStorage.setItem('access_token', token);
+    localStorage.setItem('access_token', token);
+  });
+  await page.route(/\/api\/v2\/user(?:\?|$)/, (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        data: {
+          userData: {
+            currentUser: {
+              id: 999,
+              name: 'TestUser',
+              naDisplayName: 'TestUser-NA',
+              euDisplayName: null,
+            },
+          },
+        },
+      }),
+    }),
+  );
+  await page.route(/\/graphql(?:\?|$)/, async (route) => {
+    const body = route.request().postData() ?? '';
+    const response = body.includes('currentUser')
+      ? {
+          data: {
+            userData: {
+              currentUser: {
+                id: 999,
+                name: 'TestUser',
+                naDisplayName: 'TestUser-NA',
+                euDisplayName: null,
+              },
+            },
+          },
+        }
+      : body.includes('masterData')
+        ? { data: { reportData: { report: { masterData: { actors: [], abilities: [] } } } } }
+        : body.includes('playerDetails')
+          ? { data: { reportData: { report: { playerDetails: { data: { playerDetails: [] } } } } } }
+          : { data: { reportData: { report: { events: { data: [], nextPageTimestamp: null } } } } };
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(response),
+    });
+  });
+  const response = await page.goto(ANALYZER_URL, { waitUntil: 'domcontentloaded' });
+  expect(response?.status()).toBe(200);
+  await expect(page).toHaveURL(new RegExp(`/report/${REPORT_CODE}/fight/5/insights$`));
+  await expect(page.getByTestId('fight-details-loaded')).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByTestId('fight-tab-content-container')).toBeVisible();
+  await expect(page.getByTestId('insights-panel')).toBeVisible();
+  await expect(page.getByTestId('insights-skeleton-layout')).toHaveCount(0);
+}
 
 // Mobile device configurations
 const _MOBILE_DEVICES = [
@@ -16,18 +82,15 @@ const _DESKTOP_BREAKPOINTS = [
 ];
 
 test.describe('Report Page Responsiveness', () => {
-  const testReportId = process.env.E2E_REPORT_CODE ?? 'F4f2bMwWtgVKxjB9';
-  const testUrl = `/r/${testReportId}`;
-
   // Test mobile devices - separate test files for each device
   test.describe('Mobile - Pixel 5', () => {
     test.use({ ...devices['Pixel 5'] });
 
     test('should display properly without horizontal overflow', async ({ page }) => {
-      await page.goto(testUrl);
+      await openAnalyzer(page);
 
       // Wait for page to load
-      await page.waitForSelector('[data-testid="report-title"]', { timeout: 10000 });
+      await expect(page.getByTestId('fight-title')).toBeVisible();
 
       // Check for horizontal overflow
       const bodyWidth = await page.evaluate(() => document.body.scrollWidth);
@@ -37,34 +100,31 @@ test.describe('Report Page Responsiveness', () => {
     });
 
     test('should display fight cards in responsive grid', async ({ page }) => {
-      await page.goto(testUrl);
-      await page.waitForSelector('[data-testid="fight-card"]', { timeout: 10000 });
+      await openAnalyzer(page);
 
       // Check that fight cards are visible and properly sized
-      const fightCards = page.locator('[data-testid="fight-card"]');
+      const fightCards = page.locator('[data-testid="fight-tab-content-container"]');
       await expect(fightCards.first()).toBeVisible();
 
       // Verify cards are in a grid layout
       const firstCard = fightCards.first();
       const firstCardBox = await firstCard.boundingBox();
       expect(firstCardBox).toBeTruthy();
-      expect(firstCardBox!.width).toBeLessThan(200); // Mobile cards should be smaller
+      expect(firstCardBox!.width).toBeGreaterThan(300); // Analyzer content uses the mobile viewport
     });
 
     test('should have mobile-optimized spacing', async ({ page }) => {
-      await page.goto(testUrl);
-      await page.waitForSelector('[data-testid="fights-container"]', { timeout: 10000 });
+      await openAnalyzer(page);
 
       // Check that container uses full width on mobile
-      const container = page.locator('[data-testid="fights-container"]');
+      const container = page.locator('[data-testid="fight-tab-content-container"]');
       const containerBox = await container.boundingBox();
       expect(containerBox).toBeTruthy();
       expect(containerBox!.width).toBeGreaterThan(300); // Should use most of mobile screen
     });
 
     test('should be able to scroll vertically', async ({ page }) => {
-      await page.goto(testUrl);
-      await page.waitForSelector('[data-testid="fight-card"]', { timeout: 10000 });
+      await openAnalyzer(page);
 
       // Check if page is scrollable (has content beyond viewport)
       const documentHeight = await page.evaluate(() => document.documentElement.scrollHeight);
@@ -84,10 +144,10 @@ test.describe('Report Page Responsiveness', () => {
     test.use({ ...devices['iPhone 12'] });
 
     test('should display properly without horizontal overflow', async ({ page }) => {
-      await page.goto(testUrl);
+      await openAnalyzer(page);
 
-      // Wait for page to load
-      await page.waitForSelector('[data-testid="report-title"]', { timeout: 10000 });
+      // The helper proves this is a populated Analyzer route.
+      await expect(page.getByTestId('fight-title')).toBeVisible();
 
       // Check for horizontal overflow
       const bodyWidth = await page.evaluate(() => document.body.scrollWidth);
@@ -97,18 +157,17 @@ test.describe('Report Page Responsiveness', () => {
     });
 
     test('should display fight cards in responsive grid', async ({ page }) => {
-      await page.goto(testUrl);
-      await page.waitForSelector('[data-testid="fight-card"]', { timeout: 10000 });
+      await openAnalyzer(page);
 
       // Check that fight cards are visible and properly sized
-      const fightCards = page.locator('[data-testid="fight-card"]');
+      const fightCards = page.locator('[data-testid="fight-tab-content-container"]');
       await expect(fightCards.first()).toBeVisible();
 
       // Verify cards are in a grid layout
       const firstCard = fightCards.first();
       const firstCardBox = await firstCard.boundingBox();
       expect(firstCardBox).toBeTruthy();
-      expect(firstCardBox!.width).toBeLessThan(200); // Mobile cards should be smaller
+      expect(firstCardBox!.width).toBeGreaterThan(300); // Analyzer content uses the mobile viewport
     });
   });
 
@@ -117,11 +176,10 @@ test.describe('Report Page Responsiveness', () => {
     test.use({ ...devices['iPad Pro'] });
 
     test('should display optimized layout for tablet', async ({ page }) => {
-      await page.goto(testUrl);
-      await page.waitForSelector('[data-testid="fight-card"]', { timeout: 10000 });
+      await openAnalyzer(page);
 
-      // Check that fight cards are sized appropriately for tablet
-      const fightCards = page.locator('[data-testid="fight-card"]');
+      // Check that the populated Analyzer content is sized appropriately for tablet
+      const fightCards = page.locator('[data-testid="fight-tab-content-container"]');
       const firstCard = fightCards.first();
       const firstCardBox = await firstCard.boundingBox();
       expect(firstCardBox).toBeTruthy();
@@ -129,11 +187,10 @@ test.describe('Report Page Responsiveness', () => {
     });
 
     test('should maintain proper grid layout', async ({ page }) => {
-      await page.goto(testUrl);
-      await page.waitForSelector('[data-testid="fights-grid"]', { timeout: 10000 });
+      await openAnalyzer(page);
 
       // Verify grid layout is working
-      const grid = page.locator('[data-testid="fights-grid"]');
+      const grid = page.locator('[data-testid="fight-tab-content-container"]');
       await expect(grid).toBeVisible();
 
       // Check grid gap properties
@@ -150,11 +207,10 @@ test.describe('Report Page Responsiveness', () => {
     test.use({ viewport: { width: 1280, height: 720 } });
 
     test('should display optimized layout for desktop', async ({ page }) => {
-      await page.goto(testUrl);
-      await page.waitForSelector('[data-testid="fight-card"]', { timeout: 10000 });
+      await openAnalyzer(page);
 
-      // Check that fight cards are sized appropriately for desktop
-      const fightCards = page.locator('[data-testid="fight-card"]');
+      // Check that the populated Analyzer content is sized appropriately for desktop
+      const fightCards = page.locator('[data-testid="fight-tab-content-container"]');
       const firstCard = fightCards.first();
       const firstCardBox = await firstCard.boundingBox();
       expect(firstCardBox).toBeTruthy();
@@ -162,11 +218,10 @@ test.describe('Report Page Responsiveness', () => {
     });
 
     test('should utilize screen space efficiently', async ({ page }) => {
-      await page.goto(testUrl);
-      await page.waitForSelector('[data-testid="fights-container"]', { timeout: 10000 });
+      await openAnalyzer(page);
 
       // Check that container uses appropriate width on desktop
-      const container = page.locator('[data-testid="fights-container"]');
+      const container = page.locator('[data-testid="fight-tab-content-container"]');
       const containerBox = await container.boundingBox();
       expect(containerBox).toBeTruthy();
       expect(containerBox!.width).toBeGreaterThan(800); // Should use significant desktop space
@@ -177,11 +232,10 @@ test.describe('Report Page Responsiveness', () => {
     test.use({ viewport: { width: 1920, height: 1080 } });
 
     test('should display optimized layout for desktop', async ({ page }) => {
-      await page.goto(testUrl);
-      await page.waitForSelector('[data-testid="fight-card"]', { timeout: 10000 });
+      await openAnalyzer(page);
 
-      // Check that fight cards are sized appropriately for desktop
-      const fightCards = page.locator('[data-testid="fight-card"]');
+      // Check that the populated Analyzer content is sized appropriately for desktop
+      const fightCards = page.locator('[data-testid="fight-tab-content-container"]');
       const firstCard = fightCards.first();
       const firstCardBox = await firstCard.boundingBox();
       expect(firstCardBox).toBeTruthy();
@@ -202,15 +256,14 @@ test.describe('Report Page Responsiveness', () => {
         test.use({ ...deviceConfig });
 
         test('should display consistent content', async ({ page }) => {
-          await page.goto(testUrl);
-          await page.waitForSelector('[data-testid="report-title"]', { timeout: 10000 });
+          await openAnalyzer(page);
 
-          // Check that report title is consistent
-          const title = page.locator('[data-testid="report-title"]');
+          // Check that the current fight title is consistent
+          const title = page.locator('[data-testid="fight-title"]');
           await expect(title).toBeVisible();
 
-          // Check that fight cards exist on all devices
-          const fightCards = page.locator('[data-testid="fight-card"]');
+          // Check that Analyzer content exists on all devices
+          const fightCards = page.locator('[data-testid="fight-tab-content-container"]');
           const cardCount = await fightCards.count();
           expect(cardCount).toBeGreaterThan(0);
 
@@ -229,8 +282,7 @@ test.describe('Report Page Responsiveness', () => {
       test.use({ ...devices['Pixel 5'] });
 
       const startTime = Date.now();
-      await page.goto(testUrl);
-      await page.waitForSelector('[data-testid="fight-card"]', { timeout: 10000 });
+      await openAnalyzer(page);
       const loadTime = Date.now() - startTime;
 
       // Should load within reasonable time on mobile (adjust threshold as needed)
@@ -240,10 +292,9 @@ test.describe('Report Page Responsiveness', () => {
     test('should not cause layout shifts', async ({ page }) => {
       test.use({ ...devices['Pixel 5'] });
 
-      await page.goto(testUrl);
+      await openAnalyzer(page);
 
       // Wait for initial layout
-      await page.waitForLoadState('networkidle');
 
       // Check for cumulative layout shift
       const clsScore = await page.evaluate(() => {

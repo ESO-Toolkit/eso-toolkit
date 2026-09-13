@@ -1,7 +1,61 @@
 import AxeBuilder from '@axe-core/playwright';
-import { test, expect } from '@playwright/test';
+import { expect, Page, test } from '@playwright/test';
 
+import { setupTestPage } from './setup/global-test-setup';
 import { createSkeletonDetector } from './utils/skeleton-detector';
+
+const REPORT_CODE = process.env.E2E_REPORT_CODE ?? 'F4f2bMwWtgVKxjB9';
+const ANALYZER_URL = `/report/${REPORT_CODE}/fight/5/insights`;
+
+async function openAnalyzerForAccessibility(page: Page): Promise<void> {
+  await setupTestPage(page);
+  await page.addInitScript(() => {
+    const part = (value: string) => btoa(value).replace(/=+$/, '');
+    const token = `${part('{"alg":"HS256","typ":"JWT"}')}.${part(
+      JSON.stringify({ sub: '999', exp: Math.floor(Date.now() / 1000) + 3600 }),
+    )}.test`;
+    sessionStorage.setItem('access_token', token);
+    localStorage.setItem('access_token', token);
+  });
+  await page.route(/\/api\/v2\/user(?:\?|$)/, (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        data: {
+          userData: {
+            currentUser: {
+              id: 999,
+              name: 'TestUser',
+              naDisplayName: 'TestUser-NA',
+              euDisplayName: null,
+            },
+          },
+        },
+      }),
+    }),
+  );
+  await page.route(/\/graphql(?:\?|$)/, async (route) => {
+    const body = route.request().postData() ?? '';
+    const response = body.includes('masterData')
+      ? { data: { reportData: { report: { masterData: { actors: [], abilities: [] } } } } }
+      : body.includes('playerDetails')
+        ? { data: { reportData: { report: { playerDetails: { data: { playerDetails: [] } } } } } }
+        : { data: { reportData: { report: { events: { data: [], nextPageTimestamp: null } } } } };
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(response),
+    });
+  });
+  const response = await page.goto(ANALYZER_URL, { waitUntil: 'domcontentloaded' });
+  expect(response?.status()).toBe(200);
+  await expect(page).toHaveURL(new RegExp(`/report/${REPORT_CODE}/fight/5/insights$`));
+  await expect(page.getByTestId('fight-details-loaded')).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByTestId('fight-tab-content-container')).toBeVisible();
+  await expect(page.getByTestId('insights-panel')).toBeVisible();
+  await expect(page.getByTestId('insights-skeleton-layout')).toHaveCount(0);
+}
 
 const BUILD_LEADERBOARD_AXE_TAGS = [
   'wcag2a',
@@ -138,7 +192,7 @@ async function openBuildLeaderboardForAccessibility(
 ): Promise<void> {
   const skeletonDetector = createSkeletonDetector(page);
   await page.goto(path);
-  await skeletonDetector.waitForSkeletonsToDisappear({ timeout: 30_000 }).catch(() => undefined);
+  await skeletonDetector.waitForSkeletonsToDisappear({ timeout: 30_000 });
   await expect(
     page.locator('[data-testid="archetype-row"], [data-testid="recommended-row"]').first(),
   ).toBeVisible({ timeout: 30_000 });
@@ -226,6 +280,19 @@ test.describe('Accessibility', () => {
         expect(results.violations).toEqual([]);
       });
     }
+  });
+
+  test.describe('Analyzer populated route', () => {
+    test('reaches the populated Insights panel before the axe scan', async ({ page }) => {
+      await openAnalyzerForAccessibility(page);
+
+      const results = await new AxeBuilder({ page })
+        .withTags(['wcag2a', 'wcag2aa', 'wcag22aa'])
+        .exclude('.vite-error-overlay')
+        .analyze();
+
+      expect(results.violations).toEqual([]);
+    });
   });
 
   test.describe('Build Leaderboard route and evidence states', () => {
