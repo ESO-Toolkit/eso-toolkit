@@ -297,7 +297,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
             onChange={handleNavigationModeChange}
             exclusive
             size="small"
-            aria-label="Fight navigation mode"
+            aria-label="Fight navigation scope"
             sx={{
               backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)',
               borderRadius: '8px',
@@ -322,7 +322,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
                 fontSize: { xs: '0.725rem', md: '0.75rem' },
                 fontWeight: 600,
                 textTransform: 'none',
-                minWidth: 'auto',
+                minWidth: 44,
                 minHeight: 44,
                 height: 44,
                 border: 'none',
@@ -333,7 +333,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
                 transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                 '&:focus-visible': {
                   outline: `3px solid ${theme.palette.primary.main}`,
-                  outlineOffset: -2,
+                  outlineOffset: 2,
                 },
                 '&:hover': {
                   backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.04)',
@@ -472,7 +472,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
               flexShrink: 0,
               '&:focus-visible': {
                 outline: `3px solid ${theme.palette.primary.main}`,
-                outlineOffset: -2,
+                outlineOffset: 2,
               },
             },
             '@media (prefers-reduced-motion: reduce)': {

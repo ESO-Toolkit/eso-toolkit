@@ -206,7 +206,7 @@ const CombinedFilterDropdownComponent: React.FC<CombinedFilterDropdownProps> = (
       transition: 'background-color 150ms ease',
       '&:focus-visible': {
         outline: `3px solid ${theme.palette.primary.main}`,
-        outlineOffset: -2,
+        outlineOffset: 2,
       },
       '&:hover': {
         background: isDarkMode ? 'rgba(56, 189, 248, 0.1)' : 'rgba(59, 130, 246, 0.06)',
@@ -243,10 +243,14 @@ const CombinedFilterDropdownComponent: React.FC<CombinedFilterDropdownProps> = (
   }
 
   const hasTargets = (fight?.enemyNPCs?.length ?? 0) > 0;
+  const filterAriaLabel = hasTargets
+    ? `Filters: ${targetLabel}; ${playerLabel}`
+    : `Filters: ${playerLabel}`;
 
   return (
     <>
       <Button
+        aria-label={filterAriaLabel}
         aria-controls={popoverId}
         aria-expanded={open}
         aria-haspopup="dialog"
@@ -349,7 +353,7 @@ const CombinedFilterDropdownComponent: React.FC<CombinedFilterDropdownProps> = (
         slotProps={{
           paper: {
             role: 'dialog',
-            'aria-label': 'Fight filters',
+            'aria-label': 'Analyzer filters',
           },
         }}
       >
