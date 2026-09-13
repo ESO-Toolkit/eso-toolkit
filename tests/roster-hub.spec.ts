@@ -227,8 +227,9 @@ test.describe('Roster Hub', () => {
     await expect(page.getByRole('heading', { name: 'Roster Builder' })).toBeVisible();
     await expect(page.locator('.MuiSkeleton-root:visible')).toHaveCount(0);
 
-    const publishButton = page.getByRole('button', { name: /Publish/i }).first();
-    await expect(publishButton).not.toBeVisible();
+    // Discord publishing is available to guests; only the authenticated Hub
+    // action should be absent from the builder.
+    await expect(page.getByRole('button', { name: 'Hub', exact: true })).toHaveCount(0);
   });
 
   test('should be accessible at /roster-hub route', async ({ page }) => {
