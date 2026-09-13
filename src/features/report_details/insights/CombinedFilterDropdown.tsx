@@ -372,6 +372,8 @@ const CombinedFilterDropdownComponent: React.FC<CombinedFilterDropdownProps> = (
             <Box role="group" aria-label="Target filter" sx={{ pb: 0.5 }}>
               <ListItemButton
                 component="label"
+                role="presentation"
+                tabIndex={-1}
                 selected={isAllBosses}
                 sx={{
                   ...listItemSx,
@@ -418,6 +420,8 @@ const CombinedFilterDropdownComponent: React.FC<CombinedFilterDropdownProps> = (
 
               <ListItemButton
                 component="label"
+                role="presentation"
+                tabIndex={-1}
                 selected={isAllEnemies}
                 sx={{
                   ...listItemSx,
@@ -474,6 +478,8 @@ const CombinedFilterDropdownComponent: React.FC<CombinedFilterDropdownProps> = (
                   <ListItemButton
                     key={target.id}
                     component="label"
+                    role="presentation"
+                    tabIndex={-1}
                     selected={isSelected}
                     sx={{
                       ...listItemSx,
@@ -563,6 +569,8 @@ const CombinedFilterDropdownComponent: React.FC<CombinedFilterDropdownProps> = (
         <Box role="radiogroup" aria-label="Player filter" sx={{ pb: 1 }}>
           <ListItemButton
             component="label"
+            role="presentation"
+            tabIndex={-1}
             selected={!selectedFriendlyPlayerId}
             sx={{
               ...listItemSx,
@@ -611,6 +619,8 @@ const CombinedFilterDropdownComponent: React.FC<CombinedFilterDropdownProps> = (
               <ListItemButton
                 key={player.id}
                 component="label"
+                role="presentation"
+                tabIndex={-1}
                 selected={isSelected}
                 sx={{
                   ...listItemSx,

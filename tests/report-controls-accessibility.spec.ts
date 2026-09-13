@@ -18,13 +18,22 @@ const namedControls = [
     name: 'ESO Logs',
     locator: (page: Page) => page.getByRole('link', { name: 'View full report on ESO Logs' }),
   },
-  { name: 'all fights', locator: (page: Page) => page.getByRole('button', { name: 'All' }) },
-  { name: 'boss fights', locator: (page: Page) => page.getByRole('button', { name: 'Bosses' }) },
+  {
+    name: 'all fights',
+    locator: (page: Page) => page.getByRole('button', { name: 'All', exact: true }),
+  },
+  {
+    name: 'boss fights',
+    locator: (page: Page) => page.getByRole('button', { name: 'Bosses', exact: true }),
+  },
   { name: 'Insights tab', locator: (page: Page) => page.getByRole('tab', { name: 'Insights' }) },
 ] as const;
 
-const expectVisibleUnobscuredFocus = async (control: Locator, name: string) => {
+const expectVisibleUnobscuredFocus = async (page: Page, control: Locator, name: string) => {
   await control.scrollIntoViewIfNeeded();
+  // Establish keyboard modality before focusing each control. A programmatic focus alone does
+  // not activate :focus-visible consistently across Chromium, Firefox, and WebKit.
+  await page.keyboard.press('Tab');
   await control.focus();
   await expect(control, `${name} receives focus`).toBeFocused();
 
@@ -55,8 +64,10 @@ const expectVisibleUnobscuredFocus = async (control: Locator, name: string) => {
 const expectTouchTarget = async (control: Locator, name: string) => {
   const box = await control.boundingBox();
   expect(box, `${name} has a rendered touch target`).not.toBeNull();
-  expect(box?.width, `${name} touch target width`).toBeGreaterThanOrEqual(44);
-  expect(box?.height, `${name} touch target height`).toBeGreaterThanOrEqual(44);
+  // Firefox can report a 44px CSS target as 43.999992 due to subpixel layout rounding.
+  const minimumTouchTarget = 43.5;
+  expect(box?.width, `${name} touch target width`).toBeGreaterThanOrEqual(minimumTouchTarget);
+  expect(box?.height, `${name} touch target height`).toBeGreaterThanOrEqual(minimumTouchTarget);
 };
 
 test.describe('Analyzer report header and filter controls', () => {
@@ -83,11 +94,13 @@ test.describe('Analyzer report header and filter controls', () => {
           control,
           `${controlDefinition.name} has an accessible name`,
         ).toHaveAccessibleName(/\S+/);
-        await expectVisibleUnobscuredFocus(control, controlDefinition.name);
+        await expectVisibleUnobscuredFocus(page, control, controlDefinition.name);
         await expectTouchTarget(control, controlDefinition.name);
       }
 
-      const filterTrigger = page.getByRole('button', { name: /^Filters: All Players$/ });
+      // The MUI popover marks the trigger subtree inert while open, so role queries can no longer
+      // see the trigger for the expanded-state assertion. The explicit aria-label remains stable.
+      const filterTrigger = page.locator('button[aria-label^="Filters:"]').first();
       await expect(filterTrigger).toHaveAttribute('aria-expanded', 'false');
       await filterTrigger.click();
       await expect(filterTrigger).toHaveAttribute('aria-expanded', 'true');
