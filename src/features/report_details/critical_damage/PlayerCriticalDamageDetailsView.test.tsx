@@ -2,6 +2,8 @@ import { render, screen } from '@testing-library/react';
 
 import {
   buildEsoLogsSourceUrl,
+  getCriticalDamageMetricIntent,
+  getTimeAtCapMetricIntent,
   getValidCriticalDamageDataPoints,
   PlayerCriticalDamageDetailsView,
 } from './PlayerCriticalDamageDetailsView';
@@ -81,6 +83,15 @@ describe('PlayerCriticalDamageDetailsView data boundaries', () => {
     expect(buildEsoLogsSourceUrl(0, 0, 123, 0, false)).toBe(
       'https://www.esologs.com/reports/0?fight=0&type=auras&hostility=0&ability=123&target=0',
     );
+  });
+
+  it('keeps critical-damage and time-at-cap grading thresholds distinct', () => {
+    expect(getCriticalDamageMetricIntent(null)).toBe('neutral');
+    expect(getCriticalDamageMetricIntent(110)).toBe('warning');
+    expect(getCriticalDamageMetricIntent(125)).toBe('success');
+    expect(getTimeAtCapMetricIntent(null)).toBe('neutral');
+    expect(getTimeAtCapMetricIntent(50)).toBe('warning');
+    expect(getTimeAtCapMetricIntent(80)).toBe('success');
   });
 
   it('renders unavailable metrics and an explicit status for an all-invalid sample set', () => {
