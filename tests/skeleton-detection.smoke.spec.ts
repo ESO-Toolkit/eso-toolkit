@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 
+import { ANALYZER_REPORT_TITLE, analyzerTest } from './utils/analyzer-fixtures';
 import { SKELETON_SELECTORS, skeletonHelpers } from './utils/skeleton-detector';
 
 const CALCULATOR_CARD = '[data-calculator-card="true"]';
@@ -38,5 +39,19 @@ test.describe('Skeleton Detection Smoke Tests', () => {
     await expect(page).toHaveURL(/\/$/);
     await expect(page.getByRole('heading', { name: LANDING_HEADING })).toBeVisible();
     await expect.poll(() => skeletonHelpers.count(page)).toBe(0);
+  });
+});
+
+analyzerTest.describe('Analyzer skeleton detection smoke tests', () => {
+  analyzerTest('Analyzer summary reaches populated content without loading skeletons', async ({
+    analyzerPage,
+  }) => {
+    await expect(
+      analyzerPage.getByRole('heading', { name: ANALYZER_REPORT_TITLE, exact: true }),
+    ).toBeVisible();
+    await expect(
+      analyzerPage.getByRole('rowheader', { name: 'E2E Player', exact: true }),
+    ).toBeVisible();
+    await expect(analyzerPage.locator(SKELETON_SELECTORS.ANY_SKELETON)).toHaveCount(0);
   });
 });
