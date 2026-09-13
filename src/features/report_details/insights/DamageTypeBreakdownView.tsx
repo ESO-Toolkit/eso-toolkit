@@ -386,6 +386,43 @@ export const DamageTypeBreakdownView: React.FC<DamageTypeBreakdownViewProps> = (
                               {formatNumber(Math.round(damageType.averageDamage))} avg
                             </Typography>
                           </Box>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.25 }}>
+                            <Tooltip title={criticalRateTooltip} arrow>
+                              <Typography
+                                aria-label={criticalRateTooltip}
+                                variant="caption"
+                                sx={{
+                                  color: 'rgba(255,255,255,0.9)',
+                                  textShadow: '1px 1px 1px rgba(0,0,0,0.8)',
+                                  fontWeight: 500,
+                                }}
+                              >
+                                {criticalRateLabel}
+                              </Typography>
+                            </Tooltip>
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                color: 'rgba(255,255,255,0.7)',
+                                textShadow: '1px 1px 1px rgba(0,0,0,0.8)',
+                              }}
+                            >
+                              •
+                            </Typography>
+                            <Tooltip title={criticalDamageShareTooltip} arrow>
+                              <Typography
+                                aria-label={criticalDamageShareTooltip}
+                                variant="caption"
+                                sx={{
+                                  color: 'rgba(255,255,255,0.9)',
+                                  textShadow: '1px 1px 1px rgba(0,0,0,0.8)',
+                                  fontWeight: 500,
+                                }}
+                              >
+                                {criticalDamageShareLabel}
+                              </Typography>
+                            </Tooltip>
+                          </Box>
                         </Box>
 
                         {/* Percentage */}
