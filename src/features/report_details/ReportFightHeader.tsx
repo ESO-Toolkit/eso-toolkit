@@ -29,6 +29,8 @@ import { cleanArray } from '@/utils/cleanArray';
 import type { LogPlayerDetails } from '@/utils/logToRoster';
 import { encodeRosterToURL } from '@/utils/rosterEncoding';
 
+import { getFightOutcome, isBossFight } from './fightGrouping';
+
 function getWipeColor(percentage: number): string {
   const clamped = Math.max(0, Math.min(100, percentage));
   const hue = ((100 - clamped) / 100) * 120;
@@ -44,52 +46,6 @@ function getWipeColor(percentage: number): string {
       .padStart(2, '0');
   };
   return `#${ch(0)}${ch(8)}${ch(4)}`;
-}
-
-/**
- * Detects if a fight marked as 100% wipe is likely a false positive (actually a kill).
- * Uses heuristics based on fight duration, difficulty, and boss percentage.
- *
- * NOTE: This is a faithful copy of `isFalsePositiveWipe` in ReportFightsView.tsx. The two
- * must stay in lockstep so the fight header, the fight card, and the trial counter all
- * classify the same wipe identically. The proper DRY fix (a shared fightOutcome module) is
- * deferred because it spans multiple files owned by other concurrent edits.
- */
-function isFalsePositiveWipe(fight: FightFragment): boolean {
-  if (!fight.bossPercentage || fight.bossPercentage < 99.5) {
-    return false; // Not a 100% wipe
-  }
-
-  const durationMs = fight.endTime - fight.startTime;
-
-  // 1. Very short fights (< 45 seconds) with high boss health are likely false positives
-  if (durationMs < 45000 && fight.bossPercentage >= 95) {
-    return true;
-  }
-
-  // 2. Exactly 100.0% is very suspicious (ESO bug)
-  if (Math.abs(fight.bossPercentage - 100) < 0.1) {
-    return true;
-  }
-
-  // 3. Any fight with 100% that lasted more than 10 seconds but less than 5 minutes
-  if (fight.bossPercentage >= 99.9 && durationMs > 10000 && durationMs < 300000) {
-    return true;
-  }
-
-  // 4. Normal/veteran difficulty with very high boss health in reasonable time
-  if (
-    fight.difficulty != null &&
-    fight.difficulty >= 1 &&
-    fight.difficulty < 10 &&
-    fight.bossPercentage >= 98 &&
-    durationMs > 15000 &&
-    durationMs < 600000
-  ) {
-    return true;
-  }
-
-  return false;
 }
 
 // Custom hook for fight navigation logic
@@ -128,7 +84,7 @@ export const useFightNavigation = (): {
 
   // Get boss fights (fights with difficulty set) for boss navigation
   const bossFights = React.useMemo<FightFragment[]>(() => {
-    return sortedFights.filter((fight) => fight.difficulty != null);
+    return sortedFights.filter(isBossFight);
   }, [sortedFights]);
 
   // Unified navigation logic based on current mode
@@ -163,7 +119,7 @@ export const useFightNavigation = (): {
     // Determine if current fight is a boss or trash
     const currentFight = sortedFights.find((f) => f.id === fightIdNumber);
     const currentFightType: 'boss' | 'trash' | 'unknown' =
-      currentFight?.difficulty != null ? 'boss' : 'trash';
+      currentFight == null ? 'unknown' : isBossFight(currentFight) ? 'boss' : 'trash';
 
     if (currentIndex === -1) {
       // Current fight not found in active list - handle cross-mode navigation
@@ -522,23 +478,16 @@ export const ReportFightHeader: React.FC = () => {
 
         {fight &&
           (() => {
-            const isBossFight = fight.difficulty != null;
-            const bossWasKilled =
-              isBossFight &&
-              fight.bossPercentage !== null &&
-              fight.bossPercentage !== undefined &&
-              fight.bossPercentage <= 1.0;
-            const trashWasKilled = !isBossFight && (fight.kill === true || fight.kill === null);
-            // A boss flagged as a 100% wipe that the heuristics identify as a false positive was
-            // actually downed — classify it as a kill so the header, fight card, and trial counter
-            // agree (the trial counter already counts false-positive wipes as kills).
-            const rawBossWipe =
-              isBossFight &&
-              fight.bossPercentage !== null &&
-              fight.bossPercentage !== undefined &&
-              fight.bossPercentage > 1.0;
-            const isFalsePositive = rawBossWipe && isFalsePositiveWipe(fight);
-            const isKill = bossWasKilled || trashWasKilled || isFalsePositive;
+            const outcome = getFightOutcome(fight);
+            const isKill = outcome.status === 'kill';
+            const healthRemaining = outcome.bossHealthRemaining;
+            const outcomeLabel = isKill
+              ? 'KILL'
+              : outcome.status === 'wipe' && isBossFight(fight) && healthRemaining != null
+                ? `${Math.round(healthRemaining)}%`
+                : outcome.status === 'wipe'
+                  ? 'WIPE'
+                  : 'UNKNOWN';
 
             const ms = fight.endTime - fight.startTime;
             const totalSec = Math.floor(ms / 1000);
@@ -550,7 +499,11 @@ export const ReportFightHeader: React.FC = () => {
               ? isDarkMode
                 ? '#4ade80'
                 : '#16a34a'
-              : getWipeColor(fight.bossPercentage ?? 100);
+              : healthRemaining != null
+                ? getWipeColor(healthRemaining)
+                : isDarkMode
+                  ? '#cbd5e1'
+                  : '#475569';
 
             const difficultyLabel =
               fight.difficulty != null && fight.difficulty >= 122
@@ -612,7 +565,7 @@ export const ReportFightHeader: React.FC = () => {
                       lineHeight: 1.4,
                     }}
                   >
-                    {isKill ? 'KILL' : `${Math.round(fight.bossPercentage ?? 100)}%`}
+                    {outcomeLabel}
                   </Typography>
                 </Box>
 
