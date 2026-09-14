@@ -167,9 +167,8 @@ test('links report-only CSP headers to the bounded report endpoint without retai
     ASSETS: assets,
   });
 
-  const csp = response.headers.get('Content-Security-Policy-Report-Only');
-  assert.equal(csp?.includes('https://unsafe.example/reports'), false);
-  assert.equal(csp?.includes('report-to legacy'), false);
+  // Exact policy equality proves both attacker-controlled reporting directives
+  // were replaced; substring checks can themselves resemble URL sanitization.
   assertSecurityHeaders(response);
 });
 
