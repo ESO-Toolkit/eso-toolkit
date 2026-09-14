@@ -207,59 +207,26 @@ test.describe('Product-completion workflow route', () => {
     ).toHaveCount(0);
     await expect(page.getByTestId('insights-skeleton-layout')).toHaveCount(0);
 
-    const workflow = page.getByRole('region', { name: 'Analysis workflow' });
-    await expect(workflow).toBeVisible();
-    await expect(workflow.getByRole('heading', { name: 'Decision summary' })).toBeVisible();
+    const workflowStatus = page.getByRole('region', { name: 'Analysis workflow status' });
+    await expect(workflowStatus).toBeVisible();
     await expect(
-      workflow.getByText(
-        'Decision evidence is unavailable. No recommendation was inferred.',
-      ),
+      workflowStatus.getByRole('heading', {
+        name: 'Contextual analysis is not available for this fight',
+      }),
     ).toBeVisible();
-
-    const evidence = workflow.getByTestId('evidence-drilldown-unavailable');
-    await expect(evidence.getByRole('heading', { name: 'Evidence drilldown' })).toBeVisible();
-    await expect(
-      evidence.getByText(
-        'Validated evidence and its privacy-safe provenance are unavailable. The drilldown is withheld rather than treating unavailable events as an empty evidence set.',
-      ),
-    ).toBeVisible();
-    await expect(evidence.getByText(/^Timestamp:/)).toHaveCount(0);
-    await expect(evidence.getByText(/^Phase:/)).toHaveCount(0);
-
-    const pinnedFindings = workflow.getByRole('region', { name: 'Pinned findings' });
-    await expect(pinnedFindings).toContainText(
-      'No persisted, privacy-safe findings are available for this analysis context.',
+    await expect(workflowStatus).toContainText(
+      'This fight has no authoritative encounter rules, compatible baseline, and validated event evidence for a recommendation. Unknown data is not scored as zero.',
     );
-    await expect(pinnedFindings.getByText('Ownership lineage', { exact: true })).toHaveCount(0);
-    await expect(pinnedFindings.getByText('Resolution lineage', { exact: true })).toHaveCount(0);
-    await expect(pinnedFindings.getByText('Provenance', { exact: true })).toHaveCount(0);
-    await expect(pinnedFindings.getByText(/^Confidence:/)).toHaveCount(0);
-    await expect(
-      pinnedFindings.getByRole('button', { name: /Prepare privacy-safe share/i }),
-    ).toHaveCount(0);
 
-    await expect(
-      workflow.getByRole('heading', { name: 'A/B and cohort comparison' }),
-    ).toBeVisible();
-    await expect(workflow.getByText('Comparison unavailable', { exact: true })).toBeVisible();
-    await expect(
-      workflow.getByText(
-        'A/B and cohort comparisons require an authoritative, context-compatible baseline. No comparison score is available.',
-      ),
-    ).toBeVisible();
-    await expect(
-      workflow.getByText(
-        'No metric or score is shown because a valid comparison baseline is unavailable.',
-      ),
-    ).toBeVisible();
-    await expect(workflow.getByRole('table')).toHaveCount(0);
-
-    await expect(workflow.getByRole('heading', { name: 'Pull progression' })).toBeVisible();
-    await expect(
-      workflow.getByText(
-        'Progression is unavailable because this report has no verified, context-compatible pull history. No trend or score is inferred.',
-      ),
-    ).toBeVisible();
+    await expect(page.getByRole('region', { name: 'Analysis workflow', exact: true })).toHaveCount(
+      0,
+    );
+    await expect(page.getByTestId('evidence-drilldown-panel')).toHaveCount(0);
+    await expect(page.getByTestId('evidence-drilldown-unavailable')).toHaveCount(0);
+    await expect(page.getByText('Decision summary')).toHaveCount(0);
+    await expect(page.getByText('Pinned findings')).toHaveCount(0);
+    await expect(page.getByText('A/B and cohort comparison')).toHaveCount(0);
+    await expect(page.getByText('Pull progression')).toHaveCount(0);
 
     for (const operationName of REQUIRED_INSIGHTS_OPERATIONS) {
       expect(requestedOperations, `${operationName} should be requested`).toContain(operationName);
