@@ -3,9 +3,12 @@ import { defineConfig, devices } from '@playwright/test';
 
 import { ciBlockExternalHeaders } from '../tests/utils/playwright-shared';
 
-const rawPort = process.env.PORT || '3000';
+// Keep this suite on the dedicated Analyzer test port. Reusing an arbitrary
+// process on the main worktree port can make the route appear healthy while
+// serving an unrelated application.
+const rawPort = process.env.REPORT_CONTROLS_A11Y_PORT || process.env.PORT || '3006';
 const parsedPort = Number.parseInt(rawPort, 10);
-const port = Number.isNaN(parsedPort) ? 3000 : parsedPort;
+const port = Number.isNaN(parsedPort) ? 3006 : parsedPort;
 const baseUrl = process.env.BASE_URL || `http://localhost:${port}`;
 
 export default defineConfig({
@@ -40,7 +43,10 @@ export default defineConfig({
   webServer: {
     command: 'npm start',
     url: baseUrl,
-    reuseExistingServer: !process.env.CI,
+    // Never reuse an existing server: a stale or unrelated process must fail
+    // the harness instead of turning the populated-state test into a false
+    // 404/skeleton result.
+    reuseExistingServer: false,
     timeout: 300000,
     stdout: 'pipe',
     stderr: 'pipe',
