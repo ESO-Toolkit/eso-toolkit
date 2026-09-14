@@ -1,6 +1,7 @@
 import { expect, Page, test, devices } from '@playwright/test';
 
 import { setupTestPage } from './setup/global-test-setup';
+import { openPopulatedAnalyzer } from './utils/analyzer-route-fixture';
 
 const REPORT_CODE = process.env.E2E_REPORT_CODE ?? 'F4f2bMwWtgVKxjB9';
 const ANALYZER_URL = `/report/${REPORT_CODE}/fight/5/insights`;
@@ -874,5 +875,150 @@ test.describe('Damage statistics worker performance', () => {
           measurement.heapGrowthBytes >= workerThresholds.maxHeapGrowthBytes),
     );
     expect(assertionFailure, JSON.stringify(measurements)).toBeUndefined();
+  });
+});
+
+test.describe('Populated Analyzer interaction performance', () => {
+  test('keeps an urgent populated Analyzer tab change responsive', async ({ page }, testInfo) => {
+    test.skip(
+      testInfo.project.name !== 'desktop-performance',
+      'The 50ms interaction target is measured in the desktop Chromium performance project.',
+    );
+
+    const unexpectedOperations = await openPopulatedAnalyzer(page);
+    expect(unexpectedOperations).toEqual([]);
+
+    // These assertions make the benchmark fail if it accidentally measures the route shell or a
+    // loading fallback. The fixture itself supplies a real fight, actor, target, and event stream.
+    await expect(page.getByTestId('fight-details-loaded')).toBeVisible();
+    await expect(page.getByTestId('fight-tab-content-container')).toBeVisible();
+    await expect(page.getByTestId('insights-panel')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Fight Insights', exact: true })).toBeVisible();
+    await expect(page.getByText('Training Dummy', { exact: true })).toBeVisible();
+    await expect(page.getByText('Duration: 1m 0.0s', { exact: true })).toBeVisible();
+    await expect(page.locator('[data-testid*="skeleton" i]')).toHaveCount(0);
+
+    const insightsTab = page.getByRole('tab', { name: 'Insights', exact: true });
+    const playersTab = page.getByRole('tab', { name: 'Players', exact: true });
+    await expect(insightsTab).toHaveAttribute('aria-selected', 'true');
+    await expect(playersTab).toBeVisible();
+    await expect(playersTab).toBeEnabled();
+    await expect(playersTab).toHaveAttribute('aria-selected', 'false');
+
+    // Prime the lazy Players panel once so the measured transition isolates the urgent tab update
+    // and paint from one-time module evaluation and panel data loading.
+    await playersTab.click();
+    await expect(playersTab).toHaveAttribute('aria-selected', 'true');
+    await expect(page.getByRole('heading', { name: 'Players', exact: true })).toBeVisible({
+      timeout: 30_000,
+    });
+    await expect(page.locator('[data-testid*="skeleton" i]')).toHaveCount(0);
+    await expect(insightsTab).toHaveAttribute('aria-selected', 'false');
+
+    const measurement = await page.evaluate(async () => {
+      const target = document.getElementById('fight-detail-tab-insights');
+      if (!target) throw new Error('Insights tab was not found on the populated Analyzer route');
+      if (target.getAttribute('role') !== 'tab') {
+        throw new Error('Insights tab did not expose the expected tab role');
+      }
+
+      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+
+      let samplingFrames = true;
+      let previousFrameAt = performance.now();
+      let maxFrameGapMs = 0;
+      const sampleFrame = (timestamp: number): void => {
+        if (!samplingFrames) return;
+        maxFrameGapMs = Math.max(maxFrameGapMs, timestamp - previousFrameAt);
+        previousFrameAt = timestamp;
+        requestAnimationFrame(sampleFrame);
+      };
+      requestAnimationFrame(sampleFrame);
+
+      const longTasks: number[] = [];
+      let longTaskObserver: PerformanceObserver | null = null;
+      if (
+        typeof PerformanceObserver !== 'undefined' &&
+        PerformanceObserver.supportedEntryTypes.includes('longtask')
+      ) {
+        longTaskObserver = new PerformanceObserver((list) => {
+          for (const entry of list.getEntries()) longTasks.push(entry.duration);
+        });
+        longTaskObserver.observe({ type: 'longtask', buffered: false });
+      }
+
+      const interactionStartedAt = performance.now();
+      const nextPaint = new Promise<number>((resolve) => {
+        requestAnimationFrame(() => resolve(performance.now() - interactionStartedAt));
+      });
+      const selectionCommit = new Promise<number>((resolve, reject) => {
+        let frameCount = 0;
+        let selectionObserver: MutationObserver | null = null;
+        const checkSelection = (): void => {
+          if (target.getAttribute('aria-selected') === 'true') {
+            selectionObserver?.disconnect();
+            resolve(performance.now() - interactionStartedAt);
+            return;
+          }
+          if (frameCount++ >= 120) {
+            selectionObserver?.disconnect();
+            reject(new Error('Insights tab did not commit its selected state'));
+            return;
+          }
+          requestAnimationFrame(checkSelection);
+        };
+        selectionObserver = new MutationObserver(checkSelection);
+        selectionObserver.observe(target, { attributes: true, attributeFilter: ['aria-selected'] });
+        checkSelection();
+      });
+
+      target.click();
+      const [interactionToNextPaintMs, selectionCommitMs] = await Promise.all([
+        nextPaint,
+        selectionCommit,
+      ]);
+
+      await new Promise<void>((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+      );
+      samplingFrames = false;
+      for (const entry of longTaskObserver?.takeRecords() ?? []) longTasks.push(entry.duration);
+      longTaskObserver?.disconnect();
+
+      return {
+        interactionToNextPaintMs,
+        selectionCommitMs,
+        maxFrameGapMs,
+        maxLongTaskMs: longTasks.length > 0 ? Math.max(...longTasks) : null,
+        observedLongTaskCount: longTasks.length,
+      };
+    });
+
+    await expect(insightsTab).toHaveAttribute('aria-selected', 'true');
+    await expect(playersTab).toHaveAttribute('aria-selected', 'false');
+    await expect(page.getByTestId('insights-panel')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Fight Insights', exact: true })).toBeVisible();
+    await expect(page.locator('[data-testid*="skeleton" i]')).toHaveCount(0);
+    await testInfo.attach('populated-analyzer-interaction-evidence.json', {
+      body: JSON.stringify(
+        {
+          benchmark: 'populated-analyzer-urgent-tab-interaction',
+          fixture: 'AnalyzerMatrixFixture01 / Training Dummy / one damage event',
+          thresholds: { interactionToNextPaintMs: 50, selectionCommitMs: 50, maxFrameGapMs: 50 },
+          measurement,
+        },
+        null,
+        2,
+      ),
+      contentType: 'application/json',
+    });
+    console.log(`POPULATED_ANALYZER_INTERACTION_EVIDENCE=${JSON.stringify(measurement)}`);
+
+    expect(measurement.interactionToNextPaintMs).toBeLessThan(50);
+    expect(measurement.selectionCommitMs).toBeLessThan(50);
+    expect(measurement.maxFrameGapMs).toBeLessThan(50);
+    if (measurement.maxLongTaskMs !== null) {
+      expect(measurement.maxLongTaskMs).toBeLessThan(50);
+    }
   });
 });

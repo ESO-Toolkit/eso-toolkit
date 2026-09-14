@@ -192,7 +192,14 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
     return tabId;
   };
 
-  const validSelectedTabId = getValidTabId(selectedTabId);
+  const routeSelectedTabId = getValidTabId(selectedTabId);
+  const [optimisticSelectedTabId, setOptimisticSelectedTabId] = React.useState(routeSelectedTabId);
+
+  React.useEffect(() => {
+    setOptimisticSelectedTabId(routeSelectedTabId);
+  }, [routeSelectedTabId]);
+
+  const validSelectedTabId = getValidTabId(optimisticSelectedTabId);
   const getTabA11yProps = (tabId: TabId): { id: string; 'aria-controls': string } => ({
     id: `fight-detail-tab-${tabId}`,
     'aria-controls': `fight-detail-panel-${tabId}`,
@@ -449,7 +456,9 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           value={validSelectedTabId}
           aria-label="Fight detail sections"
           onChange={(_: React.SyntheticEvent, v: unknown) => {
-            onTabChange(v as TabId);
+            const nextTabId = v as TabId;
+            setOptimisticSelectedTabId(nextTabId);
+            React.startTransition(() => onTabChange(nextTabId));
           }}
           sx={{
             minWidth: 0,

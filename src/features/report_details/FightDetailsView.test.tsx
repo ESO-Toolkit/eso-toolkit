@@ -1,5 +1,5 @@
 import { ThemeProvider, createTheme } from '@mui/material/styles';
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import '@testing-library/jest-dom';
 
@@ -187,5 +187,60 @@ describe('FightDetailsView', () => {
     } finally {
       useDeferredValueSpy.mockRestore();
     }
+  });
+
+  it('optimistically selects a tab before route navigation completes', async () => {
+    const fight = {
+      id: 1,
+      startTime: 0,
+      endTime: 60_000,
+      friendlyPlayers: [],
+      phaseTransitions: [],
+    } as unknown as FightFragment;
+    const onTabChange = jest.fn();
+
+    mockUseReportMasterData.mockReturnValue({
+      isMasterDataLoading: false,
+      reportMasterData: { actorsById: {} },
+    } as never);
+    mockUsePhaseTransitions.mockReturnValue({
+      phaseTransitions: null,
+      fightStartTime: 0,
+      fightEndTime: 60_000,
+      isLoading: false,
+      source: null,
+    });
+    mockUseFightNavigation.mockReturnValue({
+      navigationMode: 'all',
+      navigationData: {
+        currentIndex: 0,
+        previousFight: null,
+        nextFight: null,
+        totalCount: 1,
+        modeLabel: 'Fight',
+        currentFightType: 'boss',
+      },
+      navigateToPrevious: jest.fn(),
+      navigateToNext: jest.fn(),
+      handleNavigationModeChange: jest.fn(),
+    });
+
+    render(
+      <ThemeProvider theme={createTheme()}>
+        <FightDetailsView
+          fight={fight}
+          selectedTabId={TabId.PLAYERS}
+          onTabChange={onTabChange}
+          showExperimentalTabs={false}
+          onToggleExperimentalTabs={jest.fn()}
+        />
+      </ThemeProvider>,
+    );
+
+    const insightsTab = screen.getByRole('tab', { name: 'Insights' });
+    fireEvent.click(insightsTab);
+
+    expect(insightsTab).toHaveAttribute('aria-selected', 'true');
+    expect(onTabChange).toHaveBeenCalledWith(TabId.INSIGHTS);
   });
 });
