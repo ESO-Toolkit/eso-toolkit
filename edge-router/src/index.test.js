@@ -41,7 +41,10 @@ const assertSecurityHeaders = (response, expectedCsp = resolvedCsp) => {
   const reportingEndpoints = response.headers.get('Reporting-Endpoints');
   assert.equal(reportingEndpoints, `csp-violations="${CSP_REPORT_PATH}"`);
   const endpointPath = reportingEndpoints.match(/^csp-violations="([^"]+)"$/)?.[1];
-  assert.equal(new URL(endpointPath, 'https://esotk.com/report/example').href, 'https://esotk.com/csp-reports');
+  assert.equal(
+    new URL(endpointPath, 'https://esotk.com/report/example').href,
+    'https://esotk.com/csp-reports',
+  );
   assert.equal(response.headers.get('Report-To'), null);
 
   for (const [name, value] of Object.entries(SECURITY_HEADERS)) {
@@ -92,8 +95,67 @@ test('strips query parameters when loading the Analyzer app shell', async () => 
   assert.equal(appShellRequest?.url, 'https://esotk.com/index.html');
 });
 
-test('handles all deployed Analyzer route families without masking unknown paths', async () => {
-  for (const pathname of ['/report/abc', '/u/player', '/b/build', '/bv', '/rv/fight']) {
+test('serves every declared BrowserRouter path without masking unknown paths', async () => {
+  const browserRouterPaths = [
+    '/',
+    '/oauth-redirect',
+    '/discord-oauth-redirect',
+    '/app-auth',
+    '/login',
+    '/banned',
+    '/calculator',
+    '/text-editor',
+    '/logs',
+    '/leaderboards',
+    '/build-leaderboard',
+    '/build-leaderboard/boss/cloudrest',
+    '/build-leaderboard/class/dragonknight',
+    '/build-leaderboard/class/dragonknight/cloudrest',
+    '/sample-report',
+    '/latest-reports',
+    '/whoami',
+    '/my-reports',
+    '/scribing-simulator',
+    '/ultimate-simulator',
+    '/parse-analysis',
+    '/parse-analysis/report-code',
+    '/parse-analysis/report-code/42',
+    '/loadout-manager',
+    '/build-editor',
+    '/docs/loadout/food-selector',
+    '/docs/calculations',
+    '/docs/dlss5-neural-rendering',
+    '/docs/discord-roster-bot',
+    '/roster-builder',
+    '/roster-hub',
+    '/my-rosters',
+    '/rv',
+    '/bv',
+    '/b/build',
+    '/my-builds',
+    '/build-hub',
+    '/pack-hub',
+    '/about',
+    '/kalpa',
+    '/kalpa/support',
+    '/discord-server-config',
+    '/discord-setup',
+    '/privacy',
+    '/privacy-settings',
+    '/terms',
+    '/whats-new',
+    '/replay-models',
+    '/gear-sets',
+    '/u/player',
+    '/report/abc',
+    '/report/abc/live',
+    '/report/abc/summary',
+    '/report/abc/dashboard',
+    '/report/abc/fight/42',
+    '/report/abc/fight/42/summary',
+  ];
+
+  for (const pathname of browserRouterPaths) {
     const assets = makeAssets();
     const response = await handleRequest(new Request(`https://esotk.com${pathname}`), {
       ASSETS: assets,
@@ -103,14 +165,54 @@ test('handles all deployed Analyzer route families without masking unknown paths
     assert.equal(new URL(assets.requests[0].url).pathname, '/index.html', pathname);
   }
 
-  const assets = makeAssets();
-  const response = await handleRequest(new Request('https://esotk.com/assets/missing.js'), {
-    ASSETS: assets,
-  });
+  for (const pathname of [
+    '/assets/missing.js',
+    '/favicon.ico',
+    '/manifest.webmanifest',
+    '/unknown-path',
+    '/report/abc/export',
+    '/build-leaderboard/unknown/cloudrest',
+    '/build-leaderboard/boss/cloudrest/extra',
+    '/bv/unexpected',
+    '/docs/not-a-route',
+  ]) {
+    const assets = makeAssets();
+    const response = await handleRequest(new Request(`https://esotk.com${pathname}`), {
+      ASSETS: assets,
+    });
 
-  assert.equal(response.status, 404);
-  assert.equal(new URL(assets.requests[0].url).pathname, '/assets/missing.js');
-  assertSecurityHeaders(response);
+    assert.equal(response.status, 404, pathname);
+    assert.equal(new URL(assets.requests[0].url).pathname, pathname, pathname);
+    assert.ok(!assets.requests.some((request) => new URL(request.url).pathname === '/index.html'));
+    assertSecurityHeaders(response);
+  }
+});
+
+test('rewrites representative static routes for GET and HEAD, and discards navigation queries', async () => {
+  for (const method of ['GET', 'HEAD']) {
+    for (const pathname of [
+      '/calculator',
+      '/latest-reports',
+      '/roster-hub',
+      '/login',
+      '/privacy',
+    ]) {
+      const assets = makeAssets();
+      const response = await handleRequest(
+        new Request(`https://esotk.com${pathname}?source=bookmark&tab=overview`, { method }),
+        { ASSETS: assets },
+      );
+      const appShellRequest = assets.requests.find(
+        (request) => new URL(request.url).pathname === '/index.html',
+      );
+
+      assert.equal(response.status, 200, `${method} ${pathname}`);
+      assert.equal(appShellRequest?.method, method, `${method} ${pathname}`);
+      assert.equal(appShellRequest?.url, 'https://esotk.com/index.html', `${method} ${pathname}`);
+      assert.equal(await response.text(), method === 'HEAD' ? '' : '<!doctype html>');
+      assertSecurityHeaders(response);
+    }
+  }
 });
 
 test('preserves HEAD semantics for Analyzer history routes', async () => {
@@ -161,17 +263,19 @@ test('serves the app shell for OAuth callback routes while preserving request me
 });
 
 test('does not rewrite non-GET Analyzer requests', async () => {
-  const assets = makeAssets();
-  const response = await handleRequest(
-    new Request('https://esotk.com/report/example/fight/42', { method: 'POST' }),
-    { ASSETS: assets },
-  );
-  const requestedPaths = assets.requests.map((request) => new URL(request.url).pathname);
+  for (const method of ['POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']) {
+    const assets = makeAssets();
+    const response = await handleRequest(
+      new Request('https://esotk.com/report/example/fight/42?tab=damage', { method }),
+      { ASSETS: assets },
+    );
+    const requestedPaths = assets.requests.map((request) => new URL(request.url).pathname);
 
-  assert.equal(response.status, 404);
-  assert.ok(requestedPaths.includes('/report/example/fight/42'));
-  assert.ok(!requestedPaths.includes('/index.html'));
-  assertSecurityHeaders(response);
+    assert.equal(response.status, 404, method);
+    assert.ok(requestedPaths.includes('/report/example/fight/42'), method);
+    assert.ok(!requestedPaths.includes('/index.html'), method);
+    assertSecurityHeaders(response);
+  }
 });
 
 test('uses a marker-free report-only CSP fallback if the built header asset is unavailable', async () => {
@@ -245,18 +349,21 @@ test('records only bounded, privacy-safe categories for accepted CSP reports', a
     console.log = originalLog;
   }
 
-  assert.deepEqual(observations.map((entry) => JSON.parse(entry)), [
-    {
-      event: 'csp-violation',
-      reports: [
-        {
-          directive: 'script-src',
-          routeTemplate: '/report/:report',
-          sourceOriginCategory: 'cross-origin',
-        },
-      ],
-    },
-  ]);
+  assert.deepEqual(
+    observations.map((entry) => JSON.parse(entry)),
+    [
+      {
+        event: 'csp-violation',
+        reports: [
+          {
+            directive: 'script-src',
+            routeTemplate: '/report/:report',
+            sourceOriginCategory: 'cross-origin',
+          },
+        ],
+      },
+    ],
+  );
   assert.equal(observations.join('').includes('private-report-code'), false);
   assert.equal(observations.join('').includes('private-player'), false);
 });

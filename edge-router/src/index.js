@@ -18,19 +18,76 @@ const REPORTING_HEADERS = {
   'Reporting-Endpoints': `${CSP_REPORTING_GROUP}="${CSP_REPORT_PATH}"`,
 };
 
-const analyzerRoutePrefixes = ['/report/', '/u/', '/b/'];
-const oauthCallbackPaths = new Set(['/oauth-redirect', '/discord-oauth-redirect', '/app-auth']);
+// Keep this explicit route list in sync with the BrowserRouter declarations in
+// src/App.tsx. The asset binding has `html_handling = "none"`, so only real
+// client routes can be rewritten to the shell. In particular, do not use the
+// React catch-all route here: unknown URLs must retain an asset-origin 404.
+const browserRouterStaticPaths = new Set([
+  '/',
+  '/oauth-redirect',
+  '/discord-oauth-redirect',
+  '/app-auth',
+  '/login',
+  '/banned',
+  '/calculator',
+  '/text-editor',
+  '/logs',
+  '/leaderboards',
+  '/build-leaderboard',
+  '/sample-report',
+  '/latest-reports',
+  '/whoami',
+  '/my-reports',
+  '/scribing-simulator',
+  '/ultimate-simulator',
+  '/loadout-manager',
+  '/build-editor',
+  '/docs/loadout/food-selector',
+  '/docs/calculations',
+  '/docs/dlss5-neural-rendering',
+  '/docs/discord-roster-bot',
+  '/roster-builder',
+  '/roster-hub',
+  '/my-rosters',
+  '/rv',
+  '/bv',
+  '/my-builds',
+  '/build-hub',
+  '/pack-hub',
+  '/about',
+  '/kalpa',
+  '/kalpa/support',
+  '/discord-server-config',
+  '/discord-setup',
+  '/privacy',
+  '/privacy-settings',
+  '/terms',
+  '/whats-new',
+  '/replay-models',
+  '/gear-sets',
+]);
 
-export const isAnalyzerHistoryPath = (pathname) =>
-  oauthCallbackPaths.has(pathname) ||
-  pathname === '/report' ||
-  pathname === '/u' ||
-  pathname === '/b' ||
-  pathname === '/bv' ||
-  pathname.startsWith('/bv/') ||
-  pathname === '/rv' ||
-  pathname.startsWith('/rv/') ||
-  analyzerRoutePrefixes.some((prefix) => pathname.startsWith(prefix));
+const browserRouterDynamicPaths = [
+  /^\/report\/[^/]+$/,
+  /^\/report\/[^/]+\/(?:live|summary|dashboard)$/,
+  /^\/report\/[^/]+\/fight\/[^/]+(?:\/[^/]+)?$/,
+  /^\/build-leaderboard\/boss\/[^/]+$/,
+  /^\/build-leaderboard\/class\/[^/]+(?:\/[^/]+)?$/,
+  /^\/parse-analysis(?:\/[^/]+){0,2}$/,
+  /^\/u\/[^/]+$/,
+  /^\/b\/[^/]+$/,
+];
+
+const normalizePathname = (pathname) =>
+  pathname.length > 1 ? pathname.replace(/\/+$/, '') : pathname;
+
+export const isAnalyzerHistoryPath = (pathname) => {
+  const normalizedPathname = normalizePathname(pathname);
+  return (
+    browserRouterStaticPaths.has(normalizedPathname) ||
+    browserRouterDynamicPaths.some((route) => route.test(normalizedPathname))
+  );
+};
 
 const isHistoryRequest = (request) =>
   (request.method === 'GET' || request.method === 'HEAD') &&
