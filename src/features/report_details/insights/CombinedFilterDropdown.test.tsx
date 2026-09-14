@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { useSelector } from 'react-redux';
 
 import { useReportMasterData } from '../../../hooks';
@@ -59,7 +60,7 @@ describe('CombinedFilterDropdown', () => {
     fireEvent.click(trigger);
 
     expect(trigger).toHaveAttribute('aria-expanded', 'true');
-    expect(screen.getByRole('dialog', { name: 'Fight filters' })).toBeInTheDocument();
+    expect(screen.getByRole('dialog', { name: 'Analyzer filters' })).toBeInTheDocument();
     expect(screen.getByRole('checkbox', { name: 'All Bosses' })).toBeChecked();
     expect(screen.getByRole('checkbox', { name: 'All Enemies' })).toBeInTheDocument();
     expect(screen.getByRole('checkbox', { name: 'Real Boss' })).toBeInTheDocument();
@@ -72,15 +73,16 @@ describe('CombinedFilterDropdown', () => {
     );
   });
 
-  it('provides native checkbox and radio controls with named selected states', () => {
+  it('provides native checkbox and radio controls with named selected states', async () => {
+    const user = userEvent.setup();
     render(<CombinedFilterDropdown players={[{ id: 42, name: 'Aria' }]} />);
 
     const trigger = screen.getByRole('button', { name: /all bosses.*all players/i });
-    trigger.focus();
+    await user.tab();
     expect(trigger).toHaveFocus();
     expect(trigger).toHaveAttribute('aria-haspopup', 'dialog');
 
-    fireEvent.click(trigger);
+    await user.click(trigger);
     const dialog = screen.getByRole('dialog', { name: 'Analyzer filters' });
     expect(dialog).toBeInTheDocument();
     expect(screen.getByRole('group', { name: 'Target filter' })).toBeInTheDocument();
@@ -89,9 +91,8 @@ describe('CombinedFilterDropdown', () => {
     expect(screen.getByRole('radio', { name: 'Aria' })).not.toBeChecked();
 
     const playerControl = screen.getByRole('radio', { name: 'Aria' });
-    playerControl.focus();
+    await user.click(playerControl);
     expect(playerControl).toHaveFocus();
-    fireEvent.click(playerControl);
     expect(dispatch).toHaveBeenCalled();
   });
 });
