@@ -53,6 +53,20 @@ export const StatusEffectUptimesView: React.FC<StatusEffectUptimesViewProps> = (
     );
   }, [statusEffectUptimes, nameFilter]);
 
+  const filterAnnouncement = React.useMemo(() => {
+    const normalizedFilter = nameFilter.trim();
+    if (!statusEffectUptimes || !normalizedFilter || !filteredStatusEffectUptimes) {
+      return null;
+    }
+
+    if (filteredStatusEffectUptimes.length === 0) {
+      return `No matching status effects found for "${normalizedFilter}".`;
+    }
+
+    const resultLabel = filteredStatusEffectUptimes.length === 1 ? 'result' : 'results';
+    return `Showing ${filteredStatusEffectUptimes.length} matching status effect ${resultLabel} for "${normalizedFilter}".`;
+  }, [filteredStatusEffectUptimes, nameFilter, statusEffectUptimes]);
+
   return (
     <Box sx={{ mt: 2 }}>
       <AnalyzerPanelState title="Status Effect Uptimes" state={state} detail={stateDetail}>
@@ -84,6 +98,27 @@ export const StatusEffectUptimesView: React.FC<StatusEffectUptimesViewProps> = (
           <Alert severity="warning" sx={{ mb: 2 }}>
             {unavailableMessage}
           </Alert>
+        )}
+
+        {filterAnnouncement && (
+          <Box
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+            sx={{
+              position: 'absolute',
+              width: 1,
+              height: 1,
+              p: 0,
+              m: -1,
+              overflow: 'hidden',
+              clip: 'rect(0 0 0 0)',
+              whiteSpace: 'nowrap',
+              border: 0,
+            }}
+          >
+            {filterAnnouncement}
+          </Box>
         )}
 
         {!unavailableMessage && statusEffectUptimes && statusEffectUptimes.length > 0 && (

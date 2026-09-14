@@ -257,6 +257,24 @@ describe('StatusEffectUptimesView - Name Filter', () => {
     expect(screen.getByText('No status effects matching "xyz" found.')).toBeInTheDocument();
   });
 
+  it('announces the filtered result count', () => {
+    renderView();
+    typeFilter('burn');
+
+    const announcement = screen.getByText('Showing 1 matching status effect result for "burn".');
+    expect(announcement).toHaveAttribute('role', 'status');
+    expect(announcement).toHaveAttribute('aria-live', 'polite');
+  });
+
+  it('announces when filtering returns no results', () => {
+    renderView();
+    typeFilter('xyz');
+
+    const announcement = screen.getByText('No matching status effects found for "xyz".');
+    expect(announcement).toHaveAttribute('role', 'status');
+    expect(announcement).toHaveAttribute('aria-live', 'polite');
+  });
+
   it('clears filter via clear button', async () => {
     const user = userEvent.setup();
     renderView();
