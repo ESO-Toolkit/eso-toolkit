@@ -80,6 +80,9 @@ export const PenetrationPanel: React.FC<PenetrationPanelProps> = ({
     hasData: hasRetainedData,
     isComplete: hasCompleteInputs,
     isLoading,
+    isInitialRequestPending: Boolean(
+      fight && (playerData === null || playerData.status === 'idle'),
+    ),
   });
 
   return (

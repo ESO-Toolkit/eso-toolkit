@@ -15,6 +15,7 @@ import {
   removeFromCache,
   resolveCacheKey,
   resetCacheState,
+  settleCacheEntry,
   touchAccessOrder,
   trimCache,
 } from '../utils/keyedCacheState';
@@ -288,8 +289,7 @@ const healingEventsSlice = createSlice({
         entry.error = null;
         entry.cacheMetadata.lastFetchedTimestamp = Date.now();
         entry.currentRequest = null;
-        touchAccessOrder(state, key);
-        trimCache(state, EVENT_CACHE_MAX_ENTRIES);
+        settleCacheEntry(state, key, EVENT_CACHE_MAX_ENTRIES);
       })
       .addCase(fetchHealingEvents.rejected, (state, action) => {
         const { key } = resolveCacheKey({
@@ -302,7 +302,7 @@ const healingEventsSlice = createSlice({
             entry.status = 'succeeded';
             entry.error = null;
             entry.currentRequest = null;
-            touchAccessOrder(state, key);
+            settleCacheEntry(state, key, EVENT_CACHE_MAX_ENTRIES);
           }
           return;
         }
@@ -323,7 +323,7 @@ const healingEventsSlice = createSlice({
         entry.status = 'failed';
         entry.error = action.payload ?? action.error.message ?? 'Failed to fetch healing events';
         entry.currentRequest = null;
-        touchAccessOrder(state, key);
+        settleCacheEntry(state, key, EVENT_CACHE_MAX_ENTRIES);
       });
   },
 });

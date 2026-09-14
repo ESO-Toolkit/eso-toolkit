@@ -15,6 +15,7 @@ import {
   removeFromCache,
   resolveCacheKey,
   resetCacheState,
+  settleCacheEntry,
   touchAccessOrder,
   trimCache,
 } from '../utils/keyedCacheState';
@@ -273,8 +274,7 @@ const combatantInfoEventsSlice = createSlice({
         entry.cacheMetadata.eventCount = action.payload.length;
         entry.cacheMetadata.restrictToFightWindow = action.meta.arg.restrictToFightWindow ?? true;
         entry.currentRequest = null;
-        touchAccessOrder(state, key);
-        trimCache(state, EVENT_CACHE_MAX_ENTRIES);
+        settleCacheEntry(state, key, EVENT_CACHE_MAX_ENTRIES);
       })
       .addCase(fetchCombatantInfoEvents.rejected, (state, action) => {
         const { key } = resolveCacheKey({
@@ -294,7 +294,7 @@ const combatantInfoEventsSlice = createSlice({
             entry.status = 'succeeded';
             entry.error = null;
             entry.currentRequest = null;
-            touchAccessOrder(state, key);
+            settleCacheEntry(state, key, EVENT_CACHE_MAX_ENTRIES);
           }
           return;
         }
@@ -315,7 +315,7 @@ const combatantInfoEventsSlice = createSlice({
         entry.status = 'failed';
         entry.error = action.error.message || 'Failed to fetch combatant info events';
         entry.currentRequest = null;
-        touchAccessOrder(state, key);
+        settleCacheEntry(state, key, EVENT_CACHE_MAX_ENTRIES);
       });
   },
 });

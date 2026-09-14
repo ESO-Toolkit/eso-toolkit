@@ -14,6 +14,7 @@ import {
   removeFromCache,
   resolveCacheKey,
   resetCacheState,
+  settleCacheEntry,
   touchAccessOrder,
   trimCache,
 } from '../utils/keyedCacheState';
@@ -366,8 +367,7 @@ const hostileBuffEventsSlice = createSlice({
         entry.cacheMetadata.intervalCount = action.payload.intervalResults.length;
         entry.cacheMetadata.failedIntervals = 0;
         entry.currentRequest = null;
-        touchAccessOrder(state, key);
-        trimCache(state, EVENT_CACHE_MAX_ENTRIES);
+        settleCacheEntry(state, key, EVENT_CACHE_MAX_ENTRIES);
       })
       .addCase(fetchHostileBuffEvents.rejected, (state, action) => {
         const { key } = resolveCacheKey({
@@ -383,7 +383,7 @@ const hostileBuffEventsSlice = createSlice({
           if (entry.status === 'succeeded' && isFresh) {
             entry.error = null;
             entry.currentRequest = null;
-            touchAccessOrder(state, key);
+            settleCacheEntry(state, key, EVENT_CACHE_MAX_ENTRIES);
           }
           return;
         }
@@ -401,7 +401,7 @@ const hostileBuffEventsSlice = createSlice({
         entry.error =
           action.payload ?? action.error.message ?? 'Failed to fetch hostile buff events';
         entry.currentRequest = null;
-        touchAccessOrder(state, key);
+        settleCacheEntry(state, key, EVENT_CACHE_MAX_ENTRIES);
       });
   },
 });

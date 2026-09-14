@@ -33,6 +33,12 @@ export interface ResolveAnalyzerPanelStateInput {
   hasData: boolean;
   isComplete: boolean;
   isLoading: boolean;
+  /**
+   * True only when the panel has a valid context and its first request has not
+   * started yet. This distinguishes the initial idle render from a stalled
+   * dependency without allowing missing-context panels to spin forever.
+   */
+  isInitialRequestPending?: boolean;
 }
 
 export const resolveAnalyzerPanelState = ({
@@ -40,10 +46,12 @@ export const resolveAnalyzerPanelState = ({
   hasData,
   isComplete,
   isLoading,
+  isInitialRequestPending = false,
 }: ResolveAnalyzerPanelStateInput): AnalyzerPanelStateKind => {
   if (error) return 'failed';
   if (isLoading) return hasData ? 'partial' : 'loading';
   if (isComplete) return hasData ? 'ready' : 'empty';
+  if (isInitialRequestPending && !hasData) return 'loading';
 
   // A dependency has stopped making progress without confirming a fresh
   // result. Do not disguise this as an empty panel or an endless skeleton.

@@ -60,6 +60,10 @@ export function useSelectedTargetIds(options?: UseSelectedTargetIdsOptions): Set
     [targetScopes.allEnemyIds],
   );
   const bossTargetsSet = React.useMemo(() => new Set(targetScopes.bossIds), [targetScopes.bossIds]);
+  const hasAuthoritativeTargetMetadata = React.useMemo(
+    () => targetScopes.allEnemyIds.some((id) => reportMasterData?.actorsById[id]?.type === 'NPC'),
+    [targetScopes.allEnemyIds, reportMasterData?.actorsById],
+  );
   const noTargetsSet = React.useMemo(() => new Set([NO_TARGETS_SENTINEL]), []);
 
   return React.useMemo<Set<number>>(() => {
@@ -67,8 +71,18 @@ export function useSelectedTargetIds(options?: UseSelectedTargetIdsOptions): Set
       return allTargetsSet.size > 0 ? allTargetsSet : noTargetsSet;
     }
 
-    if (hasAllTargetsSelected || isEmptySelection) {
+    if (hasAllTargetsSelected) {
       return bossTargetsSet.size > 0 ? bossTargetsSet : noTargetsSet;
+    }
+
+    if (isEmptySelection) {
+      if (bossTargetsSet.size > 0) {
+        return bossTargetsSet;
+      }
+
+      return hasAuthoritativeTargetMetadata && allTargetsSet.size > 0
+        ? allTargetsSet
+        : noTargetsSet;
     }
 
     return selectedTargetsSet;
@@ -78,6 +92,7 @@ export function useSelectedTargetIds(options?: UseSelectedTargetIdsOptions): Set
     isEmptySelection,
     bossTargetsSet,
     allTargetsSet,
+    hasAuthoritativeTargetMetadata,
     noTargetsSet,
     selectedTargetsSet,
   ]);

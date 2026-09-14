@@ -64,6 +64,7 @@ export const SynergyPanel: React.FC<SynergyPanelProps> = ({ context }) => {
     hasData: hasSynergyData,
     isComplete: Boolean(fight && reportMasterData.loaded && castEventsStatus === 'succeeded'),
     isLoading,
+    isInitialRequestPending: Boolean(fight && castEventsStatus === 'idle'),
   });
 
   return (

@@ -1,5 +1,12 @@
 import { Page, expect } from '@playwright/test';
+import { print } from 'graphql';
 
+import {
+  GetDamageEventsDocument,
+  GetHealingEventsDocument,
+  GetPlayersForReportDocument,
+  GetReportByCodeDocument,
+} from '../../src/graphql/gql/graphql';
 import { setupWithSharedPreprocessing } from '../screen-sizes/shared-preprocessing';
 import { setupAuthentication } from '../screen-sizes/utils';
 
@@ -7,7 +14,7 @@ import { createSkeletonDetector } from './skeleton-detector';
 
 /**
  * Enhanced data pre-loading utilities for AI-driven Playwright tests
- * 
+ *
  * This ensures ALL data is loaded and cached before taking screenshots,
  * eliminating loading states and providing instant UI rendering.
  */
@@ -37,6 +44,52 @@ export interface PreloadedDataState {
   penetrationData?: any;
   cacheWarmed: boolean;
   preloadTimestamp: number;
+}
+
+export interface PreloadGraphQLQuery {
+  operationName: string;
+  query: string;
+  variables: Record<string, unknown>;
+}
+
+export interface PreloadGraphQLRequest {
+  endpoint: string;
+  operationName: string;
+  query: string;
+  variables: Record<string, unknown>;
+}
+
+/**
+ * The GraphQL proxy accepts only allowlisted operation names and pinned,
+ * canonical documents. These documents are generated from the same source the
+ * application uses, rather than maintained as divergent hand-written copies.
+ */
+export const PRELOAD_QUERY_DOCUMENTS = {
+  getReportByCode: print(GetReportByCodeDocument),
+  getPlayersForReport: print(GetPlayersForReportDocument),
+  getDamageEvents: print(GetDamageEventsDocument),
+  getHealingEvents: print(GetHealingEventsDocument),
+} as const;
+
+/** Add the proxy's required operation hint without losing a configured endpoint's query. */
+export function withGraphQLOperationHint(endpoint: string, operationName: string): string {
+  const relativeUrlBase = 'https://screen-size-preload.invalid';
+  const url = new URL(endpoint, relativeUrlBase);
+  url.searchParams.set('query', operationName);
+
+  return url.origin === relativeUrlBase ? `${url.pathname}${url.search}` : url.toString();
+}
+
+export function createPreloadGraphQLRequest(
+  endpoint: string,
+  query: PreloadGraphQLQuery,
+): PreloadGraphQLRequest {
+  return {
+    endpoint: withGraphQLOperationHint(endpoint, query.operationName),
+    operationName: query.operationName,
+    query: query.query,
+    variables: query.variables,
+  };
 }
 
 /**
@@ -74,7 +127,7 @@ export async function preloadAllReportData(
     // Step 2: Navigate to app to establish context
     console.log('🏠 Step 2: Establishing app context...');
     await page.goto('/', { waitUntil: 'domcontentloaded', timeout });
-    
+
     // Wait for auth state to settle
 
     // Step 3: Pre-warm all GraphQL queries in the background
@@ -103,15 +156,16 @@ export async function preloadAllReportData(
     });
 
     preloadedState.cacheWarmed = true;
-    
+
     const duration = Date.now() - startTime;
     console.log(`🎉 Data pre-loading completed successfully in ${duration}ms`);
-    
-    return preloadedState;
 
+    return preloadedState;
   } catch (error) {
     console.error('❌ Data pre-loading failed:', error);
-    throw new Error(`Data pre-loading failed: ${error instanceof Error ? error.message : String(error)}`);
+    throw new Error(
+      `Data pre-loading failed: ${error instanceof Error ? error.message : String(error)}`,
+    );
   }
 }
 
@@ -119,155 +173,99 @@ export async function preloadAllReportData(
  * Warm GraphQL cache by making all necessary queries in advance
  */
 async function warmGraphQLCache(
-  page: Page, 
+  page: Page,
   options: { reportCode: string; fightId: string; tabs: string[] },
 ): Promise<void> {
+  for (const query of buildPreloadGraphQLQueries(options)) {
+    await executeGraphQLQuery(page, query);
+  }
+}
+
+export function buildPreloadGraphQLQueries(options: {
+  reportCode: string;
+  fightId: string;
+  tabs: string[];
+}): PreloadGraphQLQuery[] {
   const { reportCode, fightId, tabs } = options;
 
-  // Core queries that every page needs
-  const coreQueries = [
+  // Core queries that every page needs.
+  const coreQueries: PreloadGraphQLQuery[] = [
     {
-      name: 'getReportMetadata',
-      query: `query GetReportMetadata($code: String!) {
-        reportData {
-          report(code: $code) {
-            code
-            title
-            startTime
-            endTime
-            fights {
-              id
-              name
-              startTime
-              endTime
-              difficulty
-              kill
-              size
-            }
-          }
-        }
-      }`,
+      operationName: 'getReportByCode',
+      query: PRELOAD_QUERY_DOCUMENTS.getReportByCode,
       variables: { code: reportCode },
-    },
-    {
-      name: 'getCurrentUser',
-      query: `query GetCurrentUser {
-        userData {
-          currentUser {
-            id
-            name
-          }
-        }
-      }`,
-      variables: {},
     },
   ];
 
   // Tab-specific queries
-  const tabQueries: Record<string, any[]> = {
+  const tabQueries: Record<string, PreloadGraphQLQuery[]> = {
     players: [
       {
-        name: 'getPlayersForFight',
-        query: `query GetPlayersForFight($code: String!, $fightIds: [Int!]!) {
-          reportData {
-            report(code: $code) {
-              playerDetails(fightIDs: $fightIds) {
-                name
-                id
-                guid
-                type
-                server
-              }
-            }
-          }
-        }`,
-        variables: { code: reportCode, fightIds: [parseInt(fightId)] },
+        operationName: 'getPlayersForReport',
+        query: PRELOAD_QUERY_DOCUMENTS.getPlayersForReport,
+        variables: { code: reportCode, fightIDs: [Number.parseInt(fightId, 10)] },
       },
     ],
     damage: [
       {
-        name: 'getDamageEvents',
-        query: `query GetDamageEvents($code: String!, $fightIds: [Int!]!) {
-          reportData {
-            report(code: $code) {
-              events(fightIDs: $fightIds, dataType: DamageDone) {
-                data
-              }
-            }
-          }
-        }`,
-        variables: { code: reportCode, fightIds: [parseInt(fightId)] },
+        operationName: 'getDamageEvents',
+        query: PRELOAD_QUERY_DOCUMENTS.getDamageEvents,
+        variables: { code: reportCode, fightIds: [Number.parseInt(fightId, 10)] },
       },
     ],
     healing: [
       {
-        name: 'getHealingEvents',
-        query: `query GetHealingEvents($code: String!, $fightIds: [Int!]!) {
-          reportData {
-            report(code: $code) {
-              events(fightIDs: $fightIds, dataType: Healing) {
-                data
-              }
-            }
-          }
-        }`,
-        variables: { code: reportCode, fightIds: [parseInt(fightId)] },
+        operationName: 'getHealingEvents',
+        query: PRELOAD_QUERY_DOCUMENTS.getHealingEvents,
+        variables: { code: reportCode, fightIds: [Number.parseInt(fightId, 10)] },
       },
     ],
   };
 
-  // Execute core queries first
-  for (const query of coreQueries) {
-    await executeGraphQLQuery(page, query);
+  const queries = [...coreQueries];
+  for (const tab of tabs) {
+    queries.push(...(tabQueries[tab] ?? []));
   }
 
-  // Execute tab-specific queries
-  for (const tab of tabs) {
-    const queries = tabQueries[tab] || [];
-    for (const query of queries) {
-      await executeGraphQLQuery(page, query);
-    }
-  }
+  return queries;
 }
 
 /**
  * Execute a preload query without swallowing transport or GraphQL failures.
  */
-async function executeGraphQLQuery(
-  page: Page,
-  query: { name: string; query: string; variables: any },
-): Promise<void> {
+async function executeGraphQLQuery(page: Page, query: PreloadGraphQLQuery): Promise<void> {
   const configuredApiUrl = process.env.VITE_ROSTER_HUB_API_URL?.trim().replace(/\/$/, '');
   const graphQlEndpoint = configuredApiUrl
     ? `${configuredApiUrl}/graphql`
     : '/roster-hub-api/graphql';
 
-  await page.evaluate(async ({ endpoint, query: queryText, variables, name }) => {
-    const response = await fetch(endpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${localStorage.getItem('access_token')}`,
-      },
-      body: JSON.stringify({ query: queryText, variables }),
-    });
+  const request = createPreloadGraphQLRequest(graphQlEndpoint, query);
+  const accessToken = await page.evaluate(() => sessionStorage.getItem('access_token'));
 
-    if (!response.ok) {
-      throw new Error(`GraphQL query failed: ${response.status}`);
-    }
+  await page.evaluate(
+    async ({ endpoint, operationName, query: queryText, variables, accessToken }) => {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken ?? ''}`,
+        },
+        body: JSON.stringify({ operationName, query: queryText, variables }),
+      });
 
-    const payload = (await response.json()) as { errors?: Array<{ message?: string }> };
-    if (payload.errors?.length) {
-      throw new Error(
-        `${name}: ${payload.errors.map((item) => item.message ?? 'Unknown GraphQL error').join('; ')}`,
-      );
-    }
-  }, {
-    endpoint: graphQlEndpoint,
-    query: query.query,
-    variables: query.variables,
-    name: query.name,
-  });
+      if (!response.ok) {
+        throw new Error(`GraphQL query failed: ${response.status}`);
+      }
+
+      const payload = (await response.json()) as { errors?: Array<{ message?: string }> };
+      if (payload.errors?.length) {
+        throw new Error(
+          `${operationName}: ${payload.errors.map((item) => item.message ?? 'Unknown GraphQL error').join('; ')}`,
+        );
+      }
+    },
+    { ...request, accessToken },
+  );
 }
 
 /**
@@ -336,17 +334,17 @@ export async function ensureDataPreloadedForScreenshot(
   options: DataPreloadOptions = {},
 ): Promise<void> {
   console.log('📸 Ensuring data is preloaded before screenshot...');
-  
+
   // Check if data is already preloaded
   const isPreloaded = await page.evaluate(() => {
     return !!(window as any).__DATA_PRELOADED__;
   });
-  
+
   if (isPreloaded) {
     console.log('✅ Data already preloaded, proceeding with screenshot');
     return;
   }
-  
+
   console.log('🔄 Data not preloaded, running preload process...');
   await preloadAllReportData(page, options);
 }
@@ -382,28 +380,30 @@ export async function takeScreenshotWithPreloadedData(
   } = {},
 ): Promise<void> {
   const { fullPage = true, clip, ...preloadOptions } = options;
-  
+
   console.log(`📸 Taking screenshot '${screenshotName}' with preloaded data...`);
-  
+
   // Ensure data is preloaded
   await ensureDataPreloadedForScreenshot(page, preloadOptions);
-  
+
   // Additional safety wait for animations
-  
+
   // Verify no loading skeletons remain
   const skeletonDetector = createSkeletonDetector(page);
   const finalSkeletons = await skeletonDetector.getSkeletonInfo();
   if (finalSkeletons.hasSkeletons) {
-    throw new Error(`Cannot capture ${screenshotName}: ${finalSkeletons.count} loading skeletons remain`);
+    throw new Error(
+      `Cannot capture ${screenshotName}: ${finalSkeletons.count} loading skeletons remain`,
+    );
   }
-  
+
   // Take screenshot
   await expect(page).toHaveScreenshot(screenshotName, {
     fullPage,
     clip,
     animations: 'disabled',
   });
-  
+
   console.log(`✅ Screenshot '${screenshotName}' captured successfully`);
 }
 
@@ -416,12 +416,12 @@ export async function warmCacheForVisualTestSuite(
   options: DataPreloadOptions = {},
 ): Promise<void> {
   console.log('🔥 Warming cache for visual test suite...');
-  
+
   await preloadAllReportData(page, {
     ...options,
     aggressiveWarmup: true,
     verifyLoaded: true,
   });
-  
+
   console.log('✅ Cache warmed for visual test suite - subsequent tests should be fast');
 }

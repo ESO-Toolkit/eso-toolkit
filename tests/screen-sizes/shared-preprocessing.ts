@@ -52,18 +52,18 @@ let globalPreprocessedResults: PreprocessedResults | null = null;
 async function prefetchReportData(page: Page, accessToken?: string): Promise<void> {
   log('verbose', '🌐 Pre-fetching report data via GraphQL...');
 
-  // If no token provided, try to get it from localStorage after navigating to the app
+  // If no token is provided, read the same tab-scoped storage used by production auth.
   let token = accessToken;
   if (!token) {
     try {
       // Navigate to the app first to establish the domain context
       await page.goto(APP_BASE_URL, { timeout: 30000 });
-      const storageToken = await page.evaluate(() => localStorage.getItem('access_token'));
+      const storageToken = await page.evaluate(() => sessionStorage.getItem('access_token'));
       token = storageToken || undefined;
     } catch {
       log(
         'verbose',
-        '⚠️ Could not access localStorage or navigate to app, skipping direct API pre-fetching',
+        '⚠️ Could not access sessionStorage or navigate to app, skipping direct API pre-fetching',
       );
       return;
     }
@@ -235,7 +235,7 @@ export async function preprocessWorkerComputations(page: Page): Promise<Preproce
 
   // Add authentication state
   await page.addInitScript(() => {
-    if (localStorage.getItem('access_token')) {
+    if (sessionStorage.getItem('access_token')) {
       localStorage.setItem('authenticated', 'true');
     }
   });
@@ -356,7 +356,7 @@ export async function setupWithSharedPreprocessing(page: Page): Promise<void> {
 
   // Add authentication state
   await page.addInitScript(() => {
-    if (localStorage.getItem('access_token')) {
+    if (sessionStorage.getItem('access_token')) {
       localStorage.setItem('authenticated', 'true');
     }
   });

@@ -11,6 +11,7 @@ import {
   removeFromCache,
   resolveCacheKey,
   resetCacheState,
+  settleCacheEntry,
   touchAccessOrder,
   trimCache,
 } from '../utils/keyedCacheState';
@@ -268,8 +269,7 @@ const playerDataSlice = createSlice({
         entry.cacheMetadata.lastFetchedTimestamp = Date.now();
         entry.cacheMetadata.playerCount = Object.keys(action.payload.playersById).length;
         entry.currentRequest = null;
-        touchAccessOrder(state, key);
-        trimCache(state, PLAYER_DATA_CACHE_MAX_ENTRIES);
+        settleCacheEntry(state, key, PLAYER_DATA_CACHE_MAX_ENTRIES);
       })
       .addCase(fetchPlayerData.rejected, (state, action) => {
         const { key, context } = resolveCacheKey({
@@ -297,7 +297,7 @@ const playerDataSlice = createSlice({
         entry.status = 'failed';
         entry.error = action.payload ?? action.error.message ?? 'Failed to fetch player data';
         entry.currentRequest = null;
-        touchAccessOrder(state, key);
+        settleCacheEntry(state, key, PLAYER_DATA_CACHE_MAX_ENTRIES);
       });
   },
 });

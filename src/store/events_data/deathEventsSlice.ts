@@ -14,6 +14,7 @@ import {
   removeFromCache,
   resolveCacheKey,
   resetCacheState,
+  settleCacheEntry,
   touchAccessOrder,
   trimCache,
 } from '../utils/keyedCacheState';
@@ -263,8 +264,7 @@ const deathEventsSlice = createSlice({
         entry.cacheMetadata.intervalCount = 1;
         entry.cacheMetadata.failedIntervals = 0;
         entry.currentRequest = null;
-        touchAccessOrder(state, key);
-        trimCache(state, EVENT_CACHE_MAX_ENTRIES);
+        settleCacheEntry(state, key, EVENT_CACHE_MAX_ENTRIES);
       })
       .addCase(fetchDeathEvents.rejected, (state, action) => {
         const { key } = resolveCacheKey({
@@ -277,7 +277,7 @@ const deathEventsSlice = createSlice({
             entry.status = 'succeeded';
             entry.error = null;
             entry.currentRequest = null;
-            touchAccessOrder(state, key);
+            settleCacheEntry(state, key, EVENT_CACHE_MAX_ENTRIES);
           }
           return;
         }
@@ -294,7 +294,7 @@ const deathEventsSlice = createSlice({
         entry.status = 'failed';
         entry.error = action.payload ?? action.error.message ?? 'Failed to fetch death events';
         entry.currentRequest = null;
-        touchAccessOrder(state, key);
+        settleCacheEntry(state, key, EVENT_CACHE_MAX_ENTRIES);
       });
   },
 });

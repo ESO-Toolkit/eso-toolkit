@@ -82,19 +82,29 @@ describe('kill detection', () => {
     expect(wasKill(makeFight({ kill: null, bossPercentage: 40 }))).toBe(false);
   });
 
+  it.each([Number.NEGATIVE_INFINITY, -5, Number.NaN, Number.POSITIVE_INFINITY, 105])(
+    'does not infer a kill from invalid boss health %p',
+    (bossPercentage) => {
+      const fight = makeFight({ kill: null, bossPercentage });
+
+      expect(wasKill(fight)).toBe(false);
+      expect(getFightOutcome(fight)).toEqual({
+        status: 'unknown',
+        bossHealthRemaining: null,
+      });
+    },
+  );
+
   it('does not let inferred health override an explicit wipe', () => {
     expect(wasKill(makeFight({ kill: false, bossPercentage: 0 }))).toBe(false);
   });
 
-  it('keeps missing and non-finite boss health unknown', () => {
+  it('keeps missing, non-finite, and out-of-range boss health unknown', () => {
     expect(bossHealthRemaining(makeFight({ bossPercentage: null }))).toBeNull();
     expect(bossHealthRemaining(makeFight({ bossPercentage: Number.NaN }))).toBeNull();
     expect(bossHealthRemaining(makeFight({ bossPercentage: Number.POSITIVE_INFINITY }))).toBeNull();
-  });
-
-  it('clips finite boss health to the API percentage range', () => {
-    expect(bossHealthRemaining(makeFight({ bossPercentage: -5 }))).toBe(0);
-    expect(bossHealthRemaining(makeFight({ bossPercentage: 105 }))).toBe(100);
+    expect(bossHealthRemaining(makeFight({ bossPercentage: -5 }))).toBeNull();
+    expect(bossHealthRemaining(makeFight({ bossPercentage: 105 }))).toBeNull();
   });
 
   it('exposes authoritative, display-safe outcomes', () => {

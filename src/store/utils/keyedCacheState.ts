@@ -86,3 +86,17 @@ export const trimCache = <TEntry>(state: KeyedCacheState<TEntry>, maxEntries: nu
     delete state.entries[oldestKey];
   }
 };
+
+/**
+ * Mark an entry as recently used once its request has settled, then enforce the
+ * cache limit. `trimCache` retains active requests, so concurrent requests are
+ * never evicted while this makes newly failed requests eligible for eviction.
+ */
+export const settleCacheEntry = <TEntry>(
+  state: KeyedCacheState<TEntry>,
+  key: ReportFightCacheKey,
+  maxEntries: number,
+): void => {
+  touchAccessOrder(state, key);
+  trimCache(state, maxEntries);
+};

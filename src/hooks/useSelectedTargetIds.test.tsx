@@ -11,6 +11,7 @@ import { useReportData } from './useReportData';
 import { useReportMasterData } from './useReportMasterData';
 import {
   ALL_ENEMIES_SENTINEL,
+  ALL_TARGETS_SENTINEL,
   NO_TARGETS_SENTINEL,
   useSelectedTargetIds,
 } from './useSelectedTargetIds';
@@ -532,7 +533,7 @@ describe('useSelectedTargetIds', () => {
     expect(Array.from(result.current)).toEqual([NO_TARGETS_SENTINEL]);
   });
 
-  it('should not treat non-boss NPCs as the All Bosses scope', () => {
+  it('should default to all enemies when a fight has no bosses', () => {
     // Create fight with only non-boss NPCs
     const fightWithNonBosses: FightFragment = {
       ...mockFightWithBosses,
@@ -561,6 +562,40 @@ describe('useSelectedTargetIds', () => {
     const { result } = renderHook(() => useSelectedTargetIds(), {
       wrapper: ({ children }) => (
         <TestWrapper fightId="4" selectedTargetIds={[]} fightOverride={fightWithNonBosses}>
+          {children}
+        </TestWrapper>
+      ),
+    });
+
+    expect(Array.from(result.current)).toEqual([300]);
+  });
+
+  it('should keep explicit All Bosses empty when a fight has no bosses', () => {
+    const fightWithNonBosses: FightFragment = {
+      ...mockFightWithBosses,
+      id: 4,
+      name: 'Fight With Non-Boss NPCs',
+      enemyNPCs: [
+        { __typename: 'ReportFightNPC', id: 300, gameID: 3001, groupCount: 1, instanceCount: 1 },
+      ],
+    };
+
+    mockUseReportData.mockReturnValue({
+      reportData: { ...mockReportData, fights: [fightWithNonBosses] },
+      isReportLoading: false,
+    });
+    mockUseReportMasterData.mockReturnValue({
+      reportMasterData: mockMasterData,
+      isMasterDataLoading: false,
+    });
+
+    const { result } = renderHook(() => useSelectedTargetIds(), {
+      wrapper: ({ children }) => (
+        <TestWrapper
+          fightId="4"
+          selectedTargetIds={[ALL_TARGETS_SENTINEL]}
+          fightOverride={fightWithNonBosses}
+        >
           {children}
         </TestWrapper>
       ),

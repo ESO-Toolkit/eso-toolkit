@@ -89,6 +89,9 @@ export const CriticalDamagePanel: React.FC<CriticalDamagePanelProps> = ({
     hasData: hasRetainedData,
     isComplete: hasCompleteInputs,
     isLoading,
+    isInitialRequestPending: Boolean(
+      fight && (playerData === null || playerData.status === 'idle'),
+    ),
   });
 
   return (

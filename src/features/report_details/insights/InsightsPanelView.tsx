@@ -7,7 +7,6 @@ import {
   List,
   ListItem,
   ListItemText,
-  Stack,
   useTheme,
 } from '@mui/material';
 import React from 'react';
@@ -23,14 +22,9 @@ import {
 } from '../../analysis/evidence/EvidenceDrilldownPanel';
 
 import { BuffUptimesPanel } from './BuffUptimesPanel';
-import type { ComparisonResult } from './comparison/comparisonModel';
-import { AnalysisComparisonPanel } from './comparison/components/AnalysisComparisonPanel';
 import { DamageBreakdownPanel } from './DamageBreakdownPanel';
 import { DamageTypeBreakdownPanel } from './DamageTypeBreakdownPanel';
 import { DebuffUptimesPanel } from './DebuffUptimesPanel';
-import { DecisionSummaryPanel } from './decision/components/DecisionSummaryPanel';
-import { buildPrioritizedDecisionSummary, type DecisionScope } from './decision/decisionSummary';
-import { PinnedFindingsPanel, type PinnedFindingsPanelState } from './findings/PinnedFindingsPanel';
 import type { InsightsDataState, InsightsRetryAvailability } from './insightsDataState';
 import { StatusEffectUptimesPanel } from './StatusEffectUptimesPanel';
 
@@ -91,189 +85,44 @@ const workflowCardWrapperSx = {
   minWidth: 0,
 } as const;
 
-const unavailableDecisionScope: DecisionScope = {
-  partitionId: 'unknown',
-  update: 'unknown',
-  encounterId: 'unknown',
-  encounterVersion: 'unknown',
-  encounterKind: 'encounter',
-  difficulty: 'unknown',
-  role: 'unknown',
-  esoClass: 'unknown',
-  buildBracket: 'unknown',
-};
-
-const unavailableDecisionSummary = buildPrioritizedDecisionSummary({
-  scope: unavailableDecisionScope,
-  candidates: [
-    {
-      id: 'authoritative-analysis-unavailable',
-      scope: unavailableDecisionScope,
-      availability: 'unavailable',
-    },
-  ],
-});
-
-const unavailableComparison: ComparisonResult = {
-  status: 'unavailable',
-  reason: 'invalid-analysis',
-  message:
-    'A/B and cohort comparisons require an authoritative, context-compatible baseline. No comparison score is available.',
-};
-
-const toPinnedFindingsState = (state: InsightsWorkflowState): PinnedFindingsPanelState => {
-  switch (state) {
-    case 'loading':
-      return { status: 'loading' };
-    case 'failed':
-      return {
-        status: 'failed',
-        message:
-          'Pinned findings could not be refreshed. No stale finding is presented as current.',
-      };
-    case 'partial':
-      return {
-        status: 'unavailable',
-        reason:
-          'Pinned findings require complete, validated evidence. The current analysis inputs are partial.',
-      };
-    case 'stale':
-      return {
-        status: 'unavailable',
-        reason: 'Pinned findings are withheld while the analysis inputs are stale.',
-      };
-    case 'unavailable':
-      return {
-        status: 'unavailable',
-        reason: 'No persisted, privacy-safe findings are available for this analysis context.',
-      };
-    case 'evidence-ready':
-      return {
-        status: 'unavailable',
-        reason:
-          'Validated evidence is available for drilldown, but no persisted, privacy-safe findings are available for this analysis context.',
-      };
-  }
-};
-
-const workflowStatus = (state: InsightsWorkflowState): React.ReactElement => {
-  switch (state) {
-    case 'loading':
-      return (
-        <Alert aria-live="polite" role="status" severity="info">
-          Product analysis inputs are loading. Findings and comparisons are withheld until they are
-          validated.
-        </Alert>
-      );
-    case 'partial':
-      return (
-        <Alert aria-live="polite" role="status" severity="warning">
-          Product analysis inputs are partial. No recommendation, benchmark, or progression score is
-          inferred.
-        </Alert>
-      );
-    case 'stale':
-      return (
-        <Alert aria-live="polite" role="status" severity="warning">
-          Product analysis inputs are stale. Any refreshed finding remains withheld until the
-          current data is available.
-        </Alert>
-      );
-    case 'failed':
-      return (
-        <Alert aria-live="assertive" role="alert" severity="error">
-          Product analysis inputs failed to load. No recommendation, score, or comparison is
-          available.
-        </Alert>
-      );
-    case 'unavailable':
-      return (
-        <Alert aria-live="polite" role="status" severity="info">
-          This report has no authoritative encounter context, validated rule evidence, or
-          context-compatible baseline for product findings yet. Unknown data is not scored as zero.
-        </Alert>
-      );
-    case 'evidence-ready':
-      return (
-        <Alert aria-live="polite" role="status" severity="success">
-          Validated timestamped evidence is ready for drilldown. It does not establish a
-          recommendation, benchmark, comparison, or score.
-        </Alert>
-      );
-  }
+const ProductWorkflowAvailabilityNotice = ({
+  state,
+}: {
+  state: InsightsWorkflowState;
+}): React.ReactElement => {
+  return (
+    <Box component="section" aria-label="Advanced analysis availability" sx={workflowCardWrapperSx}>
+      <Alert
+        aria-live={state === 'failed' ? 'assertive' : 'polite'}
+        role={state === 'failed' ? 'alert' : 'status'}
+        severity={state === 'failed' ? 'error' : 'info'}
+      >
+        <Typography component="h2" variant="subtitle2">
+          Advanced analysis is unavailable
+        </Typography>
+        <Typography variant="body2" sx={{ mt: 0.5 }}>
+          Recommendations, pinned findings, comparisons, and pull progression are withheld until
+          this fight has authoritative rule evidence, context-compatible baselines, and privacy-safe
+          saved findings. Unknown data is not scored as zero.
+        </Typography>
+      </Alert>
+    </Box>
+  );
 };
 
 const ProductWorkflow = ({
-  state,
   evidence,
 }: {
-  state: InsightsWorkflowState;
-  evidence?: InsightsEvidenceWorkflow;
+  evidence: InsightsEvidenceWorkflow;
 }): React.ReactElement => {
   return (
     <Box component="section" aria-label="Analysis workflow" sx={workflowCardWrapperSx}>
-      <Stack spacing={2}>
-        {workflowStatus(state)}
-        <DecisionSummaryPanel
-          summary={unavailableDecisionSummary}
-          state={state === 'loading' ? 'loading' : 'unavailable'}
-        />
-        {evidence ? (
-          <EvidenceDrilldownPanel
-            input={evidence.input}
-            dataState={evidence.dataState}
-            provenance={evidence.provenance}
-            title="Evidence drilldown"
-          />
-        ) : (
-          <Paper
-            component="section"
-            elevation={0}
-            sx={insightPaperSx}
-            aria-labelledby="evidence-drilldown-title"
-            data-testid="evidence-drilldown-unavailable"
-          >
-            <Typography id="evidence-drilldown-title" component="h2" variant="h6">
-              Evidence drilldown
-            </Typography>
-            <Typography color="text.secondary" variant="body2" sx={{ mt: 0.5 }}>
-              Timestamped evidence for transparent analysis decisions.
-            </Typography>
-            <Alert aria-live="polite" role="status" severity="info" sx={{ mt: 2 }}>
-              Validated evidence and its privacy-safe provenance are unavailable. The drilldown is
-              withheld rather than treating unavailable events as an empty evidence set.
-            </Alert>
-          </Paper>
-        )}
-        <PinnedFindingsPanel state={toPinnedFindingsState(state)} />
-        <AnalysisComparisonPanel
-          comparison={unavailableComparison}
-          title="A/B and cohort comparison"
-        />
-        <Paper
-          component="section"
-          elevation={0}
-          sx={insightPaperSx}
-          aria-labelledby="pull-progression-title"
-        >
-          <Typography id="pull-progression-title" component="h2" variant="h6">
-            Pull progression
-          </Typography>
-          <Typography color="text.secondary" variant="body2" sx={{ mt: 0.5 }}>
-            A timestamped pull storyboard is available only for an authoritative, matching pull
-            cohort.
-          </Typography>
-          <Alert
-            aria-live="polite"
-            role="status"
-            severity={state === 'failed' ? 'error' : 'info'}
-            sx={{ mt: 2 }}
-          >
-            Progression is unavailable because this report has no verified, context-compatible pull
-            history. No trend or score is inferred.
-          </Alert>
-        </Paper>
-      </Stack>
+      <EvidenceDrilldownPanel
+        input={evidence.input}
+        dataState={evidence.dataState}
+        provenance={evidence.provenance}
+        title="Evidence drilldown"
+      />
     </Box>
   );
 };
@@ -663,8 +512,9 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
         </Box>
         {/* All panels in flexbox with 2 items per row */}
 
-        {productWorkflowState ? (
-          <ProductWorkflow evidence={productEvidence} state={productWorkflowState} />
+        {productEvidence ? <ProductWorkflow evidence={productEvidence} /> : null}
+        {productWorkflowState && !productEvidence ? (
+          <ProductWorkflowAvailabilityNotice state={productWorkflowState} />
         ) : null}
 
         <Box sx={insightCardWrapperSx}>

@@ -1,6 +1,6 @@
 import type { ReportFightCacheKey } from '../contextTypes';
 
-import { trimCache, type KeyedCacheState } from './keyedCacheState';
+import { settleCacheEntry, trimCache, type KeyedCacheState } from './keyedCacheState';
 
 interface TestEvent {
   id: number;
@@ -73,6 +73,35 @@ describe('trimCache event-array retention', () => {
 
     expect(Object.keys(state.entries)).toHaveLength(2);
     expect(state.accessOrder).toEqual([firstKey, secondKey]);
+  });
+
+  it('returns below the limit as rejected requests settle without evicting active entries', () => {
+    const firstKey = key('first');
+    const secondKey = key('second');
+    const thirdKey = key('third');
+    const state: KeyedCacheState<EventEntry> = {
+      entries: {
+        [firstKey]: { events: [], currentRequest: { requestId: 'first' } },
+        [secondKey]: { events: [], currentRequest: { requestId: 'second' } },
+        [thirdKey]: { events: [], currentRequest: { requestId: 'third' } },
+      },
+      accessOrder: [firstKey, secondKey, thirdKey],
+    };
+
+    state.entries[firstKey]!.currentRequest = null;
+    settleCacheEntry(state, firstKey, 2);
+
+    expect(state.entries[firstKey]).toBeUndefined();
+    expect(state.entries[secondKey]?.currentRequest).toEqual({ requestId: 'second' });
+    expect(state.entries[thirdKey]?.currentRequest).toEqual({ requestId: 'third' });
+
+    state.entries[secondKey]!.currentRequest = null;
+    settleCacheEntry(state, secondKey, 2);
+    state.entries[thirdKey]!.currentRequest = null;
+    settleCacheEntry(state, thirdKey, 2);
+
+    expect(Object.keys(state.entries)).toHaveLength(2);
+    expect(state.accessOrder).toHaveLength(2);
   });
 
   it('preserves in-flight entries when trimming to zero', () => {

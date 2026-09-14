@@ -248,6 +248,22 @@ describe('Analyzer panel state integration', () => {
     expect(screen.getByText('critical damage view')).toBeInTheDocument();
   });
 
+  it('announces loading during a valid critical-damage initial idle render', () => {
+    hooks.usePlayerData.mockReturnValue({ playerData: null, isPlayerDataLoading: false });
+    hooks.useCriticalDamageTask.mockReturnValue({
+      criticalDamageData: null,
+      isCriticalDamageLoading: false,
+      criticalDamageError: null,
+    });
+
+    render(<CriticalDamagePanel />);
+
+    expect(within(panel('Critical damage')).getByRole('status')).toHaveTextContent('Loading data.');
+    expect(
+      within(panel('Critical damage')).getByLabelText('Critical damage: loading'),
+    ).toBeInTheDocument();
+  });
+
   it('marks a completed empty critical-damage calculation as empty', () => {
     hooks.useCriticalDamageTask.mockReturnValue({
       criticalDamageData: { playerDataMap: {} },
@@ -398,6 +414,20 @@ describe('Analyzer panel state integration', () => {
     );
   });
 
+  it('announces loading during a valid penetration initial idle render', () => {
+    hooks.usePlayerData.mockReturnValue({ playerData: null, isPlayerDataLoading: false });
+    usePenetrationDataTask.mockReturnValue({
+      penetrationData: null,
+      isPenetrationDataLoading: false,
+      penetrationDataError: null,
+    });
+
+    render(<PenetrationPanel />);
+
+    expect(within(panel('Penetration')).getByRole('status')).toHaveTextContent('Loading data.');
+    expect(within(panel('Penetration')).getByLabelText('Penetration: loading')).toBeInTheDocument();
+  });
+
   it('does not treat a missing penetration result as completed empty', () => {
     usePenetrationDataTask.mockReturnValue({
       penetrationData: null,
@@ -524,6 +554,20 @@ describe('Analyzer panel state integration', () => {
     render(<SynergyPanel />);
 
     expect(within(panel('Synergies')).getByRole('status')).toHaveTextContent('Loading data.');
+  });
+
+  it('announces loading during a valid synergy initial idle render', () => {
+    hooks.useCastEvents.mockReturnValue({
+      castEvents: [],
+      isCastEventsLoading: false,
+      castEventsStatus: 'idle',
+      castEventsError: null,
+    });
+
+    render(<SynergyPanel />);
+
+    expect(within(panel('Synergies')).getByRole('status')).toHaveTextContent('Loading data.');
+    expect(within(panel('Synergies')).getByLabelText('Synergies: loading')).toBeInTheDocument();
   });
 
   it('marks a missing synergy fight context as stale even while dependencies load', () => {

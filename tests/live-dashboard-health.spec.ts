@@ -1,10 +1,8 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page, type Request } from '@playwright/test';
 
 const REPORT_CODE = 'LIVEHEALTHFIXTURE';
 const REPORT_TITLE = 'Fixture Live Dashboard';
 const FIXTURE_CLOCK_START = 1_800_000_000_000;
-const DASHBOARD_BASE_URL =
-  process.env.LIVE_HEALTH_BASE_URL ?? process.env.FULL_BASE_URL ?? 'http://127.0.0.1:3016';
 
 type FixtureScenario = 'fresh' | 'api-error' | 'recovered';
 
@@ -53,6 +51,38 @@ const makeReport = (scenario: FixtureScenario) => ({
   phases: [],
 });
 
+const getOperationName = (request: Request): string => {
+  const postData = request.postData();
+
+  if (!postData) {
+    return '<missing-operation-name>';
+  }
+
+  try {
+    const body = JSON.parse(postData) as { operationName?: unknown };
+    return typeof body.operationName === 'string' && body.operationName.trim() !== ''
+      ? body.operationName
+      : '<missing-operation-name>';
+  } catch {
+    return '<malformed-request-body>';
+  }
+};
+
+const emptyEventsResponse = {
+  data: { reportData: { report: { events: { data: [], nextPageTimestamp: null } } } },
+};
+
+const eventOperations = new Set([
+  'getDamageEvents',
+  'getHealingEvents',
+  'getBuffEvents',
+  'getDeathEvents',
+  'getCombatantInfoEvents',
+  'getDebuffEvents',
+  'getCastEvents',
+  'getResourceEvents',
+]);
+
 const installFixture = async (page: Page, state: FixtureState): Promise<void> => {
   await page.clock.install({ time: FIXTURE_CLOCK_START });
   await page.addInitScript(
@@ -68,33 +98,79 @@ const installFixture = async (page: Page, state: FixtureState): Promise<void> =>
     { issuedAt: FIXTURE_CLOCK_START },
   );
 
-  await page.route('**/roster-hub-api/graphql**', async (route) => {
-    const operationName = new URL(route.request().url()).searchParams.get('query');
+  // The checked-in .env points the client proxy at the Worker directly, while
+  // development without that override uses /roster-hub-api/graphql. Matching
+  // the GraphQL endpoint rather than one deployment path keeps this fixture
+  // tied to the app's actual request contract in either configuration.
+  await page.route('**/graphql?*', async (route) => {
+    const operationName = getOperationName(route.request());
 
-    if (operationName !== 'getReportByCode') {
+    if (operationName === 'getReportByCode') {
+      if (state.current === 'api-error') {
+        await route.fulfill({
+          contentType: 'application/json',
+          body: JSON.stringify({ errors: [{ message: 'Fixture API outage' }] }),
+        });
+        return;
+      }
+
       await route.fulfill({
         contentType: 'application/json',
-        body: JSON.stringify({ data: {} }),
+        body: JSON.stringify({
+          data: {
+            __typename: 'Query',
+            reportData: {
+              __typename: 'ReportData',
+              report: makeReport(state.current),
+            },
+          },
+        }),
       });
       return;
     }
 
-    if (state.current === 'api-error') {
+    if (operationName === 'getReportMasterData') {
       await route.fulfill({
         contentType: 'application/json',
-        body: JSON.stringify({ errors: [{ message: 'Fixture API outage' }] }),
+        body: JSON.stringify({
+          data: {
+            reportData: { report: { masterData: { abilities: [], actors: [] } } },
+          },
+        }),
       });
       return;
     }
 
+    if (operationName === 'getPlayersForReport') {
+      await route.fulfill({
+        contentType: 'application/json',
+        body: JSON.stringify({
+          data: { reportData: { report: { playerDetails: { data: { playerDetails: {} } } } } },
+        }),
+      });
+      return;
+    }
+
+    if (eventOperations.has(operationName)) {
+      await route.fulfill({ contentType: 'application/json', body: JSON.stringify(emptyEventsResponse) });
+      return;
+    }
+
+    await route.abort('failed');
+  });
+
+  await page.route('**/api/v2/user**', async (route) => {
     await route.fulfill({
       contentType: 'application/json',
       body: JSON.stringify({
         data: {
-          __typename: 'Query',
-          reportData: {
-            __typename: 'ReportData',
-            report: makeReport(state.current),
+          userData: {
+            currentUser: {
+              id: 999,
+              name: 'Fixture User',
+              naDisplayName: 'Fixture User-NA',
+              euDisplayName: null,
+            },
           },
         },
       }),
@@ -108,7 +184,7 @@ test('renders populated, accessible live-dashboard health through stale, failed,
   const state: FixtureState = { current: 'fresh' };
   await installFixture(page, state);
 
-  await page.goto(`${DASHBOARD_BASE_URL}/report/${REPORT_CODE}/dashboard`);
+  await page.goto(`/report/${REPORT_CODE}/dashboard`);
 
   const healthStatus = page.locator('#live-sync-status');
   const firstWidget = page.getByTestId('widget-death-causes-1');

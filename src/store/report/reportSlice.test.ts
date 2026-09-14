@@ -392,5 +392,47 @@ describe('reportSlice caching logic', () => {
       await testStore.dispatch(fetchReportData({ reportId: CODE, client, force: true }));
       expect(query).not.toHaveBeenCalled();
     });
+
+    it('trims rejected report requests once they settle, without evicting active requests', () => {
+      const client = { query: jest.fn() } as unknown as EsoLogsClient;
+      const reportIds = Array.from({ length: 7 }, (_, index) => `REJECTED-${index}`);
+
+      for (const reportId of reportIds) {
+        store.dispatch(fetchReportData.pending(`request-${reportId}`, { reportId, client }));
+      }
+
+      expect(
+        Object.keys((store.getState() as { report: ReportState }).report.entries),
+      ).toHaveLength(7);
+
+      store.dispatch(
+        fetchReportData.rejected(new Error('Network failed'), 'request-REJECTED-0', {
+          reportId: 'REJECTED-0',
+          client,
+        }),
+      );
+
+      const afterFirstRejection = (store.getState() as { report: ReportState }).report;
+      expect(
+        afterFirstRejection.entries[resolveCacheKey({ reportCode: 'REJECTED-0' }).key],
+      ).toBeUndefined();
+      expect(
+        afterFirstRejection.entries[resolveCacheKey({ reportCode: 'REJECTED-1' }).key]
+          ?.currentRequest,
+      ).toEqual({ reportId: 'REJECTED-1', requestId: 'request-REJECTED-1' });
+
+      for (const reportId of reportIds.slice(1)) {
+        store.dispatch(
+          fetchReportData.rejected(new Error('Network failed'), `request-${reportId}`, {
+            reportId,
+            client,
+          }),
+        );
+      }
+
+      const afterAllRejections = (store.getState() as { report: ReportState }).report;
+      expect(Object.keys(afterAllRejections.entries)).toHaveLength(6);
+      expect(afterAllRejections.accessOrder).toHaveLength(6);
+    });
   });
 });

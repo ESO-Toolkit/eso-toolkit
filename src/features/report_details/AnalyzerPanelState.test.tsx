@@ -34,11 +34,34 @@ describe('AnalyzerPanelState', () => {
     [{ hasData: true, isComplete: false, isLoading: true }, 'partial'],
     [{ hasData: true, isComplete: false, isLoading: false }, 'stale'],
     [{ hasData: false, isComplete: false, isLoading: false }, 'stale'],
+    [
+      { hasData: false, isComplete: false, isLoading: false, isInitialRequestPending: true },
+      'loading',
+    ],
     [{ error: 'Request failed', hasData: false, isComplete: true, isLoading: false }, 'failed'],
     [{ error: 'Request failed', hasData: true, isComplete: true, isLoading: false }, 'failed'],
     [{ hasData: true, isComplete: true, isLoading: false }, 'ready'],
   ] as const)('resolves %o as %s', (input, expectedState) => {
     expect(resolveAnalyzerPanelState(input)).toBe(expectedState);
+  });
+
+  it('keeps an explicit initial request pending state scoped to panels without data', () => {
+    expect(
+      resolveAnalyzerPanelState({
+        hasData: true,
+        isComplete: false,
+        isLoading: false,
+        isInitialRequestPending: true,
+      }),
+    ).toBe('stale');
+    expect(
+      resolveAnalyzerPanelState({
+        hasData: false,
+        isComplete: false,
+        isLoading: false,
+        isInitialRequestPending: false,
+      }),
+    ).toBe('stale');
   });
 
   it('announces loading with an accessible progress indicator', () => {

@@ -96,6 +96,7 @@ describe('buildTrialChapters', () => {
       makeFight({
         id: 2,
         name: 'Xalvakka',
+        kill: false,
         bossPercentage: 35,
         startTime: 70000,
         endTime: 250000,

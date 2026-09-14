@@ -455,60 +455,48 @@ const renderProductWorkflow = (
   );
 
 describe('InsightsPanelView product workflow', () => {
-  it.each<readonly [InsightsWorkflowState, RegExp]>([
-    ['loading', /Product analysis inputs are loading/],
-    ['partial', /Product analysis inputs are partial/],
-    ['stale', /Product analysis inputs are stale/],
-    ['failed', /Product analysis inputs failed to load/],
-    ['unavailable', /Unknown data is not scored as zero/],
-  ])('shows the explicit %s state without manufacturing a result', (state, status) => {
-    renderProductWorkflow(state);
+  it.each<readonly [InsightsWorkflowState]>([
+    ['loading'],
+    ['partial'],
+    ['stale'],
+    ['failed'],
+    ['unavailable'],
+  ])(
+    'shows one honest availability notice for %s instead of unavailable workflow cards',
+    (state) => {
+      renderProductWorkflow(state);
 
-    expect(screen.getByText(status)).toBeInTheDocument();
-    expect(screen.getByTestId('evidence-drilldown-unavailable')).toHaveTextContent(
-      /withheld rather than treating unavailable events as an empty evidence set/,
-    );
-    expect(screen.getByText(/No comparison score is available/)).toBeInTheDocument();
-    expect(screen.getByText(/No trend or score is inferred/)).toBeInTheDocument();
-  });
+      expect(screen.getByRole(state === 'failed' ? 'alert' : 'status')).toHaveTextContent(
+        /Advanced analysis is unavailable/,
+      );
+      expect(screen.getByText(/Unknown data is not scored as zero/)).toBeInTheDocument();
+      expect(screen.queryByRole('region', { name: 'Analysis workflow' })).not.toBeInTheDocument();
+      expect(screen.queryByText('Decision summary')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('evidence-drilldown-unavailable')).not.toBeInTheDocument();
+      expect(screen.queryByText('Pinned findings')).not.toBeInTheDocument();
+      expect(screen.queryByText('A/B and cohort comparison')).not.toBeInTheDocument();
+      expect(screen.queryByText('Pull progression')).not.toBeInTheDocument();
+    },
+  );
 
-  it('announces validated evidence as ready without manufacturing a recommendation or baseline', () => {
+  it('renders validated authoritative evidence as a drilldown without unavailable workflow cards', () => {
     renderProductWorkflow('evidence-ready', availableEvidence);
 
-    expect(
-      screen.getByText(/Validated timestamped evidence is ready for drilldown/),
-    ).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Analysis workflow' })).toBeInTheDocument();
     expect(screen.getByTestId('evidence-drilldown-panel')).toHaveTextContent(
       'Analyzer evidence | report-1 / fight-1',
     );
     expect(screen.queryByTestId('evidence-drilldown-unavailable')).not.toBeInTheDocument();
-    expect(
-      screen.getByText(/does not establish a recommendation, benchmark, comparison, or score/),
-    ).toBeInTheDocument();
-    expect(screen.getByText(/No comparison score is available/)).toBeInTheDocument();
-  });
-
-  it('orders the product workflow from decision through progression', () => {
-    renderProductWorkflow('unavailable');
-
-    const text = document.body.textContent ?? '';
-    const sections = [
-      'Decision summary',
-      'Evidence drilldown',
-      'Pinned findings',
-      'A/B and cohort comparison',
-      'Pull progression',
-    ];
-    const positions = sections.map((section) => text.indexOf(section));
-
-    expect(positions.every((position) => position >= 0)).toBe(true);
-    expect([...positions].sort((left, right) => left - right)).toEqual(positions);
+    expect(screen.queryByText('Decision summary')).not.toBeInTheDocument();
+    expect(screen.queryByText('Pinned findings')).not.toBeInTheDocument();
+    expect(screen.queryByText('A/B and cohort comparison')).not.toBeInTheDocument();
+    expect(screen.queryByText('Pull progression')).not.toBeInTheDocument();
   });
 
   it('withholds provenance and identifiers until a privacy-safe evidence producer exists', () => {
     const { container } = renderProductWorkflow('unavailable');
 
-    expect(container).toHaveTextContent(/privacy-safe provenance are unavailable/);
+    expect(container).toHaveTextContent(/privacy-safe saved findings/);
     expect(container).not.toHaveTextContent('F4f2bMwWtgVKxjB9');
     expect(container).not.toHaveTextContent('Example Player');
     expect(container).not.toHaveTextContent('0%');
