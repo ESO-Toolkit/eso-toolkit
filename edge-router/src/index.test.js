@@ -129,6 +129,37 @@ test('preserves HEAD semantics for Analyzer history routes', async () => {
   assertSecurityHeaders(response);
 });
 
+test('serves the app shell for OAuth callback routes while preserving request methods', async () => {
+  for (const pathname of ['/oauth-redirect', '/discord-oauth-redirect', '/app-auth']) {
+    for (const method of ['GET', 'HEAD']) {
+      const assets = makeAssets();
+      const response = await handleRequest(
+        new Request(`https://esotk.com${pathname}?code=callback-code`, { method }),
+        { ASSETS: assets },
+      );
+
+      assert.equal(response.status, 200, `${method} ${pathname}`);
+      assert.equal(
+        new URL(assets.requests[0].url).pathname,
+        '/index.html',
+        `${method} ${pathname}`,
+      );
+      assert.equal(assets.requests[0].method, method, `${method} ${pathname}`);
+      assert.equal(await response.text(), method === 'HEAD' ? '' : '<!doctype html>');
+    }
+
+    const assets = makeAssets();
+    const response = await handleRequest(
+      new Request(`https://esotk.com${pathname}`, { method: 'POST' }),
+      { ASSETS: assets },
+    );
+
+    assert.equal(response.status, 404, `POST ${pathname}`);
+    assert.equal(new URL(assets.requests[0].url).pathname, pathname, `POST ${pathname}`);
+    assert.ok(!assets.requests.some((request) => new URL(request.url).pathname === '/index.html'));
+  }
+});
+
 test('does not rewrite non-GET Analyzer requests', async () => {
   const assets = makeAssets();
   const response = await handleRequest(

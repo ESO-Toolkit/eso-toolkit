@@ -19,8 +19,10 @@ const REPORTING_HEADERS = {
 };
 
 const analyzerRoutePrefixes = ['/report/', '/u/', '/b/'];
+const oauthCallbackPaths = new Set(['/oauth-redirect', '/discord-oauth-redirect', '/app-auth']);
 
 export const isAnalyzerHistoryPath = (pathname) =>
+  oauthCallbackPaths.has(pathname) ||
   pathname === '/report' ||
   pathname === '/u' ||
   pathname === '/b' ||
