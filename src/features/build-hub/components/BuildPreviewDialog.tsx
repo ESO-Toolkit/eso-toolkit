@@ -20,6 +20,8 @@ import type { HubBuild } from '../types/build-hub.types';
 import { ROLE_ACCENT } from '../types/build-hub.types';
 import { getHubBuildViewUrl } from '../utils/buildLinks';
 
+import { isTrustedBuildPreviewReadyMessage } from './buildPreviewMessage';
+
 const IFRAME_TIMEOUT_MS = 12000;
 
 const SlideUpTransition = React.forwardRef(function Transition(
@@ -73,14 +75,13 @@ export const BuildPreviewDialog: React.FC<BuildPreviewDialogProps> = ({
     if (!build || iframeLoaded || iframeError) return;
 
     const handleMessage = (event: MessageEvent): void => {
-      const isExpectedMessage =
-        event.origin === window.location.origin &&
-        event.source === iframeRef.current?.contentWindow &&
-        event.data !== null &&
-        typeof event.data === 'object' &&
-        event.data.type === 'build-preview-ready';
-
-      if (isExpectedMessage) {
+      if (
+        isTrustedBuildPreviewReadyMessage(
+          event,
+          window.location.origin,
+          iframeRef.current?.contentWindow ?? null,
+        )
+      ) {
         setIframeLoaded(true);
       }
     };
