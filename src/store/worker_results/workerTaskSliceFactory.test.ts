@@ -388,6 +388,59 @@ describe('workerTaskSliceFactory', () => {
           // Ignore errors for this test
         });
       });
+
+      it('does not expose a result owned by a different input when replacement fails', async () => {
+        mockWorkerManager.executeTask.mockResolvedValueOnce(mockResult);
+        await store.dispatch(workerSlice.executeTask(mockInput));
+
+        let rejectReplacement: (reason: Error) => void = () => {};
+        mockWorkerManager.executeTask.mockImplementationOnce(
+          () =>
+            new Promise((_resolve, reject) => {
+              rejectReplacement = reject;
+            }),
+        );
+        const replacementInput = {
+          reportCode: 'test',
+          fightId: 2,
+        } as unknown as SharedWorkerInputType<typeof mockTaskName>;
+
+        const replacement = store.dispatch(workerSlice.executeTask(replacementInput));
+        const pendingState = store.getState() as {
+          workerResults: {
+            [mockTaskName]: WorkerTaskState<SharedWorkerResultType<typeof mockTaskName>>;
+          };
+        };
+
+        expect(pendingState.workerResults[mockTaskName].result).toBeNull();
+        expect(pendingState.workerResults[mockTaskName].cacheMetadata.lastInputHash).toBe(
+          createInputHash(replacementInput),
+        );
+
+        rejectReplacement(new Error('replacement failed'));
+        await replacement;
+
+        const rejectedState = store.getState() as {
+          workerResults: {
+            [mockTaskName]: WorkerTaskState<SharedWorkerResultType<typeof mockTaskName>>;
+          };
+        };
+        expect(rejectedState.workerResults[mockTaskName].result).toBeNull();
+        expect(rejectedState.workerResults[mockTaskName].error).toBe('replacement failed');
+      });
+
+      it('retains a result while the same input is explicitly refreshed', () => {
+        const initialPending = workerSlice.executeTask.pending('first-request', mockInput);
+        const fulfilled = workerSlice.executeTask.fulfilled(mockResult, 'first-request', mockInput);
+        const pending = workerSlice.executeTask.pending('refresh-request', mockInput);
+
+        const loadingState = workerSlice.reducer(undefined, initialPending);
+        const fulfilledState = workerSlice.reducer(loadingState, fulfilled);
+        const refreshingState = workerSlice.reducer(fulfilledState, pending);
+
+        expect(refreshingState.result).toEqual(mockResult);
+        expect(refreshingState.isLoading).toBe(true);
+      });
     });
 
     describe('fulfilled', () => {

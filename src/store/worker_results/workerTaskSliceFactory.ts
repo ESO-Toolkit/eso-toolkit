@@ -280,13 +280,21 @@ export const createWorkerTaskSlice = <T extends ReduxBackedWorkerTaskType>(
     extraReducers: (builder) => {
       builder
         .addCase(executeTask.pending, (state, action) => {
+          const inputHash = createInputHash(action.meta.arg);
+
+          // A result belongs to the input that produced it. Keep it available while the same
+          // input refreshes so panels can render an honest stale/partial state, but never expose
+          // a previous fight's result while a different input is loading or after it fails.
+          if (state.cacheMetadata.lastInputHash !== inputHash) {
+            state.result = null;
+          }
           state.isLoading = true;
           state.progress = null;
           state.error = null;
           // Track this as the latest request to handle race conditions
           state.latestRequestId = action.meta.requestId;
           // Update cache metadata with input hash
-          state.cacheMetadata.lastInputHash = createInputHash(action.meta.arg);
+          state.cacheMetadata.lastInputHash = inputHash;
         })
         .addCase(executeTask.fulfilled, (state, action) => {
           // Only update state if this is the latest request (prevent race conditions)
