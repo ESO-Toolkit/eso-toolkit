@@ -267,9 +267,10 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
             {
               field: 'criticalDamageShare' as SortField,
               label: 'Critical damage share',
+              shortLabel: 'Crit %',
               icon: getSortIcon('criticalDamageShare'),
             },
-          ].map(({ field, label, icon, accent }) => (
+          ].map(({ field, label, shortLabel, icon, accent }) => (
             <Box
               key={field}
               role="button"
@@ -331,7 +332,9 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
               }}
             >
               <Box sx={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <Typography sx={{ fontSize: 'inherit', fontWeight: 'inherit' }}>{label}</Typography>
+                <Typography sx={{ fontSize: 'inherit', fontWeight: 'inherit' }}>
+                  {shortLabel ?? label}
+                </Typography>
                 <Typography
                   sx={{
                     fontSize: '0.7rem',
@@ -534,7 +537,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
               onClick={() => handleSort('criticalDamageShare')}
               onKeyDown={handleSortKeyDown('criticalDamageShare')}
             >
-              Critical damage share{getSortIcon('criticalDamageShare')}
+              Crit %{getSortIcon('criticalDamageShare')}
             </Box>
             <Tooltip title="Deaths" arrow>
               <Box
@@ -1183,7 +1186,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                           textTransform: 'uppercase',
                         }}
                       >
-                        Critical damage
+                        Crit
                       </Typography>
                       <Tooltip title={formatNumber(row.criticalDamageTotal)} arrow>
                         <Typography

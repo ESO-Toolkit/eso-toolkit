@@ -204,11 +204,18 @@ const setupMocks = (overrides: Record<string, Record<string, unknown> | FightFra
 
 const expectPanelSnapshot = (container: HTMLElement, name: string) => {
   const panelState = container.querySelector('section');
-  const content = panelState?.lastElementChild;
+  const lastChild = panelState?.lastElementChild;
+  // Ready and partial panels render their view directly inside the section;
+  // other states wrap retained content in a Box inside an outlined Paper.
+  const content = panelState?.classList.contains('MuiPaper-root')
+    ? lastChild?.classList.contains('MuiBox-root')
+      ? lastChild.firstElementChild
+      : null
+    : lastChild;
 
-  if (content?.classList.contains('MuiBox-root') && content.firstElementChild) {
+  if (content) {
     const legacyContainer = document.createElement('div');
-    legacyContainer.append(content.firstElementChild.cloneNode(true));
+    legacyContainer.append(content.cloneNode(true));
     expect(legacyContainer).toMatchSnapshot(name);
     return;
   }

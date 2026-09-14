@@ -88,6 +88,16 @@ const statePresentations: Record<AnalyzerPanelStateKind, StatePresentation> = {
 const canShowContent = (state: AnalyzerPanelStateKind): boolean =>
   state === 'partial' || state === 'stale' || state === 'failed' || state === 'ready';
 
+const visuallyHiddenSx = {
+  position: 'absolute',
+  width: 1,
+  height: 1,
+  margin: -1,
+  overflow: 'hidden',
+  clip: 'rect(0 0 0 0)',
+  whiteSpace: 'nowrap',
+} as const;
+
 /**
  * Shared state renderer for Analyzer widgets. It makes data freshness explicit
  * and preserves usable prior content when a refresh is incomplete or fails.
@@ -107,6 +117,21 @@ export const AnalyzerPanelState: React.FC<AnalyzerPanelStateProps> = ({
   const announcement = detail
     ? `${presentation.announcement} ${detail}`
     : presentation.announcement;
+
+  // Ready and partial panels render their content in place: wrapping a populated
+  // table in an outlined card with a heading narrows it and duplicates the
+  // panel's own title, and a transient "updating" banner flashes on every load.
+  // Both states still announce themselves to assistive technology.
+  if ((state === 'ready' || state === 'partial') && children) {
+    return (
+      <Box component="section" aria-label={title}>
+        <Typography role="status" aria-live={presentation.live} sx={visuallyHiddenSx}>
+          {announcement}
+        </Typography>
+        {children}
+      </Box>
+    );
+  }
 
   return (
     <Paper component="section" aria-labelledby={titleId} variant="outlined" sx={{ p: 2 }}>
@@ -161,17 +186,7 @@ export const AnalyzerPanelState: React.FC<AnalyzerPanelStateProps> = ({
       )}
 
       {state === 'ready' && (
-        <Typography
-          role="status"
-          aria-live={presentation.live}
-          sx={{
-            position: 'absolute',
-            width: 1,
-            height: 1,
-            overflow: 'hidden',
-            clip: 'rect(0 0 0 0)',
-          }}
-        >
+        <Typography role="status" aria-live={presentation.live} sx={visuallyHiddenSx}>
           {announcement}
         </Typography>
       )}

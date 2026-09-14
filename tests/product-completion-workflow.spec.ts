@@ -207,17 +207,7 @@ test.describe('Product-completion workflow route', () => {
     ).toHaveCount(0);
     await expect(page.getByTestId('insights-skeleton-layout')).toHaveCount(0);
 
-    const workflowStatus = page.getByRole('region', { name: 'Analysis workflow status' });
-    await expect(workflowStatus).toBeVisible();
-    await expect(
-      workflowStatus.getByRole('heading', {
-        name: 'Contextual analysis is not available for this fight',
-      }),
-    ).toBeVisible();
-    await expect(workflowStatus).toContainText(
-      'This fight has no authoritative encounter rules, compatible baseline, and validated event evidence for a recommendation. Unknown data is not scored as zero.',
-    );
-
+    await expect(page.getByText(/Contextual analysis/)).toHaveCount(0);
     await expect(page.getByRole('region', { name: 'Analysis workflow', exact: true })).toHaveCount(
       0,
     );

@@ -229,10 +229,10 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
   // isDarkMode, so it is computed inside the component rather than at module scope).
   const navIconButtonSx = useMemo(
     () => ({
-      width: 44,
-      height: 44,
-      minWidth: '44px !important',
-      minHeight: '44px !important',
+      width: { xs: 44, md: 36 },
+      height: { xs: 44, md: 36 },
+      minWidth: { xs: '44px !important', md: 36 },
+      minHeight: { xs: '44px !important', md: 36 },
       borderRadius: { xs: '8px', md: '10px' },
       backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.05)',
       color: isDarkMode ? 'rgba(255, 255, 255, 0.85)' : 'rgba(0, 0, 0, 0.7)',
@@ -353,9 +353,9 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
                 fontSize: { xs: '0.725rem', md: '0.75rem' },
                 fontWeight: 600,
                 textTransform: 'none',
-                minWidth: 44,
-                minHeight: 44,
-                height: 44,
+                minWidth: { xs: 44, md: 'auto' },
+                minHeight: { xs: 44, md: 'unset' },
+                height: { xs: 44, md: 28 },
                 border: 'none',
                 borderRadius: '6px',
                 color: isDarkMode ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)',

@@ -28,9 +28,6 @@ import { DebuffUptimesPanel } from './DebuffUptimesPanel';
 import type { InsightsDataState, InsightsRetryAvailability } from './insightsDataState';
 import { StatusEffectUptimesPanel } from './StatusEffectUptimesPanel';
 
-export type InsightsWorkflowState =
-  'loading' | 'partial' | 'stale' | 'failed' | 'unavailable' | 'evidence-ready';
-
 /**
  * Evidence can only enter the workflow after an authoritative producer has
  * supplied the complete, rule-backed payload. Raw event streams alone are not
@@ -59,10 +56,9 @@ export interface InsightsPanelViewProps {
   retryAvailability: InsightsRetryAvailability;
   /**
    * Product-completion findings require an authoritative encounter definition,
-   * context-compatible baseline, and validated evidence. Until those inputs
-   * exist, the shell must show an explicit state rather than deriving advice.
+   * context-compatible baseline, and validated evidence. The drilldown renders
+   * only when that evidence exists; otherwise nothing is shown.
    */
-  productWorkflowState?: InsightsWorkflowState;
   productEvidence?: InsightsEvidenceWorkflow;
 }
 
@@ -98,84 +94,6 @@ const ProductWorkflow = ({
         provenance={evidence.provenance}
         title="Evidence drilldown"
       />
-    </Box>
-  );
-};
-
-type ProductWorkflowStateCopy = Readonly<{
-  title: string;
-  message: string;
-  severity: 'error' | 'info' | 'warning';
-  role: 'alert' | 'status';
-}>;
-
-const PRODUCT_WORKFLOW_STATE_COPY: Record<InsightsWorkflowState, ProductWorkflowStateCopy> = {
-  loading: {
-    title: 'Contextual analysis is preparing',
-    message:
-      'Rules, baseline context, or event evidence are still loading. Recommendations are withheld until their provenance is available.',
-    severity: 'info',
-    role: 'status',
-  },
-  partial: {
-    title: 'Contextual analysis is provisional',
-    message:
-      'Some required rules, baseline context, or event evidence is unavailable. Recommendations that require those inputs are withheld.',
-    severity: 'warning',
-    role: 'status',
-  },
-  stale: {
-    title: 'Contextual analysis is provisional',
-    message:
-      'The available rules, baseline context, or event evidence may be out of date. Recommendations are withheld until the analysis refreshes.',
-    severity: 'warning',
-    role: 'status',
-  },
-  failed: {
-    title: 'Contextual analysis could not be verified',
-    message:
-      'Required rules, baseline context, or event evidence could not be loaded. Recommendations are withheld rather than scored as zero.',
-    severity: 'error',
-    role: 'alert',
-  },
-  unavailable: {
-    title: 'Contextual analysis is not available for this fight',
-    message:
-      'This fight has no authoritative encounter rules, compatible baseline, and validated event evidence for a recommendation. Unknown data is not scored as zero.',
-    severity: 'warning',
-    role: 'status',
-  },
-  'evidence-ready': {
-    title: 'Contextual analysis is awaiting validated evidence',
-    message:
-      'Analysis evidence was marked ready but no validated drilldown is available. Recommendations are withheld until evidence and provenance are available.',
-    severity: 'warning',
-    role: 'status',
-  },
-};
-
-const ProductWorkflowStateNotice = ({
-  state,
-}: {
-  state: InsightsWorkflowState;
-}): React.ReactElement => {
-  const copy = PRODUCT_WORKFLOW_STATE_COPY[state];
-
-  return (
-    <Box component="section" aria-label="Analysis workflow status" sx={workflowCardWrapperSx}>
-      <Alert
-        severity={copy.severity}
-        role={copy.role}
-        aria-live={copy.role === 'alert' ? 'assertive' : 'polite'}
-        aria-atomic="true"
-      >
-        <Typography component="h2" variant="subtitle2">
-          {copy.title}
-        </Typography>
-        <Typography variant="body2" sx={{ mt: 0.5 }}>
-          {copy.message}
-        </Typography>
-      </Alert>
     </Box>
   );
 };
@@ -248,7 +166,6 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
   dataState,
   onRetry,
   retryAvailability,
-  productWorkflowState,
   productEvidence,
 }) => {
   const theme = useTheme();
@@ -565,12 +482,6 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
         </Box>
         {/* All panels in flexbox with 2 items per row */}
 
-        {productEvidence ? (
-          <ProductWorkflow evidence={productEvidence} />
-        ) : productWorkflowState ? (
-          <ProductWorkflowStateNotice state={productWorkflowState} />
-        ) : null}
-
         <Box sx={insightCardWrapperSx}>
           <Paper elevation={2} sx={insightPaperSx}>
             <StatusEffectUptimesPanel fight={fight} selectedPlayerId={selectedPlayerId} />
@@ -600,6 +511,9 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
             <DamageTypeBreakdownPanel fight={fight} selectedPlayerId={selectedPlayerId} />
           </Paper>
         </Box>
+
+        {/* Full-width, so it goes after the paired cards rather than splitting a row. */}
+        {productEvidence ? <ProductWorkflow evidence={productEvidence} /> : null}
       </Box>
     </>
   );
@@ -608,10 +522,12 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
 const getStateMessage = (dataState: InsightsDataState): string | null => {
   switch (dataState.kind) {
     case 'loading':
-      return 'Loading detailed fight insights. Fight details already available remain visible.';
+      // Each card shows its own loading state; a page-level banner here only
+      // flashes for a moment on every fight load.
+      return null;
     case 'partial': {
       if (dataState.failedSources.length === 0) {
-        return 'Some fight insight data is still loading. Available insights may be incomplete.';
+        return null;
       }
 
       const partialFailureMessage = dataState.hasPendingSources

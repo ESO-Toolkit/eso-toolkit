@@ -1,5 +1,5 @@
 import { ThemeProvider, createTheme } from '@mui/material';
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 
 import type { FightFragment } from '../../../graphql/gql/graphql';
@@ -9,7 +9,6 @@ import {
   InsightsPanelView,
   type InsightsEvidenceWorkflow,
   type FightInitiatorState,
-  type InsightsWorkflowState,
 } from './InsightsPanelView';
 
 jest.mock('../../../components/AbilityIcon', () => ({
@@ -134,7 +133,7 @@ describe('InsightsPanelView data states', () => {
     expect(screen.getByTestId('fight-initiator')).toHaveTextContent(
       'Loading damage events to identify the fight initiator.',
     );
-    expect(screen.getByRole('status')).toHaveTextContent('Loading detailed fight insights');
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
     expect(screen.getByTestId('insights-panel')).toHaveAttribute('aria-busy', 'true');
   });
 
@@ -211,7 +210,7 @@ describe('InsightsPanelView data states', () => {
     expect(screen.getByText('Damage breakdown content')).toBeInTheDocument();
   });
 
-  it('announces explicit empty and partial states without hiding the panel', () => {
+  it('announces an explicit empty state and stays quiet while data is still loading', () => {
     const { rerender } = render(
       <ThemeProvider theme={createTheme()}>
         <InsightsPanelView
@@ -257,7 +256,7 @@ describe('InsightsPanelView data states', () => {
       </ThemeProvider>,
     );
 
-    expect(screen.getByRole('status')).toHaveTextContent('still loading');
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
     expect(screen.getByTestId('insights-panel')).toHaveAttribute('aria-busy', 'true');
   });
 
@@ -289,7 +288,7 @@ describe('InsightsPanelView data states', () => {
     ).toHaveLength(2);
   });
 
-  it('keeps one current announcement through stale, loading, and ready transitions', () => {
+  it('clears the stale alert once data starts reloading and completes', () => {
     const { rerender } = render(
       <ThemeProvider theme={createTheme()}>
         <InsightsPanelView
@@ -336,7 +335,7 @@ describe('InsightsPanelView data states', () => {
     );
 
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
-    expect(screen.getAllByRole('status')).toHaveLength(1);
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
     expect(screen.getByTestId('insights-panel')).toHaveAttribute('aria-busy', 'true');
 
     rerender(
@@ -427,10 +426,7 @@ describe('InsightsPanelView data states', () => {
   });
 });
 
-const renderProductWorkflow = (
-  productWorkflowState: InsightsWorkflowState,
-  productEvidence?: InsightsEvidenceWorkflow,
-) =>
+const renderProductWorkflow = (productEvidence?: InsightsEvidenceWorkflow) =>
   render(
     <ThemeProvider theme={createTheme()}>
       <InsightsPanelView
@@ -448,118 +444,33 @@ const renderProductWorkflow = (
         }}
         onRetry={jest.fn()}
         retryAvailability={availableRetry}
-        productWorkflowState={productWorkflowState}
         productEvidence={productEvidence}
       />
     </ThemeProvider>,
   );
 
 describe('InsightsPanelView product workflow', () => {
-  it.each([
-    [
-      'loading',
-      'status',
-      'Contextual analysis is preparing',
-      'Rules, baseline context, or event evidence are still loading.',
-    ],
-    [
-      'partial',
-      'status',
-      'Contextual analysis is provisional',
-      'Some required rules, baseline context, or event evidence is unavailable.',
-    ],
-    [
-      'stale',
-      'status',
-      'Contextual analysis is provisional',
-      'The available rules, baseline context, or event evidence may be out of date.',
-    ],
-    [
-      'failed',
-      'alert',
-      'Contextual analysis could not be verified',
-      'Required rules, baseline context, or event evidence could not be loaded.',
-    ],
-    [
-      'unavailable',
-      'status',
-      'Contextual analysis is not available for this fight',
-      'This fight has no authoritative encounter rules, compatible baseline, and validated event evidence for a recommendation.',
-    ],
-    [
-      'evidence-ready',
-      'status',
-      'Contextual analysis is awaiting validated evidence',
-      'Analysis evidence was marked ready but no validated drilldown is available.',
-    ],
-  ] as const)(
-    'renders an explicit provenance state for %s when no validated evidence is available',
-    (state, role, title, message) => {
-      renderProductWorkflow(state);
+  it('renders no workflow region when validated evidence is absent', () => {
+    const { container } = renderProductWorkflow();
 
-      const workflowStatus = screen.getByRole('region', { name: 'Analysis workflow status' });
-      expect(within(workflowStatus).getByRole(role)).toHaveTextContent(title);
-      expect(workflowStatus).toHaveTextContent(message);
-      expect(screen.queryByRole('region', { name: 'Analysis workflow' })).not.toBeInTheDocument();
-      expect(screen.queryByTestId('evidence-drilldown-panel')).not.toBeInTheDocument();
-      expect(screen.queryByTestId('evidence-drilldown-unavailable')).not.toBeInTheDocument();
-      expect(screen.queryByText('Decision summary')).not.toBeInTheDocument();
-      expect(screen.queryByText('Pinned findings')).not.toBeInTheDocument();
-      expect(screen.queryByText('A/B and cohort comparison')).not.toBeInTheDocument();
-      expect(screen.queryByText('Pull progression')).not.toBeInTheDocument();
-    },
-  );
-
-  it('does not render a workflow notice when workflow state is absent', () => {
-    render(
-      <ThemeProvider theme={createTheme()}>
-        <InsightsPanelView
-          fight={fight}
-          durationMs={65_000}
-          abilityEquipped={{}}
-          buffActors={{}}
-          fightInitiator={unavailableFightInitiator}
-          selectedPlayerId={null}
-          dataState={{
-            kind: 'ready',
-            errorMessage: null,
-            failedSources: [],
-            hasPendingSources: false,
-          }}
-          onRetry={jest.fn()}
-          retryAvailability={availableRetry}
-        />
-      </ThemeProvider>,
-    );
-
-    expect(
-      screen.queryByRole('region', { name: 'Analysis workflow status' }),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'Analysis workflow' })).not.toBeInTheDocument();
+    expect(screen.queryByTestId('evidence-drilldown-panel')).not.toBeInTheDocument();
+    expect(container).not.toHaveTextContent('Contextual analysis');
+    expect(container).not.toHaveTextContent('F4f2bMwWtgVKxjB9');
+    expect(container).not.toHaveTextContent('Example Player');
   });
 
   it('renders validated authoritative evidence as a drilldown without a workflow notice', () => {
-    renderProductWorkflow('evidence-ready', availableEvidence);
+    renderProductWorkflow(availableEvidence);
 
     expect(screen.getByRole('region', { name: 'Analysis workflow' })).toBeInTheDocument();
     expect(screen.getByTestId('evidence-drilldown-panel')).toHaveTextContent(
       'Analyzer evidence | report-1 / fight-1',
     );
-    expect(
-      screen.queryByRole('region', { name: 'Analysis workflow status' }),
-    ).not.toBeInTheDocument();
     expect(screen.queryByTestId('evidence-drilldown-unavailable')).not.toBeInTheDocument();
     expect(screen.queryByText('Decision summary')).not.toBeInTheDocument();
     expect(screen.queryByText('Pinned findings')).not.toBeInTheDocument();
     expect(screen.queryByText('A/B and cohort comparison')).not.toBeInTheDocument();
     expect(screen.queryByText('Pull progression')).not.toBeInTheDocument();
-  });
-
-  it('does not invent provenance or identifiers when evidence is absent', () => {
-    const { container } = renderProductWorkflow('unavailable');
-
-    expect(container).toHaveTextContent('Contextual analysis is not available for this fight');
-    expect(container).not.toHaveTextContent('F4f2bMwWtgVKxjB9');
-    expect(container).not.toHaveTextContent('Example Player');
-    expect(container).not.toHaveTextContent('0%');
   });
 });
