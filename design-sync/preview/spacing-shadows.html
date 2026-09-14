@@ -1,0 +1,23 @@
+<!-- @dsCard group="Spacing" -->
+<meta charset="utf-8"><title>Shadow Recipes</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>html,body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif;padding:24px;box-sizing:border-box}
+.row{display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start}
+.b{width:110px;height:80px;border-radius:14px;background:linear-gradient(180deg,rgba(15,23,42,.66),rgba(3,7,18,.66));border:1px solid var(--border);display:flex;align-items:flex-end;padding:8px;font-family:Consolas,Menlo,monospace;font-size:10px;color:var(--muted)}
+.s1{box-shadow:0 8px 30px rgba(0,0,0,.25)}
+.s2{box-shadow:0 10px 40px rgba(0,0,0,.3),0 0 60px rgba(56,189,248,.08);border-color:rgba(56,189,248,.3)}
+.s3{box-shadow:0 4px 15px rgba(56,189,248,.25)}
+.s4{box-shadow:0 24px 64px rgba(0,0,0,.55),0 0 0 1px rgba(255,255,255,.03) inset;border-radius:24px}
+.s5{box-shadow:0 20px 60px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.1);border-color:rgba(56,189,248,.2);border-radius:16px}
+.src{font-size:10px;color:var(--muted);font-family:Consolas,Menlo,monospace;margin-top:14px;line-height:1.6}
+</style>
+<div class="row">
+<div class="b s1">paper</div>
+<div class="b s2">card hover</div>
+<div class="b s3">button glow</div>
+<div class="b s4">dialog</div>
+<div class="b s5">hero field</div>
+</div>
+<div class="src">paper 0 8px 30px rgba(0,0,0,.25) (ReduxThemeProvider.tsx:166-167) · card hover 0 10px 40px rgba(0,0,0,.3), 0 0 60px rgba(56,189,248,.08) (:266-267) ·
+button glow 0 4px 15px rgba(56,189,248,.25) (:286-287) · dialog 0 24px 64px rgba(0,0,0,.55) + inset ring (:397-398) ·
+hero field 0 20px 60px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.1) (LandingPage.tsx:579-582)</div>

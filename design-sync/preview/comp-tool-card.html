@@ -1,0 +1,27 @@
+<!-- @dsCard group="Components" -->
+<meta charset="utf-8"><title>Landing Tool Card</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>html,body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif;padding:20px;box-sizing:border-box}
+.card{background:rgba(15,23,42,.6);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(56,189,248,.1);border-radius:16px;padding:2rem;max-width:340px;box-shadow:0 8px 32px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.05);position:relative;overflow:hidden}
+.card::before{content:"";position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(56,189,248,.6),transparent);opacity:0;transition:opacity .4s ease}
+.card:hover{border-color:rgba(56,189,248,.3);box-shadow:0 20px 60px rgba(0,0,0,.4),0 0 60px rgba(56,189,248,.15),inset 0 1px 0 rgba(255,255,255,.1)}
+.card:hover::before{opacity:1}
+.ic{width:64px;height:64px;background:linear-gradient(135deg,rgba(56,189,248,.15),rgba(0,225,255,.1));border:1px solid rgba(56,189,248,.2);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:2rem;margin-bottom:1.5rem;color:#38bdf8;box-shadow:0 4px 20px rgba(0,0,0,.2),inset 0 1px 0 rgba(255,255,255,.1)}
+h3{margin:0 0 16px;font-size:1.5rem;font-weight:700;font-family:'Space Grotesk',Inter,system-ui,sans-serif}
+p{margin:0 0 16px;color:var(--muted);font-size:14px;font-weight:200;line-height:1.6}
+ul{list-style:none;margin:0 0 24px;padding:0;color:var(--muted);font-size:13px}
+ul li{padding:.5rem 0 .5rem 1.5rem;position:relative;font-weight:500}
+ul li::before{content:"✓";position:absolute;left:0;color:#38bdf8;font-weight:bold}
+.cta{display:block;text-align:center;padding:.875rem 1.5rem;background:linear-gradient(135deg,#38bdf8 0%,#0ea5e9 100%);color:#ffffff;border-radius:12px;border:none;font-weight:600;font-size:.95rem;letter-spacing:.5px;text-decoration:none;box-shadow:0 4px 20px rgba(0,0,0,.2),inset 0 1px 0 rgba(255,255,255,.2)}
+.src{font-size:10px;color:var(--muted);font-family:Consolas,Menlo,monospace;margin-top:12px;line-height:1.6}
+</style>
+<div class="card">
+<div class="ic">🧮</div>
+<h3>Build Calculator</h3>
+<p>Optimize your character's stats. Track penetration, crit, and armor to hit crucial caps.</p>
+<ul><li>Penetration optimizer (18,200 cap)</li><li>Critical damage calculator (125% cap)</li><li>Armor resistance planner</li></ul>
+<a class="cta" href="#">Launch Calculator</a>
+</div>
+<div class="src">src/components/LandingPage.tsx — ToolCard :1281-1361 (rgba(15,23,42,.6) + blur(12px), border rgba(56,189,248,.1), radius 16, shadow 0 8px 32px + inset .05, hover hairline) ·
+ToolIcon :1363-1420 (64px, radius 16, cyan glass) · ToolFeatures :1422-1441 (✓ #38bdf8) · ToolAction :1443-1498 (solid #38bdf8→#0ea5e9, white, radius 12).
+The old translucent-cyan CTA / 14px-radius card came from the legacy static src/landingpage.css.</div>

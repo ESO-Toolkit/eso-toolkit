@@ -1,0 +1,24 @@
+<!-- @dsCard group="Components" -->
+<meta charset="utf-8"><title>Report Tabs</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>html,body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif;padding:20px;box-sizing:border-box}
+.tabs{display:flex;gap:8px;align-items:center;overflow-x:auto}
+.tab{display:inline-flex;align-items:center;justify-content:center;min-width:48px;min-height:48px;padding:6px 12px;border-radius:100px;font-size:20px;color:#94a3b8;cursor:pointer;flex-shrink:0;transition:background .2s ease}
+.tab:hover{background:rgba(56,189,248,.08)}
+.tab.active{color:#38bdf8}
+.content{padding:16px;font-size:13px;color:var(--muted);font-family:Consolas,Menlo,monospace;animation:tabFadeIn 150ms ease-out}
+@keyframes tabFadeIn{from{opacity:0}to{opacity:1}}
+.src{font-size:10px;color:var(--muted);font-family:Consolas,Menlo,monospace;margin-top:10px;line-height:1.6}
+</style>
+<div class="tabs">
+<div class="tab active" title="Insights">✨</div>
+<div class="tab" title="Players">👥</div>
+<div class="tab" title="Damage Done">⚔️</div>
+<div class="tab" title="Healing Done">💚</div>
+<div class="tab" title="Deaths">💀</div>
+<div class="tab" title="Maps">🗺️</div>
+</div>
+<div class="content">// icon-only pill tabs with tooltips — the indicator is hidden</div>
+<div class="src">MUI Tabs, scrollable — FightDetailsView.tsx:400-453: indicator display:none, flexContainer gap 8px, tab min 48×48, padding 6px 12px, radius 100px.
+Selected = theme primary #38bdf8; unselected = text.secondary #94a3b8. No MuiTab(s) theme overrides exist in ReduxThemeProvider.tsx.
+Tab content enters with a 150ms tabFadeIn (AnimatedTabContent.tsx:25-33).</div>
