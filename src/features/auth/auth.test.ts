@@ -472,6 +472,39 @@ describe('refreshAccessToken', () => {
     expect(mockFetch).toHaveBeenCalledTimes(1);
   });
 
+  it('does not restore credentials when they are erased during an in-flight refresh', async () => {
+    mockSessionStorage.getItem.mockImplementation((key: string) =>
+      key === REFRESH_TOKEN_KEY ? 'refresh-token' : null,
+    );
+
+    let resolveRequest!: (value: Response) => void;
+    mockFetch.mockReturnValueOnce(
+      new Promise<Response>((resolve) => {
+        resolveRequest = resolve;
+      }),
+    );
+
+    const refresh = refreshAccessToken();
+    clearStoredTokens();
+    resolveRequest({
+      ok: true,
+      json: async () => ({
+        access_token: 'late-access-token',
+        refresh_token: 'late-refresh-token',
+      }),
+    } as Response);
+
+    await expect(refresh).resolves.toBeNull();
+    expect(mockSessionStorage.setItem).not.toHaveBeenCalledWith(
+      ACCESS_TOKEN_KEY,
+      'late-access-token',
+    );
+    expect(mockSessionStorage.setItem).not.toHaveBeenCalledWith(
+      REFRESH_TOKEN_KEY,
+      'late-refresh-token',
+    );
+  });
+
   it('should return cached token within the cooldown window after a successful refresh', async () => {
     mockSessionStorage.getItem.mockImplementation((key: string) => {
       if (key === REFRESH_TOKEN_KEY) return 'refresh-token';

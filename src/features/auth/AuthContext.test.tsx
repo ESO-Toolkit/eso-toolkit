@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import React from 'react';
 
@@ -48,6 +48,7 @@ jest.mock('../../EsoLogsClientContext', () => ({
 // Now import after mocking
 import { checkUserBan } from '../../utils/banlist';
 
+import { clearStoredTokens } from './auth';
 import { AuthProvider, useAuth } from './AuthContext';
 
 // Mock localStorage
@@ -392,5 +393,36 @@ describe('AuthContext', () => {
       expect(screen.getByTestId('is-logged-in')).toHaveTextContent('false');
       expect(screen.getByTestId('is-banned')).toHaveTextContent('false');
     });
+  });
+
+  it('clears live auth and ignores a user request completed after credential erasure', async () => {
+    const futureExp = Math.floor(Date.now() / 1000) + 3600;
+    window.sessionStorage.setItem('access_token', createMockToken(futureExp));
+
+    let resolveQuery!: (value: { userData: { currentUser: { id: number; name: string } } }) => void;
+    mockEsoLogsClient.query.mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveQuery = resolve;
+      }),
+    );
+
+    renderWithAuthProvider(<TestComponent />);
+    await waitFor(() => expect(mockEsoLogsClient.query).toHaveBeenCalled());
+
+    act(() => clearStoredTokens());
+
+    await waitFor(() => {
+      expect(screen.getByTestId('access-token')).toHaveTextContent('');
+      expect(screen.getByTestId('is-logged-in')).toHaveTextContent('false');
+      expect(screen.getByTestId('current-user')).toHaveTextContent('no-user');
+      expect(mockClearAuthToken).toHaveBeenCalled();
+    });
+
+    await act(async () => {
+      resolveQuery({ userData: { currentUser: { id: 999, name: 'late-user' } } });
+      await Promise.resolve();
+    });
+
+    expect(screen.getByTestId('current-user')).toHaveTextContent('no-user');
   });
 });

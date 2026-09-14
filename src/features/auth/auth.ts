@@ -44,6 +44,15 @@ export const REFRESH_TOKEN_KEY = 'refresh_token';
 
 const volatileTokens = new Map<string, string>();
 
+export const AUTH_CREDENTIALS_CLEARED_EVENT = 'auth-credentials-cleared';
+
+// Credential erasure is a generation boundary. A refresh that began in an
+// earlier generation must never be allowed to restore credentials afterward.
+let credentialGeneration = 0;
+let pendingRefreshPromise: Promise<string | null> | null = null;
+let pendingRefreshController: AbortController | null = null;
+let lastSuccessfulRefresh: { token: string; timestamp: number } | null = null;
+
 /** Remove credentials that might have been written by older application versions. */
 const clearLegacyPersistentToken = (key: string): void => {
   try {
@@ -105,8 +114,16 @@ export const removeStoredToken = (key: string): void => {
 };
 
 export const clearStoredTokens = (): void => {
+  credentialGeneration += 1;
+  lastSuccessfulRefresh = null;
+  pendingRefreshController?.abort();
+  pendingRefreshController = null;
+  pendingRefreshPromise = null;
   removeStoredToken(ACCESS_TOKEN_KEY);
   removeStoredToken(REFRESH_TOKEN_KEY);
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new Event(AUTH_CREDENTIALS_CLEARED_EVENT));
+  }
 };
 
 export function setPkceCodeVerifier(verifier: string): void {
@@ -284,13 +301,10 @@ const OAUTH_TOKEN_URL = 'https://www.esologs.com/oauth/token';
 // Deduplication guard: if a refresh is already in flight (e.g. proactive timer
 // refresh racing an error-link 401 refresh), all callers share the same Promise
 // so we never burn the single-use refresh token on two concurrent requests.
-let pendingRefreshPromise: Promise<string | null> | null = null;
-
 // Cooldown guard: after a successful refresh, subsequent calls within the
 // cooldown window return the cached token instead of starting a new request.
 // This handles the case where the proactive refresh completes before a concurrent
 // error-link 401 refresh starts (pendingRefreshPromise is already cleared).
-let lastSuccessfulRefresh: { token: string; timestamp: number } | null = null;
 const REFRESH_COOLDOWN_MS = 10_000;
 
 // Abort a hung token request after this window (matches roster-hub-api's
@@ -301,8 +315,11 @@ const REFRESH_TIMEOUT_MS = 15_000;
 
 /** @internal Reset module-level refresh state — for tests only. */
 export function _resetRefreshState(): void {
+  pendingRefreshController?.abort();
+  pendingRefreshController = null;
   pendingRefreshPromise = null;
   lastSuccessfulRefresh = null;
+  credentialGeneration = 0;
 }
 
 /**
@@ -329,8 +346,11 @@ export async function refreshAccessToken(): Promise<string | null> {
     return null;
   }
 
-  pendingRefreshPromise = (async (): Promise<string | null> => {
+  const refreshGeneration = credentialGeneration;
+  let refreshPromise!: Promise<string | null>;
+  refreshPromise = (async (): Promise<string | null> => {
     const controller = new AbortController();
+    pendingRefreshController = controller;
     const timer = setTimeout(() => controller.abort(), REFRESH_TIMEOUT_MS);
     try {
       const body = new URLSearchParams({
@@ -355,6 +375,12 @@ export async function refreshAccessToken(): Promise<string | null> {
 
       const data = await response.json();
 
+      // Explicit logout/privacy erasure wins over every earlier async refresh,
+      // even if the network response was already too far along to abort.
+      if (credentialGeneration !== refreshGeneration) {
+        return null;
+      }
+
       // Store new tokens
       setStoredToken(ACCESS_TOKEN_KEY, data.access_token);
       if (data.refresh_token) {
@@ -365,15 +391,25 @@ export async function refreshAccessToken(): Promise<string | null> {
       lastSuccessfulRefresh = { token: data.access_token, timestamp: Date.now() };
       return data.access_token;
     } catch (error) {
+      if (credentialGeneration !== refreshGeneration) {
+        return null;
+      }
       logger.error('Token refresh error', error instanceof Error ? error : undefined);
       // Clear invalid tokens
       clearStoredTokens();
       return null;
     } finally {
       clearTimeout(timer);
-      pendingRefreshPromise = null;
+      if (pendingRefreshController === controller) {
+        pendingRefreshController = null;
+      }
+      if (pendingRefreshPromise === refreshPromise) {
+        pendingRefreshPromise = null;
+      }
     }
   })();
 
-  return pendingRefreshPromise;
+  pendingRefreshPromise = refreshPromise;
+
+  return refreshPromise;
 }

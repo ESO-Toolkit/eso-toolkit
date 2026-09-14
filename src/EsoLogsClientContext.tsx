@@ -61,6 +61,12 @@ export const EsoLogsClientProvider: React.FC<{ children: ReactNode }> = ({ child
         // Bearer and the cache keeps the previous user's private results.
         if (client.getAccessToken() !== '') {
           client.updateAccessToken('');
+          void client.clearStore().catch((error: unknown) => {
+            logger.error(
+              'Failed to clear EsoLogsClient cache after token removal',
+              error instanceof Error ? error : new Error(String(error)),
+            );
+          });
         }
         addBreadcrumb('Auth: EsoLogsClient token cleared via setAuthToken', 'auth', {
           tokenPresent: false,
@@ -76,6 +82,12 @@ export const EsoLogsClientProvider: React.FC<{ children: ReactNode }> = ({ child
     logger.info('Clearing EsoLogsClient access token');
     setIsLoggedIn(false);
     client.updateAccessToken('');
+    void client.clearStore().catch((error: unknown) => {
+      logger.error(
+        'Failed to clear EsoLogsClient cache during logout',
+        error instanceof Error ? error : new Error(String(error)),
+      );
+    });
     addBreadcrumb('Auth: EsoLogsClient token cleared', 'auth');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [client]); // logger intentionally omitted - it's a stable singleton, not a reactive dependency
