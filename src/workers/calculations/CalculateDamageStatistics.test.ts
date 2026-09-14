@@ -1,4 +1,5 @@
 import type { FightFragment } from '@/graphql/gql/graphql';
+import { NO_TARGETS_SENTINEL } from '@/hooks/useSelectedTargetIds';
 import { createMockDamageEvent } from '@/test/utils/combatLogMockFactories';
 import { calculateDamageStatisticsWithActivity } from '@/utils/activePercentageUtils';
 
@@ -22,6 +23,27 @@ const FIGHT: FightFragment = {
 };
 
 describe('calculateDamageStatistics', () => {
+  it('does not treat an explicitly empty aggregate target scope as no filter', () => {
+    const result = calculateDamageStatistics({
+      fight: FIGHT,
+      selectedTargetIds: [NO_TARGETS_SENTINEL],
+      damageEventsByPlayer: {
+        '123': [
+          createMockDamageEvent({
+            timestamp: 2000,
+            sourceID: 123,
+            targetID: 456,
+            targetIsFriendly: false,
+            amount: 100,
+          }),
+        ],
+      },
+    });
+
+    expect(result.damageByPlayer).toEqual({});
+    expect(result.damageEventsBySource).toEqual({});
+  });
+
   it('matches main-thread semantics for selected targets, out-of-order events, and attributed pet damage', () => {
     const task: DamageStatisticsCalculationTask = {
       fight: FIGHT,

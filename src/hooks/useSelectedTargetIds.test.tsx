@@ -9,7 +9,11 @@ import { TabId } from '../utils/getSkeletonForTab';
 
 import { useReportData } from './useReportData';
 import { useReportMasterData } from './useReportMasterData';
-import { ALL_ENEMIES_SENTINEL, useSelectedTargetIds } from './useSelectedTargetIds';
+import {
+  ALL_ENEMIES_SENTINEL,
+  NO_TARGETS_SENTINEL,
+  useSelectedTargetIds,
+} from './useSelectedTargetIds';
 
 // Mock the dependencies
 const mockUseReportData = useReportData as jest.MockedFunction<typeof useReportData>;
@@ -406,7 +410,7 @@ describe('useSelectedTargetIds', () => {
     expect(Array.from(result.current).sort()).toEqual([100, 200]);
   });
 
-  it('should return empty set when no fight is found', () => {
+  it('should return an explicit no-target scope when no fight is found', () => {
     mockUseReportData.mockReturnValue({
       reportData: mockReportData,
       isReportLoading: false,
@@ -425,10 +429,10 @@ describe('useSelectedTargetIds', () => {
       ),
     });
 
-    expect(Array.from(result.current)).toEqual([]);
+    expect(Array.from(result.current)).toEqual([NO_TARGETS_SENTINEL]);
   });
 
-  it('should return empty set when fight has no enemy NPCs', () => {
+  it('should return an explicit no-target scope when fight has no enemy NPCs', () => {
     mockUseReportData.mockReturnValue({
       reportData: mockReportData,
       isReportLoading: false,
@@ -447,10 +451,10 @@ describe('useSelectedTargetIds', () => {
       ),
     });
 
-    expect(Array.from(result.current)).toEqual([]);
+    expect(Array.from(result.current)).toEqual([NO_TARGETS_SENTINEL]);
   });
 
-  it('should return empty set when fight has null enemy NPCs', () => {
+  it('should return an explicit no-target scope when fight has null enemy NPCs', () => {
     mockUseReportData.mockReturnValue({
       reportData: mockReportData,
       isReportLoading: false,
@@ -469,10 +473,10 @@ describe('useSelectedTargetIds', () => {
       ),
     });
 
-    expect(Array.from(result.current)).toEqual([]);
+    expect(Array.from(result.current)).toEqual([NO_TARGETS_SENTINEL]);
   });
 
-  it('should return empty set when no report data is available', () => {
+  it('should return an explicit no-target scope when no report data is available', () => {
     mockUseReportData.mockReturnValue({
       reportData: null,
       isReportLoading: false,
@@ -491,7 +495,7 @@ describe('useSelectedTargetIds', () => {
       ),
     });
 
-    expect(Array.from(result.current)).toEqual([]);
+    expect(Array.from(result.current)).toEqual([NO_TARGETS_SENTINEL]);
   });
 
   it('should not infer bosses when authoritative actor metadata is unavailable', () => {
@@ -525,7 +529,7 @@ describe('useSelectedTargetIds', () => {
       ),
     });
 
-    expect(Array.from(result.current)).toEqual([]);
+    expect(Array.from(result.current)).toEqual([NO_TARGETS_SENTINEL]);
   });
 
   it('should not treat non-boss NPCs as the All Bosses scope', () => {
@@ -562,7 +566,7 @@ describe('useSelectedTargetIds', () => {
       ),
     });
 
-    expect(Array.from(result.current)).toEqual([]);
+    expect(Array.from(result.current)).toEqual([NO_TARGETS_SENTINEL]);
   });
 
   it('should handle NPCs with null IDs', () => {
@@ -705,7 +709,7 @@ describe('useSelectedTargetIds', () => {
       ),
     });
 
-    expect(Array.from(newResult.current)).toEqual([]);
+    expect(Array.from(newResult.current)).toEqual([NO_TARGETS_SENTINEL]);
   });
 
   it('should prioritize selected target ID over boss filtering', () => {
@@ -764,7 +768,7 @@ describe('useSelectedTargetIds', () => {
       ),
     });
 
-    expect(Array.from(result.current)).toEqual([]);
+    expect(Array.from(result.current)).toEqual([NO_TARGETS_SENTINEL]);
   });
 
   it('should return stable reference when params do not change', () => {

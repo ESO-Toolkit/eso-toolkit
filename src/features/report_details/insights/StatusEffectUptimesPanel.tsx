@@ -10,7 +10,7 @@ import {
 } from '@/hooks';
 
 import { FightFragment } from '../../../graphql/gql/graphql';
-import { ALL_TARGETS_SENTINEL } from '../../../hooks/useSelectedTargetIds';
+import { ALL_TARGETS_SENTINEL, hasNoResolvedTargets } from '../../../hooks/useSelectedTargetIds';
 import { useSelectedReportAndFight } from '../../../ReportFightContext';
 import { selectSelectedFriendlyPlayerId } from '../../../store/ui/uiSelectors';
 import type { BuffLookupData } from '../../../utils/BuffLookupUtils';
@@ -118,7 +118,7 @@ export const StatusEffectUptimesPanel: React.FC<StatusEffectUptimesPanelProps> =
 
   // Convert Set to single target ID for backward compatibility with StatusEffectUptimesView
   const selectedTargetId = React.useMemo(() => {
-    if (selectedTargetIds.size === 0) {
+    if (selectedTargetIds.size === 0 || hasNoResolvedTargets(selectedTargetIds)) {
       return null;
     }
     const targetArray = Array.from(selectedTargetIds);
@@ -148,7 +148,11 @@ export const StatusEffectUptimesPanel: React.FC<StatusEffectUptimesPanelProps> =
     : 'Uptime data is unavailable because this fight has an invalid time window.';
 
   const realTargetFilter = React.useMemo(() => {
-    if (selectedTargetIds.size === 0 || selectedTargetIds.has(ALL_TARGETS_SENTINEL)) {
+    if (
+      selectedTargetIds.size === 0 ||
+      hasNoResolvedTargets(selectedTargetIds) ||
+      selectedTargetIds.has(ALL_TARGETS_SENTINEL)
+    ) {
       return null;
     }
 
@@ -189,7 +193,11 @@ export const StatusEffectUptimesPanel: React.FC<StatusEffectUptimesPanelProps> =
 
   // Filter and average the target-segmented data based on selected targets
   const filteredStatusEffectUptimes = React.useMemo<BuffUptime[]>(() => {
-    if (!statusEffectUptimes || selectedTargetIds.size === 0) {
+    if (
+      !statusEffectUptimes ||
+      selectedTargetIds.size === 0 ||
+      hasNoResolvedTargets(selectedTargetIds)
+    ) {
       return [];
     }
 

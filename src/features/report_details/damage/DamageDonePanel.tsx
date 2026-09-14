@@ -5,6 +5,7 @@ import { useSelector } from 'react-redux';
 import { PlayerCardModal } from '../../../components/PlayerCardModal';
 import {
   useDamageEventsLookup,
+  hasNoResolvedTargets,
   useReportMasterData,
   usePlayerData,
   useSelectedTargetIds,
@@ -132,7 +133,7 @@ export const DamageDonePanel: React.FC<DamageDonePanelProps> = ({ context }) => 
 
   // Resolve selected target names for display
   const selectedTargetNames = useMemo(() => {
-    if (selectedTargetIds.size === 0) return null;
+    if (selectedTargetIds.size === 0 || hasNoResolvedTargets(selectedTargetIds)) return null;
 
     const names = Array.from(selectedTargetIds).map((targetId) => {
       const actor = actorsById[targetId];

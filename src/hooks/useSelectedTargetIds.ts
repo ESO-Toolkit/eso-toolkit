@@ -13,6 +13,13 @@ import { useResolvedReportFightContext } from './useResolvedReportFightContext';
 export const ALL_TARGETS_SENTINEL = -1;
 // Sentinel value for "select all enemies" (including non-bosses)
 export const ALL_ENEMIES_SENTINEL = -2;
+// A resolved aggregate scope with no matching actors. Keeping this non-empty prevents
+// calculation helpers from interpreting the result as their legacy "no filter" value.
+export const NO_TARGETS_SENTINEL = -3;
+
+export function hasNoResolvedTargets(targetIds: ReadonlySet<number>): boolean {
+  return targetIds.has(NO_TARGETS_SENTINEL);
+}
 
 interface UseSelectedTargetIdsOptions {
   context?: ReportFightContextInput;
@@ -53,14 +60,15 @@ export function useSelectedTargetIds(options?: UseSelectedTargetIdsOptions): Set
     [targetScopes.allEnemyIds],
   );
   const bossTargetsSet = React.useMemo(() => new Set(targetScopes.bossIds), [targetScopes.bossIds]);
+  const noTargetsSet = React.useMemo(() => new Set([NO_TARGETS_SENTINEL]), []);
 
   return React.useMemo<Set<number>>(() => {
     if (hasAllEnemiesSelected) {
-      return allTargetsSet;
+      return allTargetsSet.size > 0 ? allTargetsSet : noTargetsSet;
     }
 
     if (hasAllTargetsSelected || isEmptySelection) {
-      return bossTargetsSet;
+      return bossTargetsSet.size > 0 ? bossTargetsSet : noTargetsSet;
     }
 
     return selectedTargetsSet;
@@ -70,6 +78,7 @@ export function useSelectedTargetIds(options?: UseSelectedTargetIdsOptions): Set
     isEmptySelection,
     bossTargetsSet,
     allTargetsSet,
+    noTargetsSet,
     selectedTargetsSet,
   ]);
 }

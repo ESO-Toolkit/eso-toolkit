@@ -22,7 +22,11 @@ export { useCurrentFight } from './useCurrentFight';
 export { useTrialChapters } from './useTrialChapters';
 export type { UseTrialChaptersResult } from './useTrialChapters';
 export { useSelectedTab, useSelectedTabId } from './useSelectedTab';
-export { useSelectedTargetIds } from './useSelectedTargetIds';
+export {
+  hasNoResolvedTargets,
+  NO_TARGETS_SENTINEL,
+  useSelectedTargetIds,
+} from './useSelectedTargetIds';
 export { useResolvedReportFightContext } from './useResolvedReportFightContext';
 export { useFightForContext } from './useFightForContext';
 
