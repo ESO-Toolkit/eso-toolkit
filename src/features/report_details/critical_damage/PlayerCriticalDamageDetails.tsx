@@ -10,7 +10,10 @@ import {
   CriticalDamageSourceWithActiveState,
 } from '../../../utils/CritDamageUtils';
 
-import { computeCritDamageAdjustment } from './critDamageAdjustment';
+import {
+  computeCritDamageAdjustment,
+  type CriticalDamageSourceInclusion,
+} from './critDamageAdjustment';
 import {
   PlayerCriticalDamageDetailsView,
   PlayerCriticalDamageData,
@@ -33,6 +36,39 @@ interface PlayerCriticalDamageDataExtended extends PlayerCriticalDamageData {
   criticalDamageSources: CriticalDamageSourceWithActiveState[];
   staticCriticalDamage: number;
 }
+
+const isFiniteNumber = (value: unknown): value is number =>
+  typeof value === 'number' && Number.isFinite(value);
+
+const isCriticalDamageDataPoint = (
+  point: unknown,
+): point is PlayerCriticalDamageData['dataPoints'][number] => {
+  if (!point || typeof point !== 'object') return false;
+  const candidate = point as Record<string, unknown>;
+  return (
+    isFiniteNumber(candidate.timestamp) &&
+    isFiniteNumber(candidate.relativeTime) &&
+    isFiniteNumber(candidate.criticalDamage)
+  );
+};
+
+const isCombatInterval = (interval: unknown): interval is { start: number; end: number } => {
+  if (!interval || typeof interval !== 'object') return false;
+  const candidate = interval as Record<string, unknown>;
+  return isFiniteNumber(candidate.start) && isFiniteNumber(candidate.end);
+};
+
+export const resolveCriticalDamageSourceInclusion = (
+  source: CriticalDamageSourceWithActiveState | undefined,
+): CriticalDamageSourceInclusion => {
+  if (!source || typeof source.wasActive !== 'boolean') return 'unknown';
+  return source.wasActive ? 'included' : 'excluded';
+};
+
+export const getFightDurationMs = (fight: FightFragment | undefined): number => {
+  if (!fight || !isFiniteNumber(fight.startTime) || !isFiniteNumber(fight.endTime)) return 0;
+  return Math.max(0, fight.endTime - fight.startTime);
+};
 
 interface PlayerCriticalDamageDetailsProps {
   id: number;
@@ -74,26 +110,33 @@ export const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsPr
     return playerData.playersById[id] || null;
   }, [playerData, id]);
 
-  const fightDurationMs = fight?.endTime && fight?.startTime ? fight.endTime - fight.startTime : 1;
+  const fightDurationMs = getFightDurationMs(fight);
+
+  const criticalDamageSources = React.useMemo(
+    () =>
+      Array.isArray(criticalDamageData?.criticalDamageSources)
+        ? criticalDamageData.criticalDamageSources
+        : [],
+    [criticalDamageData?.criticalDamageSources],
+  );
 
   const fightingFinesseSource = React.useMemo(() => {
-    return criticalDamageData?.criticalDamageSources?.find(
+    return criticalDamageSources.find(
       (source) => source.source === 'always_on' && source.name === FIGHTING_FINESSE_SOURCE_NAME,
     );
-  }, [criticalDamageData?.criticalDamageSources]);
+  }, [criticalDamageSources]);
 
   const backstabberSource = React.useMemo(() => {
-    return criticalDamageData?.criticalDamageSources?.find(
+    return criticalDamageSources.find(
       (source) => source.source === 'always_on' && source.name === BACKSTABBER_SOURCE_NAME,
     );
-  }, [criticalDamageData?.criticalDamageSources]);
+  }, [criticalDamageSources]);
 
-  // Whether the worker actually BAKED each star into staticCriticalDamage. This is the single
-  // source of truth for the subtract: when companion evidence proves a star isn't slotted the
-  // worker sets wasActive=false and excludes it, so we must not subtract it again. With no
-  // evidence, wasActive is true (assume-active) => included=true => pre-companion behaviour.
-  const fightingFinesseIncluded = fightingFinesseSource?.wasActive ?? false;
-  const backstabberIncluded = backstabberSource?.wasActive ?? false;
+  // Whether the worker confirmed each star was baked into staticCriticalDamage. Source activity
+  // without a boolean wasActive field is unknown, so it must not be treated as either included
+  // or excluded when calculating a toggle adjustment.
+  const fightingFinesseInclusion = resolveCriticalDamageSourceInclusion(fightingFinesseSource);
+  const backstabberInclusion = resolveCriticalDamageSourceInclusion(backstabberSource);
 
   const [localFightingFinesseEnabled, setLocalFightingFinesseEnabled] = React.useState<boolean>(
     FIGHTING_FINESSE_DEFAULT_ENABLED,
@@ -144,12 +187,12 @@ export const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsPr
   const critDamageAdjustment = React.useMemo(
     () =>
       computeCritDamageAdjustment({
-        fightingFinesseIncluded,
+        fightingFinesseInclusion,
         fightingFinesseEnabled,
-        backstabberIncluded,
+        backstabberInclusion,
         backstabberEnabled,
       }),
-    [fightingFinesseIncluded, fightingFinesseEnabled, backstabberIncluded, backstabberEnabled],
+    [fightingFinesseInclusion, fightingFinesseEnabled, backstabberInclusion, backstabberEnabled],
   );
 
   const adjustedCriticalDamageData = React.useMemo(() => {
@@ -157,36 +200,52 @@ export const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsPr
       return null;
     }
 
-    if (critDamageAdjustment === 0) {
-      return criticalDamageData;
-    }
-
-    const adjustment = critDamageAdjustment;
-
-    const adjustedDataPoints = criticalDamageData.dataPoints.map((point) => ({
+    const rawDataPoints = Array.isArray(criticalDamageData.dataPoints)
+      ? criticalDamageData.dataPoints
+      : [];
+    const adjustedDataPoints = rawDataPoints.filter(isCriticalDamageDataPoint).map((point) => ({
       ...point,
-      criticalDamage: Math.max(0, point.criticalDamage - adjustment),
+      criticalDamage: Math.max(0, point.criticalDamage - critDamageAdjustment),
     }));
 
-    const adjustedEffective = Math.max(0, criticalDamageData.effectiveCriticalDamage - adjustment);
-    const adjustedMaximum =
-      adjustedDataPoints.length > 0
-        ? Math.max(...adjustedDataPoints.map((point) => point.criticalDamage))
-        : 0;
+    const hasValidSamples = adjustedDataPoints.length > 0;
+    const adjustedEffective =
+      hasValidSamples && isFiniteNumber(criticalDamageData.effectiveCriticalDamage)
+        ? Math.max(0, criticalDamageData.effectiveCriticalDamage - critDamageAdjustment)
+        : null;
+    const adjustedMaximum = hasValidSamples
+      ? Math.max(...adjustedDataPoints.map((point) => point.criticalDamage))
+      : null;
 
     // Time at cap must stay filtered to active-combat data points, matching the worker's
     // calculation. Fall back to all data points if active intervals weren't provided.
-    const activeCombatIntervals = criticalDamageData.activeCombatIntervals;
-    const capDataPoints = activeCombatIntervals
-      ? filterDataPointsByActiveCombat(adjustedDataPoints, activeCombatIntervals)
-      : adjustedDataPoints;
+    const rawActiveCombatIntervals = criticalDamageData.activeCombatIntervals;
+    const activeCombatIntervalsAreValid =
+      rawActiveCombatIntervals === undefined ||
+      (Array.isArray(rawActiveCombatIntervals) && rawActiveCombatIntervals.every(isCombatInterval));
+    const capDataPoints =
+      rawActiveCombatIntervals === undefined
+        ? adjustedDataPoints
+        : activeCombatIntervalsAreValid
+          ? filterDataPointsByActiveCombat(adjustedDataPoints, rawActiveCombatIntervals)
+          : [];
 
     const adjustedTimeAtCapPercentage =
       capDataPoints.length > 0
         ? (capDataPoints.filter((point) => point.criticalDamage >= 125).length /
             capDataPoints.length) *
           100
-        : 0;
+        : null;
+
+    const invalidSampleCount = rawDataPoints.length - adjustedDataPoints.length;
+    const invalidMetrics =
+      !isFiniteNumber(criticalDamageData.effectiveCriticalDamage) ||
+      !isFiniteNumber(criticalDamageData.timeAtCapPercentage);
+    const dataQualityMessage = !hasValidSamples
+      ? 'No valid critical damage samples were received.'
+      : invalidSampleCount > 0 || invalidMetrics || !activeCombatIntervalsAreValid
+        ? 'Some critical damage measurements were invalid and were omitted.'
+        : undefined;
 
     return {
       ...criticalDamageData,
@@ -194,32 +253,34 @@ export const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsPr
       effectiveCriticalDamage: adjustedEffective,
       maximumCriticalDamage: adjustedMaximum,
       timeAtCapPercentage: adjustedTimeAtCapPercentage,
-      staticCriticalDamage: Math.max(0, criticalDamageData.staticCriticalDamage - adjustment),
+      inactiveCombatIntervals: Array.isArray(criticalDamageData.inactiveCombatIntervals)
+        ? criticalDamageData.inactiveCombatIntervals.filter(isCombatInterval)
+        : [],
+      dataQualityMessage,
     };
   }, [criticalDamageData, critDamageAdjustment]);
 
   const adjustedCriticalDamageSources = React.useMemo(() => {
-    const sources = criticalDamageData?.criticalDamageSources ?? [];
-    return sources.map((source) => {
+    return criticalDamageSources.map((source) => {
       if (source.source === 'always_on' && source.name === FIGHTING_FINESSE_SOURCE_NAME) {
         return {
           ...source,
-          wasActive: fightingFinesseIncluded && fightingFinesseEnabled,
+          wasActive: fightingFinesseInclusion === 'included' && fightingFinesseEnabled,
         };
       }
       if (source.source === 'always_on' && source.name === BACKSTABBER_SOURCE_NAME) {
         return {
           ...source,
-          wasActive: backstabberIncluded && backstabberEnabled,
+          wasActive: backstabberInclusion === 'included' && backstabberEnabled,
         };
       }
-      return source;
+      return { ...source, wasActive: source.wasActive === true };
     });
   }, [
-    criticalDamageData?.criticalDamageSources,
-    fightingFinesseIncluded,
+    criticalDamageSources,
+    fightingFinesseInclusion,
     fightingFinesseEnabled,
-    backstabberIncluded,
+    backstabberInclusion,
     backstabberEnabled,
   ]);
 
@@ -228,10 +289,27 @@ export const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsPr
   // can't ADD back a contribution the worker never included.
   const toggleableSourceNames = React.useMemo(() => {
     const names = new Set<string>();
-    if (fightingFinesseIncluded) names.add(FIGHTING_FINESSE_SOURCE_NAME);
-    if (backstabberIncluded) names.add(BACKSTABBER_SOURCE_NAME);
+    if (fightingFinesseInclusion === 'included') names.add(FIGHTING_FINESSE_SOURCE_NAME);
+    if (backstabberInclusion === 'included') names.add(BACKSTABBER_SOURCE_NAME);
     return names.size > 0 ? names : undefined;
-  }, [fightingFinesseIncluded, backstabberIncluded]);
+  }, [fightingFinesseInclusion, backstabberInclusion]);
+
+  const dataQualityMessage = React.useMemo(() => {
+    const numericDataQualityMessage = adjustedCriticalDamageData?.dataQualityMessage;
+    const sourceActivityIsUnknown =
+      fightingFinesseInclusion === 'unknown' || backstabberInclusion === 'unknown';
+    if (!sourceActivityIsUnknown) return numericDataQualityMessage;
+
+    const sourceMessage =
+      'Fighting Finesse or Backstabber activity could not be confirmed, so those sources cannot be toggled.';
+    return numericDataQualityMessage
+      ? `${numericDataQualityMessage} ${sourceMessage}`
+      : sourceMessage;
+  }, [
+    adjustedCriticalDamageData?.dataQualityMessage,
+    fightingFinesseInclusion,
+    backstabberInclusion,
+  ]);
 
   const handleSourceToggle = React.useCallback((sourceName: string, nextValue: boolean) => {
     if (sourceName === FIGHTING_FINESSE_SOURCE_NAME) {
@@ -253,6 +331,7 @@ export const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsPr
       expanded={expanded}
       isLoading={isLoading}
       criticalDamageData={adjustedCriticalDamageData}
+      dataQualityMessage={dataQualityMessage}
       criticalDamageSources={adjustedCriticalDamageSources}
       toggleableSourceNames={toggleableSourceNames}
       onSourceToggle={handleSourceToggle}

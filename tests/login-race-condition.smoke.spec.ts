@@ -34,7 +34,7 @@ function createMockJwt(options: { expiresInSecs?: number; expired?: boolean } = 
 }
 
 /**
- * Injects tokens into localStorage before any app JS runs, so the module-level
+ * Injects tokens into tab-scoped storage before any app JS runs, so the module-level
  * `initialToken` in EsoLogsClientContext picks up the mock value on first render.
  */
 async function injectTokens(
@@ -46,8 +46,8 @@ async function injectTokens(
 
   await page.addInitScript(
     ({ at, rt }: { at: string; rt: string }) => {
-      localStorage.setItem('access_token', at);
-      localStorage.setItem('refresh_token', rt);
+      sessionStorage.setItem('access_token', at);
+      sessionStorage.setItem('refresh_token', rt);
     },
     { at: accessToken, rt: refreshToken },
   );

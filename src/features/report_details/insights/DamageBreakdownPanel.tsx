@@ -2,9 +2,10 @@ import React from 'react';
 
 import { FightFragment } from '../../../graphql/gql/graphql';
 import { useDamageEvents, useReportMasterData } from '../../../hooks';
-import { useSelectedTargetIds } from '../../../hooks/useSelectedTargetIds';
+import { hasNoResolvedTargets, useSelectedTargetIds } from '../../../hooks/useSelectedTargetIds';
 import { parseDamageTypeFlags } from '../../../types/abilities';
-import { DamageEvent } from '../../../types/combatlogEvents';
+import { DamageEvent, HitType } from '../../../types/combatlogEvents';
+import { resolveAnalyzerPanelState } from '../AnalyzerPanelState';
 
 import { DamageBreakdownView } from './DamageBreakdownView';
 
@@ -19,8 +20,11 @@ interface DamageBreakdown {
   icon?: string;
   totalDamage: number;
   hitCount: number;
+  eligibleHitCount: number;
   criticalHits: number;
-  criticalRate: number;
+  criticalRate: number | null;
+  criticalDamage: number;
+  criticalDamageShare: number | null;
   averageDamage: number;
   damageTypes?: string[];
 }
@@ -29,13 +33,20 @@ export const DamageBreakdownPanel: React.FC<DamageBreakdownPanelProps> = ({
   fight: _fight,
   selectedPlayerId,
 }) => {
-  const { damageEvents, isDamageEventsLoading } = useDamageEvents();
+  const { damageEvents, isDamageEventsLoading, damageEventsStatus, damageEventsError } =
+    useDamageEvents();
   const { reportMasterData, isMasterDataLoading } = useReportMasterData();
   const selectedTargetIds = useSelectedTargetIds();
 
   // Calculate damage breakdown by ability
   const damageBreakdown = React.useMemo(() => {
-    if (!damageEvents || !reportMasterData?.abilitiesById) {
+    // NO_TARGETS is deliberately non-empty so legacy filters do not treat it
+    // as "all targets". Short-circuit here as well so it cannot produce metrics.
+    if (
+      hasNoResolvedTargets(selectedTargetIds) ||
+      !damageEvents ||
+      !reportMasterData?.abilitiesById
+    ) {
       return [];
     }
 
@@ -65,7 +76,10 @@ export const DamageBreakdownPanel: React.FC<DamageBreakdownPanelProps> = ({
       {
         totalDamage: number;
         hitCount: number;
+        eligibleHitCount: number;
         criticalHits: number;
+        criticalDamage: number;
+        hasUnknownHitType: boolean;
         events: DamageEvent[];
       }
     >();
@@ -77,7 +91,10 @@ export const DamageBreakdownPanel: React.FC<DamageBreakdownPanelProps> = ({
         damageByAbility.set(abilityId, {
           totalDamage: 0,
           hitCount: 0,
+          eligibleHitCount: 0,
           criticalHits: 0,
+          criticalDamage: 0,
+          hasUnknownHitType: false,
           events: [],
         });
       }
@@ -91,9 +108,16 @@ export const DamageBreakdownPanel: React.FC<DamageBreakdownPanelProps> = ({
       abilityData.hitCount += 1;
       abilityData.events.push(event);
 
-      // Check if it's a critical hit (hitType === 2)
-      if (event.hitType === 2) {
+      const isEligibleHit = event.hitType === HitType.Normal || event.hitType === HitType.Critical;
+      if (isEligibleHit) {
+        abilityData.eligibleHitCount += 1;
+      } else {
+        abilityData.hasUnknownHitType = true;
+      }
+
+      if (event.hitType === HitType.Critical) {
         abilityData.criticalHits += 1;
+        abilityData.criticalDamage += event.amount || 0;
       }
     });
 
@@ -102,7 +126,12 @@ export const DamageBreakdownPanel: React.FC<DamageBreakdownPanelProps> = ({
     damageByAbility.forEach((data, abilityGameID) => {
       const ability = reportMasterData.abilitiesById[abilityGameID];
       const abilityName = ability?.name || `Unknown (${abilityGameID})`;
-      const criticalRate = data.hitCount > 0 ? (data.criticalHits / data.hitCount) * 100 : 0;
+      const criticalRate =
+        data.eligibleHitCount > 0 ? (data.criticalHits / data.eligibleHitCount) * 100 : null;
+      const criticalDamageShare =
+        data.totalDamage > 0 && !data.hasUnknownHitType
+          ? (data.criticalDamage / data.totalDamage) * 100
+          : null;
       const averageDamage = data.hitCount > 0 ? data.totalDamage / data.hitCount : 0;
       const damageTypes = ability?.type ? parseDamageTypeFlags(ability.type) : undefined;
 
@@ -113,8 +142,11 @@ export const DamageBreakdownPanel: React.FC<DamageBreakdownPanelProps> = ({
           icon: ability?.icon ? String(ability.icon) : undefined,
           totalDamage: data.totalDamage,
           hitCount: data.hitCount,
+          eligibleHitCount: data.eligibleHitCount,
           criticalHits: data.criticalHits,
           criticalRate,
+          criticalDamage: data.criticalDamage,
+          criticalDamageShare,
           averageDamage,
           damageTypes,
         });
@@ -129,15 +161,23 @@ export const DamageBreakdownPanel: React.FC<DamageBreakdownPanelProps> = ({
     return damageBreakdown.reduce((sum, item) => sum + item.totalDamage, 0);
   }, [damageBreakdown]);
 
-  if (isMasterDataLoading || isDamageEventsLoading) {
-    return <DamageBreakdownView damageBreakdown={[]} totalDamage={0} isLoading={true} />;
-  }
+  const state = resolveAnalyzerPanelState({
+    error: damageEventsError,
+    hasData: damageBreakdown.length > 0,
+    isComplete: damageEventsStatus === 'succeeded' && reportMasterData.loaded,
+    isLoading: isMasterDataLoading || isDamageEventsLoading,
+  });
 
   return (
     <DamageBreakdownView
       damageBreakdown={damageBreakdown}
       totalDamage={totalDamage}
-      isLoading={false}
+      state={state}
+      stateDetail={
+        state === 'stale'
+          ? 'Damage events or ability data have not completed loading.'
+          : (damageEventsError ?? undefined)
+      }
     />
   );
 };

@@ -35,85 +35,95 @@ const INTENDED_DESTINATION_PROTECTED_KEY = 'eso_intended_destination_protected';
 export const DEV_PREVIEW_OAUTH_RETURN_KEY = 'dev_preview_oauth_return_path';
 
 /**
- * Token key names are kept stable for migration and test compatibility. New
- * sessions store OAuth tokens in sessionStorage so a token is not retained in
- * persistent Web Storage after the browser is closed. Existing localStorage
- * values are migrated once and removed.
+ * OAuth credentials are deliberately scoped to the current tab. `sessionStorage`
+ * supports page reloads in that tab; the in-memory map keeps authentication working
+ * when Web Storage is unavailable. Neither location is shared with a new tab.
  */
-export const LOCAL_STORAGE_ACCESS_TOKEN_KEY = 'access_token';
-export const LOCAL_STORAGE_REFRESH_TOKEN_KEY = 'refresh_token';
+export const ACCESS_TOKEN_KEY = 'access_token';
+export const REFRESH_TOKEN_KEY = 'refresh_token';
+
+const volatileTokens = new Map<string, string>();
+
+export const AUTH_CREDENTIALS_CLEARED_EVENT = 'auth-credentials-cleared';
+
+// Credential erasure is a generation boundary. A refresh that began in an
+// earlier generation must never be allowed to restore credentials afterward.
+let credentialGeneration = 0;
+let pendingRefreshPromise: Promise<string | null> | null = null;
+let pendingRefreshController: AbortController | null = null;
+let lastSuccessfulRefresh: { token: string; timestamp: number } | null = null;
+
+/** Remove credentials that might have been written by older application versions. */
+const clearLegacyPersistentToken = (key: string): void => {
+  try {
+    window.localStorage.removeItem(key);
+  } catch {
+    // Storage may be unavailable or disabled. It is never a credential source.
+  }
+};
 
 const readToken = (key: string): string => {
   if (typeof window === 'undefined') return '';
 
-  try {
-    const sessionToken = window.sessionStorage.getItem(key);
-    if (sessionToken) return sessionToken;
-  } catch {
-    // Fall back to the legacy store below when sessionStorage is unavailable.
-  }
+  // Do not revive a credential from persistent storage. Clean up old values so
+  // they cannot be recovered by a later application version either.
+  clearLegacyPersistentToken(key);
+
+  const volatileToken = volatileTokens.get(key);
+  if (volatileToken) return volatileToken;
 
   try {
-    const legacyToken = window.localStorage.getItem(key);
-    if (!legacyToken) return '';
-
-    // Migrate legacy persistent tokens to a tab-scoped store immediately.
-    try {
-      window.sessionStorage.setItem(key, legacyToken);
-      window.localStorage.removeItem(key);
-    } catch {
-      // Private/restricted browsing may reject either storage API. Keeping the
-      // legacy value preserves login functionality in that environment.
-    }
-    return legacyToken;
+    return window.sessionStorage.getItem(key) || '';
   } catch {
     return '';
   }
 };
 
-export const getStoredAccessToken = (): string => readToken(LOCAL_STORAGE_ACCESS_TOKEN_KEY);
+export const getStoredAccessToken = (): string => {
+  // Startup reads are the normal entry point for authentication. Remove both
+  // legacy credentials here so an old persistent refresh token cannot remain
+  // resident until a refresh attempt happens later.
+  clearLegacyPersistentToken(REFRESH_TOKEN_KEY);
+  return readToken(ACCESS_TOKEN_KEY);
+};
 
-export const getStoredRefreshToken = (): string => readToken(LOCAL_STORAGE_REFRESH_TOKEN_KEY);
+export const getStoredRefreshToken = (): string => readToken(REFRESH_TOKEN_KEY);
 
 export const setStoredToken = (key: string, value: string): void => {
   if (typeof window === 'undefined') return;
+
+  volatileTokens.set(key, value);
   try {
     window.sessionStorage.setItem(key, value);
-    // Remove any legacy copy so a refresh token cannot remain persistent.
-    try {
-      window.localStorage.removeItem(key);
-    } catch {
-      // A blocked legacy store does not change the sessionStorage write.
-    }
-    return;
   } catch {
-    // Fall back to persistent storage only when sessionStorage is unavailable.
+    // The in-memory copy keeps this tab authenticated when Web Storage is blocked.
   }
-
-  try {
-    window.localStorage.setItem(key, value);
-  } catch {
-    // Storage can be blocked; the caller still has the in-memory token.
-  }
+  clearLegacyPersistentToken(key);
 };
 
 export const removeStoredToken = (key: string): void => {
   if (typeof window === 'undefined') return;
+
+  volatileTokens.delete(key);
   try {
     window.sessionStorage.removeItem(key);
   } catch {
     // Ignore unavailable storage.
   }
-  try {
-    window.localStorage.removeItem(key);
-  } catch {
-    // Ignore unavailable storage.
-  }
+  clearLegacyPersistentToken(key);
 };
 
 export const clearStoredTokens = (): void => {
-  removeStoredToken(LOCAL_STORAGE_ACCESS_TOKEN_KEY);
-  removeStoredToken(LOCAL_STORAGE_REFRESH_TOKEN_KEY);
+  credentialGeneration += 1;
+  lastSuccessfulRefresh = null;
+  pendingRefreshController?.abort();
+  pendingRefreshController = null;
+  pendingRefreshPromise = null;
+  removeStoredToken(ACCESS_TOKEN_KEY);
+  removeStoredToken(REFRESH_TOKEN_KEY);
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new Event(AUTH_CREDENTIALS_CLEARED_EVENT));
+  }
 };
 
 export function setPkceCodeVerifier(verifier: string): void {
@@ -291,13 +301,10 @@ const OAUTH_TOKEN_URL = 'https://www.esologs.com/oauth/token';
 // Deduplication guard: if a refresh is already in flight (e.g. proactive timer
 // refresh racing an error-link 401 refresh), all callers share the same Promise
 // so we never burn the single-use refresh token on two concurrent requests.
-let pendingRefreshPromise: Promise<string | null> | null = null;
-
 // Cooldown guard: after a successful refresh, subsequent calls within the
 // cooldown window return the cached token instead of starting a new request.
 // This handles the case where the proactive refresh completes before a concurrent
 // error-link 401 refresh starts (pendingRefreshPromise is already cleared).
-let lastSuccessfulRefresh: { token: string; timestamp: number } | null = null;
 const REFRESH_COOLDOWN_MS = 10_000;
 
 // Abort a hung token request after this window (matches roster-hub-api's
@@ -308,8 +315,11 @@ const REFRESH_TIMEOUT_MS = 15_000;
 
 /** @internal Reset module-level refresh state — for tests only. */
 export function _resetRefreshState(): void {
+  pendingRefreshController?.abort();
+  pendingRefreshController = null;
   pendingRefreshPromise = null;
   lastSuccessfulRefresh = null;
+  credentialGeneration = 0;
 }
 
 /**
@@ -336,8 +346,11 @@ export async function refreshAccessToken(): Promise<string | null> {
     return null;
   }
 
-  pendingRefreshPromise = (async (): Promise<string | null> => {
+  const refreshGeneration = credentialGeneration;
+  let refreshPromise!: Promise<string | null>;
+  refreshPromise = (async (): Promise<string | null> => {
     const controller = new AbortController();
+    pendingRefreshController = controller;
     const timer = setTimeout(() => controller.abort(), REFRESH_TIMEOUT_MS);
     try {
       const body = new URLSearchParams({
@@ -362,25 +375,41 @@ export async function refreshAccessToken(): Promise<string | null> {
 
       const data = await response.json();
 
+      // Explicit logout/privacy erasure wins over every earlier async refresh,
+      // even if the network response was already too far along to abort.
+      if (credentialGeneration !== refreshGeneration) {
+        return null;
+      }
+
       // Store new tokens
-      setStoredToken(LOCAL_STORAGE_ACCESS_TOKEN_KEY, data.access_token);
+      setStoredToken(ACCESS_TOKEN_KEY, data.access_token);
       if (data.refresh_token) {
-        setStoredToken(LOCAL_STORAGE_REFRESH_TOKEN_KEY, data.refresh_token);
+        setStoredToken(REFRESH_TOKEN_KEY, data.refresh_token);
       }
 
       logger.info('Token refreshed successfully');
       lastSuccessfulRefresh = { token: data.access_token, timestamp: Date.now() };
       return data.access_token;
     } catch (error) {
+      if (credentialGeneration !== refreshGeneration) {
+        return null;
+      }
       logger.error('Token refresh error', error instanceof Error ? error : undefined);
       // Clear invalid tokens
       clearStoredTokens();
       return null;
     } finally {
       clearTimeout(timer);
-      pendingRefreshPromise = null;
+      if (pendingRefreshController === controller) {
+        pendingRefreshController = null;
+      }
+      if (pendingRefreshPromise === refreshPromise) {
+        pendingRefreshPromise = null;
+      }
     }
   })();
 
-  return pendingRefreshPromise;
+  pendingRefreshPromise = refreshPromise;
+
+  return refreshPromise;
 }

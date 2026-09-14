@@ -13,7 +13,8 @@
  * chunk fetch is kicked off imperatively (see `preloadReportFightDetails`) at
  * entry evaluation when the URL is already a report route, so it downloads in
  * parallel with the rest of boot exactly as a static import would have. Users
- * arriving from the report list get it warmed on idle instead. Everyone else
+ * arriving from the report list warm it only after targeting a specific fight.
+ * Everyone else
  * never pays for it at all.
  *
  * This importer is the SINGLE SOURCE OF TRUTH for the chunk: `App.tsx` builds
@@ -28,15 +29,15 @@ export const importReportFightDetails = (): Promise<
 // Importers that are currently loading or have already loaded successfully.
 // Repeated calls skip these so we never re-fire a healthy preload. A REJECTED
 // preload is removed again (in the .catch) so a later call can retry: a transient
-// background failure (e.g. an idle preload during a network blip) must not
-// permanently poison warming and leave a later mount unable to re-warm.
+// background failure during an intentional preload must not permanently poison
+// warming and leave a later interaction unable to re-warm.
 const warming = new Set<() => Promise<unknown>>();
 
 /**
  * Warm the fight-details route chunk so the route resolves without a network
  * round trip when the user gets there.
  *
- * Safe to invoke repeatedly (entry evaluation, plus every report-list mount): an
+ * Safe to invoke repeatedly (entry evaluation, plus report-fight intent): an
  * importer already loading or loaded is skipped, but one whose previous attempt
  * rejected is retried. Import rejections are swallowed — a failed *preload* must
  * never surface as an unhandled rejection; the route's own Suspense boundary and
@@ -51,7 +52,7 @@ export function preloadReportFightDetails(
   if (warming.has(load)) return;
   warming.add(load);
   void load().catch(() => {
-    // Transient failure — allow a later call (a later mount) to retry.
+    // Transient failure — allow a later intentional interaction to retry.
     warming.delete(load);
   });
 }

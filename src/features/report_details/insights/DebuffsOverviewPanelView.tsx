@@ -24,8 +24,6 @@ interface PlayerOption {
 
 interface DebuffsOverviewPanelViewProps {
   debuffOverviewData: DebuffOverviewData[];
-  isLoading: boolean;
-  error?: string | null;
   selectedTargetId?: number | null;
   selectedPlayerId?: number | null;
   availablePlayers: PlayerOption[];
@@ -34,8 +32,6 @@ interface DebuffsOverviewPanelViewProps {
 
 export const DebuffsOverviewPanelView: React.FC<DebuffsOverviewPanelViewProps> = ({
   debuffOverviewData,
-  isLoading,
-  error,
   selectedTargetId,
   selectedPlayerId,
   availablePlayers,
@@ -219,23 +215,6 @@ export const DebuffsOverviewPanelView: React.FC<DebuffsOverviewPanelViewProps> =
 
   return (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <Typography
-        variant="h6"
-        sx={{
-          mb: 2,
-          color: 'text.primary',
-          fontWeight: 600,
-        }}
-      >
-        {targetName && playerName
-          ? `Debuffs Overview - ${targetName} (by ${playerName})`
-          : targetName
-            ? `Debuffs Overview - ${targetName}`
-            : playerName
-              ? `Debuffs Overview (by ${playerName})`
-              : 'Debuffs Overview'}
-      </Typography>
-
       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
         {targetName && playerName
           ? `Shows debuffs applied by ${playerName} to ${targetName} during this fight.`
@@ -278,8 +257,8 @@ export const DebuffsOverviewPanelView: React.FC<DebuffsOverviewPanelViewProps> =
         enableSorting={true}
         enableFiltering={true}
         enablePagination={true}
-        loading={isLoading}
-        emptyMessage={error || 'No debuff data available'}
+        loading={false}
+        emptyMessage="No debuff data available"
       />
     </Box>
   );

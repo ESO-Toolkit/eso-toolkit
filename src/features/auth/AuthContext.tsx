@@ -16,9 +16,10 @@ import { addBreadcrumb, setUserContext } from '../../utils/errorTracking';
 import { Logger, LogLevel } from '../../utils/logger';
 
 import {
+  AUTH_CREDENTIALS_CLEARED_EVENT,
   getStoredAccessToken,
   removeStoredToken,
-  LOCAL_STORAGE_ACCESS_TOKEN_KEY,
+  ACCESS_TOKEN_KEY,
   refreshAccessToken,
 } from './auth';
 import {
@@ -89,7 +90,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [isBanned, setIsBanned] = useState<boolean>(false);
   const [banReason, setBanReason] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
-  // Initialize userLoading to true when a valid token exists in browser storage.
+  // Initialize userLoading to true when a valid token exists in tab-scoped storage.
   // This prevents child components (e.g. HeaderBar) from prematurely calling
   // refetchUser() before AuthProvider's effects have synced the token to the
   // EsoLogsClient — child effects run before parent effects in React.
@@ -109,6 +110,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const accessTokenExpiry = React.useMemo(() => getAccessTokenExpiry(accessToken), [accessToken]);
   const accessTokenExpired = React.useMemo(() => isAccessTokenExpired(accessToken), [accessToken]);
   const lastUserPropertyPayload = React.useRef<string>('');
+  const authEpochRef = React.useRef(0);
 
   if (isDevelopment()) {
     logger.debug('render', {
@@ -128,7 +130,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setAnalyticsUserId(subject);
   }, [accessToken]);
 
-  // Re-bind access token from browser storage (sessionStorage, with legacy migration).
+  // Re-bind access token from this tab's credential store.
   const rebindAccessToken = useCallback(() => {
     const token = getStoredAccessToken();
     setAccessToken(token);
@@ -153,6 +155,28 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     },
     [setAuthToken],
   );
+
+  // Token storage is also cleared by privacy erasure and refresh failures.
+  // Treat that signal as an atomic live-session boundary: clear React state,
+  // the client's bearer token, and its private Apollo cache together.
+  useEffect(() => {
+    const handleCredentialsCleared = (): void => {
+      authEpochRef.current += 1;
+      setAccessToken('');
+      setCurrentUser(null);
+      setUserLoading(false);
+      setUserError(null);
+      setIsBanned(false);
+      setBanReason(null);
+      clearAuthToken();
+      addBreadcrumb('Auth: Live session cleared after credential erasure', 'auth');
+    };
+
+    window.addEventListener(AUTH_CREDENTIALS_CLEARED_EVENT, handleCredentialsCleared);
+    return () => {
+      window.removeEventListener(AUTH_CREDENTIALS_CLEARED_EVENT, handleCredentialsCleared);
+    };
+  }, [clearAuthToken]);
 
   // Schedule proactive token refresh 60 s before expiry so the session never
   // silently dies mid-use.  If the refresh fails, tokens are cleared by
@@ -219,6 +243,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     setUserLoading(true);
     setUserError(null);
+    const requestAuthEpoch = authEpochRef.current;
     addBreadcrumb('Auth: Fetching current user', 'auth', {
       tokenHasUser: accessTokenHasUser,
       tokenExpired: accessTokenExpired,
@@ -228,6 +253,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const result = await esoLogsClient.query<GetCurrentUserQuery>({
         query: GetCurrentUserDocument,
       });
+
+      if (authEpochRef.current !== requestAuthEpoch) return;
 
       const fetchedUser = result?.userData?.currentUser ?? null;
 
@@ -240,14 +267,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       if (fetchedUser) {
         const banCheck = await checkUserBan(fetchedUser);
+        if (authEpochRef.current !== requestAuthEpoch) return;
         if (banCheck.isBanned) {
           const reason = banCheck.reason || DEFAULT_BAN_REASON;
           setIsBanned(true);
           setBanReason(reason);
           setUserError(reason);
           setCurrentUser(null);
-          // Remove the access token from both session and legacy storage.
-          removeStoredToken(LOCAL_STORAGE_ACCESS_TOKEN_KEY);
+          removeStoredToken(ACCESS_TOKEN_KEY);
           updateAccessToken('');
           addBreadcrumb('Auth: Banned user detected', 'auth', {
             userId: fetchedUser.id,
@@ -277,6 +304,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         addBreadcrumb('Auth: No user data returned', 'auth');
       }
     } catch (error) {
+      if (authEpochRef.current !== requestAuthEpoch) return;
       logger.error('Failed to fetch current user', error instanceof Error ? error : undefined);
       setUserError(error instanceof Error ? error.message : 'Failed to fetch user data');
       setIsBanned(false);
@@ -286,7 +314,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         errorMessage: error instanceof Error ? error.message : String(error),
       });
     } finally {
-      setUserLoading(false);
+      if (authEpochRef.current === requestAuthEpoch) {
+        setUserLoading(false);
+      }
     }
   }, [
     esoLogsClient,
@@ -298,23 +328,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   ]);
 
   useEffect(() => {
-    // Listen for legacy storage changes (e.g., from OAuthRedirect in another context).
-    const handler = (): void => {
-      const token = getStoredAccessToken();
-      setAccessToken(token);
-      setAuthToken(token);
-      addBreadcrumb('Auth: Access token updated via storage event', 'auth', {
-        tokenPresent: Boolean(token),
-      });
-    };
-    window.addEventListener('storage', handler);
-
-    // Initialize token on mount
+    // Initialize from this tab only. Session storage does not synchronize a
+    // credential to another tab, and persistent storage is never consulted.
     const initialToken = getStoredAccessToken();
     setAccessToken(initialToken);
     setAuthToken(initialToken);
-
-    return () => window.removeEventListener('storage', handler);
   }, [setAuthToken]);
 
   const isLoggedIn =

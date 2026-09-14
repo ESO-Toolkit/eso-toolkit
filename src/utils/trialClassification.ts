@@ -11,6 +11,8 @@
 
 import type { FightFragment, ReportFragment } from '../graphql/gql/graphql';
 
+import { getCanonicalFightOutcome } from './fightOutcome';
+
 /**
  * Map a boss name (falling back to the report zone) to its trial name.
  *
@@ -284,46 +286,34 @@ export function isFalsePositiveWipe(fight: FightFragment): boolean {
 
 /** The kill/wipe outcome of a fight, with the boss-vs-trash distinction resolved. */
 export interface FightOutcome {
-  /** True when the fight is a boss encounter (has a difficulty), false for trash. */
+  /** True when the fight is a boss encounter, false for trash. */
   isBoss: boolean;
-  /** True when the boss was killed (or a false-positive wipe), or trash cleared. */
+  /** True when the fight was killed under the authoritative outcome rule. */
   isKill: boolean;
-  /** True when the pull was a genuine wipe (not a kill, not a false positive). */
+  /** True when the pull was a wipe under the authoritative outcome rule. */
   isWipe: boolean;
-  /** True when a ~100% "wipe" was reclassified as a kill (ESO Logs quirk). */
+  /**
+   * True when a wipe has the full-HP / short-duration false-positive signature.
+   * This replay annotation never overrides the authoritative outcome.
+   */
   isFalsePositiveWipe: boolean;
-  /** Boss health % remaining at the end (rounded), or null for trash / unknown. */
+  /** Boss health % remaining at the end, or null when unknown. */
   bossPercentage: number | null;
 }
 
 /**
- * Derive a fight's outcome using the same rules the report fight cards use:
- * boss fights are judged on `bossPercentage` (<=1% = kill), trash on `kill`.
+ * Derive replay presentation fields from the shared authoritative outcome rule.
+ * The false-positive heuristic remains a replay annotation.
  */
 export function getFightOutcome(fight: FightFragment): FightOutcome {
-  const isBoss = fight.difficulty != null;
+  const outcome = getCanonicalFightOutcome(fight);
+  const falsePositive = outcome.status === 'wipe' && isFalsePositiveWipe(fight);
 
-  if (isBoss) {
-    const pct = fight.bossPercentage;
-    const bossWasKilled = pct !== null && pct !== undefined && pct <= 1.0;
-    const rawIsWipe = pct !== null && pct !== undefined && pct > 1.0;
-    const falsePositive = rawIsWipe && isFalsePositiveWipe(fight);
-    return {
-      isBoss: true,
-      isKill: bossWasKilled || falsePositive,
-      isWipe: rawIsWipe && !falsePositive,
-      isFalsePositiveWipe: falsePositive,
-      bossPercentage: pct !== null && pct !== undefined ? Math.round(pct) : null,
-    };
-  }
-
-  // Trash: `kill === false` is a wipe; true/null is treated as cleared.
-  const wasKilled = fight.kill === true || fight.kill === null;
   return {
-    isBoss: false,
-    isKill: wasKilled,
-    isWipe: fight.kill === false,
-    isFalsePositiveWipe: false,
-    bossPercentage: null,
+    isBoss: outcome.isBoss,
+    isKill: outcome.status === 'kill',
+    isWipe: outcome.status === 'wipe',
+    isFalsePositiveWipe: falsePositive,
+    bossPercentage: outcome.isBoss ? outcome.bossHealthRemaining : null,
   };
 }

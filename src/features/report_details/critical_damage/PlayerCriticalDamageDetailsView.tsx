@@ -50,9 +50,9 @@ export interface PlayerCriticalDamageData {
   playerId: number;
   playerName: string;
   dataPoints: CriticalDamageDataPoint[];
-  effectiveCriticalDamage: number;
-  maximumCriticalDamage: number;
-  timeAtCapPercentage: number;
+  effectiveCriticalDamage: number | null;
+  maximumCriticalDamage: number | null;
+  timeAtCapPercentage: number | null;
   criticalDamageAlerts: CriticalDamageAlert[];
   inactiveCombatIntervals: Array<{ start: number; end: number }>;
   /** Active combat intervals (absolute timestamps). Used to keep time-at-cap filtered to
@@ -63,13 +63,13 @@ export interface PlayerCriticalDamageData {
 interface CriticalMultiplierInfo {
   abilityName: string;
   abilityId: number;
-  criticalDamage: number;
-  normalDamage: number;
-  criticalMultiplier: number;
+  criticalDamage: number | null;
+  normalDamage: number | null;
+  criticalMultiplier: number | null;
   foundPair: boolean;
   criticalTimestamp: number;
-  accountedCritDamagePercent: number;
-  unaccountedCritDamagePercent: number;
+  accountedCritDamagePercent: number | null;
+  unaccountedCritDamagePercent: number | null;
   activeSources: CriticalDamageSource[];
 }
 
@@ -86,9 +86,11 @@ interface PlayerCriticalDamageDetailsViewProps {
   criticalMultiplier: CriticalMultiplierInfo | null;
   fightDurationMs: number;
   /** Report code for building "View on ESO Logs" deep links. */
-  reportId?: string | null;
+  reportId?: string | number | null;
   /** Fight id for building "View on ESO Logs" deep links. */
-  fightId?: string | null;
+  fightId?: string | number | null;
+  /** Explains missing or omitted measurements without replacing valid values with zero. */
+  dataQualityMessage?: string;
   onExpandChange?: (event: React.SyntheticEvent, isExpanded: boolean) => void;
   phaseTransitionInfo?: PhaseTransitionInfo;
 }
@@ -98,19 +100,26 @@ interface PlayerCriticalDamageDetailsViewProps {
  * to the current report, fight and player. Returns undefined when the report or
  * fight context is unavailable so callers can omit the link entirely.
  */
-const buildEsoLogsSourceUrl = (
-  reportId: string | null | undefined,
-  fightId: string | null | undefined,
+export const buildEsoLogsSourceUrl = (
+  reportId: string | number | null | undefined,
+  fightId: string | number | null | undefined,
   abilityId: number,
   playerId: number,
   isDebuff: boolean,
 ): string | undefined => {
-  if (!reportId || !fightId) {
+  if (
+    reportId === null ||
+    reportId === undefined ||
+    reportId === '' ||
+    fightId === null ||
+    fightId === undefined ||
+    fightId === ''
+  ) {
     return undefined;
   }
 
   const params = new URLSearchParams({
-    fight: fightId,
+    fight: String(fightId),
     type: 'auras',
     hostility: isDebuff ? '1' : '0',
     ability: String(abilityId),
@@ -128,7 +137,58 @@ const buildEsoLogsSourceUrl = (
     params.set('target', String(playerId));
   }
 
-  return `https://www.esologs.com/reports/${encodeURIComponent(reportId)}?${params.toString()}`;
+  return `https://www.esologs.com/reports/${encodeURIComponent(String(reportId))}?${params.toString()}`;
+};
+
+const isFiniteNumber = (value: unknown): value is number =>
+  typeof value === 'number' && Number.isFinite(value);
+
+const isValidCombatInterval = (interval: unknown): interval is { start: number; end: number } =>
+  !!interval &&
+  typeof interval === 'object' &&
+  isFiniteNumber((interval as Record<string, unknown>).start) &&
+  isFiniteNumber((interval as Record<string, unknown>).end);
+
+export const getValidCriticalDamageDataPoints = (
+  dataPoints: unknown,
+): CriticalDamageDataPoint[] => {
+  if (!Array.isArray(dataPoints)) return [];
+  return dataPoints.filter(
+    (point): point is CriticalDamageDataPoint =>
+      !!point &&
+      typeof point === 'object' &&
+      isFiniteNumber((point as Record<string, unknown>).timestamp) &&
+      isFiniteNumber((point as Record<string, unknown>).relativeTime) &&
+      isFiniteNumber((point as Record<string, unknown>).criticalDamage),
+  );
+};
+
+const metricValue = (value: number | null, fractionDigits: number): string =>
+  value === null ? 'Unavailable' : value.toFixed(fractionDigits);
+
+const finiteValue = (value: number | null): number | null => (isFiniteNumber(value) ? value : null);
+
+const formatDamageAverage = (value: number | null): string => {
+  const finiteDamage = finiteValue(value);
+  return finiteDamage !== null && finiteDamage >= 0 ? finiteDamage.toLocaleString() : 'Unavailable';
+};
+
+export const getCriticalDamageMetricIntent = (
+  value: number | null,
+): 'success' | 'warning' | 'danger' | 'neutral' => {
+  if (value === null) return 'neutral';
+  if (value >= 125) return 'success';
+  if (value >= 100) return 'warning';
+  return 'danger';
+};
+
+export const getTimeAtCapMetricIntent = (
+  value: number | null,
+): 'success' | 'warning' | 'danger' | 'neutral' => {
+  if (value === null) return 'neutral';
+  if (value >= 80) return 'success';
+  if (value >= 50) return 'warning';
+  return 'danger';
 };
 
 export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetailsViewProps> = ({
@@ -147,6 +207,7 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
   fightId,
   onExpandChange,
   phaseTransitionInfo,
+  dataQualityMessage,
 }) => {
   const roleColors = useRoleColors();
 
@@ -159,7 +220,7 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
       return {
         id: sourceId,
         name: source.name,
-        wasActive: source.wasActive,
+        wasActive: source.wasActive === true,
         description: source.description,
         sourceType: source.source,
         interactive: isInteractive,
@@ -181,19 +242,27 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
 
   const { theme } = useEChartsTheme();
 
-  const chartData = React.useMemo(() => {
-    return (
-      criticalDamageData?.dataPoints.map((point) => [point.relativeTime, point.criticalDamage]) ||
-      []
-    );
+  const validDataPoints = React.useMemo(() => {
+    return getValidCriticalDamageDataPoints(criticalDamageData?.dataPoints);
   }, [criticalDamageData?.dataPoints]);
 
+  const chartData = React.useMemo(() => {
+    return validDataPoints.map((point) => [point.relativeTime, point.criticalDamage]);
+  }, [validDataPoints]);
+
+  const validInactiveCombatIntervals = React.useMemo(() => {
+    const intervals = criticalDamageData?.inactiveCombatIntervals;
+    return Array.isArray(intervals) ? intervals.filter(isValidCombatInterval) : [];
+  }, [criticalDamageData?.inactiveCombatIntervals]);
+
   const phaseMarkLines = usePhaseMarkLines(phaseTransitionInfo);
-  const inactiveMarkAreas = useInactiveMarkAreas(criticalDamageData?.inactiveCombatIntervals);
+  const inactiveMarkAreas = useInactiveMarkAreas(validInactiveCombatIntervals);
 
   const chartOption = React.useMemo(() => {
     const lineColor = '#d32f2f';
-    const fightDuration = msToSeconds(fightDurationMs);
+    const fightDuration = msToSeconds(
+      isFiniteNumber(fightDurationMs) ? Math.max(0, fightDurationMs) : 0,
+    );
 
     const targetLine = buildGoalMarkLine(125, 'Target: 125%', '#2e7d32');
     const markLineData = [targetLine];
@@ -324,10 +393,53 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
     );
   }
 
-  const maxCriticalDamage = Math.max(
-    ...criticalDamageData.dataPoints.map((point) => point.criticalDamage),
-    0,
-  );
+  const hasValidSamples = validDataPoints.length > 0;
+  const maxCriticalDamage = hasValidSamples
+    ? Math.max(...validDataPoints.map((point) => point.criticalDamage))
+    : null;
+  const effectiveCriticalDamage =
+    hasValidSamples && isFiniteNumber(criticalDamageData.effectiveCriticalDamage)
+      ? criticalDamageData.effectiveCriticalDamage
+      : null;
+  const timeAtCapPercentage =
+    hasValidSamples && isFiniteNumber(criticalDamageData.timeAtCapPercentage)
+      ? criticalDamageData.timeAtCapPercentage
+      : null;
+  const unavailableSamplesMessage =
+    dataQualityMessage ?? 'No valid critical damage samples were received.';
+  const hasValidMultiplierDenominator =
+    criticalMultiplier !== null &&
+    isFiniteNumber(criticalMultiplier.normalDamage) &&
+    criticalMultiplier.normalDamage > 0;
+  const observedMultiplier =
+    hasValidMultiplierDenominator &&
+    isFiniteNumber(criticalMultiplier.criticalMultiplier) &&
+    criticalMultiplier.criticalMultiplier >= 0 &&
+    isFiniteNumber(criticalMultiplier.criticalMultiplier * 100)
+      ? criticalMultiplier.criticalMultiplier
+      : null;
+  const accountedCritDamagePercent =
+    hasValidMultiplierDenominator &&
+    isFiniteNumber(criticalMultiplier.accountedCritDamagePercent) &&
+    isFiniteNumber(criticalMultiplier.accountedCritDamagePercent + 50)
+      ? criticalMultiplier.accountedCritDamagePercent
+      : null;
+  const unaccountedCritDamagePercent =
+    hasValidMultiplierDenominator && isFiniteNumber(criticalMultiplier.unaccountedCritDamagePercent)
+      ? criticalMultiplier.unaccountedCritDamagePercent
+      : null;
+  const hasCompleteMultiplierAnalysis =
+    observedMultiplier !== null &&
+    accountedCritDamagePercent !== null &&
+    unaccountedCritDamagePercent !== null;
+  const multiplierUnavailableMessage =
+    criticalMultiplier === null
+      ? 'Critical multiplier analysis is unavailable because no matched normal and critical hit sample was found.'
+      : !hasValidMultiplierDenominator
+        ? 'Critical multiplier analysis is unavailable because a positive finite normal-damage average is required.'
+        : !hasCompleteMultiplierAnalysis
+          ? 'Some critical multiplier values are unavailable because the calculated data is incomplete or invalid.'
+          : null;
 
   return (
     <Accordion
@@ -381,35 +493,23 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
             <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 2.5, alignItems: 'center' }}>
               <MetricPill
                 label="Max"
-                value={maxCriticalDamage}
-                suffix="%"
-                intent={maxCriticalDamage >= 125 ? 'success' : 'danger'}
+                value={metricValue(maxCriticalDamage, 0)}
+                suffix={maxCriticalDamage === null ? undefined : '%'}
+                intent={getCriticalDamageMetricIntent(maxCriticalDamage)}
                 size="md"
               />
               <MetricPill
                 label="Active"
-                value={criticalDamageData.effectiveCriticalDamage.toFixed(1)}
-                suffix="%"
-                intent={
-                  criticalDamageData.effectiveCriticalDamage >= 125
-                    ? 'success'
-                    : criticalDamageData.effectiveCriticalDamage >= 100
-                      ? 'warning'
-                      : 'danger'
-                }
+                value={metricValue(effectiveCriticalDamage, 1)}
+                suffix={effectiveCriticalDamage === null ? undefined : '%'}
+                intent={getCriticalDamageMetricIntent(effectiveCriticalDamage)}
                 size="md"
               />
               <MetricPill
                 label="At Cap"
-                value={criticalDamageData.timeAtCapPercentage.toFixed(0)}
-                suffix="%"
-                intent={
-                  criticalDamageData.timeAtCapPercentage >= 80
-                    ? 'success'
-                    : criticalDamageData.timeAtCapPercentage >= 50
-                      ? 'warning'
-                      : 'danger'
-                }
+                value={metricValue(timeAtCapPercentage, 0)}
+                suffix={timeAtCapPercentage === null ? undefined : '%'}
+                intent={getTimeAtCapMetricIntent(timeAtCapPercentage)}
                 size="md"
               />
             </Box>
@@ -433,35 +533,23 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
               >
                 <MetricPill
                   label="Max"
-                  value={maxCriticalDamage}
-                  suffix="%"
-                  intent={maxCriticalDamage >= 125 ? 'success' : 'danger'}
+                  value={metricValue(maxCriticalDamage, 0)}
+                  suffix={maxCriticalDamage === null ? undefined : '%'}
+                  intent={getCriticalDamageMetricIntent(maxCriticalDamage)}
                   size="sm"
                 />
                 <MetricPill
                   label="Active"
-                  value={criticalDamageData.effectiveCriticalDamage.toFixed(1)}
-                  suffix="%"
-                  intent={
-                    criticalDamageData.effectiveCriticalDamage >= 125
-                      ? 'success'
-                      : criticalDamageData.effectiveCriticalDamage >= 100
-                        ? 'warning'
-                        : 'danger'
-                  }
+                  value={metricValue(effectiveCriticalDamage, 1)}
+                  suffix={effectiveCriticalDamage === null ? undefined : '%'}
+                  intent={getCriticalDamageMetricIntent(effectiveCriticalDamage)}
                   size="sm"
                 />
                 <MetricPill
                   label="At Cap"
-                  value={criticalDamageData.timeAtCapPercentage.toFixed(0)}
-                  suffix="%"
-                  intent={
-                    criticalDamageData.timeAtCapPercentage >= 80
-                      ? 'success'
-                      : criticalDamageData.timeAtCapPercentage >= 50
-                        ? 'warning'
-                        : 'danger'
-                  }
+                  value={metricValue(timeAtCapPercentage, 0)}
+                  suffix={timeAtCapPercentage === null ? undefined : '%'}
+                  intent={getTimeAtCapMetricIntent(timeAtCapPercentage)}
                   size="sm"
                 />
               </Box>
@@ -475,94 +563,21 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
               onToggleSource={onSourceToggle}
             />
 
-            {/* Critical Multiplier Information */}
-            {criticalMultiplier && (
-              <Paper
-                variant="outlined"
-                sx={{
-                  p: 2,
-                  mb: 2,
-                  background:
-                    'linear-gradient(135deg, rgba(175, 82, 222, 0.15) 0%, rgba(175, 82, 222, 0.08) 50%, rgba(175, 82, 222, 0.04) 100%)',
-                  border: '1px solid rgba(175, 82, 222, 0.3)',
-                  borderRadius: 2,
-                  backdropFilter: 'blur(10px)',
-                  WebkitBackdropFilter: 'blur(10px)',
-                }}
-              >
-                <Typography
-                  variant="h6"
-                  sx={{
-                    mb: 2,
-                    textShadow:
-                      '0 2px 4px rgb(0 0 0 / 0%), 0 4px 8px rgba(0, 0, 0, 0.4), 0 8px 16px rgba(0, 0, 0, 0.2)',
-                  }}
-                >
-                  Critical Multiplier Analysis
-                </Typography>
-                <Typography variant="body2" sx={{ mb: 1 }}>
-                  <strong>Ability:</strong> {criticalMultiplier.abilityName}
-                </Typography>
-                <Typography variant="body2" sx={{ mb: 1 }}>
-                  <strong>Normal Damage (Avg):</strong>{' '}
-                  {criticalMultiplier.normalDamage.toLocaleString()}
-                </Typography>
-                <Typography variant="body2" sx={{ mb: 1 }}>
-                  <strong>Critical Damage (Avg):</strong>{' '}
-                  {criticalMultiplier.criticalDamage.toLocaleString()}
-                </Typography>
-
-                <Typography variant="body2" sx={{ mb: 1 }}>
-                  <strong>Critical Multiplier:</strong>{' '}
-                  {criticalMultiplier.criticalMultiplier.toFixed(2)}x (Critical damage is{' '}
-                  {(criticalMultiplier.criticalMultiplier * 100).toFixed(0)}% of normal damage)
-                </Typography>
-
-                <Typography variant="body2" sx={{ mb: 1, color: '#2e7d32', fontWeight: 'bold' }}>
-                  <strong>Accounted Critical Damage:</strong>{' '}
-                  {(criticalMultiplier.accountedCritDamagePercent + 50).toFixed(1)}% total
-                  <span style={{ color: '#666', marginLeft: '4px' }}>
-                    (50% base + {criticalMultiplier.accountedCritDamagePercent.toFixed(1)}% bonus)
-                  </span>
-                </Typography>
-
-                <Typography
-                  variant="body2"
-                  sx={{
-                    mb: 2,
-                    color:
-                      criticalMultiplier.unaccountedCritDamagePercent > 0 ? '#d32f2f' : '#2e7d32',
-                    fontWeight: 'bold',
-                  }}
-                >
-                  <strong>Unaccounted Critical Damage:</strong>{' '}
-                  {criticalMultiplier.unaccountedCritDamagePercent.toFixed(1)}%
-                  {criticalMultiplier.unaccountedCritDamagePercent > 0 &&
-                    ' (This could be from unknown sources like gear sets, mundus stones, or other effects)'}
-                </Typography>
-
-                <Typography
-                  variant="body2"
-                  sx={{ color: 'text.secondary', mt: 2, fontStyle: 'italic' }}
-                >
-                  Critical damage bonuses are additive before being applied as a multiplier. For
-                  example, if you have 75% critical damage total (50% base + 25% from sources), your
-                  critical hits will do 175% of normal damage (1.75x multiplier). This analysis
-                  compares the actual multiplier observed in combat against what we expect from
-                  known additive sources.
-                </Typography>
-              </Paper>
+            {dataQualityMessage && (
+              <Typography role="status" sx={{ mb: 2, color: 'warning.main' }}>
+                {dataQualityMessage}
+              </Typography>
             )}
 
-            {/* Critical Damage vs Time Chart */}
+            {/* Critical Multiplier Information */}
             <Paper
               variant="outlined"
               sx={{
                 p: 2,
                 mb: 2,
                 background:
-                  'linear-gradient(135deg, rgba(0, 122, 255, 0.15) 0%, rgba(0, 122, 255, 0.08) 50%, rgba(0, 122, 255, 0.04) 100%)',
-                border: '1px solid rgba(0, 122, 255, 0.3)',
+                  'linear-gradient(135deg, rgba(175, 82, 222, 0.15) 0%, rgba(175, 82, 222, 0.08) 50%, rgba(175, 82, 222, 0.04) 100%)',
+                border: '1px solid rgba(175, 82, 222, 0.3)',
                 borderRadius: 2,
                 backdropFilter: 'blur(10px)',
                 WebkitBackdropFilter: 'blur(10px)',
@@ -576,18 +591,136 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
                     '0 2px 4px rgb(0 0 0 / 0%), 0 4px 8px rgba(0, 0, 0, 0.4), 0 8px 16px rgba(0, 0, 0, 0.2)',
                 }}
               >
-                Critical Damage vs Time
+                Critical Multiplier Analysis
               </Typography>
-              <EChart option={chartOption} height={300} group="fightReport" />
-              <Typography
-                variant="caption"
-                sx={{ color: 'text.secondary', mt: 1, display: 'block' }}
-              >
-                Shows critical damage changes over the duration of the fight. Data downsampled to
-                0.5-second intervals (highest value per interval). Data points:{' '}
-                {criticalDamageData.dataPoints.length}
-              </Typography>
+
+              {multiplierUnavailableMessage && (
+                <Typography role="status" sx={{ mb: 2, color: 'warning.main' }}>
+                  {multiplierUnavailableMessage}
+                </Typography>
+              )}
+
+              {criticalMultiplier && (
+                <Box>
+                  <Typography variant="body2" sx={{ mb: 1 }}>
+                    <strong>Ability:</strong> {criticalMultiplier.abilityName}
+                  </Typography>
+                  <Typography variant="body2" sx={{ mb: 1 }}>
+                    <strong>Normal Damage (Avg):</strong>{' '}
+                    {formatDamageAverage(criticalMultiplier.normalDamage)}
+                  </Typography>
+                  <Typography variant="body2" sx={{ mb: 1 }}>
+                    <strong>Critical Damage (Avg):</strong>{' '}
+                    {formatDamageAverage(criticalMultiplier.criticalDamage)}
+                  </Typography>
+
+                  <Typography variant="body2" sx={{ mb: 1 }}>
+                    <strong>Critical Multiplier:</strong>{' '}
+                    {observedMultiplier === null
+                      ? 'Unavailable'
+                      : `${observedMultiplier.toFixed(2)}x (Critical damage is ${(
+                          observedMultiplier * 100
+                        ).toFixed(0)}% of normal damage)`}
+                  </Typography>
+
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      mb: 1,
+                      color:
+                        accountedCritDamagePercent === null ? 'text.secondary' : 'success.main',
+                      fontWeight: 'bold',
+                    }}
+                  >
+                    <strong>Accounted Critical Damage:</strong>{' '}
+                    {accountedCritDamagePercent === null ? (
+                      'Unavailable'
+                    ) : (
+                      <>
+                        {(accountedCritDamagePercent + 50).toFixed(1)}% total
+                        <Box component="span" sx={{ color: 'text.secondary', ml: 0.5 }}>
+                          (50% base + {accountedCritDamagePercent.toFixed(1)}% bonus)
+                        </Box>
+                      </>
+                    )}
+                  </Typography>
+
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      mb: 2,
+                      color:
+                        unaccountedCritDamagePercent === null
+                          ? 'text.secondary'
+                          : unaccountedCritDamagePercent > 0
+                            ? 'error.main'
+                            : 'success.main',
+                      fontWeight: 'bold',
+                    }}
+                  >
+                    <strong>Unaccounted Critical Damage:</strong>{' '}
+                    {unaccountedCritDamagePercent === null
+                      ? 'Unavailable'
+                      : `${unaccountedCritDamagePercent.toFixed(1)}%`}
+                    {unaccountedCritDamagePercent !== null &&
+                      unaccountedCritDamagePercent > 0 &&
+                      ' (This could be from unknown sources like gear sets, mundus stones, or other effects)'}
+                  </Typography>
+
+                  <Typography
+                    variant="body2"
+                    sx={{ color: 'text.secondary', mt: 2, fontStyle: 'italic' }}
+                  >
+                    Critical damage bonuses are additive before being applied as a multiplier. For
+                    example, if you have 75% critical damage total (50% base + 25% from sources),
+                    your critical hits will do 175% of normal damage (1.75x multiplier). This
+                    analysis compares the actual multiplier observed in combat against what we
+                    expect from known additive sources.
+                  </Typography>
+                </Box>
+              )}
             </Paper>
+
+            {/* Critical Damage vs Time Chart */}
+            {hasValidSamples ? (
+              <Paper
+                variant="outlined"
+                sx={{
+                  p: 2,
+                  mb: 2,
+                  background:
+                    'linear-gradient(135deg, rgba(0, 122, 255, 0.15) 0%, rgba(0, 122, 255, 0.08) 50%, rgba(0, 122, 255, 0.04) 100%)',
+                  border: '1px solid rgba(0, 122, 255, 0.3)',
+                  borderRadius: 2,
+                  backdropFilter: 'blur(10px)',
+                  WebkitBackdropFilter: 'blur(10px)',
+                }}
+              >
+                <Typography
+                  variant="h6"
+                  sx={{
+                    mb: 2,
+                    textShadow:
+                      '0 2px 4px rgb(0 0 0 / 0%), 0 4px 8px rgba(0, 0, 0, 0.4), 0 8px 16px rgba(0, 0, 0, 0.2)',
+                  }}
+                >
+                  Critical Damage vs Time
+                </Typography>
+                <EChart option={chartOption} height={300} group="fightReport" />
+                <Typography
+                  variant="caption"
+                  sx={{ color: 'text.secondary', mt: 1, display: 'block' }}
+                >
+                  Shows critical damage changes over the duration of the fight. Data downsampled to
+                  0.5-second intervals (highest value per interval). Data points:{' '}
+                  {validDataPoints.length}
+                </Typography>
+              </Paper>
+            ) : (
+              <Typography role="status" sx={{ color: 'warning.main' }}>
+                {unavailableSamplesMessage}
+              </Typography>
+            )}
           </Box>
         )}
       </AccordionDetails>

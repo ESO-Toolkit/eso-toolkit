@@ -3,6 +3,7 @@
  */
 
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import {
@@ -23,6 +24,25 @@ describe('CookieConsent', () => {
   it('should show banner when no consent has been given', () => {
     render(<CookieConsent />);
     expect(screen.getByText('Privacy & Cookies')).toBeInTheDocument();
+  });
+
+  it('exposes the non-modal consent notice as a labelled region and supports keyboard decline', async () => {
+    const user = userEvent.setup();
+    render(<CookieConsent />);
+
+    const consentRegion = screen.getByRole('region', { name: 'Privacy & Cookies' });
+    expect(consentRegion).toHaveAttribute('aria-describedby');
+    expect(consentRegion).not.toHaveAttribute('aria-modal');
+
+    const declineButton = screen.getByRole('button', { name: /^decline all$/i });
+    await act(async () => {
+      declineButton.focus();
+    });
+    await user.keyboard('{Enter}');
+
+    await waitFor(() => {
+      expect(screen.queryByRole('region', { name: 'Privacy & Cookies' })).not.toBeInTheDocument();
+    });
   });
 
   it('should not show banner when valid consent exists', async () => {
@@ -105,7 +125,11 @@ describe('CookieConsent', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText('Privacy Preferences')).toBeInTheDocument();
+      expect(screen.getByRole('dialog', { name: 'Privacy Preferences' })).toHaveAttribute(
+        'aria-modal',
+        'true',
+      );
+      expect(screen.queryByRole('region', { name: 'Privacy & Cookies' })).not.toBeInTheDocument();
     });
   });
 

@@ -14,6 +14,7 @@ import {
   removeFromCache,
   resolveCacheKey,
   resetCacheState,
+  settleCacheEntry,
   touchAccessOrder,
   trimCache,
 } from '../utils/keyedCacheState';
@@ -259,8 +260,7 @@ const masterDataSlice = createSlice({
         entry.cacheMetadata.actorCount = action.payload.actors.length;
         entry.cacheMetadata.abilityCount = action.payload.abilities.length;
         entry.currentRequest = null;
-        touchAccessOrder(state, key);
-        trimCache(state, MASTER_DATA_CACHE_MAX_ENTRIES);
+        settleCacheEntry(state, key, MASTER_DATA_CACHE_MAX_ENTRIES);
       })
       .addCase(fetchReportMasterData.rejected, (state, action) => {
         const { key, context } = resolveCacheKey({ reportCode: action.meta.arg.reportCode });
@@ -279,7 +279,7 @@ const masterDataSlice = createSlice({
         entry.status = 'failed';
         entry.error = action.payload ?? action.error.message ?? 'Failed to fetch master data';
         entry.currentRequest = null;
-        touchAccessOrder(state, key);
+        settleCacheEntry(state, key, MASTER_DATA_CACHE_MAX_ENTRIES);
       });
   },
 });

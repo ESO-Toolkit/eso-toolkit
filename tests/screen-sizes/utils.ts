@@ -31,9 +31,10 @@ const enableDebugLogging = process.env.ENABLE_DEBUG_LOGGING === 'true';
 const isCI = process.env.CI === 'true';
 
 // Determine if we're using fast config by checking timeout environment or test file
-const isFastMode = process.env.PLAYWRIGHT_FAST_MODE === 'true' || 
-                   process.env.TEST_TIMEOUT === '45000' ||
-                   process.argv.some(arg => arg.includes('visual-regression-minimal'));
+const isFastMode =
+  process.env.PLAYWRIGHT_FAST_MODE === 'true' ||
+  process.env.TEST_TIMEOUT === '45000' ||
+  process.argv.some((arg) => arg.includes('visual-regression-minimal'));
 
 /**
  * Conditional logging for cache operations
@@ -57,7 +58,7 @@ function debugLog(...args: any[]): void {
  * Sleep for a given number of milliseconds
  */
 function sleep(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 /**
@@ -67,7 +68,7 @@ async function setupNetworkCaching(page: Page): Promise<void> {
   await page.route('**/api/v2/**', async (route) => {
     const request = route.request();
     const url = request.url();
-    
+
     // Only intercept ESO Logs API calls
     if (!url.includes('esologs.com/api/v2/')) {
       return route.continue();
@@ -78,17 +79,17 @@ async function setupNetworkCaching(page: Page): Promise<void> {
       const operationName = extractOperationName(request);
       const variables = extractVariables(request);
       const endpoint = 'network'; // Use consistent endpoint for network-intercepted requests
-      
+
       // Try to get from cache using proper file cache parameters
       const cachedResponse = await networkCache.get<CachedApiResponse>(
         operationName,
         variables,
         endpoint,
       );
-      
+
       if (cachedResponse) {
         log(`🟢 Network Cache HIT for ${operationName}`);
-        
+
         await route.fulfill({
           status: cachedResponse.status || 200,
           headers: cachedResponse.headers || { 'content-type': 'application/json' },
@@ -99,13 +100,13 @@ async function setupNetworkCaching(page: Page): Promise<void> {
 
       // Cache miss - make real request with increased timeout and retry logic
       log(`🔴 Network Cache MISS for ${operationName} - fetching from API`);
-      
+
       let response: any;
       let retries = 2;
-      
+
       while (retries >= 0) {
         try {
-          response = await route.fetch({ 
+          response = await route.fetch({
             timeout: 30000, // Increase timeout to 30 seconds for API calls
           });
           break; // Success, exit retry loop
@@ -116,16 +117,16 @@ async function setupNetworkCaching(page: Page): Promise<void> {
           log(`⚠️ API fetch failed for ${operationName}, retrying... (${retries} retries left)`);
           retries--;
           // Wait a bit before retrying
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          await new Promise((resolve) => setTimeout(resolve, 1000));
         }
       }
-      
+
       if (!response) {
         throw new Error('Failed to get response after retries');
       }
-      
+
       const responseData = await response.json().catch(() => null);
-      
+
       if (response.ok() && responseData) {
         // Cache successful response using proper file cache parameters
         await networkCache.set(operationName, variables, endpoint, {
@@ -134,17 +135,16 @@ async function setupNetworkCaching(page: Page): Promise<void> {
           headers: response.headers(),
           timestamp: Date.now(),
         });
-        
+
         log(`💾 Network Cache STORED for ${operationName}`);
       }
-      
+
       // Return the response
       await route.fulfill({
         status: response.status(),
         headers: response.headers(),
         body: JSON.stringify(responseData),
       });
-      
     } catch (error) {
       console.warn(`Network cache error for ${url}:`, error);
       // Fallback: return a mock response to prevent test failure
@@ -173,7 +173,7 @@ function extractOperationName(request: any): string {
       const parsed = JSON.parse(body);
       return parsed.operationName || extractOperationFromQuery(parsed.query) || 'unknown';
     }
-    
+
     const url = new URL(request.url());
     return url.pathname.split('/').pop() || 'get';
   } catch {
@@ -186,7 +186,7 @@ function extractOperationName(request: any): string {
  */
 function extractOperationFromQuery(query?: string): string | null {
   if (!query) return null;
-  
+
   const match = query.match(/(?:query|mutation)\s+([a-zA-Z0-9_]+)/);
   return match ? match[1] : null;
 }
@@ -201,7 +201,7 @@ function extractVariables(request: any): any {
       const parsed = JSON.parse(body);
       return parsed.variables || {};
     }
-    
+
     // For GET requests, extract from URL parameters
     const url = new URL(request.url());
     const variables: any = {};
@@ -221,7 +221,7 @@ function extractVariables(request: any): any {
 export async function getRealOAuthToken(): Promise<any> {
   const clientId = process.env.OAUTH_CLIENT_ID;
   const clientSecret = process.env.OAUTH_CLIENT_SECRET;
-  
+
   if (!clientId || !clientSecret) {
     log('⚠️  No OAuth credentials available - using mock authentication');
     return null;
@@ -229,11 +229,11 @@ export async function getRealOAuthToken(): Promise<any> {
 
   const maxRetries = 3;
   const baseDelayMs = 1000; // Start with 1 second delay
-  
+
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
       const tokenUrl = process.env.ESOLOGS_TOKEN_URL || 'https://www.esologs.com/oauth/token';
-      
+
       const response = await fetch(tokenUrl, {
         method: 'POST',
         headers: {
@@ -250,7 +250,9 @@ export async function getRealOAuthToken(): Promise<any> {
         // Rate limited - retry with exponential backoff
         if (attempt < maxRetries) {
           const delayMs = baseDelayMs * Math.pow(2, attempt);
-          log(`⏳ Rate limited (429), retrying in ${delayMs}ms (attempt ${attempt + 1}/${maxRetries + 1})`);
+          log(
+            `⏳ Rate limited (429), retrying in ${delayMs}ms (attempt ${attempt + 1}/${maxRetries + 1})`,
+          );
           await sleep(delayMs);
           continue;
         } else {
@@ -271,14 +273,17 @@ export async function getRealOAuthToken(): Promise<any> {
         } else {
           log('✅ Successfully obtained real OAuth token for screen size tests');
         }
-        return data;  // Return the full token object, not just access_token
+        return data; // Return the full token object, not just access_token
       }
-      
+
       return null;
     } catch (error) {
       if (attempt < maxRetries) {
         const delayMs = baseDelayMs * Math.pow(2, attempt);
-        log(`⚠️  OAuth error, retrying in ${delayMs}ms (attempt ${attempt + 1}/${maxRetries + 1}):`, error);
+        log(
+          `⚠️  OAuth error, retrying in ${delayMs}ms (attempt ${attempt + 1}/${maxRetries + 1}):`,
+          error,
+        );
         await sleep(delayMs);
         continue;
       } else {
@@ -287,7 +292,7 @@ export async function getRealOAuthToken(): Promise<any> {
       }
     }
   }
-  
+
   return null;
 }
 
@@ -297,15 +302,17 @@ export async function getRealOAuthToken(): Promise<any> {
 function _createMockJWT(): string {
   // JWT structure: header.payload.signature
   const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
-  
+
   // Create payload with expiration far in the future (10 years from now)
-  const payload = btoa(JSON.stringify({
-    sub: '12345',
-    name: 'TestUser',
-    iat: Math.floor(Date.now() / 1000),
-    exp: Math.floor(Date.now() / 1000) + (10 * 365 * 24 * 60 * 60), // 10 years
-  }));
-  
+  const payload = btoa(
+    JSON.stringify({
+      sub: '12345',
+      name: 'TestUser',
+      iat: Math.floor(Date.now() / 1000),
+      exp: Math.floor(Date.now() / 1000) + 10 * 365 * 24 * 60 * 60, // 10 years
+    }),
+  );
+
   const signature = 'mock_signature';
   return `${header}.${payload}.${signature}`;
 }
@@ -317,14 +324,14 @@ export async function setupAuthentication(page: Page): Promise<void> {
   // Enable API caching to reduce load on ESO Logs servers
   await enableApiCaching(page);
   log('✅ Enabled API response caching for reduced server load');
-  
+
   // Try to get real OAuth token first
   const realTokenData = await getRealOAuthToken();
-  
+
   await page.addInitScript((tokenData: any) => {
     let authToken: string;
     let tokenObject: any;
-    
+
     if (tokenData && tokenData.access_token) {
       // Use real OAuth token data
       authToken = tokenData.access_token;
@@ -338,12 +345,14 @@ export async function setupAuthentication(page: Page): Promise<void> {
     } else {
       // Create mock token for fallback
       const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
-      const payload = btoa(JSON.stringify({
-        sub: '12345',
-        name: 'TestUser',
-        iat: Math.floor(Date.now() / 1000),
-        exp: Math.floor(Date.now() / 1000) + (10 * 365 * 24 * 60 * 60), // 10 years
-      }));
+      const payload = btoa(
+        JSON.stringify({
+          sub: '12345',
+          name: 'TestUser',
+          iat: Math.floor(Date.now() / 1000),
+          exp: Math.floor(Date.now() / 1000) + 10 * 365 * 24 * 60 * 60, // 10 years
+        }),
+      );
       const signature = 'mock_signature';
       authToken = `${header}.${payload}.${signature}`;
       tokenObject = {
@@ -354,23 +363,28 @@ export async function setupAuthentication(page: Page): Promise<void> {
         scope: 'view-user-profile view-private-reports',
       };
     }
-    
-    // Set authentication tokens in localStorage - using the correct key expected by AuthContext
-    window.localStorage.setItem('access_token', authToken);
-    
+
+    // Match the production auth contract: credentials are tab-scoped and never
+    // persisted in localStorage.
+    window.sessionStorage.setItem('access_token', authToken);
+    window.localStorage.removeItem('access_token');
+
     // Also set the full token object for any other parts that might need it
-    window.localStorage.setItem('eso-logs-token', JSON.stringify(tokenObject));
-    
+    window.sessionStorage.setItem('eso-logs-token', JSON.stringify(tokenObject));
+
     // Set authentication state
     window.localStorage.setItem('authenticated', 'true');
-    
+
     // Mock user profile data
-    window.localStorage.setItem('user-profile', JSON.stringify({
-      id: 12345,
-      name: 'TestUser',
-      displayName: '@TestUser',
-      avatar: null,
-    }));
+    window.localStorage.setItem(
+      'user-profile',
+      JSON.stringify({
+        id: 12345,
+        name: 'TestUser',
+        displayName: '@TestUser',
+        avatar: null,
+      }),
+    );
   }, realTokenData);
 }
 
@@ -388,7 +402,7 @@ export interface ViewportInfo {
 export async function enableApiCaching(page: Page): Promise<void> {
   // For now, use a simpler approach with route interception
   await setupNetworkCaching(page);
-  
+
   log('✅ Enabled network-level API caching');
 }
 
@@ -398,8 +412,6 @@ export async function enableApiCaching(page: Page): Promise<void> {
 export async function disableApiCaching(page: Page): Promise<void> {
   // Disable network-level caching
   await page.unroute('**/api/v2/**');
-  
-
 }
 
 /**
@@ -413,8 +425,6 @@ export async function clearApiCache(_page: Page): Promise<void> {
   } catch (error) {
     console.warn('Could not clear network cache:', error);
   }
-  
-
 }
 
 export class ScreenSizeTestUtils {
@@ -459,29 +469,31 @@ export class ScreenSizeTestUtils {
    */
   async waitForLayoutStability(timeout?: number): Promise<void> {
     // Adjust timeout based on mode and environment - increased for heavy client processing
-    const defaultTimeout = isFastMode ? 15000 : (isCI ? 25000 : 15000);
+    const defaultTimeout = isFastMode ? 15000 : isCI ? 25000 : 15000;
     const finalTimeout = timeout || defaultTimeout;
-    
+
     await this.page.waitForLoadState('domcontentloaded');
-    
+
     // Try networkidle but don't fail if it times out - increased for heavy processing
     try {
       const networkIdleTimeout = Math.min(finalTimeout, isFastMode ? 20000 : 30000);
       await this.page.waitForLoadState('networkidle', { timeout: networkIdleTimeout });
       debugLog(`✓ Network idle achieved in ${networkIdleTimeout}ms`);
     } catch {
-      debugLog('Network idle timeout - continuing anyway (this is normal with heavy client processing)');
+      debugLog(
+        'Network idle timeout - continuing anyway (this is normal with heavy client processing)',
+      );
     }
-    
+
     // Wait for any CSS animations/transitions to complete - increased for heavy processing
-    const animationWait = isFastMode ? 2000 : (isCI ? 3000 : 1500);
+    const animationWait = isFastMode ? 2000 : isCI ? 3000 : 1500;
     await this.page.waitForTimeout(animationWait);
-    
+
     // Wait for fonts to load
     await this.page.evaluate(() => {
       return document.fonts.ready;
     });
-    
+
     debugLog(`✓ Layout stability achieved (mode: ${isFastMode ? 'fast' : 'full'}, CI: ${isCI})`);
   }
 
@@ -494,12 +506,12 @@ export class ScreenSizeTestUtils {
       const ciWait = isFastMode ? 3000 : 4000;
       debugLog(`CI Screenshot wait for heavy processing: ${ciWait}ms`);
       await this.page.waitForTimeout(ciWait);
-      
+
       // Double-check fonts are loaded
       await this.page.evaluate(() => document.fonts.ready);
-      
+
       // Ensure any pending updates are complete
-      await this.page.evaluate(() => new Promise(resolve => setTimeout(resolve, 100)));
+      await this.page.evaluate(() => new Promise((resolve) => setTimeout(resolve, 100)));
     }
   }
 
@@ -560,7 +572,7 @@ export class ScreenSizeTestUtils {
       return { overflows: false, elementWidth: 0, viewportWidth: 0 };
     }
 
-    const overflows = (elementBox.x + elementBox.width) > viewport.width;
+    const overflows = elementBox.x + elementBox.width > viewport.width;
 
     return {
       overflows,
@@ -581,12 +593,14 @@ export class ScreenSizeTestUtils {
   /**
    * Get all interactive elements and their sizes
    */
-  async getInteractiveElementSizes(): Promise<Array<{
-    selector: string;
-    width: number;
-    height: number;
-    area: number;
-  }>> {
+  async getInteractiveElementSizes(): Promise<
+    Array<{
+      selector: string;
+      width: number;
+      height: number;
+      area: number;
+    }>
+  > {
     const interactiveSelectors = [
       'button',
       'a',
@@ -625,14 +639,13 @@ export class ScreenSizeTestUtils {
   /**
    * Prepare page for consistent screenshots
    */
-  async prepareForScreenshot(options: {
-    hideElements?: string[];
-    waitForStability?: boolean;
-  } = {}): Promise<void> {
-    const {
-      hideElements = [],
-      waitForStability = true,
-    } = options;
+  async prepareForScreenshot(
+    options: {
+      hideElements?: string[];
+      waitForStability?: boolean;
+    } = {},
+  ): Promise<void> {
+    const { hideElements = [], waitForStability = true } = options;
 
     if (waitForStability) {
       await this.waitForLayoutStability();
@@ -655,7 +668,7 @@ export class ScreenSizeTestUtils {
     // Wait a moment for changes to apply (increased for heavy client processing)
     const finalWait = isCI ? (isFastMode ? 1500 : 2000) : 500;
     await this.page.waitForTimeout(finalWait);
-    
+
     // Additional wait for CI screenshot readiness
     await this.waitForScreenshotReady();
   }
@@ -678,15 +691,15 @@ export class ScreenSizeTestUtils {
     const viewport = this.getViewportInfo();
     const hasHorizontalScroll = await this.hasHorizontalScrollbar();
     const interactiveElements = await this.getInteractiveElementSizes();
-    
+
     // Check which elements overflow
     const overflowingElements: string[] = [];
     const checkElements = ['main', '.container', 'table', '.data-table', 'nav'];
-    
+
     for (const selector of checkElements) {
       const elements = this.page.locator(selector);
       const count = await elements.count();
-      
+
       for (let i = 0; i < count; i++) {
         const overflow = await this.checkElementOverflow(`${selector}:nth(${i})`);
         if (overflow.overflows) {
@@ -719,16 +732,16 @@ export async function waitForReportDataLoaded(page: Page): Promise<void> {
   const startTime = Date.now();
   debugLog('Waiting for report data to be fully loaded...');
   debugLog(`Environment: CI=${isCI}, FastMode=${isFastMode}`);
-  
+
   try {
     // Adjust timeouts based on mode and environment - significantly increased for heavy client processing
     const bodyTimeout = isFastMode ? 15000 : 20000;
-    const networkIdleTimeout = isFastMode ? 25000 : (isCI ? 40000 : 25000);
-    
+    const networkIdleTimeout = isFastMode ? 25000 : isCI ? 40000 : 25000;
+
     // Step 1: Basic page readiness
     debugLog('Step 1: Waiting for basic page readiness...');
     await page.waitForSelector('body', { state: 'visible', timeout: bodyTimeout });
-    
+
     // Step 2: Wait for network activity to settle first (most important)
     debugLog(`Step 2: Waiting for network idle (${networkIdleTimeout}ms)...`);
     try {
@@ -741,77 +754,85 @@ export async function waitForReportDataLoaded(page: Page): Promise<void> {
     // Step 3: Wait for any loading skeletons to disappear - increased for heavy processing
     debugLog('Step 3: Waiting for skeletons to disappear...');
     const skeletonTimeout = isFastMode ? 12000 : 15000;
-    await page.waitForSelector([
-      '.MuiSkeleton-root',
-      '[class*="skeleton"]',
-      '[data-testid*="skeleton"]',
-      '.skeleton',
-      '.loading-skeleton',
-    ].join(', '), { state: 'hidden', timeout: skeletonTimeout }).catch(() => {
-      debugLog('⚠ No loading skeletons found or they persisted');
-    });
-    
+    await page
+      .waitForSelector(
+        [
+          '.MuiSkeleton-root',
+          '[class*="skeleton"]',
+          '[data-testid*="skeleton"]',
+          '.skeleton',
+          '.loading-skeleton',
+        ].join(', '),
+        { state: 'hidden', timeout: skeletonTimeout },
+      )
+      .catch(() => {
+        debugLog('⚠ No loading skeletons found or they persisted');
+      });
+
     // Step 4: Look for specific content that indicates data is loaded
     debugLog('Step 4: Looking for loaded content indicators...');
-    
+
     // Try to find player cards (most specific indicator for players panel)
     const hasPlayerCards = await page.locator('[data-testid^="player-card-"]').count();
     if (hasPlayerCards > 0) {
       debugLog(`✓ Found ${hasPlayerCards} player cards`);
-      
+
       // Step 4a: Wait for actual player card content to be loaded
       debugLog('Step 4a: Waiting for player card content...');
-      
+
       // Wait for gear chips to be loaded (indicates gear data is processed)
       const hasGearChips = await page.locator('[data-testid^="gear-chips-"]').count();
       if (hasGearChips > 0) {
         debugLog(`✓ Found gear chips in ${hasGearChips} player cards`);
       }
-      
-      // Wait for mundus buffs to be loaded (indicates buff data is processed)  
+
+      // Wait for mundus buffs to be loaded (indicates buff data is processed)
       const hasMundusBuffs = await page.locator('[data-testid^="mundus-buffs-"]').count();
       if (hasMundusBuffs > 0) {
         debugLog(`✓ Found mundus buffs in ${hasMundusBuffs} player cards`);
       }
-      
+
       // Wait for food/drink indicators to be loaded
       const hasFoodDrink = await page.locator('[data-testid^="food-drink-"]').count();
       if (hasFoodDrink > 0) {
         debugLog(`✓ Found food/drink indicators in ${hasFoodDrink} player cards`);
       }
-      
+
       // Additional wait for content to fully render and stabilize
       await page.waitForTimeout(1500);
       debugLog('✓ Player card content should be fully loaded');
       return;
     }
-    
+
     // Fallback: look for any data content
-    const hasDataContent = await page.locator([
-      'table',
-      '.MuiDataGrid-root',
-      'canvas',
-      '[class*="chart"]',
-      '[class*="damage"]',
-      '[class*="healing"]',
-      '[class*="player"]',
-      '.card',
-      '.panel',
-    ].join(', ')).count();
-    
+    const hasDataContent = await page
+      .locator(
+        [
+          'table',
+          '.MuiDataGrid-root',
+          'canvas',
+          '[class*="chart"]',
+          '[class*="damage"]',
+          '[class*="healing"]',
+          '[class*="player"]',
+          '.card',
+          '.panel',
+        ].join(', '),
+      )
+      .count();
+
     if (hasDataContent > 0) {
       debugLog(`✓ Found ${hasDataContent} data content elements - content appears loaded`);
     } else {
       debugLog('⚠ No specific data content found - may be empty or still loading');
     }
-    
+
     // Final stabilization wait (adjusted for heavy client processing)
     const finalWait = isFastMode ? 3000 : 5000;
     await page.waitForTimeout(finalWait);
-    
+
     const totalTime = Date.now() - startTime;
     debugLog(`✅ Report data loading complete (took ${totalTime}ms)`);
-    
   } catch (error) {
     console.log('❌ Error waiting for report data:', error);
     // Don't throw - let the test continue
@@ -824,10 +845,10 @@ export async function waitForReportDataLoaded(page: Page): Promise<void> {
  */
 export async function waitForHeavyClientProcessing(page: Page): Promise<void> {
   debugLog('Waiting for heavy client-side processing to complete...');
-  
+
   // Wait for any pending async operations
   await page.evaluate(() => {
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
       // Wait for any pending promises/microtasks
       setTimeout(() => {
         // Additional wait for heavy computation
@@ -835,7 +856,7 @@ export async function waitForHeavyClientProcessing(page: Page): Promise<void> {
       }, 1000);
     });
   });
-  
+
   // Check if there are any active network requests
   await page.evaluate(() => {
     // Standard Performance API — no suppression needed; the directive that used
@@ -844,13 +865,13 @@ export async function waitForHeavyClientProcessing(page: Page): Promise<void> {
       ? window.performance.getEntriesByType('navigation').length
       : 0;
   });
-  
+
   debugLog(`Active requests check complete, waiting additional stabilization time...`);
-  
+
   // Extra stabilization for heavy processing
   const heavyProcessingWait = isFastMode ? 3000 : 5000;
   await page.waitForTimeout(heavyProcessingWait);
-  
+
   debugLog('✅ Heavy client-side processing wait complete');
 }
 
@@ -858,23 +879,26 @@ export async function waitForHeavyClientProcessing(page: Page): Promise<void> {
  * Comprehensive preparation for screenshot capture
  * This is the main function tests should call before taking screenshots
  */
-export async function preparePageForScreenshot(page: Page, options: {
-  hideElements?: string[];
-  waitForStability?: boolean;
-  waitForHeavyProcessing?: boolean;
-} = {}): Promise<void> {
+export async function preparePageForScreenshot(
+  page: Page,
+  options: {
+    hideElements?: string[];
+    waitForStability?: boolean;
+    waitForHeavyProcessing?: boolean;
+  } = {},
+): Promise<void> {
   debugLog(`Preparing page for screenshot (CI: ${isCI}, FastMode: ${isFastMode})`);
-  
+
   const { waitForHeavyProcessing = true, ...otherOptions } = options;
-  
+
   // Wait for heavy processing if requested
   if (waitForHeavyProcessing) {
     await waitForHeavyClientProcessing(page);
   }
-  
+
   // Create utils instance and prepare
   const utils = new ScreenSizeTestUtils(page);
   await utils.prepareForScreenshot(otherOptions);
-  
+
   debugLog('✅ Page ready for screenshot capture');
 }

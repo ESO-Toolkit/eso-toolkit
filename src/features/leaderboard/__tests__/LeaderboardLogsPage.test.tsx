@@ -19,6 +19,7 @@ import { LeaderboardLogsPage } from '../LeaderboardLogsPage';
 type QueryOptions = {
   query: unknown;
   variables?: GetEncounterFightRankingsQueryVariables;
+  errorPolicy?: 'all' | 'none';
 };
 
 const zonesResponse: GetTrialZonesQuery = {
@@ -142,6 +143,9 @@ describe('LeaderboardLogsPage winning-variable behaviour', () => {
     // Page 2 reused the winning variables verbatim: same metric fallback,
     // same dropped size, same partition absence — only the page changed.
     const pageTwoCall = rankingCalls()[rankingCalls().length - 1];
+    expect(rankingCalls()).toEqual(
+      expect.arrayContaining([expect.objectContaining({ errorPolicy: 'none' })]),
+    );
     expect(pageTwoCall.variables).toEqual({
       encounterId: 300,
       difficulty: 2,

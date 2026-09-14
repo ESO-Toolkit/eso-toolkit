@@ -310,10 +310,33 @@ jobs:
           ERROR_TRACKING_TOKEN: ''
           # Playwright memory optimization
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+      - name: Run dedicated route, report-list, and edge-router tests
+        run: |
+          npm run test:analyzer-route
+          npm run test:product-completion
+          npm run test:report-controls-a11y
+          npm run test:live-dashboard-health
+          npm run test:report-lists
+          npm run test:auth-enhanced
+          npm run test:edge-router
+          npm run test:deploy-contract
+        env:
+          NODE_OPTIONS: '--max_old_space_size=8192 --max_semi_space_size=1024'
+          CI: 'true'
+          PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS: 'true'
+          NO_PROXY: '*'
+          HTTP_PROXY: 'http://127.0.0.1:9999'
+          HTTPS_PROXY: 'http://127.0.0.1:9999'
+          BLOCK_EXTERNAL_REQUESTS: 'true'
+          ESOLOGS_API_URL: 'http://localhost:3000/mock-api'
+          ERROR_TRACKING_TOKEN: ''
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
       - name: Upload Playwright Report
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         if: always()
         with:
           name: playwright-smoke-report
-          path: playwright-report/
+          path: |
+            playwright-report*/
+            test-results*/
           retention-days: 30

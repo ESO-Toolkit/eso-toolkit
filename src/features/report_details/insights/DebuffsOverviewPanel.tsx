@@ -4,7 +4,9 @@ import { useSelector } from 'react-redux';
 import { usePlayerData, useReportMasterData } from '../../../hooks';
 import { useDebuffEvents } from '../../../hooks/events/useDebuffEvents';
 import { useDebuffLookupTask } from '../../../hooks/workerTasks/useDebuffLookupTask';
+import { selectMasterDataErrorState } from '../../../store/master_data/masterDataSelectors';
 import { selectSelectedTargetId } from '../../../store/ui/uiSelectors';
+import { AnalyzerPanelState, resolveAnalyzerPanelState } from '../AnalyzerPanelState';
 
 import { DebuffsOverviewPanelView } from './DebuffsOverviewPanelView';
 
@@ -21,10 +23,12 @@ export interface DebuffOverviewData extends Record<string, unknown> {
 
 export const DebuffsOverviewPanel: React.FC = () => {
   const { debuffLookupData, isDebuffLookupLoading, debuffLookupError } = useDebuffLookupTask();
-  const { reportMasterData } = useReportMasterData();
-  const { debuffEvents } = useDebuffEvents();
-  const { playerData } = usePlayerData();
+  const { reportMasterData, isMasterDataLoading } = useReportMasterData();
+  const { debuffEvents, isDebuffEventsLoading, debuffEventsStatus, debuffEventsError } =
+    useDebuffEvents();
+  const { playerData, isPlayerDataLoading } = usePlayerData();
   const selectedTargetId = useSelector(selectSelectedTargetId);
+  const masterDataError = useSelector(selectMasterDataErrorState);
 
   // Local state for selected player filter
   const [selectedPlayerId, setSelectedPlayerId] = React.useState<number | null>(null);
@@ -50,28 +54,6 @@ export const DebuffsOverviewPanel: React.FC = () => {
       }))
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [debuffEvents, playerData?.playersById]);
-
-  // Create a mapping of abilityGameID + targetID to sourceIDs for filtering
-  const debuffSourceMapping = React.useMemo(() => {
-    if (!debuffEvents) return new Map<string, Set<number>>();
-
-    const mapping = new Map<string, Set<number>>();
-
-    debuffEvents.forEach((event) => {
-      if (event.type === 'applydebuff' || event.type === 'applydebuffstack') {
-        const key = `${event.abilityGameID}_${event.targetID}`;
-        if (!mapping.has(key)) {
-          mapping.set(key, new Set<number>());
-        }
-        const sourceSet = mapping.get(key);
-        if (sourceSet) {
-          sourceSet.add(event.sourceID);
-        }
-      }
-    });
-
-    return mapping;
-  }, [debuffEvents]);
 
   // Create a mapping of abilityGameID to all extraAbilityGameIDs for resolving extra abilities
   const extraAbilityMapping = React.useMemo(() => {
@@ -109,17 +91,16 @@ export const DebuffsOverviewPanel: React.FC = () => {
       const ability = reportMasterData.abilitiesById[abilityId];
 
       // Filter intervals by selected target if one is selected
-      let filteredIntervals = selectedTargetId
-        ? intervals.filter((interval) => interval.targetID === selectedTargetId)
-        : intervals;
+      let filteredIntervals =
+        selectedTargetId != null
+          ? intervals.filter((interval) => interval.targetID === selectedTargetId)
+          : intervals;
 
       // Filter by selected player (sourceID) if one is selected
-      if (selectedPlayerId) {
-        filteredIntervals = filteredIntervals.filter((interval) => {
-          const key = `${abilityId}_${interval.targetID}`;
-          const sources = debuffSourceMapping.get(key);
-          return sources && sources.has(selectedPlayerId);
-        });
+      if (selectedPlayerId != null) {
+        filteredIntervals = filteredIntervals.filter(
+          (interval) => interval.sourceID === selectedPlayerId,
+        );
       }
 
       // Skip abilities that have no intervals after filtering
@@ -170,24 +151,34 @@ export const DebuffsOverviewPanel: React.FC = () => {
       }
       return a.debuffName.localeCompare(b.debuffName);
     });
-  }, [
-    debuffLookupData,
-    reportMasterData,
-    selectedTargetId,
-    selectedPlayerId,
-    debuffSourceMapping,
-    extraAbilityMapping,
-  ]);
+  }, [debuffLookupData, reportMasterData, selectedTargetId, selectedPlayerId, extraAbilityMapping]);
+
+  const hasRetainedData = debuffOverviewData.length > 0;
+  const failureDetail =
+    debuffLookupError ?? debuffEventsError ?? playerData?.error ?? masterDataError ?? undefined;
+  const state = resolveAnalyzerPanelState({
+    error: failureDetail,
+    hasData: hasRetainedData,
+    isComplete:
+      debuffLookupData !== null &&
+      debuffEventsStatus === 'succeeded' &&
+      playerData?.status === 'succeeded' &&
+      reportMasterData.loaded,
+    isLoading:
+      isDebuffLookupLoading || isDebuffEventsLoading || isPlayerDataLoading || isMasterDataLoading,
+  });
 
   return (
-    <DebuffsOverviewPanelView
-      debuffOverviewData={debuffOverviewData}
-      isLoading={isDebuffLookupLoading}
-      error={debuffLookupError}
-      selectedTargetId={selectedTargetId}
-      selectedPlayerId={selectedPlayerId}
-      availablePlayers={availablePlayers}
-      onPlayerChange={setSelectedPlayerId}
-    />
+    <AnalyzerPanelState detail={failureDetail} state={state} title="Debuffs overview">
+      {hasRetainedData && (
+        <DebuffsOverviewPanelView
+          debuffOverviewData={debuffOverviewData}
+          selectedTargetId={selectedTargetId}
+          selectedPlayerId={selectedPlayerId}
+          availablePlayers={availablePlayers}
+          onPlayerChange={setSelectedPlayerId}
+        />
+      )}
+    </AnalyzerPanelState>
   );
 };

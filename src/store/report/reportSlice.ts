@@ -12,6 +12,7 @@ import {
   removeFromCache,
   resolveCacheKey,
   resetCacheState,
+  settleCacheEntry,
   touchAccessOrder,
   trimCache,
 } from '../utils/keyedCacheState';
@@ -426,7 +427,9 @@ const reportSlice = createSlice({
         }
         const entry = ensureEntry(state, reportId);
         entry.status = 'loading';
-        entry.error = null;
+        // Preserve the last refresh error until an authoritative success
+        // replaces it. Clearing it here makes retained stale data appear live
+        // for the entire duration of the retry.
         entry.currentRequest = createCurrentRequest(reportId, action.meta.requestId);
         touchAccessOrder(state, cacheKey);
         if (!state.activeContext.reportId) {
@@ -457,8 +460,7 @@ const reportSlice = createSlice({
         entry.fightsById = fightsById;
         state.fightIndexByReport[reportId] = fightIds;
 
-        touchAccessOrder(state, cacheKey);
-        trimCache(state, REPORT_CACHE_MAX_ENTRIES);
+        settleCacheEntry(state, cacheKey, REPORT_CACHE_MAX_ENTRIES);
         pruneFightIndexByReport(state);
 
         if (!state.activeContext.reportId) {
@@ -482,7 +484,8 @@ const reportSlice = createSlice({
         entry.status = 'failed';
         entry.error = action.payload ?? action.error.message ?? 'Failed to fetch report data';
         entry.currentRequest = null;
-        touchAccessOrder(state, cacheKey);
+        settleCacheEntry(state, cacheKey, REPORT_CACHE_MAX_ENTRIES);
+        pruneFightIndexByReport(state);
         if (!state.activeContext.reportId) {
           state.activeContext.reportId = reportId;
         }

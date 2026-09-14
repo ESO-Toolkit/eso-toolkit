@@ -192,7 +192,6 @@ export function useLatestReportsQuery(input: LatestReportsQueryInput): LatestRep
             const cached = await client.query<GetLatestReportsQuery>({
               query: GetLatestReportsDocument,
               variables,
-              errorPolicy: 'all',
               fetchPolicy: 'cache-only',
             });
             // Drop the peek if a newer load has superseded this one.
@@ -207,7 +206,6 @@ export function useLatestReportsQuery(input: LatestReportsQueryInput): LatestRep
         const fresh = await client.query<GetLatestReportsQuery>({
           query: GetLatestReportsDocument,
           variables,
-          errorPolicy: 'all',
           fetchPolicy: 'network-only',
         });
         // The request-id guard keeps the DISPLAYED state from the newest load. A

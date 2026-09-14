@@ -9,14 +9,12 @@ import { AuraData } from './AurasPanel';
 
 interface AurasPanelViewProps {
   aurasData: AuraData[];
-  isLoading: boolean;
   reportId?: string | null;
   fightId?: string | null;
 }
 
 export const AurasPanelView: React.FC<AurasPanelViewProps> = ({
   aurasData,
-  isLoading,
   reportId: _reportId,
   fightId: _fightId,
 }) => {
@@ -208,26 +206,13 @@ export const AurasPanelView: React.FC<AurasPanelViewProps> = ({
 
   return (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <Typography
-        variant="h6"
-        sx={{
-          mb: 2,
-          color: 'text.primary',
-          fontWeight: 600,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 1,
-        }}
-      >
-        🔮 Experimental: Auras Overview
-        <Chip
-          label="BETA"
-          size="small"
-          color="warning"
-          variant="outlined"
-          sx={{ fontSize: '0.7rem', height: 20 }}
-        />
-      </Typography>
+      <Chip
+        label="BETA"
+        size="small"
+        color="warning"
+        variant="outlined"
+        sx={{ alignSelf: 'flex-start', fontSize: '0.7rem', height: 20, mb: 1 }}
+      />
 
       <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
         Shows all auras/buffs detected on players during this fight. Includes consumables,
@@ -244,7 +229,7 @@ export const AurasPanelView: React.FC<AurasPanelViewProps> = ({
         enableSorting={true}
         enableFiltering={true}
         enablePagination={true}
-        loading={isLoading}
+        loading={false}
         emptyMessage="No aura data available"
       />
 

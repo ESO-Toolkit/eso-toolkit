@@ -12,6 +12,7 @@ import React, { useState } from 'react';
 
 import { FightFragment as Fight } from '../../../graphql/gql/graphql';
 import type { PhaseTransitionInfo } from '../../../hooks/usePhaseTransitions';
+import { hasNoResolvedTargets } from '../../../hooks/useSelectedTargetIds';
 import { PlayerDetailsWithRole as Player } from '../../../store/player_data/playerDataSlice';
 import { PlayerPenetrationData } from '../../../workers/calculations/CalculatePenetration';
 
@@ -46,7 +47,7 @@ export const PenetrationPanelView: React.FC<PenetrationPanelViewProps> = ({
   const [cmxDialogOpen, setCmxDialogOpen] = useState(false);
 
   // Show info when no targets are available
-  if (selectedTargetIds.size === 0) {
+  if (selectedTargetIds.size === 0 || hasNoResolvedTargets(selectedTargetIds)) {
     return (
       <Box sx={{ px: { xs: 0, sm: 2 }, py: 2 }}>
         <Typography

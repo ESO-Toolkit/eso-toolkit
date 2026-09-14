@@ -106,6 +106,7 @@
     "jest": "^30.4.2",
     "jest-environment-jsdom": "^30.4.1",
     "jest-watch-typeahead": "^3.0.1",
+    "js-yaml": "4.3.2",
     "luaparse": "^0.3.1",
     "msw": "^2.14.6",
     "msw-storybook-addon": "^2.0.7",
@@ -123,6 +124,13 @@
     "vite-bundle-analyzer": "^1.3.9",
     "vite-plugin-mkcert": "^1.17.12",
     "vite-plugin-svgr": "^4.5.0"
+  },
+  "overrides": {
+    "hono": "4.13.7",
+    "js-yaml": "4.3.2",
+    "@istanbuljs/load-nyc-config": {
+      "js-yaml": "3.15.2"
+    }
   },
   "msw": {
     "workerDirectory": [
@@ -144,6 +152,7 @@
   "scripts": {
     "analyze": "npm run build && npx vite-bundle-analyzer build/assets/*.js",
     "analyze-bundle": "npm run build && node scripts/analyze-bundle.cjs",
+    "benchmark:players-panel-index": "node --expose-gc ./node_modules/tsx/dist/cli.mjs --tsconfig tsconfig/scripts.json scripts/benchmarks/playersPanelEventIndexBenchmark.ts",
     "cache:stats": "node scripts/manage-cache-simple.js stats",
     "cache:clean": "node scripts/manage-cache-simple.js clean",
     "cache:clear": "node scripts/manage-cache-simple.js clear",
@@ -243,6 +252,14 @@
     "test:smoke": "npm run test:smoke:unit && npm run test:smoke:e2e",
     "test:smoke:e2e": "playwright test --config=playwright/smoke.config.ts",
     "test:smoke:unit": "jest --config=jest/smoke.config.cjs --watchAll=false",
+    "test:analyzer-route": "playwright test --config=playwright/analyzer-route.config.ts",
+    "test:product-completion": "playwright test --config=playwright/product-completion.config.ts",
+    "test:report-controls-a11y": "playwright test --config=playwright/report-controls-a11y.config.ts",
+    "test:live-dashboard-health": "playwright test --config=playwright/live-dashboard-health.config.ts",
+    "test:report-lists": "playwright test --config=playwright/report-lists.config.ts",
+    "test:auth-enhanced": "playwright test tests/auth-enhanced.spec.ts --config=playwright/full.config.ts",
+    "test:edge-router": "node --test edge-router/src/index.test.js",
+    "test:deploy-contract": "node --test .github/workflows/deploy-worker.contract.test.cjs",
     "test:full": "playwright test --config=playwright/full.config.ts",
     "test:full:headed": "playwright test --config=playwright/full.config.ts --headed",
     "test:full:ui": "playwright test --config=playwright/full.config.ts --ui",

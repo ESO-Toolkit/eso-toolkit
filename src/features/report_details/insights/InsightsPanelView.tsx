@@ -1,25 +1,69 @@
-import { Box, Typography, Paper, List, ListItem, ListItemText, useTheme } from '@mui/material';
+import {
+  Alert,
+  Box,
+  Button,
+  Typography,
+  Paper,
+  List,
+  ListItem,
+  ListItemText,
+  useTheme,
+} from '@mui/material';
 import React from 'react';
 
 import { AbilityIcon } from '../../../components/AbilityIcon';
-import { InsightsSkeletonLayout } from '../../../components/InsightsSkeletonLayout';
 import { FightFragment } from '../../../graphql/gql/graphql';
 import { KnownAbilities } from '../../../types/abilities';
+import type { EvidenceDrilldownInput } from '../../analysis/evidence/evidenceDrilldownModel';
+import {
+  EvidenceDrilldownPanel,
+  type EvidenceDrilldownDataState,
+  type EvidenceDrilldownProvenance,
+} from '../../analysis/evidence/EvidenceDrilldownPanel';
 
 import { BuffUptimesPanel } from './BuffUptimesPanel';
 import { DamageBreakdownPanel } from './DamageBreakdownPanel';
 import { DamageTypeBreakdownPanel } from './DamageTypeBreakdownPanel';
 import { DebuffUptimesPanel } from './DebuffUptimesPanel';
+import type { InsightsDataState, InsightsRetryAvailability } from './insightsDataState';
 import { StatusEffectUptimesPanel } from './StatusEffectUptimesPanel';
 
-interface InsightsPanelViewProps {
+export type InsightsWorkflowState =
+  'loading' | 'partial' | 'stale' | 'failed' | 'unavailable' | 'evidence-ready';
+
+/**
+ * Evidence can only enter the workflow after an authoritative producer has
+ * supplied the complete, rule-backed payload. Raw event streams alone are not
+ * evidence: they do not establish expected behavior or score contribution.
+ */
+export type InsightsEvidenceWorkflow = Readonly<{
+  input: EvidenceDrilldownInput;
+  dataState?: EvidenceDrilldownDataState;
+  provenance?: EvidenceDrilldownProvenance;
+}>;
+
+export type FightInitiatorState =
+  | { kind: 'available'; name: string }
+  | { kind: 'loading'; message: string }
+  | { kind: 'unavailable'; message: string };
+
+export interface InsightsPanelViewProps {
   fight: FightFragment;
   durationMs: number;
   abilityEquipped: Partial<Record<KnownAbilities, string[]>>;
   buffActors: Partial<Record<KnownAbilities, Set<string>>>;
-  fightInitiator: string | null;
+  fightInitiator: FightInitiatorState;
   selectedPlayerId: number | null;
-  isLoading: boolean;
+  dataState: InsightsDataState;
+  onRetry: () => void;
+  retryAvailability: InsightsRetryAvailability;
+  /**
+   * Product-completion findings require an authoritative encounter definition,
+   * context-compatible baseline, and validated evidence. Until those inputs
+   * exist, the shell must show an explicit state rather than deriving advice.
+   */
+  productWorkflowState?: InsightsWorkflowState;
+  productEvidence?: InsightsEvidenceWorkflow;
 }
 
 // Shared styling for the insight card wrappers (used by the header card and
@@ -35,6 +79,106 @@ const insightPaperSx = {
   background:
     'linear-gradient(135deg, rgb(110 170 240 / 25%) 0%, rgb(152 131 227 / 15%) 50%, rgb(173 192 255 / 8%) 100%)',
 } as const;
+
+const workflowCardWrapperSx = {
+  flex: '1 1 100%',
+  minWidth: 0,
+} as const;
+
+const ProductWorkflow = ({
+  evidence,
+}: {
+  evidence: InsightsEvidenceWorkflow;
+}): React.ReactElement => {
+  return (
+    <Box component="section" aria-label="Analysis workflow" sx={workflowCardWrapperSx}>
+      <EvidenceDrilldownPanel
+        input={evidence.input}
+        dataState={evidence.dataState}
+        provenance={evidence.provenance}
+        title="Evidence drilldown"
+      />
+    </Box>
+  );
+};
+
+type ProductWorkflowStateCopy = Readonly<{
+  title: string;
+  message: string;
+  severity: 'error' | 'info' | 'warning';
+  role: 'alert' | 'status';
+}>;
+
+const PRODUCT_WORKFLOW_STATE_COPY: Record<InsightsWorkflowState, ProductWorkflowStateCopy> = {
+  loading: {
+    title: 'Contextual analysis is preparing',
+    message:
+      'Rules, baseline context, or event evidence are still loading. Recommendations are withheld until their provenance is available.',
+    severity: 'info',
+    role: 'status',
+  },
+  partial: {
+    title: 'Contextual analysis is provisional',
+    message:
+      'Some required rules, baseline context, or event evidence is unavailable. Recommendations that require those inputs are withheld.',
+    severity: 'warning',
+    role: 'status',
+  },
+  stale: {
+    title: 'Contextual analysis is provisional',
+    message:
+      'The available rules, baseline context, or event evidence may be out of date. Recommendations are withheld until the analysis refreshes.',
+    severity: 'warning',
+    role: 'status',
+  },
+  failed: {
+    title: 'Contextual analysis could not be verified',
+    message:
+      'Required rules, baseline context, or event evidence could not be loaded. Recommendations are withheld rather than scored as zero.',
+    severity: 'error',
+    role: 'alert',
+  },
+  unavailable: {
+    title: 'Contextual analysis is not available for this fight',
+    message:
+      'This fight has no authoritative encounter rules, compatible baseline, and validated event evidence for a recommendation. Unknown data is not scored as zero.',
+    severity: 'warning',
+    role: 'status',
+  },
+  'evidence-ready': {
+    title: 'Contextual analysis is awaiting validated evidence',
+    message:
+      'Analysis evidence was marked ready but no validated drilldown is available. Recommendations are withheld until evidence and provenance are available.',
+    severity: 'warning',
+    role: 'status',
+  },
+};
+
+const ProductWorkflowStateNotice = ({
+  state,
+}: {
+  state: InsightsWorkflowState;
+}): React.ReactElement => {
+  const copy = PRODUCT_WORKFLOW_STATE_COPY[state];
+
+  return (
+    <Box component="section" aria-label="Analysis workflow status" sx={workflowCardWrapperSx}>
+      <Alert
+        severity={copy.severity}
+        role={copy.role}
+        aria-live={copy.role === 'alert' ? 'assertive' : 'polite'}
+        aria-atomic="true"
+      >
+        <Typography component="h2" variant="subtitle2">
+          {copy.title}
+        </Typography>
+        <Typography variant="body2" sx={{ mt: 0.5 }}>
+          {copy.message}
+        </Typography>
+      </Alert>
+    </Box>
+  );
+};
 
 interface AbilityDatum {
   name: string;
@@ -101,17 +245,53 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
   buffActors,
   fightInitiator,
   selectedPlayerId,
-  isLoading,
+  dataState,
+  onRetry,
+  retryAvailability,
+  productWorkflowState,
+  productEvidence,
 }) => {
   const theme = useTheme();
-  if (isLoading) {
-    return <InsightsSkeletonLayout />;
-  }
+  const stateMessage = getStateMessage(dataState);
+  const isRecoverable = dataState.failedSources.length > 0;
+  const retryReasonId = 'insights-retry-unavailable-reason';
+
   return (
     <>
+      {stateMessage && (
+        <Alert
+          severity={dataState.kind === 'failed' ? 'error' : isRecoverable ? 'warning' : 'info'}
+          role={isRecoverable ? 'alert' : 'status'}
+          aria-live={isRecoverable ? 'assertive' : 'polite'}
+          aria-atomic="true"
+          action={
+            isRecoverable ? (
+              <Button
+                aria-label="Try again to reload failed fight insight data"
+                aria-describedby={retryAvailability.unavailableReason ? retryReasonId : undefined}
+                color="inherit"
+                disabled={!retryAvailability.canRetry}
+                onClick={onRetry}
+                size="small"
+              >
+                Try Again
+              </Button>
+            ) : undefined
+          }
+          sx={{ mb: 2 }}
+        >
+          {stateMessage}
+          {isRecoverable && retryAvailability.unavailableReason ? (
+            <Typography component="span" id={retryReasonId} sx={{ display: 'block' }}>
+              {retryAvailability.unavailableReason}
+            </Typography>
+          ) : null}
+        </Alert>
+      )}
       {/* Main insights grid layout */}
       <Box
         data-testid="insights-panel"
+        aria-busy={dataState.hasPendingSources}
         sx={{
           display: 'flex',
           flexWrap: 'wrap',
@@ -165,39 +345,53 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
               </Typography>
             </Box>
 
-            {fightInitiator && (
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mt: 1 }}>
-                <Box
-                  aria-hidden
-                  sx={{
-                    width: 32,
-                    height: 32,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '20px',
-                    backgroundColor:
-                      theme.palette.mode === 'dark'
-                        ? 'rgba(255, 255, 255, 0.1)'
-                        : 'rgba(15, 23, 42, 0.08)',
-                    borderRadius: 1,
-                    boxShadow: 1,
-                  }}
-                >
-                  🎯
-                </Box>
-                <Typography
-                  sx={{
-                    '& strong': { fontWeight: 600 },
-                    '& span': { fontWeight: 400 },
-                    fontSize: { xs: '0.875rem', sm: '0.9rem', md: '0.95rem' },
-                  }}
-                >
-                  <strong>Fight initiator: </strong>
-                  <span>{fightInitiator}</span>
-                </Typography>
+            <Box
+              aria-atomic="true"
+              aria-live="polite"
+              data-testid="fight-initiator"
+              sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mt: 1 }}
+            >
+              <Box
+                aria-hidden
+                sx={{
+                  width: 32,
+                  height: 32,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '20px',
+                  backgroundColor:
+                    theme.palette.mode === 'dark'
+                      ? 'rgba(255, 255, 255, 0.1)'
+                      : 'rgba(15, 23, 42, 0.08)',
+                  borderRadius: 1,
+                  boxShadow: 1,
+                }}
+              >
+                🎯
               </Box>
-            )}
+              <Typography
+                sx={{
+                  '& strong': { fontWeight: 600 },
+                  '& span': { fontWeight: 400 },
+                  fontSize: { xs: '0.875rem', sm: '0.9rem', md: '0.95rem' },
+                }}
+              >
+                <strong>Fight initiator: </strong>
+                <span>
+                  {fightInitiator.kind === 'available'
+                    ? fightInitiator.name
+                    : fightInitiator.kind === 'loading'
+                      ? 'Loading'
+                      : 'Unavailable'}
+                </span>
+              </Typography>
+              {fightInitiator.kind !== 'available' ? (
+                <Typography color="text.secondary" variant="caption">
+                  {fightInitiator.message}
+                </Typography>
+              ) : null}
+            </Box>
 
             <Box sx={{ mt: 2.5 }}>
               <Typography
@@ -371,6 +565,12 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
         </Box>
         {/* All panels in flexbox with 2 items per row */}
 
+        {productEvidence ? (
+          <ProductWorkflow evidence={productEvidence} />
+        ) : productWorkflowState ? (
+          <ProductWorkflowStateNotice state={productWorkflowState} />
+        ) : null}
+
         <Box sx={insightCardWrapperSx}>
           <Paper elevation={2} sx={insightPaperSx}>
             <StatusEffectUptimesPanel fight={fight} selectedPlayerId={selectedPlayerId} />
@@ -403,4 +603,29 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
       </Box>
     </>
   );
+};
+
+const getStateMessage = (dataState: InsightsDataState): string | null => {
+  switch (dataState.kind) {
+    case 'loading':
+      return 'Loading detailed fight insights. Fight details already available remain visible.';
+    case 'partial': {
+      if (dataState.failedSources.length === 0) {
+        return 'Some fight insight data is still loading. Available insights may be incomplete.';
+      }
+
+      const partialFailureMessage = dataState.hasPendingSources
+        ? 'Some fight insight data could not be loaded while other data is still loading.'
+        : 'Some fight insight data could not be loaded. Other insight data may be incomplete.';
+      return `${partialFailureMessage}${dataState.errorMessage ? ` ${dataState.errorMessage}` : ''}`;
+    }
+    case 'empty':
+      return 'No additional insight data is available for this fight.';
+    case 'stale':
+      return `Some fight insight data could not be refreshed. Showing available results${dataState.hasPendingSources ? ' while other data is still loading' : ''}.${dataState.errorMessage ? ` ${dataState.errorMessage}` : ''}`;
+    case 'failed':
+      return `Unable to load fight insight data.${dataState.errorMessage ? ` ${dataState.errorMessage}` : ''}`;
+    case 'ready':
+      return null;
+  }
 };

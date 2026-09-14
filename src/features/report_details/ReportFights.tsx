@@ -6,6 +6,11 @@ import { useReportData } from '../../hooks';
 import { useSelectedReportAndFight } from '../../ReportFightContext';
 import { cleanArray } from '../../utils/cleanArray';
 import { preloadReportFightDetails } from '../../utils/reportRoutePreload';
+import {
+  canPrefetchHeavyRoute,
+  shouldPrefetchHeavyRoute,
+  type RoutePrefetchIntent,
+} from '../../utils/routePrefetchPolicy';
 import { isRecentlyUploaded } from '../reports/reportFormatting';
 
 import { ReportFightsView } from './ReportFightsView';
@@ -17,16 +22,24 @@ import { ReportFightsView } from './ReportFightsView';
 const AUTO_RECHECK_INTERVAL_MS = 30_000;
 const MAX_AUTO_RECHECKS = 10;
 
+const prefetchFightDetailsOnIntent = (intent: RoutePrefetchIntent): void => {
+  if (shouldPrefetchHeavyRoute(intent)) preloadReportFightDetails();
+};
+
 export const ReportFights: React.FC = () => {
   // Get current selected report and fight from context
   const { reportId, fightId } = useSelectedReportAndFight();
   const { reportData, isReportLoading, reportError, refetchReport } = useReportData();
 
-  // Every fight in this list links to the (lazy, heavy) fight-details route, so
-  // warm its chunk during idle time: by the time the user picks an encounter the
-  // chunk is already resolved and the navigation paints without a round trip.
-  // Deferred to idle so it never competes with this page's own report fetch.
+  // Every fight in this list links to the lazy fight-details route. Warm its
+  // chunk during idle time when the connection can afford it, preserving the
+  // immediate pointer, focus, and touch intent paths below for fast clicks.
   React.useEffect(() => {
+    if (!canPrefetchHeavyRoute()) return undefined;
+
+    const warmFightDetails = (): void => {
+      if (canPrefetchHeavyRoute()) preloadReportFightDetails();
+    };
     const ric = (
       window as unknown as {
         requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
@@ -34,14 +47,14 @@ export const ReportFights: React.FC = () => {
       }
     ).requestIdleCallback;
     if (typeof ric === 'function') {
-      const handle = ric(() => preloadReportFightDetails(), { timeout: 2500 });
+      const handle = ric(warmFightDetails, { timeout: 2500 });
       return () => {
         (
           window as unknown as { cancelIdleCallback?: (handle: number) => void }
         ).cancelIdleCallback?.(handle);
       };
     }
-    const timer = window.setTimeout(() => preloadReportFightDetails(), 200);
+    const timer = window.setTimeout(warmFightDetails, 200);
     return () => window.clearTimeout(timer);
   }, []);
 
@@ -120,6 +133,7 @@ export const ReportFights: React.FC = () => {
         error={reportError}
         stillProcessing={stillProcessing}
         onRetry={refetchReport}
+        onFightIntent={prefetchFightDetailsOnIntent}
       />
     </>
   );

@@ -293,6 +293,35 @@ describe('reportSlice caching logic', () => {
       expect(query.mock.calls[0][0]).toMatchObject({ fetchPolicy: 'network-only' });
     });
 
+    it('keeps a retained refresh error visible until the retry succeeds', async () => {
+      let resolveQuery: ((value: unknown) => void) | undefined;
+      const query = jest.fn(
+        () =>
+          new Promise((resolve) => {
+            resolveQuery = resolve;
+          }),
+      );
+      const client = { query } as unknown as EsoLogsClient;
+      const testStore = storeWithEntry(
+        createReportEntry({
+          data: makeReportData([{ id: 1 }]),
+          status: 'failed',
+          error: 'Gateway failed',
+          cacheMetadata: { lastFetchedTimestamp: Date.now() - DATA_FETCH_CACHE_TIMEOUT - 1000 },
+        }),
+      );
+
+      const pendingRetry = testStore.dispatch(fetchReportData({ reportId: CODE, client }));
+      expect(testStore.getState().report.error).toBe('Gateway failed');
+      expect(testStore.getState().report.loading).toBe(true);
+
+      resolveQuery?.({ reportData: { report: makeReportData([{ id: 1 }]) } });
+      await pendingRetry;
+
+      expect(testStore.getState().report.error).toBeNull();
+      expect(testStore.getState().report.loading).toBe(false);
+    });
+
     it('uses the default (cacheable) fetch for a stale report WITH fights', async () => {
       const { client, query } = makeClient();
       const testStore = storeWithEntry(
@@ -362,6 +391,48 @@ describe('reportSlice caching logic', () => {
 
       await testStore.dispatch(fetchReportData({ reportId: CODE, client, force: true }));
       expect(query).not.toHaveBeenCalled();
+    });
+
+    it('trims rejected report requests once they settle, without evicting active requests', () => {
+      const client = { query: jest.fn() } as unknown as EsoLogsClient;
+      const reportIds = Array.from({ length: 7 }, (_, index) => `REJECTED-${index}`);
+
+      for (const reportId of reportIds) {
+        store.dispatch(fetchReportData.pending(`request-${reportId}`, { reportId, client }));
+      }
+
+      expect(
+        Object.keys((store.getState() as { report: ReportState }).report.entries),
+      ).toHaveLength(7);
+
+      store.dispatch(
+        fetchReportData.rejected(new Error('Network failed'), 'request-REJECTED-0', {
+          reportId: 'REJECTED-0',
+          client,
+        }),
+      );
+
+      const afterFirstRejection = (store.getState() as { report: ReportState }).report;
+      expect(
+        afterFirstRejection.entries[resolveCacheKey({ reportCode: 'REJECTED-0' }).key],
+      ).toBeUndefined();
+      expect(
+        afterFirstRejection.entries[resolveCacheKey({ reportCode: 'REJECTED-1' }).key]
+          ?.currentRequest,
+      ).toEqual({ reportId: 'REJECTED-1', requestId: 'request-REJECTED-1' });
+
+      for (const reportId of reportIds.slice(1)) {
+        store.dispatch(
+          fetchReportData.rejected(new Error('Network failed'), `request-${reportId}`, {
+            reportId,
+            client,
+          }),
+        );
+      }
+
+      const afterAllRejections = (store.getState() as { report: ReportState }).report;
+      expect(Object.keys(afterAllRejections.entries)).toHaveLength(6);
+      expect(afterAllRejections.accessOrder).toHaveLength(6);
     });
   });
 });

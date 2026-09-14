@@ -14,6 +14,7 @@ import {
   setUserProperties,
   trackConversion,
   trackEvent,
+  trackFieldWebVital,
   trackPageView,
 } from './analytics';
 import * as cacheBusting from './cacheBusting';
@@ -80,6 +81,116 @@ describe('analytics', () => {
   afterEach(() => {
     getEnvVarSpy.mockRestore();
     localStorage.clear();
+  });
+
+  describe('trackFieldWebVital', () => {
+    const webVital = {
+      name: 'INP' as const,
+      value: 120,
+      rating: 'good' as const,
+      route: '/report/:reportId/fight/:fightId/insights',
+      deviceTier: 'mobile' as const,
+      networkTier: 'fast' as const,
+    };
+
+    it('sends only the fixed privacy-safe Web Vitals payload after consent', () => {
+      getEnvVarSpy.mockReturnValue(mockMeasurementId);
+
+      trackFieldWebVital(webVital);
+
+      expect(ReactGA.event).toHaveBeenCalledWith('web_vital', {
+        metric_name: 'INP',
+        metric_value: 120,
+        metric_rating: 'good',
+        route_template: '/report/:reportId/fight/:fightId/insights',
+        device_tier: 'mobile',
+        network_tier: 'fast',
+      });
+      expect(ReactGA.event).not.toHaveBeenCalledWith(
+        'web_vital',
+        expect.objectContaining({ reportCode: expect.anything(), playerId: expect.anything() }),
+      );
+    });
+
+    it('canonicalizes arbitrary caller routes before telemetry leaves the client', () => {
+      getEnvVarSpy.mockReturnValue(mockMeasurementId);
+
+      trackFieldWebVital({
+        ...webVital,
+        route:
+          '/report/SECRET_REPORT/fight/42/insights?player=Lady%20Ardent&token=do-not-send#damage',
+      });
+
+      expect(ReactGA.event).toHaveBeenCalledWith('web_vital', {
+        metric_name: 'INP',
+        metric_value: 120,
+        metric_rating: 'good',
+        route_template: '/report/:reportId/fight/:fightId/insights',
+        device_tier: 'mobile',
+        network_tier: 'fast',
+      });
+      expect(JSON.stringify((ReactGA.event as jest.Mock).mock.calls[0][1])).not.toMatch(
+        /SECRET_REPORT|Lady|token|damage/,
+      );
+    });
+
+    it('keeps raw values in separate mobile and desktop p75-ready segments', () => {
+      getEnvVarSpy.mockReturnValue(mockMeasurementId);
+      const desktopVital = {
+        ...webVital,
+        value: 240,
+        route: '/dashboard',
+        deviceTier: 'desktop' as const,
+        networkTier: 'standard' as const,
+      };
+
+      trackFieldWebVital(webVital);
+      trackFieldWebVital(desktopVital);
+
+      expect(ReactGA.event).toHaveBeenNthCalledWith(1, 'web_vital', {
+        metric_name: 'INP',
+        metric_value: 120,
+        metric_rating: 'good',
+        route_template: '/report/:reportId/fight/:fightId/insights',
+        device_tier: 'mobile',
+        network_tier: 'fast',
+      });
+      expect(ReactGA.event).toHaveBeenNthCalledWith(2, 'web_vital', {
+        metric_name: 'INP',
+        metric_value: 240,
+        metric_rating: 'good',
+        route_template: '/dashboard',
+        device_tier: 'desktop',
+        network_tier: 'standard',
+      });
+    });
+
+    it('does not send field Web Vitals without analytics consent', () => {
+      getEnvVarSpy.mockReturnValue(mockMeasurementId);
+      localStorage.clear();
+
+      trackFieldWebVital(webVital);
+
+      expect(ReactGA.event).not.toHaveBeenCalled();
+    });
+
+    it('rejects malformed direct samples at the transport boundary', () => {
+      getEnvVarSpy.mockReturnValue(mockMeasurementId);
+      const malformedSamples = [
+        { ...webVital, value: Number.NaN },
+        { ...webVital, value: -1 },
+        { ...webVital, name: 'FID' },
+        { ...webVital, rating: 'invalid' },
+        { ...webVital, route: 42 },
+        { ...webVital, deviceTier: 'tablet' },
+        { ...webVital, networkTier: 'wifi' },
+        { ...webVital, playerId: 'PLAYER_NAME' },
+      ] as never[];
+
+      malformedSamples.forEach((sample) => trackFieldWebVital(sample));
+
+      expect(ReactGA.event).not.toHaveBeenCalled();
+    });
   });
 
   describe('initializeAnalytics', () => {

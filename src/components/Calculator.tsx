@@ -46,7 +46,7 @@ import {
 import { styled, useTheme, alpha, Theme } from '@mui/material/styles';
 import DOMPurify from 'dompurify';
 import { motion } from 'framer-motion';
-import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useMemo, useCallback, useRef, useEffect, useDeferredValue } from 'react';
 
 import { useLogger } from '@/contexts/LoggerContext';
 import { usePageTitle } from '@/hooks/useDocumentTitle';
@@ -1207,6 +1207,25 @@ function TabPanel(props: TabPanelProps): React.JSX.Element {
   );
 }
 
+interface DeferredCalculatorTabContentProps {
+  renderContent: () => React.ReactNode;
+  revision: object;
+}
+
+/**
+ * Keeps expensive item-list construction out of the urgent selected-tab update.
+ * `renderContent` is deliberately not compared: it is recreated by the parent,
+ * while `revision` changes only when one of its rendered inputs changes.
+ */
+export const DeferredCalculatorTabContent = React.memo(
+  ({ renderContent }: DeferredCalculatorTabContentProps): React.JSX.Element => (
+    <>{renderContent()}</>
+  ),
+  (previous, next) => previous.revision === next.revision,
+);
+
+DeferredCalculatorTabContent.displayName = 'DeferredCalculatorTabContent';
+
 // Structured tooltip card. Resolves a typed record by item name (preferred) and
 // falls back to rendering the legacy `content` HTML string when no record exists.
 interface CalculatorTooltipProps {
@@ -1529,6 +1548,7 @@ const CalculatorComponent: React.FC = () => {
   const isTablet = useMediaQuery(theme.breakpoints.down('md'));
   const isExtraSmall = useMediaQuery('(max-width:380px)');
   const [selectedTab, setSelectedTab] = useState(0);
+  const deferredSelectedTab = useDeferredValue(selectedTab);
 
   usePageTitle('/calculator');
 
@@ -3970,6 +3990,68 @@ const CalculatorComponent: React.FC = () => {
     [getFilteredItems, armorResistanceData],
   );
 
+  // The memo boundary below receives a freshly-created render function on every
+  // parent render. This revision contains the values that can change its output,
+  // so selected-tab highlighting can commit without rebuilding item lists.
+  const deferredTabContentRevision = useMemo(
+    () => ({
+      armorResistanceData,
+      armorResistanceGearSections,
+      armorResistanceSets,
+      armorResistanceStatus,
+      armorResistanceTotal,
+      critStatus,
+      critTotal,
+      damageLossPercentage,
+      damageMitigationPercentage,
+      deferredSelectedTab,
+      filteredCp,
+      filteredCritData,
+      filteredPassives,
+      filteredPenData,
+      fullTokens,
+      gameMode,
+      isMobile,
+      liteMode,
+      penStatus,
+      penTotal,
+      renderItem,
+      themeMode: theme.palette.mode,
+      underpenetrationAmount,
+      updateArmorResistanceItem,
+      updateCritItem,
+      updatePenItem,
+    }),
+    [
+      armorResistanceData,
+      armorResistanceGearSections,
+      armorResistanceSets,
+      armorResistanceStatus,
+      armorResistanceTotal,
+      critStatus,
+      critTotal,
+      damageLossPercentage,
+      damageMitigationPercentage,
+      deferredSelectedTab,
+      filteredCp,
+      filteredCritData,
+      filteredPassives,
+      filteredPenData,
+      fullTokens,
+      gameMode,
+      isMobile,
+      liteMode,
+      penStatus,
+      penTotal,
+      renderItem,
+      theme.palette.mode,
+      underpenetrationAmount,
+      updateArmorResistanceItem,
+      updateCritItem,
+      updatePenItem,
+    ],
+  );
+
   const penSelectableItems = useMemo(
     () =>
       Object.values(filteredPenData)
@@ -5454,9 +5536,14 @@ const CalculatorComponent: React.FC = () => {
               </Box>
             )}
 
+            {/* prettier-ignore */}
+            <DeferredCalculatorTabContent
+              revision={deferredTabContentRevision}
+              renderContent={() => (
+                <>
             {/* Tab Content */}
             <Box sx={{ px: { xs: 1.5, sm: 3.75 }, pb: 3 }}>
-              <TabPanel value={selectedTab} index={0}>
+              <TabPanel value={deferredSelectedTab} index={0}>
                 {(() => {
                   return liteMode ? (
                     // Lite mode: render all penetration items in a single flattened list
@@ -5500,7 +5587,7 @@ const CalculatorComponent: React.FC = () => {
                 {/* Footer removed from inside TabPanel - moved outside */}
               </TabPanel>
 
-              <TabPanel value={selectedTab} index={1}>
+              <TabPanel value={deferredSelectedTab} index={1}>
                 {(() => {
                   return liteMode ? (
                     // Lite mode: render all critical items in a single flattened list
@@ -5544,7 +5631,7 @@ const CalculatorComponent: React.FC = () => {
                 {/* Footer removed from inside TabPanel - moved outside */}
               </TabPanel>
 
-              <TabPanel value={selectedTab} index={2}>
+              <TabPanel value={deferredSelectedTab} index={2}>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                   {/* Armor Resistance Calculator Categories */}
                   {!liteMode && (
@@ -5824,7 +5911,7 @@ const CalculatorComponent: React.FC = () => {
                       : 'inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 12px 36px rgba(15, 23, 42, 0.12)',
                 }}
               >
-                {selectedTab === 0 &&
+                {deferredSelectedTab === 0 &&
                   renderSummaryFooter({
                     label: 'Total Penetration',
                     value: penTotal.toLocaleString(),
@@ -5843,7 +5930,7 @@ const CalculatorComponent: React.FC = () => {
                             : `PvE: ${PEN_OPTIMAL_MIN_PVE.toLocaleString()}–${PEN_OPTIMAL_MAX_PVE.toLocaleString()}\nPvP: ${PEN_OPTIMAL_MIN_PVP.toLocaleString()}–${PEN_OPTIMAL_MAX_PVP.toLocaleString()}`,
                     },
                   })}
-                {selectedTab === 1 &&
+                {deferredSelectedTab === 1 &&
                   renderSummaryFooter({
                     label: 'Total Critical Damage',
                     value: critTotal.toLocaleString(undefined, { maximumFractionDigits: 1 }),
@@ -5859,7 +5946,7 @@ const CalculatorComponent: React.FC = () => {
                             : 'PvE: 125%\nPvP: 100%',
                     },
                   })}
-                {selectedTab === 2 &&
+                {deferredSelectedTab === 2 &&
                   renderSummaryFooter({
                     label: 'Total Armor Resistance',
                     value: armorResistanceTotal.toLocaleString(),
@@ -5873,6 +5960,9 @@ const CalculatorComponent: React.FC = () => {
                   })}
               </Box>
             </Box>
+                </>
+              )}
+            />
 
             {/* Total Section - moved inside tab content */}
           </CalculatorCard>

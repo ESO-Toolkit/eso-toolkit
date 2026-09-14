@@ -230,6 +230,58 @@ describe('buffUptimeCalculator', () => {
       expect(result[0].totalDuration).toBe(FIGHT_DURATION);
     });
 
+    it('unions overlapping refreshes per target, including timestamp zero and fight clipping', () => {
+      const buffLookup = createBuffLookup(
+        new Map([
+          [
+            MOCK_ABILITY_ID_1,
+            [
+              createBuffInterval(0, 6000, MOCK_TARGET_ID_1),
+              createBuffInterval(5000, 12000, MOCK_TARGET_ID_1),
+            ],
+          ],
+        ]),
+      );
+
+      const result = computeBuffUptimes(buffLookup, {
+        ...baseOptions,
+        fightStartTime: 0,
+        fightEndTime: 10000,
+        fightDuration: 10000,
+      });
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toMatchObject({
+        totalDuration: 10000,
+        uptimePercentage: 100,
+        applications: 2,
+      });
+    });
+
+    it('unions overlaps independently per target before averaging', () => {
+      const buffLookup = createBuffLookup(
+        new Map([
+          [
+            MOCK_ABILITY_ID_1,
+            [
+              createBuffInterval(FIGHT_START, FIGHT_END, MOCK_TARGET_ID_1),
+              createBuffInterval(FIGHT_START + 1000, FIGHT_END - 1000, MOCK_TARGET_ID_1),
+              createBuffInterval(FIGHT_START, FIGHT_START + 5000, MOCK_TARGET_ID_2),
+            ],
+          ],
+        ]),
+      );
+
+      const result = computeBuffUptimes(buffLookup, baseOptions);
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toMatchObject({
+        totalDuration: 7500,
+        uptimePercentage: 75,
+        applications: 3,
+      });
+    });
+
     it('should filter by target IDs when specified', () => {
       const intervals = new Map([
         [
@@ -644,6 +696,65 @@ describe('buffUptimeCalculator', () => {
       const expected = referenceGroupAverage(buffLookup, options, PLAYER_A);
       const actual = computeBuffUptimesWithGroupAverage(buffLookup, options, PLAYER_A);
       expect(actual).toEqual(expected);
+    });
+
+    it('unions overlapping intervals in the optimized normal-player aggregation', () => {
+      const buffLookup = createBuffLookup(
+        new Map([
+          [
+            MOCK_ABILITY_ID_1,
+            [
+              createBuffInterval(FIGHT_START, FIGHT_END, PLAYER_A),
+              createBuffInterval(FIGHT_START + 1000, FIGHT_END - 1000, PLAYER_A),
+              createBuffInterval(FIGHT_START, FIGHT_START + 2000, PLAYER_B),
+            ],
+          ],
+        ]),
+      );
+      const options: BuffUptimeCalculatorOptions = {
+        ...baseOptions,
+        targetIds: new Set([PLAYER_A, PLAYER_B]),
+      };
+
+      const expected = referenceGroupAverage(buffLookup, options, PLAYER_A);
+      const actual = computeBuffUptimesWithGroupAverage(buffLookup, options, PLAYER_A);
+
+      expect(actual).toEqual(expected);
+      expect(actual[0]).toMatchObject({
+        uptimePercentage: 100,
+        groupAverageUptimePercentage: 60,
+      });
+    });
+
+    it('unions overlapping intervals in the optimized inverted-debuff aggregation', () => {
+      const buffLookup = createBuffLookup(
+        new Map([
+          [
+            MOCK_ABILITY_ID_1,
+            [
+              createBuffInterval(FIGHT_START, FIGHT_END, ENEMY_A, PLAYER_A),
+              createBuffInterval(FIGHT_START + 1000, FIGHT_END - 1000, ENEMY_A, PLAYER_A),
+              createBuffInterval(FIGHT_START, FIGHT_START + 5000, ENEMY_A, PLAYER_B),
+            ],
+          ],
+        ]),
+      );
+      const options: BuffUptimeCalculatorOptions = {
+        ...baseOptions,
+        isDebuff: true,
+        sourceIds: new Set([PLAYER_A, PLAYER_B]),
+        targetIds: new Set([ENEMY_A]),
+        filterBySourceId: true,
+      };
+
+      const expected = referenceGroupAverage(buffLookup, options, PLAYER_A);
+      const actual = computeBuffUptimesWithGroupAverage(buffLookup, options, PLAYER_A);
+
+      expect(actual).toEqual(expected);
+      expect(actual[0]).toMatchObject({
+        uptimePercentage: 100,
+        groupAverageUptimePercentage: 75,
+      });
     });
   });
 });

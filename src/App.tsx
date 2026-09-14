@@ -20,12 +20,14 @@ import { LandingPage } from './components/LandingPage';
 import { PerfLowNotice } from './components/PerfLowNotice';
 import { PerfTierProvider } from './components/PerfTierProvider';
 import { ReportFightsSkeleton } from './components/ReportFightsSkeleton';
+import { RetryableLazyRoute } from './components/RetryableLazyRoute';
 import { RobotsMeta } from './components/RobotsMeta';
 import { RosterBuilderSkeleton } from './components/RosterBuilderSkeleton';
 import { RosterHubSkeleton } from './components/RosterHubSkeleton';
 import { ScribingRedirect } from './components/ScribingRedirect';
 import { ScrollRestoration } from './components/ScrollRestoration';
 import { SiteBackground } from './components/shared';
+import { SkipLink } from './components/SkipLink';
 import { SmartCalculatorSkeleton } from './components/SmartCalculatorSkeleton';
 import { TextEditorSkeleton } from './components/TextEditorSkeleton';
 import { UltimateCalculatorSkeleton } from './components/UltimateCalculatorSkeleton';
@@ -59,15 +61,31 @@ import {
 } from './utils/hubRoutePreload';
 import { importReportFightDetails, preloadReportFightDetails } from './utils/reportRoutePreload';
 
-// A direct landing on a report URL needs the (large) fight-details chunk as soon
-// as possible, so start its fetch here at entry evaluation rather than waiting
-// for the router to mount and the lazy route to suspend. That puts the request
-// in flight alongside the rest of boot, which is what the old static import
-// bought us — minus the cost of shipping the chunk to every other route.
+// Direct landings on a fight detail or live report need the (large) fight-details
+// chunk as soon as possible. Start its fetch at entry evaluation rather than
+// waiting for the router to mount and the lazy route to suspend, while keeping
+// the report fight list out of the heavy chunk's startup path.
 // getRoutePathname strips the deploy's base path, so this is a real route match
-// and still fires under a preview deploy at /dev-previews/pr-123/report/....
-if (typeof window !== 'undefined' && getRoutePathname().startsWith('/report/')) {
-  preloadReportFightDetails();
+// and still matches under a preview deploy at /dev-previews/pr-123/report/....
+export const shouldPreloadReportFightDetailsAtStartup = (pathname: string): boolean => {
+  const normalizedPathname = pathname.replace(/\/+$/, '') || '/';
+
+  if (/^\/report\/[^/]+\/live$/.test(normalizedPathname)) {
+    return true;
+  }
+
+  const fightRoute = /^\/report\/[^/]+\/fight\/[^/]+(?:\/([^/]+))?$/.exec(normalizedPathname);
+  return fightRoute !== null && fightRoute[1] !== 'replay';
+};
+
+export const preloadReportFightDetailsForInitialRoute = (pathname: string): void => {
+  if (shouldPreloadReportFightDetailsAtStartup(pathname)) {
+    preloadReportFightDetails();
+  }
+};
+
+if (typeof window !== 'undefined') {
+  preloadReportFightDetailsForInitialRoute(getRoutePathname());
 }
 
 // Capture and clear the fragment before analytics or error tracking can observe
@@ -93,12 +111,13 @@ const LiveLog = React.lazy(() =>
 );
 // ReportFightDetails is lazy like every other route (it is the heaviest feature
 // in the app and must not sit in the entry graph). Its LCP is protected instead
-// by the module-scope `preloadReportFightDetails()` above and an idle warm from
-// the report list — both go through the same importer as this route, so the
-// preload and the route resolve the identical chunk.
-const ReportFightDetails = React.lazy(() =>
-  importReportFightDetails().then((module) => ({ default: module.ReportFightDetails })),
-);
+// by the module-scope `preloadReportFightDetails()` above and intent-driven
+// warming from the report list. Both use the same importer as the retryable
+// route loader, so preloading and navigation resolve the identical chunk.
+const loadReportFightDetails = (): Promise<{ default: React.ComponentType }> =>
+  importReportFightDetails().then((module) => ({
+    default: module.ReportFightDetails,
+  }));
 const ReportFights = React.lazy(() =>
   import('./features/report_details/ReportFights').then((module) => ({
     default: module.ReportFights,
@@ -420,38 +439,7 @@ const MainApp: React.FC = () => {
       <KalpaBanner />
       <HeaderBar />
       <Box sx={{ position: 'relative' }}>
-        <Box
-          component="a"
-          href="#main-content"
-          sx={{
-            position: 'absolute',
-            left: '-9999px',
-            top: 'auto',
-            width: 1,
-            height: 1,
-            overflow: 'hidden',
-            zIndex: 9999,
-            '&:focus': {
-              position: 'fixed',
-              top: 8,
-              left: 8,
-              width: 'auto',
-              height: 'auto',
-              overflow: 'visible',
-              bgcolor: 'primary.main',
-              color: 'primary.contrastText',
-              px: 2,
-              py: 1,
-              borderRadius: 1,
-              fontSize: '0.875rem',
-              fontWeight: 600,
-              textDecoration: 'none',
-              boxShadow: 4,
-            },
-          }}
-        >
-          Skip to main content
-        </Box>
+        <SkipLink />
         <LandingPage />
       </Box>
     </ReduxThemeProvider>
@@ -644,21 +632,13 @@ const AppRoutes: React.FC = () => {
             <Route
               path="/report/:reportId/fight/:fightId/:tabId"
               element={
-                <ErrorBoundary>
-                  <Suspense fallback={<LoadingFallback />}>
-                    <ReportFightDetails />
-                  </Suspense>
-                </ErrorBoundary>
+                <RetryableLazyRoute fallback={<LoadingFallback />} load={loadReportFightDetails} />
               }
             />
             <Route
               path="/report/:reportId/fight/:fightId"
               element={
-                <ErrorBoundary>
-                  <Suspense fallback={<LoadingFallback />}>
-                    <ReportFightDetails />
-                  </Suspense>
-                </ErrorBoundary>
+                <RetryableLazyRoute fallback={<LoadingFallback />} load={loadReportFightDetails} />
               }
             />
             <Route
@@ -677,7 +657,10 @@ const AppRoutes: React.FC = () => {
                 <ErrorBoundary>
                   <Suspense fallback={<LoadingFallback />}>
                     <LiveLog>
-                      <ReportFightDetails />
+                      <RetryableLazyRoute
+                        fallback={<LoadingFallback />}
+                        load={loadReportFightDetails}
+                      />
                     </LiveLog>
                   </Suspense>
                 </ErrorBoundary>

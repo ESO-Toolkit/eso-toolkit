@@ -4,8 +4,10 @@ import path from 'node:path';
 import type { FightFragment, ReportFragment } from '../../graphql/gql/graphql';
 
 import {
+  bossHealthRemaining,
   buildRunEncounters,
   effectiveEncounterId,
+  getFightOutcome,
   groupFightsIntoRuns,
   isBossFight,
   isResetPull,
@@ -78,6 +80,51 @@ describe('kill detection', () => {
   it('falls back to bossPercentage when kill is null', () => {
     expect(wasKill(makeFight({ kill: null, bossPercentage: 0.5 }))).toBe(true);
     expect(wasKill(makeFight({ kill: null, bossPercentage: 40 }))).toBe(false);
+  });
+
+  it.each([Number.NEGATIVE_INFINITY, -5, Number.NaN, Number.POSITIVE_INFINITY, 105])(
+    'does not infer a kill from invalid boss health %p',
+    (bossPercentage) => {
+      const fight = makeFight({ kill: null, bossPercentage });
+
+      expect(wasKill(fight)).toBe(false);
+      expect(getFightOutcome(fight)).toEqual({
+        status: 'unknown',
+        bossHealthRemaining: null,
+      });
+    },
+  );
+
+  it('does not let inferred health override an explicit wipe', () => {
+    expect(wasKill(makeFight({ kill: false, bossPercentage: 0 }))).toBe(false);
+  });
+
+  it('keeps missing, non-finite, and out-of-range boss health unknown', () => {
+    expect(bossHealthRemaining(makeFight({ bossPercentage: null }))).toBeNull();
+    expect(bossHealthRemaining(makeFight({ bossPercentage: Number.NaN }))).toBeNull();
+    expect(bossHealthRemaining(makeFight({ bossPercentage: Number.POSITIVE_INFINITY }))).toBeNull();
+    expect(bossHealthRemaining(makeFight({ bossPercentage: -5 }))).toBeNull();
+    expect(bossHealthRemaining(makeFight({ bossPercentage: 105 }))).toBeNull();
+  });
+
+  it('exposes authoritative, display-safe outcomes', () => {
+    expect(getFightOutcome(makeFight({ kill: true, bossPercentage: 100 }))).toEqual({
+      status: 'kill',
+      bossHealthRemaining: 100,
+    });
+    expect(getFightOutcome(makeFight({ kill: false, bossPercentage: 0 }))).toEqual({
+      status: 'wipe',
+      bossHealthRemaining: 0,
+    });
+    expect(getFightOutcome(makeFight({ kill: null, bossPercentage: 40 }))).toEqual({
+      status: 'wipe',
+      bossHealthRemaining: 40,
+    });
+    expect(
+      getFightOutcome(
+        makeFight({ kill: null, bossPercentage: null, encounterID: 0, difficulty: null }),
+      ),
+    ).toEqual({ status: 'unknown', bossHealthRemaining: null });
   });
 });
 

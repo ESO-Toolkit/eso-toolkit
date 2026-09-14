@@ -4,6 +4,7 @@ import { DamageEvent, HitType } from '../../../types/combatlogEvents';
 import {
   AOE_ABILITY_IDS,
   categorizeDamageEvents,
+  categorizeDamageEventsWithMetrics,
   partitionDamageEvents,
   STATUS_EFFECT_ABILITY_IDS,
 } from './damageTypeCategorization';
@@ -105,6 +106,22 @@ describe('categorizeDamageEvents', () => {
     const result = categorizeDamageEvents(null, null);
     expect(result.totalDamage).toBe(0);
     expect(result.magic.totalDamage).toBe(0);
+  });
+
+  it('derives all metric populations in one traversal without changing denominators', () => {
+    const events = [
+      makeDamage({ amount: 100, hitType: HitType.Normal }),
+      makeDamage({ amount: 300, hitType: HitType.Critical }),
+      makeDamage({ amount: 50, hitType: 77 as HitType }),
+    ];
+    const metrics = categorizeDamageEventsWithMetrics(events, abilities);
+    expect(metrics.all.magic.totalDamage).toBe(450);
+    expect(metrics.eligible.magic.hitCount).toBe(2);
+    expect(metrics.critical.magic.totalDamage).toBe(300);
+    expect(metrics.unknownHitType.magic.totalDamage).toBe(50);
+    expect(metrics.all.magic.totalDamage).toBe(
+      categorizeDamageEvents(events, abilities).magic.totalDamage,
+    );
   });
 });
 

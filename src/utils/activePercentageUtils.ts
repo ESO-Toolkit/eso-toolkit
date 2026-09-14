@@ -14,6 +14,38 @@ export interface ActivePercentageResult {
   activePercentage: number;
 }
 
+export interface DamageStatisticsWithActivity {
+  damageByPlayer: Record<number, number>;
+  criticalDamageByPlayer: Record<number, number>;
+  damageEventsBySource: Record<number, number>;
+  activePercentages: Record<number, ActivePercentageResult>;
+}
+
+type ActivityTimestampsByPlayer = Record<number, number[]>;
+
+const getFightTiming = (
+  fight: Pick<FightFragment, 'startTime' | 'endTime'>,
+): { fightStartTime: number; fightEndTime: number; totalFightDuration: number } | null => {
+  if (fight.startTime == null || fight.endTime == null) {
+    return null;
+  }
+
+  const fightStartTime = Number(fight.startTime);
+  const fightEndTime = Number(fight.endTime);
+  const totalFightDuration = fightEndTime - fightStartTime;
+
+  if (
+    !Number.isFinite(fightStartTime) ||
+    !Number.isFinite(fightEndTime) ||
+    !Number.isFinite(totalFightDuration) ||
+    totalFightDuration <= 0
+  ) {
+    return null;
+  }
+
+  return { fightStartTime, fightEndTime, totalFightDuration };
+};
+
 /**
  * Calculate active percentage for all players in a fight
  * Based on damage output: player is active during periods when they are dealing damage.
@@ -24,42 +56,125 @@ export function calculateActivePercentages(
   fight: FightFragment,
   damageEvents: Record<string, DamageEvent[]>,
 ): Record<number, ActivePercentageResult> {
-  if (fight.startTime == null || fight.endTime == null) {
-    return {};
+  const timing = getFightTiming(fight);
+  if (!timing) return {};
+
+  const activityTimestampsByPlayer: ActivityTimestampsByPlayer = {};
+
+  for (const [playerIdStr, events] of Object.entries(damageEvents)) {
+    const playerId = Number(playerIdStr);
+    const timestamps: number[] = [];
+    activityTimestampsByPlayer[playerId] = timestamps;
+
+    for (const event of events) {
+      if (
+        event.sourceID === playerId &&
+        event.timestamp >= timing.fightStartTime &&
+        event.timestamp <= timing.fightEndTime &&
+        !event.targetIsFriendly &&
+        event.amount > 0
+      ) {
+        timestamps.push(event.timestamp);
+      }
+    }
   }
 
-  const fightStartTime = Number(fight.startTime);
-  const fightEndTime = Number(fight.endTime);
-  const totalFightDuration = fightEndTime - fightStartTime;
+  return calculateActivePercentagesFromTimestamps(fight, activityTimestampsByPlayer);
+}
 
-  if (totalFightDuration <= 0) {
-    return {};
-  }
+/**
+ * Calculate active percentages from the compact timestamp summaries produced while
+ * damage totals are calculated. Timestamps have already been filtered for source,
+ * target, fight range, and positive damage by the caller.
+ */
+export function calculateActivePercentagesFromTimestamps(
+  fight: FightFragment,
+  activityTimestampsByPlayer: ActivityTimestampsByPlayer,
+): Record<number, ActivePercentageResult> {
+  const timing = getFightTiming(fight);
+  if (!timing) return {};
 
   const results: Record<number, ActivePercentageResult> = {};
 
-  // For each player, calculate their active time using a running tally approach
-  Object.entries(damageEvents).forEach(([playerIdStr, damageEvents]) => {
+  for (const [playerIdStr, timestamps] of Object.entries(activityTimestampsByPlayer)) {
     const playerId = Number(playerIdStr);
-
-    const activeTimeMs = calculatePlayerActiveTime(
-      playerId,
-      fightStartTime,
-      fightEndTime,
-      damageEvents,
-    );
-
-    const activePercentage = totalFightDuration > 0 ? (activeTimeMs / totalFightDuration) * 100 : 0;
+    const activeTimeMs = calculatePlayerActiveTimeFromTimestamps(timestamps);
 
     results[playerId] = {
       playerId,
       activeTimeMs,
-      totalTimeMs: totalFightDuration,
-      activePercentage,
+      totalTimeMs: timing.totalFightDuration,
+      activePercentage:
+        timing.totalFightDuration > 0 ? (activeTimeMs / timing.totalFightDuration) * 100 : 0,
     };
-  });
+  }
 
   return results;
+}
+
+/**
+ * Calculate Damage Done totals and the activity timestamps in one traversal of
+ * each player's event list. Events remain grouped by their attributed player ID;
+ * activity intentionally retains the source ID check used by ESO Logs so pet
+ * damage (including charged atronachs) contributes to totals but not its owner's
+ * direct-damage activity time.
+ */
+export function calculateDamageStatisticsWithActivity(
+  fight: FightFragment | null | undefined,
+  damageEventsByPlayer: Record<string, DamageEvent[]>,
+  selectedTargetIds: ReadonlySet<number>,
+): DamageStatisticsWithActivity {
+  const damageByPlayer: Record<number, number> = {};
+  const criticalDamageByPlayer: Record<number, number> = {};
+  const damageEventsBySource: Record<number, number> = {};
+  const activityTimestampsByPlayer: ActivityTimestampsByPlayer = {};
+  const timing = fight ? getFightTiming(fight) : null;
+
+  for (const [playerIdStr, events] of Object.entries(damageEventsByPlayer)) {
+    const playerId = Number(playerIdStr);
+    let totalDamage = 0;
+    let totalCriticalDamage = 0;
+    let eventCount = 0;
+    let activityTimestamps: number[] | undefined;
+
+    for (const event of events) {
+      if (event.targetIsFriendly) continue;
+      if (selectedTargetIds.size > 0 && !selectedTargetIds.has(event.targetID)) continue;
+
+      const amount = 'amount' in event ? Number(event.amount) || 0 : 0;
+      totalDamage += amount;
+      if (event.hitType === 2) totalCriticalDamage += amount;
+      eventCount += 1;
+
+      // Keep an empty summary for qualifying events, matching the previous
+      // filtered-event lookup's zero-activity entries.
+      activityTimestamps ??= activityTimestampsByPlayer[playerId] = [];
+      if (
+        timing &&
+        event.sourceID === playerId &&
+        event.timestamp >= timing.fightStartTime &&
+        event.timestamp <= timing.fightEndTime &&
+        event.amount > 0
+      ) {
+        activityTimestamps.push(event.timestamp);
+      }
+    }
+
+    if (totalDamage > 0) {
+      damageByPlayer[playerId] = totalDamage;
+      criticalDamageByPlayer[playerId] = totalCriticalDamage;
+      damageEventsBySource[playerId] = eventCount;
+    }
+  }
+
+  return {
+    damageByPlayer,
+    criticalDamageByPlayer,
+    damageEventsBySource,
+    activePercentages: fight
+      ? calculateActivePercentagesFromTimestamps(fight, activityTimestampsByPlayer)
+      : {},
+  };
 }
 
 /**
@@ -72,35 +187,22 @@ export function calculateActivePercentages(
  * - Groups damage events into continuous periods of activity
  * - A gap of more than 10 seconds without damage ends an active period
  */
-function calculatePlayerActiveTime(
-  playerId: number,
-  fightStartTime: number,
-  fightEndTime: number,
-  damageEvents: DamageEvent[],
-): number {
-  // Focus primarily on damage events as the indicator of player activity
-  const playerDamageEvents = damageEvents
-    .filter(
-      (event) =>
-        event.sourceID === playerId &&
-        event.timestamp >= fightStartTime &&
-        event.timestamp <= fightEndTime &&
-        !event.targetIsFriendly &&
-        event.amount > 0,
-    )
-    .sort((a, b) => a.timestamp - b.timestamp);
-
-  if (playerDamageEvents.length === 0) {
+function calculatePlayerActiveTimeFromTimestamps(timestamps: readonly number[]): number {
+  if (timestamps.length === 0) {
     return 0; // No damage = no activity
   }
 
+  // Event order is not guaranteed. Sorting numeric timestamps preserves the
+  // existing interval semantics without copying or sorting event objects.
+  const sortedTimestamps = [...timestamps].sort((a, b) => a - b);
+
   const ACTIVITY_GAP_THRESHOLD = 10000; // 10 seconds gap ends an active period
   let totalActiveTime = 0;
-  let lastDamageTime = playerDamageEvents[0].timestamp;
-  let currentPeriodStart = playerDamageEvents[0].timestamp;
+  let lastDamageTime = sortedTimestamps[0];
+  let currentPeriodStart = sortedTimestamps[0];
 
-  for (let i = 1; i < playerDamageEvents.length; i++) {
-    const damageTime = playerDamageEvents[i].timestamp;
+  for (let i = 1; i < sortedTimestamps.length; i++) {
+    const damageTime = sortedTimestamps[i];
     const timeSinceLastDamage = damageTime - lastDamageTime;
 
     if (timeSinceLastDamage < ACTIVITY_GAP_THRESHOLD) {

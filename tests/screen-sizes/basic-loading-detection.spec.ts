@@ -1,4 +1,4 @@
-import { test } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 
 import { createSkeletonDetector } from '../utils/skeleton-detector';
 
@@ -20,6 +20,8 @@ test.describe('ESO Toolkit - Simplified Screen Size Tests', () => {
       waitUntil: 'networkidle',
       timeout: 60000,
     });
+    expect(await page.evaluate(() => sessionStorage.getItem('access_token'))).toBeTruthy();
+    expect(await page.evaluate(() => localStorage.getItem('access_token'))).toBeNull();
 
     // Wait for content to be fully loaded using our improved detection
     const skeletonDetector = createSkeletonDetector(page);

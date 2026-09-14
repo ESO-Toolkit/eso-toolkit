@@ -9,6 +9,13 @@ import * as fs from 'fs';
 /** Base URL for the local dev server, overridable via environment variable. */
 export const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 
+/** Keep Vite's listener on the same port Playwright probes. */
+export function getDevServerPort(baseUrl: string): string {
+  const url = new URL(baseUrl);
+  if (url.port) return url.port;
+  return url.protocol === 'https:' ? '443' : '80';
+}
+
 /**
  * Standard dev-server web server config.
  * Used by performance, screen-sizes, and screen-sizes-fast configs.
@@ -17,6 +24,10 @@ export const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 export const devWebServer = {
   command: 'npm run dev',
   url: BASE_URL,
+  env: {
+    PORT: getDevServerPort(BASE_URL),
+    STRICT_PORT: 'true',
+  },
   reuseExistingServer: !process.env.CI,
   timeout: 120000, // 2 minutes to start
   stdout: 'pipe' as const,

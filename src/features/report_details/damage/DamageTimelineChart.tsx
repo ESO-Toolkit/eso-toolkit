@@ -10,6 +10,7 @@ import {
   IconButton,
   Tooltip,
   ButtonBase,
+  useMediaQuery,
 } from '@mui/material';
 import { getInstanceByDom } from 'echarts/core';
 import React from 'react';
@@ -96,6 +97,10 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
   resolvePlayerName,
 }) => {
   const { theme } = useEChartsTheme();
+  const prefersReducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
+  const chartId = React.useId().replace(/:/g, '');
+  const filtersId = `${chartId}-filters`;
+  const chartAlternativeId = `${chartId}-alternative`;
   const [stacked, setStacked] = React.useState(false);
   const [uptimeSeries, setUptimeSeries] = React.useState<UptimeTimelineSeries[]>([]);
   const [showFilters, setShowFilters] = React.useState(false);
@@ -286,6 +291,43 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
         color: playerColorMap.get(p.playerId) ?? PLAYER_COLORS[0],
       }));
   }, [displayData, hiddenPlayerIds, resolvePlayerName, playerColorMap]);
+
+  // Keep a compact, screen-reader-friendly representation alongside the canvas.
+  // The chart can contain thousands of points, so expose only three representative
+  // buckets for each of the first eight visible players.
+  const chartDataAlternative = React.useMemo(() => {
+    if (!damageOverTimeData || !displayData) return null;
+
+    const players = Object.values(displayData).filter((p) => !hiddenPlayerIds.has(p.playerId));
+    const visiblePlayers = players.slice(0, 8);
+    const rows = visiblePlayers.map((player) => {
+      const points = player.dataPoints;
+      const indexes = Array.from(
+        new Set([0, Math.floor((points.length - 1) / 2), points.length - 1]),
+      )
+        .filter((index) => index >= 0 && index < points.length)
+        .map((index) => points[index]);
+      const name = resolvePlayerName
+        ? resolvePlayerName(player.playerId, player.playerName)
+        : player.playerName;
+      return {
+        name,
+        totalDamage: Math.round(player.totalDamage).toLocaleString(),
+        averageDps: Math.round(player.averageDps).toLocaleString(),
+        samples: indexes.map(
+          (point) =>
+            `${point.relativeTime.toFixed(1)}s: ${Math.round(point.damage).toLocaleString()} damage`,
+        ),
+      };
+    });
+
+    return {
+      duration: (damageOverTimeData.fightDuration / 1000).toFixed(1),
+      playerCount: players.length,
+      omittedCount: Math.max(0, players.length - visiblePlayers.length),
+      rows,
+    };
+  }, [damageOverTimeData, displayData, hiddenPlayerIds, resolvePlayerName]);
 
   const echartsOption = React.useMemo(() => {
     if (!displayData) return null;
@@ -509,6 +551,7 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
         },
       },
       ...(dataZoom ? { dataZoom } : {}),
+      animation: !prefersReducedMotion,
       series: allSeries,
     };
   }, [
@@ -522,11 +565,12 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
     hiddenPlayerIds,
     hiddenBuffNames,
     playerColorMap,
+    prefersReducedMotion,
   ]);
 
   if (isLoading) {
     return (
-      <Card sx={{ height }}>
+      <Card sx={{ height }} role="status" aria-live="polite" aria-busy="true">
         <CardContent
           sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}
         >
@@ -536,9 +580,9 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
     );
   }
 
-  if (!damageOverTimeData || !echartsOption) {
+  if (!damageOverTimeData || damageOverTimeData.status === 'no-data' || !echartsOption) {
     return (
-      <Card sx={{ height }}>
+      <Card sx={{ height }} role="status" aria-live="polite" aria-busy="false">
         <CardContent
           sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}
         >
@@ -566,6 +610,8 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
                 size="small"
                 onClick={() => setShowFilters((s) => !s)}
                 aria-label="Toggle filters"
+                aria-expanded={showFilters}
+                aria-controls={filtersId}
                 sx={{
                   color: hasActiveFilters || showFilters ? 'primary.main' : 'text.secondary',
                   border: hasActiveFilters ? '1px solid' : '1px solid transparent',
@@ -591,6 +637,7 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
                 size="small"
                 onClick={() => setStacked((s) => !s)}
                 aria-label={stacked ? 'Hide buff timeline' : 'Stack buff timeline below'}
+                aria-pressed={stacked}
                 sx={{
                   color: stacked ? 'primary.main' : 'text.secondary',
                   border: stacked ? '1px solid' : '1px solid transparent',
@@ -605,8 +652,15 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
         </Box>
 
         {/* Filter Panel */}
-        <Collapse in={showFilters} timeout={250} easing="cubic-bezier(0.4, 0, 0.2, 1)">
+        <Collapse
+          in={showFilters}
+          timeout={prefersReducedMotion ? 0 : 250}
+          easing="cubic-bezier(0.4, 0, 0.2, 1)"
+        >
           <Box
+            id={filtersId}
+            role="region"
+            aria-label="Damage timeline filters"
             sx={{
               mb: 1.5,
               p: 1.5,
@@ -646,7 +700,7 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
                 aria-label="Show all players"
                 aria-pressed={!hasActiveFilters}
                 sx={{
-                  height: 30,
+                  minHeight: 44,
                   borderRadius: '15px',
                   px: 1.25,
                   display: 'inline-flex',
@@ -670,7 +724,9 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
                   border: hasActiveFilters
                     ? `1.5px solid ${theme.darkMode ? 'rgba(56, 189, 248, 0.35)' : 'rgba(14, 165, 233, 0.25)'}`
                     : '1.5px solid transparent',
-                  transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                  transition: prefersReducedMotion
+                    ? 'none'
+                    : 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                   '&:hover': {
                     color: theme.darkMode ? '#38bdf8' : '#0ea5e9',
                     background: theme.darkMode
@@ -694,7 +750,7 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
                     aria-pressed={!isHidden}
                     aria-label={p.name}
                     sx={{
-                      height: 30,
+                      minHeight: 44,
                       borderRadius: '15px',
                       px: 1.25,
                       display: 'inline-flex',
@@ -727,7 +783,9 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
                       opacity: isHidden ? 0.4 : 1,
                       transform: isSoloed ? 'scale(1.05)' : isHidden ? 'scale(0.95)' : 'scale(1)',
                       filter: isHidden ? 'grayscale(0.7)' : 'none',
-                      transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                      transition: prefersReducedMotion
+                        ? 'none'
+                        : 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                       '&:hover': {
                         background: `rgba(${rgb}, ${theme.darkMode ? 0.2 : 0.1})`,
                         boxShadow: `0 0 12px rgba(${rgb}, 0.3)`,
@@ -745,7 +803,7 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
                         backgroundColor: color,
                         flexShrink: 0,
                         boxShadow: theme.darkMode && !isHidden ? `0 0 6px ${color}` : 'none',
-                        transition: 'box-shadow 0.2s ease',
+                        transition: prefersReducedMotion ? 'none' : 'box-shadow 0.2s ease',
                       }}
                     />
                     {p.name}
@@ -780,7 +838,7 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
                   // at the exact moment All became active.
                   aria-pressed={effectiveTargetIds.size === 0}
                   sx={{
-                    height: 30,
+                    minHeight: 44,
                     borderRadius: '15px',
                     px: 1.25,
                     display: 'inline-flex',
@@ -807,7 +865,9 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
                       localTargetIds !== null
                         ? `1.5px solid ${theme.darkMode ? 'rgba(56, 189, 248, 0.35)' : 'rgba(14, 165, 233, 0.25)'}`
                         : '1.5px solid transparent',
-                    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                    transition: prefersReducedMotion
+                      ? 'none'
+                      : 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                     '&:hover': {
                       color: theme.darkMode ? '#38bdf8' : '#0ea5e9',
                       background: theme.darkMode
@@ -834,7 +894,7 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
                       aria-pressed={isActive}
                       aria-label={t.name}
                       sx={{
-                        height: 30,
+                        minHeight: 44,
                         borderRadius: '15px',
                         px: 1.25,
                         display: 'inline-flex',
@@ -871,7 +931,9 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
                             ? 'scale(0.95)'
                             : 'scale(1)',
                         filter: !isActive ? 'grayscale(0.7)' : 'none',
-                        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                        transition: prefersReducedMotion
+                          ? 'none'
+                          : 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                         '&:hover': {
                           background: `rgba(${rgb}, ${theme.darkMode ? 0.2 : 0.1})`,
                           boxShadow: `0 0 12px rgba(${rgb}, 0.3)`,
@@ -920,7 +982,7 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
                   aria-label="Show all buffs"
                   aria-pressed={hiddenBuffNames.size === 0}
                   sx={{
-                    height: 30,
+                    minHeight: 44,
                     borderRadius: '15px',
                     px: 1.25,
                     display: 'inline-flex',
@@ -947,7 +1009,9 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
                       hiddenBuffNames.size > 0
                         ? `1.5px solid ${theme.darkMode ? 'rgba(56, 189, 248, 0.35)' : 'rgba(14, 165, 233, 0.25)'}`
                         : '1.5px solid transparent',
-                    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                    transition: prefersReducedMotion
+                      ? 'none'
+                      : 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                     '&:hover': {
                       color: theme.darkMode ? '#38bdf8' : '#0ea5e9',
                       background: theme.darkMode
@@ -971,7 +1035,7 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
                       aria-pressed={!isHidden}
                       aria-label={b}
                       sx={{
-                        height: 30,
+                        minHeight: 44,
                         borderRadius: '15px',
                         px: 1.25,
                         display: 'inline-flex',
@@ -1004,7 +1068,9 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
                         opacity: isHidden ? 0.4 : 1,
                         transform: isSoloed ? 'scale(1.05)' : isHidden ? 'scale(0.95)' : 'scale(1)',
                         filter: isHidden ? 'grayscale(0.7)' : 'none',
-                        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                        transition: prefersReducedMotion
+                          ? 'none'
+                          : 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                         '&:hover': {
                           background: `rgba(${rgb}, ${theme.darkMode ? 0.2 : 0.1})`,
                           boxShadow: `0 0 12px rgba(${rgb}, 0.3)`,
@@ -1165,9 +1231,34 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
           sx={{ height: chartHeight }}
           role="img"
           aria-label="Damage timeline chart showing damage over fight duration"
+          aria-describedby={chartAlternativeId}
         >
           <EChart option={echartsOption} height="100%" group="fightReport" />
         </Box>
+        {chartDataAlternative && (
+          <Box component="details" sx={{ mt: 1, fontSize: '0.8rem' }}>
+            <Box component="summary" sx={{ cursor: 'pointer', minHeight: 44, py: 1 }}>
+              View damage timeline data
+            </Box>
+            <Typography id={chartAlternativeId} component="p" sx={{ mt: 0.5 }}>
+              Damage over {chartDataAlternative.duration} seconds for{' '}
+              {chartDataAlternative.playerCount} visible player
+              {chartDataAlternative.playerCount === 1 ? '' : 's'}. The chart shows total damage,
+              average DPS, and representative buckets for each visible player.
+            </Typography>
+            <Box component="ul" sx={{ m: 0, pl: 2.5 }} aria-label="Damage timeline data points">
+              {chartDataAlternative.rows.map((row) => (
+                <li key={row.name}>
+                  {row.name}: {row.totalDamage} total damage, {row.averageDps} average DPS;{' '}
+                  {row.samples.join('; ')}
+                </li>
+              ))}
+              {chartDataAlternative.omittedCount > 0 && (
+                <li>{chartDataAlternative.omittedCount} additional players omitted for brevity.</li>
+              )}
+            </Box>
+          </Box>
+        )}
       </CardContent>
     </Card>
   );

@@ -6,6 +6,7 @@ import { FightFragment } from '../../graphql/gql/graphql';
 import { usePlayerData } from '../../hooks/usePlayerData';
 import { useBuffLookupTask } from '../../hooks/workerTasks/useBuffLookupTask';
 import { WidgetScope } from '../../store/dashboard/dashboardSlice';
+import { BuffTimeInterval } from '../../utils/BuffLookupUtils';
 
 import { BaseWidget, WidgetPlayerAvatar } from './BaseWidget';
 
@@ -31,6 +32,54 @@ interface LowUptimeInfo {
   expected: number;
 }
 
+/**
+ * Returns the covered duration after clipping intervals to one fight and
+ * merging any overlap. Several sources can maintain the same buff on one
+ * player simultaneously, but that player can only be covered once at a time.
+ */
+export function getClippedUnionDuration(
+  intervals: readonly BuffTimeInterval[],
+  fightStartTime: number,
+  fightEndTime: number,
+): number {
+  if (
+    !Number.isFinite(fightStartTime) ||
+    !Number.isFinite(fightEndTime) ||
+    fightEndTime <= fightStartTime
+  ) {
+    return 0;
+  }
+
+  const clippedIntervals = intervals
+    .map((interval) => ({
+      start: Math.max(interval.start, fightStartTime),
+      end: Math.min(interval.end, fightEndTime),
+    }))
+    .filter((interval) => interval.end > interval.start)
+    .sort((first, second) => first.start - second.start || first.end - second.end);
+
+  if (clippedIntervals.length === 0) {
+    return 0;
+  }
+
+  let coveredDuration = 0;
+  let currentStart = clippedIntervals[0].start;
+  let currentEnd = clippedIntervals[0].end;
+
+  for (const interval of clippedIntervals.slice(1)) {
+    if (interval.start > currentEnd) {
+      coveredDuration += currentEnd - currentStart;
+      currentStart = interval.start;
+      currentEnd = interval.end;
+    } else {
+      currentEnd = Math.max(currentEnd, interval.end);
+    }
+  }
+
+  coveredDuration += currentEnd - currentStart;
+  return Math.min(coveredDuration, fightEndTime - fightStartTime);
+}
+
 export const LowBuffUptimesWidget: React.FC<LowBuffUptimesWidgetProps> = ({
   id,
   scope,
@@ -45,23 +94,23 @@ export const LowBuffUptimesWidget: React.FC<LowBuffUptimesWidgetProps> = ({
   const fight3 = fights[3];
   const fight4 = fights[4];
 
-  const { buffLookupData: buffs0 } = useBuffLookupTask({
+  const { buffLookupData: buffs0, isBuffLookupLoading: buffLoading0 } = useBuffLookupTask({
     context: { reportCode: reportId, fightId: fight0?.id ?? -1 },
   });
-  const { buffLookupData: buffs1 } = useBuffLookupTask({
+  const { buffLookupData: buffs1, isBuffLookupLoading: buffLoading1 } = useBuffLookupTask({
     context: { reportCode: reportId, fightId: fight1?.id ?? -1 },
   });
-  const { buffLookupData: buffs2 } = useBuffLookupTask({
+  const { buffLookupData: buffs2, isBuffLookupLoading: buffLoading2 } = useBuffLookupTask({
     context: { reportCode: reportId, fightId: fight2?.id ?? -1 },
   });
-  const { buffLookupData: buffs3 } = useBuffLookupTask({
+  const { buffLookupData: buffs3, isBuffLookupLoading: buffLoading3 } = useBuffLookupTask({
     context: { reportCode: reportId, fightId: fight3?.id ?? -1 },
   });
-  const { buffLookupData: buffs4 } = useBuffLookupTask({
+  const { buffLookupData: buffs4, isBuffLookupLoading: buffLoading4 } = useBuffLookupTask({
     context: { reportCode: reportId, fightId: fight4?.id ?? -1 },
   });
 
-  const { playerData } = usePlayerData({
+  const { playerData, isPlayerDataLoading } = usePlayerData({
     context: { reportCode: reportId, fightId: fight0?.id ?? -1 },
   });
 
@@ -113,7 +162,8 @@ export const LowBuffUptimesWidget: React.FC<LowBuffUptimesWidgetProps> = ({
     relevantFights.forEach(({ fight, buffs }) => {
       if (!fight || !buffs) return;
 
-      const fightDuration = (fight.endTime ?? fight.startTime) - fight.startTime;
+      const fightEndTime = fight.endTime ?? fight.startTime;
+      const fightDuration = fightEndTime - fight.startTime;
       if (fightDuration <= 0) return;
 
       Object.values(playerData.playersById).forEach((player) => {
@@ -123,12 +173,11 @@ export const LowBuffUptimesWidget: React.FC<LowBuffUptimesWidgetProps> = ({
           const intervals = buffs.buffIntervals[buff.id.toString()] || [];
           const playerIntervals = intervals.filter((interval) => interval.targetID === player.id);
 
-          let fightUptime = 0;
-          playerIntervals.forEach((interval) => {
-            const start = Math.max(interval.start, fight.startTime);
-            const end = Math.min(interval.end, fight.endTime ?? fight.startTime);
-            fightUptime += Math.max(0, end - start);
-          });
+          const fightUptime = getClippedUnionDuration(
+            playerIntervals,
+            fight.startTime,
+            fightEndTime,
+          );
 
           const key = `${player.id}|${buff.id}`;
           const existing = playerBuffUptimes.get(key);
@@ -152,7 +201,7 @@ export const LowBuffUptimesWidget: React.FC<LowBuffUptimesWidgetProps> = ({
     const lowUptimeResults: LowUptimeInfo[] = [];
     playerBuffUptimes.forEach((data) => {
       if (data.totalDuration <= 0) return;
-      const avgUptimePercent = (data.totalUptime / data.totalDuration) * 100;
+      const avgUptimePercent = Math.min(100, (data.totalUptime / data.totalDuration) * 100);
 
       if (avgUptimePercent < data.minUptime) {
         lowUptimeResults.push({
@@ -169,6 +218,9 @@ export const LowBuffUptimesWidget: React.FC<LowBuffUptimesWidgetProps> = ({
   }, [playerData, relevantFights]);
 
   const isEmpty = lowUptimes.length === 0;
+  const isLoading =
+    isPlayerDataLoading ||
+    [buffLoading0, buffLoading1, buffLoading2, buffLoading3, buffLoading4].some(Boolean);
 
   return (
     <BaseWidget
@@ -181,6 +233,7 @@ export const LowBuffUptimesWidget: React.FC<LowBuffUptimesWidgetProps> = ({
       onRemove={onRemove}
       onScopeChange={onScopeChange}
       isEmpty={isEmpty}
+      isLoading={isLoading}
     >
       {lowUptimes.map((item, idx) => (
         <Box

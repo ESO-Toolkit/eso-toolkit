@@ -27,6 +27,7 @@ const ROUTE_NAMES: Record<string, string> = {
 
 import { Footer } from '../components/Footer';
 import { HeaderBar } from '../components/HeaderBar';
+import { SkipLink } from '../components/SkipLink';
 import { ReduxThemeProvider } from '../ReduxThemeProvider';
 import { ReportFightProvider } from '../ReportFightContext';
 import { scheduleItemDataWarmupForPath } from '../utils/itemDataWarmup';
@@ -103,38 +104,7 @@ export const AppLayout: React.FC = () => {
             zIndex: 10,
           }}
         >
-          <Box
-            component="a"
-            href="#main-content"
-            sx={{
-              position: 'absolute',
-              left: '-9999px',
-              top: 'auto',
-              width: '1px',
-              height: '1px',
-              overflow: 'hidden',
-              zIndex: 9999,
-              '&:focus': {
-                position: 'fixed',
-                top: 8,
-                left: 8,
-                width: 'auto',
-                height: 'auto',
-                overflow: 'visible',
-                bgcolor: 'primary.main',
-                color: 'primary.contrastText',
-                px: 2,
-                py: 1,
-                borderRadius: 1,
-                fontSize: '0.875rem',
-                fontWeight: 600,
-                textDecoration: 'none',
-                boxShadow: 4,
-              },
-            }}
-          >
-            Skip to main content
-          </Box>
+          <SkipLink />
           <HeaderBar />
           <Box component="main" id="main-content" tabIndex={-1} sx={{ outline: 'none', flex: 1 }}>
             <Container

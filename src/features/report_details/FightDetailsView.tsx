@@ -31,13 +31,13 @@ import {
   Typography,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import React, { Suspense, useDeferredValue, useMemo } from 'react';
+import React, { Suspense, useMemo } from 'react';
 
 import { AnimatedTabContent } from '../../components/AnimatedTabContent';
 import { PanelErrorBoundary } from '../../components/PanelErrorBoundary';
 import { FightFragment } from '../../graphql/gql/graphql';
 import { useReportMasterData } from '../../hooks';
-import { usePhaseTransitions } from '../../hooks/usePhaseTransitions';
+import { type PhaseTransitionInfo, usePhaseTransitions } from '../../hooks/usePhaseTransitions';
 import { getSkeletonForTab, TabId } from '../../utils/getSkeletonForTab';
 
 import { CombinedFilterDropdown } from './insights/CombinedFilterDropdown';
@@ -132,6 +132,30 @@ interface FightDetailsViewProps {
   onToggleExperimentalTabs: (enabled: boolean) => void;
 }
 
+interface DeferredTabContentProps {
+  children: React.ReactNode;
+  fight: FightFragment;
+  phaseTransitionInfo: PhaseTransitionInfo;
+  showExperimentalTabs: boolean;
+  tabKey: TabId;
+}
+
+/**
+ * The panel JSX is recreated by the parent for urgent tab-highlight updates.
+ * Its output is fully determined by these stable inputs, so this boundary can
+ * safely defer reconciliation until the deferred tab value changes.
+ */
+const DeferredTabContent = React.memo(
+  function DeferredTabContent({ children, tabKey }: DeferredTabContentProps) {
+    return <AnimatedTabContent tabKey={tabKey}>{children}</AnimatedTabContent>;
+  },
+  (previous, next) =>
+    previous.tabKey === next.tabKey &&
+    previous.fight === next.fight &&
+    previous.phaseTransitionInfo === next.phaseTransitionInfo &&
+    previous.showExperimentalTabs === next.showExperimentalTabs,
+);
+
 export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
   fight,
   selectedTabId,
@@ -168,14 +192,25 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
     return tabId;
   };
 
-  const validSelectedTabId = getValidTabId(selectedTabId);
+  const routeSelectedTabId = getValidTabId(selectedTabId);
+  const [optimisticSelectedTabId, setOptimisticSelectedTabId] = React.useState(routeSelectedTabId);
+
+  React.useEffect(() => {
+    setOptimisticSelectedTabId(routeSelectedTabId);
+  }, [routeSelectedTabId]);
+
+  const validSelectedTabId = getValidTabId(optimisticSelectedTabId);
+  const getTabA11yProps = (tabId: TabId): { id: string; 'aria-controls': string } => ({
+    id: `fight-detail-tab-${tabId}`,
+    'aria-controls': `fight-detail-panel-${tabId}`,
+  });
 
   // Defer the heavy content swap so the tab highlight paints instantly.
   // getTabsMeta reflow runs against the small tab-bar DOM change, not
   // the 1500+ element panel swap that follows in the next frame.
   // Re-validate the deferred value so it never points at a tab that has
   // been removed (e.g. when showExperimentalTabs flips to false mid-defer).
-  const deferredTabId = getValidTabId(useDeferredValue(validSelectedTabId));
+  const deferredTabId = getValidTabId(React.useDeferredValue(validSelectedTabId));
 
   // Get navigation data and functions
   const {
@@ -194,15 +229,19 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
   // isDarkMode, so it is computed inside the component rather than at module scope).
   const navIconButtonSx = useMemo(
     () => ({
-      width: { xs: 32, md: 36 },
-      height: { xs: 32, md: 36 },
-      minWidth: { xs: '32px !important', md: 36 },
-      minHeight: { xs: '32px !important', md: 36 },
+      width: 44,
+      height: 44,
+      minWidth: '44px !important',
+      minHeight: '44px !important',
       borderRadius: { xs: '8px', md: '10px' },
       backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.05)',
       color: isDarkMode ? 'rgba(255, 255, 255, 0.85)' : 'rgba(0, 0, 0, 0.7)',
       padding: { xs: '4px', md: '5px' },
       transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+      '&:focus-visible': {
+        outline: `3px solid ${theme.palette.primary.main}`,
+        outlineOffset: 2,
+      },
       '& .MuiSvgIcon-root': { fontSize: { xs: '1.15rem', md: '1.5rem' } },
       '&:hover': {
         backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.1)',
@@ -213,8 +252,12 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
         opacity: 0.25,
         backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.02)' : 'rgba(0, 0, 0, 0.02)',
       },
+      '@media (prefers-reduced-motion: reduce)': {
+        transition: 'none',
+        '&:hover': { transform: 'none' },
+      },
     }),
-    [isDarkMode],
+    [isDarkMode, theme.palette.primary.main],
   );
 
   // Generate player list for the buff source selector
@@ -285,6 +328,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
             onChange={handleNavigationModeChange}
             exclusive
             size="small"
+            aria-label="Fight navigation scope"
             sx={{
               backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)',
               borderRadius: '8px',
@@ -309,15 +353,19 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
                 fontSize: { xs: '0.725rem', md: '0.75rem' },
                 fontWeight: 600,
                 textTransform: 'none',
-                minWidth: 'auto',
-                minHeight: 'unset',
-                height: { xs: 32, md: 28 },
+                minWidth: 44,
+                minHeight: 44,
+                height: 44,
                 border: 'none',
                 borderRadius: '6px',
                 color: isDarkMode ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)',
                 fontFamily: '"Inter Variable", -apple-system, BlinkMacSystemFont, sans-serif',
                 letterSpacing: '0.025em',
                 transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                '&:focus-visible': {
+                  outline: `3px solid ${theme.palette.primary.main}`,
+                  outlineOffset: 2,
+                },
                 '&:hover': {
                   backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.04)',
                   color: isDarkMode ? 'rgba(255, 255, 255, 0.8)' : 'rgba(0, 0, 0, 0.8)',
@@ -331,6 +379,10 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
                     color: 'white',
                     transform: 'scale(1.02)',
                   },
+                },
+                '@media (prefers-reduced-motion: reduce)': {
+                  transition: 'none',
+                  '&:hover': { transform: 'none' },
                 },
               },
             }}
@@ -352,6 +404,9 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
               justifyContent: 'center',
               height: { xs: 32, md: 'auto' },
             }}
+            role="status"
+            aria-live="polite"
+            aria-label={`Fight ${navigationData.currentIndex >= 0 && navigationData.totalCount > 0 ? `${navigationData.currentIndex + 1} of ${navigationData.totalCount}` : navigationData.totalCount > 0 ? `unknown of ${navigationData.totalCount}` : '0 of 0'}`}
           >
             <Typography
               variant="body2"
@@ -399,8 +454,11 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
       >
         <Tabs
           value={validSelectedTabId}
+          aria-label="Fight detail sections"
           onChange={(_: React.SyntheticEvent, v: unknown) => {
-            onTabChange(v as TabId);
+            const nextTabId = v as TabId;
+            setOptimisticSelectedTabId(nextTabId);
+            React.startTransition(() => onTabChange(nextTabId));
           }}
           sx={{
             minWidth: 0,
@@ -428,8 +486,8 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
               scrollbarWidth: 'none',
             },
             '& .MuiTabs-scrollButtons': {
-              width: 32,
-              minWidth: 32,
+              width: 44,
+              minWidth: 44,
               padding: 0,
               margin: 0,
               flexShrink: 0,
@@ -445,6 +503,15 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
               opacity: 1,
               borderRadius: 100,
               flexShrink: 0,
+              '&:focus-visible': {
+                outline: `3px solid ${theme.palette.primary.main}`,
+                outlineOffset: 2,
+              },
+            },
+            '@media (prefers-reduced-motion: reduce)': {
+              '& .MuiTabs-indicator, & .MuiTab-root, & .MuiTabs-scrollButtons': {
+                transition: 'none',
+              },
             },
           }}
           variant="scrollable"
@@ -453,6 +520,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
         >
           <Tab
             value={TabId.INSIGHTS}
+            {...getTabA11yProps(TabId.INSIGHTS)}
             aria-label="Insights"
             icon={
               <Tooltip title="Insights">
@@ -462,6 +530,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           />
           <Tab
             value={TabId.PLAYERS}
+            {...getTabA11yProps(TabId.PLAYERS)}
             aria-label="Players"
             icon={
               <Tooltip title="Players">
@@ -471,6 +540,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           />
           <Tab
             value={TabId.DAMAGE_DONE}
+            {...getTabA11yProps(TabId.DAMAGE_DONE)}
             aria-label="Damage Done"
             icon={
               <Tooltip title="Damage Done">
@@ -485,6 +555,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           />
           <Tab
             value={TabId.HEALING_DONE}
+            {...getTabA11yProps(TabId.HEALING_DONE)}
             aria-label="Healing Done"
             icon={
               <Tooltip title="Healing Done">
@@ -494,6 +565,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           />
           <Tab
             value={TabId.DEATHS}
+            {...getTabA11yProps(TabId.DEATHS)}
             aria-label="Deaths"
             icon={
               <Tooltip title="Deaths">
@@ -508,6 +580,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           />
           <Tab
             value={TabId.CRITICAL_DAMAGE}
+            {...getTabA11yProps(TabId.CRITICAL_DAMAGE)}
             aria-label="Critical Damage"
             icon={
               <Tooltip title="Critical Damage">
@@ -517,6 +590,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           />
           <Tab
             value={TabId.PENETRATION}
+            {...getTabA11yProps(TabId.PENETRATION)}
             aria-label="Penetration"
             icon={
               <Tooltip title="Penetration">
@@ -526,6 +600,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           />
           <Tab
             value={TabId.DAMAGE_REDUCTION}
+            {...getTabA11yProps(TabId.DAMAGE_REDUCTION)}
             aria-label="Damage Reduction"
             icon={
               <Tooltip title="Damage Reduction">
@@ -535,6 +610,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           />
           <Tab
             value={TabId.SYNERGIES}
+            {...getTabA11yProps(TabId.SYNERGIES)}
             aria-label="Synergies"
             icon={
               <Tooltip title="Synergies">
@@ -546,6 +622,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           {/* Always render experimental tabs, but hide them when disabled */}
           <Tab
             value={TabId.LOCATION_HEATMAP}
+            {...getTabA11yProps(TabId.LOCATION_HEATMAP)}
             aria-label="Location Heatmap"
             icon={
               <Tooltip title="Location Heatmap">
@@ -556,6 +633,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           />
           <Tab
             value={TabId.RAW_EVENTS}
+            {...getTabA11yProps(TabId.RAW_EVENTS)}
             aria-label="Raw Events"
             icon={
               <Tooltip title="Raw Events">
@@ -566,6 +644,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           />
           <Tab
             value={TabId.TARGET_EVENTS}
+            {...getTabA11yProps(TabId.TARGET_EVENTS)}
             aria-label="Target Events"
             icon={
               <Tooltip title="Target Events">
@@ -576,6 +655,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           />
           <Tab
             value={TabId.DIAGNOSTICS}
+            {...getTabA11yProps(TabId.DIAGNOSTICS)}
             aria-label="Diagnostics"
             icon={
               <Tooltip title="Diagnostics">
@@ -586,6 +666,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           />
           <Tab
             value={TabId.ACTORS}
+            {...getTabA11yProps(TabId.ACTORS)}
             aria-label="Actors"
             icon={
               <Tooltip title="Actors">
@@ -596,6 +677,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           />
           <Tab
             value={TabId.TALENTS}
+            {...getTabA11yProps(TabId.TALENTS)}
             aria-label="Talents"
             icon={
               <Tooltip title="Talents">
@@ -606,6 +688,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           />
           <Tab
             value={TabId.ROTATION_ANALYSIS}
+            {...getTabA11yProps(TabId.ROTATION_ANALYSIS)}
             aria-label="Rotation Analysis"
             icon={
               <Tooltip title="Rotation Analysis">
@@ -616,6 +699,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           />
           <Tab
             value={TabId.AURAS_OVERVIEW}
+            {...getTabA11yProps(TabId.AURAS_OVERVIEW)}
             aria-label="Auras Overview"
             icon={
               <Tooltip title="Auras Overview">
@@ -626,6 +710,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           />
           <Tab
             value={TabId.BUFFS_OVERVIEW}
+            {...getTabA11yProps(TabId.BUFFS_OVERVIEW)}
             aria-label="Buffs Overview"
             icon={
               <Tooltip title="Buffs Overview">
@@ -636,6 +721,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           />
           <Tab
             value={TabId.DEBUFFS_OVERVIEW}
+            {...getTabA11yProps(TabId.DEBUFFS_OVERVIEW)}
             aria-label="Debuffs Overview"
             icon={
               <Tooltip title="Debuffs Overview">
@@ -651,6 +737,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           />
           <Tab
             value={TabId.MAPS}
+            {...getTabA11yProps(TabId.MAPS)}
             aria-label="Maps"
             icon={
               <Tooltip title="Maps">
@@ -706,10 +793,28 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
            getTabsMeta doesn't trigger a full-page layout recalc.
            (paint omitted — it would clip disablePortal overlays in child panels) */}
       <Box
-        sx={{ mt: { xs: 1, md: 2 }, contain: 'layout style' }}
+        role="tabpanel"
+        id={`fight-detail-panel-${validSelectedTabId}`}
+        aria-labelledby={`fight-detail-tab-${validSelectedTabId}`}
+        aria-label={`${validSelectedTabId} content`}
+        tabIndex={0}
+        sx={{
+          mt: { xs: 1, md: 2 },
+          contain: 'layout style',
+          outline: 'none',
+          '&:focus-visible': {
+            outline: `3px solid ${theme.palette.primary.main}`,
+            outlineOffset: 2,
+          },
+        }}
         data-testid="fight-tab-content-container"
       >
-        <AnimatedTabContent tabKey={deferredTabId} data-testid={`tab-content-${deferredTabId}`}>
+        <DeferredTabContent
+          tabKey={deferredTabId}
+          fight={fight}
+          phaseTransitionInfo={phaseTransitionInfo}
+          showExperimentalTabs={showExperimentalTabs}
+        >
           {deferredTabId === TabId.INSIGHTS && (
             <PanelErrorBoundary panelName="Insights">
               <Suspense fallback={<PanelLoadingFallback tabId={TabId.INSIGHTS} />}>
@@ -850,7 +955,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
               </Suspense>
             </PanelErrorBoundary>
           )}
-        </AnimatedTabContent>
+        </DeferredTabContent>
       </Box>
     </React.Fragment>
   );

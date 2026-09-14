@@ -11,78 +11,40 @@ import {
   ListItem,
   ListItemText,
   Chip,
+  Alert,
+  Tooltip,
 } from '@mui/material';
 import React from 'react';
 
-interface RotationAnalysis {
-  playerId: string;
-  playerName: string;
-  abilities: AbilityUsage[];
-  averageAPM: number;
-  resourceEfficiency: ResourceEfficiencyData;
-  rotationPattern: string[];
-  skillPriorities: SkillPriority[];
-  spammableSkills: SpammableSkill[];
-  generalRotation: GeneralRotation;
-}
-
-interface AbilityUsage {
-  abilityId: number | string;
-  abilityName: string;
-  useCount: number;
-  averageCastTime: number;
-  resourceCost: number;
-  averageTimeBetweenCasts: number;
-  timestamps: number[];
-}
-
-interface SkillPriority {
-  higherPrioritySkill: string;
-  lowerPrioritySkill: string;
-  interruptionCount: number;
-  confidence: number;
-}
-
-interface SpammableSkill {
-  abilityName: string;
-  averageInterval: number;
-  burstCount: number;
-  spammableScore: number;
-}
-
-interface GeneralRotation {
-  commonSequences: RotationSequence[];
-  openerSequence: string[];
-  fillerAbilities: string[];
-}
-
-interface RotationSequence {
-  sequence: string[];
-  frequency: number;
-  averageInterval: number;
-}
-
-interface ResourceEfficiencyData {
-  magicka: {
-    averageLevel: number;
-    wastePercentage: number;
-    lowestPoint: number;
-  };
-  stamina: {
-    averageLevel: number;
-    wastePercentage: number;
-    lowestPoint: number;
-  };
-}
+import type {
+  ResourceMetric,
+  RotationAnalysis,
+  RotationAnalysisDataState,
+} from './RotationAnalysisPanel';
 
 interface RotationAnalysisPanelViewProps {
   rotationAnalyses: RotationAnalysis[];
   fight: { startTime?: number; endTime?: number; friendlyPlayers?: (number | null)[] | null };
+  dataState?: RotationAnalysisDataState;
+  dataMessage?: string;
 }
+
+const isMeasuredValue = (value: number | null): value is number =>
+  value !== null && Number.isFinite(value);
+
+const formatMetric = (value: number | null, suffix = ''): string =>
+  isMeasuredValue(value) ? `${value.toFixed(1)}${suffix}` : 'Unavailable';
+
+const resourceDetails = (metric: ResourceMetric): string =>
+  !isMeasuredValue(metric.averageLevel)
+    ? 'Resource data unavailable'
+    : `Lowest: ${formatMetric(metric.lowestPoint, '%')} | Waste: ${formatMetric(metric.wastePercentage, '%')}`;
 
 export const RotationAnalysisPanelView: React.FC<RotationAnalysisPanelViewProps> = ({
   rotationAnalyses,
   fight: _fight,
+  dataState = 'ready',
+  dataMessage,
 }) => {
   if (!rotationAnalyses.length) {
     return (
@@ -90,9 +52,9 @@ export const RotationAnalysisPanelView: React.FC<RotationAnalysisPanelViewProps>
         <Typography variant="h6" gutterBottom>
           Rotation Analysis
         </Typography>
-        <Typography color="textSecondary">
-          No cast or resource data available for this fight.
-        </Typography>
+        <Alert severity={dataState === 'invalid' ? 'error' : 'info'} role="status">
+          {dataMessage || 'No cast or resource data available for this fight.'}
+        </Alert>
       </Paper>
     );
   }
@@ -111,6 +73,12 @@ export const RotationAnalysisPanelView: React.FC<RotationAnalysisPanelViewProps>
         Rotation Analysis
       </Typography>
 
+      {dataState !== 'ready' && (
+        <Alert severity={dataState === 'invalid' ? 'error' : 'info'} sx={{ mb: 2 }} role="status">
+          {dataMessage || 'Some rotation measurements are unavailable and are not scored.'}
+        </Alert>
+      )}
+
       {rotationAnalyses.map((analysis) => (
         <Accordion key={analysis.playerId} sx={{ mb: 2 }}>
           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
@@ -118,12 +86,27 @@ export const RotationAnalysisPanelView: React.FC<RotationAnalysisPanelViewProps>
               <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
                 {analysis.playerName}
               </Typography>
-              <Chip
-                label={`${analysis.averageAPM.toFixed(1)} APM`}
-                size="small"
-                color="primary"
-                variant="outlined"
-              />
+              <Tooltip
+                title={
+                  !isMeasuredValue(analysis.averageAPM)
+                    ? 'No valid cast stream is available, so APM is not scored.'
+                    : 'Actions per minute from valid cast events.'
+                }
+              >
+                <Chip
+                  label={
+                    !isMeasuredValue(analysis.averageAPM)
+                      ? 'APM unavailable'
+                      : `${analysis.averageAPM.toFixed(1)} APM`
+                  }
+                  size="small"
+                  color={!isMeasuredValue(analysis.averageAPM) ? 'default' : 'primary'}
+                  variant="outlined"
+                />
+              </Tooltip>
+              {analysis.dataState !== 'ready' && (
+                <Chip label="Partial data" size="small" variant="outlined" />
+              )}
             </Box>
           </AccordionSummary>
 
@@ -163,34 +146,36 @@ export const RotationAnalysisPanelView: React.FC<RotationAnalysisPanelViewProps>
                     <Box sx={{ mb: 2 }}>
                       <Typography variant="subtitle2" gutterBottom>
                         Magicka Average:{' '}
-                        {analysis.resourceEfficiency.magicka.averageLevel.toFixed(1)}%
+                        {formatMetric(analysis.resourceEfficiency.magicka.averageLevel, '%')}
                       </Typography>
-                      <LinearProgress
-                        variant="determinate"
-                        value={analysis.resourceEfficiency.magicka.averageLevel}
-                        color="primary"
-                        sx={{ mb: 1 }}
-                      />
+                      {isMeasuredValue(analysis.resourceEfficiency.magicka.averageLevel) && (
+                        <LinearProgress
+                          variant="determinate"
+                          value={analysis.resourceEfficiency.magicka.averageLevel}
+                          color="primary"
+                          sx={{ mb: 1 }}
+                        />
+                      )}
                       <Typography variant="caption" color="textSecondary">
-                        Lowest: {analysis.resourceEfficiency.magicka.lowestPoint.toFixed(1)}% |
-                        Waste: {analysis.resourceEfficiency.magicka.wastePercentage.toFixed(1)}%
+                        {resourceDetails(analysis.resourceEfficiency.magicka)}
                       </Typography>
                     </Box>
 
                     <Box>
                       <Typography variant="subtitle2" gutterBottom>
                         Stamina Average:{' '}
-                        {analysis.resourceEfficiency.stamina.averageLevel.toFixed(1)}%
+                        {formatMetric(analysis.resourceEfficiency.stamina.averageLevel, '%')}
                       </Typography>
-                      <LinearProgress
-                        variant="determinate"
-                        value={analysis.resourceEfficiency.stamina.averageLevel}
-                        color="secondary"
-                        sx={{ mb: 1 }}
-                      />
+                      {isMeasuredValue(analysis.resourceEfficiency.stamina.averageLevel) && (
+                        <LinearProgress
+                          variant="determinate"
+                          value={analysis.resourceEfficiency.stamina.averageLevel}
+                          color="secondary"
+                          sx={{ mb: 1 }}
+                        />
+                      )}
                       <Typography variant="caption" color="textSecondary">
-                        Lowest: {analysis.resourceEfficiency.stamina.lowestPoint.toFixed(1)}% |
-                        Waste: {analysis.resourceEfficiency.stamina.wastePercentage.toFixed(1)}%
+                        {resourceDetails(analysis.resourceEfficiency.stamina)}
                       </Typography>
                     </Box>
                   </Paper>

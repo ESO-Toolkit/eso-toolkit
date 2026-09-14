@@ -1,11 +1,11 @@
-import { Box, Typography } from '@mui/material';
+import { Box } from '@mui/material';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 
-import { DamageDoneTableSkeleton } from '../../../components/DamageDoneTableSkeleton';
 import { PlayerCardModal } from '../../../components/PlayerCardModal';
 import {
   useDamageEventsLookup,
+  hasNoResolvedTargets,
   useReportMasterData,
   usePlayerData,
   useSelectedTargetIds,
@@ -16,19 +16,82 @@ import {
   useResolvedReportFightContext,
 } from '../../../hooks';
 import type { ReportFightContextInput } from '../../../store/contextTypes';
-import { selectActorsById } from '../../../store/master_data/masterDataSelectors';
+import { selectCastEventsEntryForContext } from '../../../store/events_data/castEventsSelectors';
+import { selectDamageEventsEntryForContext } from '../../../store/events_data/damageEventsSelectors';
+import { selectDeathEventsEntryForContext } from '../../../store/events_data/deathEventsSelectors';
+import {
+  selectActorsById,
+  selectMasterDataEntryForContext,
+} from '../../../store/master_data/masterDataSelectors';
+import { selectReportRegistryEntryForContext } from '../../../store/report/reportSelectors';
+import type { RootState } from '../../../store/storeWithHistory';
 import { KnownAbilities } from '../../../types/abilities';
-import { calculateActivePercentages } from '../../../utils/activePercentageUtils';
+import type { DamageStatisticsWithActivity } from '../../../utils/activePercentageUtils';
 import { msToSeconds } from '../../../utils/fightDuration';
 import { resolveActorName } from '../../../utils/resolveActorName';
 import type { DamageOverTimeResult } from '../../../workers/calculations/CalculateDamageOverTime';
+import {
+  AnalyzerPanelState,
+  type AnalyzerPanelStateKind,
+  resolveAnalyzerPanelState,
+} from '../AnalyzerPanelState';
 
 import { DamageDonePanelView } from './DamageDonePanelView';
+import { useDamageStatistics } from './useDamageStatistics';
+
+const EMPTY_DAMAGE_STATISTICS: DamageStatisticsWithActivity = {
+  damageByPlayer: {},
+  criticalDamageByPlayer: {},
+  damageEventsBySource: {},
+  activePercentages: {},
+};
 
 interface DamageDonePanelProps {
   context?: ReportFightContextInput;
   children?: React.ReactNode;
 }
+
+type LoadStatus = 'idle' | 'loading' | 'succeeded' | 'failed';
+
+interface ResolveDamageDonePanelStateInput {
+  error?: string | null;
+  hasData: boolean;
+  isLoading: boolean;
+  hasFight: boolean;
+  statuses: readonly LoadStatus[];
+}
+
+export const resolveDamageDonePanelState = ({
+  error,
+  hasData,
+  isLoading,
+  hasFight,
+  statuses,
+}: ResolveDamageDonePanelStateInput): AnalyzerPanelStateKind =>
+  resolveAnalyzerPanelState({
+    error,
+    hasData,
+    isLoading,
+    isComplete: hasFight && statuses.every((status) => status === 'succeeded'),
+  });
+
+/** Returns damage share from critical hits; null means the denominator is not trustworthy. */
+export const calculateCriticalDamageShare = (
+  totalDamage: number,
+  criticalDamageTotal: number,
+): number | null => {
+  if (
+    !Number.isFinite(totalDamage) ||
+    totalDamage <= 0 ||
+    !Number.isFinite(criticalDamageTotal) ||
+    criticalDamageTotal < 0 ||
+    criticalDamageTotal > totalDamage
+  ) {
+    return null;
+  }
+
+  return (criticalDamageTotal / totalDamage) * 100;
+};
 
 /**
  * Smart component that handles data processing and state management for damage done panel
@@ -49,14 +112,28 @@ export const DamageDonePanel: React.FC<DamageDonePanelProps> = ({ context }) => 
   const { castEvents, isCastEventsLoading } = useCastEvents({ context: resolvedContext });
   const selectedTargetIds = useSelectedTargetIds();
   const actorsById = useSelector(selectActorsById);
+  const damageEntry = useSelector((state: RootState) =>
+    selectDamageEventsEntryForContext(state, resolvedContext),
+  );
+  const reportEntry = useSelector((state: RootState) =>
+    selectReportRegistryEntryForContext(state, resolvedContext),
+  );
+  const masterDataEntry = useSelector((state: RootState) =>
+    selectMasterDataEntryForContext(state, resolvedContext),
+  );
+  const deathEntry = useSelector((state: RootState) =>
+    selectDeathEventsEntryForContext(state, resolvedContext),
+  );
+  const castEntry = useSelector((state: RootState) =>
+    selectCastEventsEntryForContext(state, resolvedContext),
+  );
 
-  const { damageOverTimeData, isDamageOverTimeLoading } = useDamageOverTimeTask({
-    context: resolvedContext,
-  });
+  const { damageOverTimeData, isDamageOverTimeLoading, damageOverTimeError } =
+    useDamageOverTimeTask({ context: resolvedContext });
 
   // Resolve selected target names for display
   const selectedTargetNames = useMemo(() => {
-    if (selectedTargetIds.size === 0) return null;
+    if (selectedTargetIds.size === 0 || hasNoResolvedTargets(selectedTargetIds)) return null;
 
     const names = Array.from(selectedTargetIds).map((targetId) => {
       const actor = actorsById[targetId];
@@ -114,7 +191,9 @@ export const DamageDonePanel: React.FC<DamageDonePanelProps> = ({ context }) => 
       isMasterDataLoading ||
       isPlayerDataLoading ||
       isDeathEventsLoading ||
-      isCastEventsLoading
+      isCastEventsLoading ||
+      isDamageOverTimeLoading ||
+      reportEntry?.status === 'loading'
     );
   }, [
     isDamageEventsLookupLoading,
@@ -122,82 +201,17 @@ export const DamageDonePanel: React.FC<DamageDonePanelProps> = ({ context }) => 
     isPlayerDataLoading,
     isDeathEventsLoading,
     isCastEventsLoading,
+    isDamageOverTimeLoading,
+    reportEntry?.status,
   ]);
 
-  // Memoize damage calculations to prevent unnecessary recalculations
-  const damageStatistics = useMemo(() => {
-    const damageByPlayer: Record<number, number> = {};
-    const criticalDamageByPlayer: Record<number, number> = {};
-    const damageEventsBySource: Record<number, number> = {};
-
-    // Convert string keys to numbers and calculate totals
-    Object.entries(damageEventsByPlayer).forEach(([playerIdStr, events]) => {
-      const playerId = Number(playerIdStr);
-      let totalDamage = 0;
-      let totalCriticalDamage = 0;
-      let eventCount = 0;
-
-      events.forEach((event) => {
-        // Skip events that damage friendly targets
-        if (!event.targetIsFriendly) {
-          // Apply target filter if specific targets are selected
-          if (selectedTargetIds.size > 0 && !selectedTargetIds.has(event.targetID)) {
-            return; // Skip this event
-          }
-
-          const amount = 'amount' in event ? Number(event.amount) || 0 : 0;
-          totalDamage += amount;
-
-          // Check if this is a critical hit (hitType === 2)
-          if (event.hitType === 2) {
-            totalCriticalDamage += amount;
-          }
-
-          eventCount++;
-        }
-      });
-
-      if (totalDamage > 0) {
-        damageByPlayer[playerId] = totalDamage;
-        criticalDamageByPlayer[playerId] = totalCriticalDamage;
-        damageEventsBySource[playerId] = eventCount;
-      }
-    });
-
-    return { damageByPlayer, criticalDamageByPlayer, damageEventsBySource };
-  }, [damageEventsByPlayer, selectedTargetIds]);
-
-  // Calculate active percentages using ESO logs methodology with target filtering
-  const activePercentages = useMemo(() => {
-    if (!fight || !damageEventsByPlayer) {
-      return {};
-    }
-
-    // Filter damage events by selected target before calculating active percentages
-    const filteredDamageEventsByPlayer: Record<string, (typeof damageEventsByPlayer)[string]> = {};
-
-    Object.entries(damageEventsByPlayer).forEach(([playerIdStr, events]) => {
-      const filteredEvents = events.filter((event) => {
-        // Skip events that damage friendly targets
-        if (event.targetIsFriendly) {
-          return false;
-        }
-
-        // Apply target filter if specific targets are selected
-        if (selectedTargetIds.size > 0 && !selectedTargetIds.has(event.targetID)) {
-          return false;
-        }
-
-        return true;
-      });
-
-      if (filteredEvents.length > 0) {
-        filteredDamageEventsByPlayer[playerIdStr] = filteredEvents;
-      }
-    });
-
-    return calculateActivePercentages(fight, filteredDamageEventsByPlayer);
-  }, [fight, damageEventsByPlayer, selectedTargetIds]);
+  const {
+    damageStatistics: calculatedDamageStatistics,
+    isLoading: isDamageStatisticsLoading,
+    error: damageStatisticsError,
+    retry: retryDamageStatistics,
+  } = useDamageStatistics({ fight, damageEventsByPlayer, selectedTargetIds });
+  const damageStatistics = calculatedDamageStatistics ?? EMPTY_DAMAGE_STATISTICS;
 
   const fightDurationMs = useMemo(() => {
     if (fight && fight.startTime != null && fight.endTime != null) {
@@ -324,13 +338,12 @@ export const DamageDonePanel: React.FC<DamageDonePanelProps> = ({ context }) => 
         const cpm = cpmByPlayer[id] || 0;
 
         // Get active percentage for this player
-        const activeData = activePercentages[playerId];
+        const activeData = damageStatistics.activePercentages[playerId];
         const activePercentage = activeData?.activePercentage ?? 0;
 
         // Get critical damage metrics for this player
         const criticalDamageTotal = damageStatistics.criticalDamageByPlayer[playerId] || 0;
-        const criticalDamagePercent =
-          totalDamage > 0 ? (criticalDamageTotal / totalDamage) * 100 : 0;
+        const criticalDamageShare = calculateCriticalDamageShare(totalDamage, criticalDamageTotal);
 
         return {
           id,
@@ -338,7 +351,7 @@ export const DamageDonePanel: React.FC<DamageDonePanelProps> = ({ context }) => 
           total: totalDamage,
           dps: fightDurationMs > 0 ? totalDamage / msToSeconds(fightDurationMs) : 0,
           activePercentage,
-          criticalDamagePercent,
+          criticalDamageShare,
           criticalDamageTotal,
           iconUrl,
           role,
@@ -355,7 +368,7 @@ export const DamageDonePanel: React.FC<DamageDonePanelProps> = ({ context }) => 
     masterData.actorsById,
     fightDurationMs,
     getPlayerRole,
-    activePercentages,
+    damageStatistics.activePercentages,
     deathsByPlayer,
     resByPlayer,
     cpmByPlayer,
@@ -386,47 +399,67 @@ export const DamageDonePanel: React.FC<DamageDonePanelProps> = ({ context }) => 
     [actorsById],
   );
 
-  // Show table skeleton while data is being fetched
-  if (isLoading) {
-    return <DamageDoneTableSkeleton rowCount={10} />;
-  }
-
-  // Render a styled empty state when there is no damage data to show
-  // (e.g. all damage filtered out by target selection). Mirrors HealingDonePanel.
-  if (damageRows.length === 0) {
-    return (
-      <Box sx={{ textAlign: 'center', py: 4 }}>
-        <Typography variant="body1" color="text.secondary">
-          No damage data available for this fight
-        </Typography>
-      </Box>
-    );
-  }
+  const rawPanelError =
+    damageStatisticsError ??
+    reportEntry?.error ??
+    damageEntry?.error ??
+    masterDataEntry?.error ??
+    playerData?.error ??
+    deathEntry?.error ??
+    castEntry?.error ??
+    damageOverTimeError ??
+    null;
+  const panelError =
+    rawPanelError instanceof Error ? rawPanelError.message : (rawPanelError ?? null);
+  const hasData = damageRows.length > 0;
+  const panelState = resolveDamageDonePanelState({
+    error: panelError,
+    hasData,
+    isLoading: isLoading || isDamageStatisticsLoading,
+    hasFight: Boolean(fight),
+    statuses: [
+      reportEntry?.status ?? 'idle',
+      damageEntry?.status ?? 'idle',
+      masterDataEntry?.status ?? 'idle',
+      playerData?.status ?? 'idle',
+      deathEntry?.status ?? 'idle',
+      castEntry?.status ?? 'idle',
+    ],
+  });
 
   return (
-    <Box data-testid="damage-done-panel">
-      <DamageDonePanelView
-        damageRows={damageRows}
-        selectedTargetNames={selectedTargetNames}
-        damageOverTimeData={damageOverTimeData as DamageOverTimeResult | null}
-        isDamageOverTimeLoading={isDamageOverTimeLoading}
-        selectedTargetIds={selectedTargetIds}
-        availableTargets={availableTargets}
-        onPlayerClick={handlePlayerClick}
-        context={resolvedContext}
-        fight={fight}
-        resolvePlayerName={resolvePlayerName}
-      />
-      {modalPlayerId !== null && (
-        <PlayerCardModal
-          open
-          onClose={handleModalClose}
-          currentPlayerId={modalPlayerId}
-          orderedPlayerIds={orderedPlayerIds}
-          onPlayerChange={handleModalPlayerChange}
-          context={resolvedContext}
-        />
+    <AnalyzerPanelState
+      title="Damage done"
+      state={panelState}
+      detail={panelError ?? undefined}
+      onRetry={damageStatisticsError ? retryDamageStatistics : undefined}
+    >
+      {hasData && (
+        <Box data-testid="damage-done-panel">
+          <DamageDonePanelView
+            damageRows={damageRows}
+            selectedTargetNames={selectedTargetNames}
+            damageOverTimeData={damageOverTimeData as DamageOverTimeResult | null}
+            isDamageOverTimeLoading={isDamageOverTimeLoading}
+            selectedTargetIds={selectedTargetIds}
+            availableTargets={availableTargets}
+            onPlayerClick={handlePlayerClick}
+            context={resolvedContext}
+            fight={fight}
+            resolvePlayerName={resolvePlayerName}
+          />
+          {modalPlayerId !== null && (
+            <PlayerCardModal
+              open
+              onClose={handleModalClose}
+              currentPlayerId={modalPlayerId}
+              orderedPlayerIds={orderedPlayerIds}
+              onPlayerChange={handleModalPlayerChange}
+              context={resolvedContext}
+            />
+          )}
+        </Box>
       )}
-    </Box>
+    </AnalyzerPanelState>
   );
 };

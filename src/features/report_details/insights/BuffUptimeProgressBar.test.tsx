@@ -4,7 +4,11 @@ import React from 'react';
 
 import '@testing-library/jest-dom';
 
-import { BuffUptimeProgressBar, BuffUptime } from './BuffUptimeProgressBar';
+import {
+  BuffUptimeProgressBar,
+  BuffUptime,
+  getUptimePercentageIntegrity,
+} from './BuffUptimeProgressBar';
 
 /**
  * Unit tests for BuffUptimeProgressBar delta indicator logic.
@@ -52,6 +56,28 @@ const renderBuffProgressBar = (buff: BuffUptime) => {
 };
 
 describe('BuffUptimeProgressBar - Delta Indicators', () => {
+  describe('uptime integrity', () => {
+    it.each([
+      [NaN, 'invalid'],
+      [Infinity, 'invalid'],
+      [101, 'invalid'],
+      [-1, 'invalid'],
+      [undefined, 'unavailable'],
+      [0, 'valid'],
+      [100, 'valid'],
+    ] as const)('classifies %p as %s instead of clamping it', (value, expected) => {
+      expect(getUptimePercentageIntegrity(value)).toBe(expected);
+    });
+
+    it('surfaces corrupt percentages instead of rendering a valid-looking value', () => {
+      renderBuffProgressBar(createBuffData(125));
+
+      expect(screen.getByRole('button', { name: /uptime data integrity error/i })).toBeVisible();
+      expect(screen.getByText('Data error')).toBeVisible();
+      expect(screen.queryByText('100%')).not.toBeInTheDocument();
+    });
+  });
+
   describe('Neutral Indicator (≈) for Small Deltas', () => {
     it('should show neutral indicator for delta = 0%', () => {
       const buff = createBuffData(50, 50); // 50% - 50% = 0%

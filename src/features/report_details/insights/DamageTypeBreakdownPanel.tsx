@@ -2,11 +2,15 @@ import React from 'react';
 
 import { FightFragment } from '../../../graphql/gql/graphql';
 import { useDamageEvents, useReportMasterData } from '../../../hooks';
-import { useSelectedTargetIds } from '../../../hooks/useSelectedTargetIds';
+import { hasNoResolvedTargets, useSelectedTargetIds } from '../../../hooks/useSelectedTargetIds';
 import { DamageTypeFlags } from '../../../types/abilities';
+import { resolveAnalyzerPanelState } from '../AnalyzerPanelState';
 
 import { DamageTypeBreakdownView } from './DamageTypeBreakdownView';
-import { categorizeDamageEvents, type DamageCategoryKey } from './damageTypeCategorization';
+import {
+  categorizeDamageEventsWithMetrics,
+  type DamageCategoryKey,
+} from './damageTypeCategorization';
 
 interface DamageTypeBreakdownPanelProps {
   fight: FightFragment;
@@ -18,8 +22,11 @@ interface DamageTypeBreakdown {
   displayName: string;
   totalDamage: number;
   hitCount: number;
+  eligibleHitCount: number;
   criticalHits: number;
-  criticalRate: number;
+  criticalRate: number | null;
+  criticalDamage: number;
+  criticalDamageShare: number | null;
   averageDamage: number;
 }
 
@@ -43,7 +50,8 @@ export const DamageTypeBreakdownPanel: React.FC<DamageTypeBreakdownPanelProps> =
   fight: _fight,
   selectedPlayerId,
 }) => {
-  const { damageEvents, isDamageEventsLoading } = useDamageEvents();
+  const { damageEvents, isDamageEventsLoading, damageEventsStatus, damageEventsError } =
+    useDamageEvents();
   const { reportMasterData, isMasterDataLoading } = useReportMasterData();
 
   const selectedTargetIds = useSelectedTargetIds();
@@ -51,33 +59,56 @@ export const DamageTypeBreakdownPanel: React.FC<DamageTypeBreakdownPanelProps> =
   // Calculate damage breakdown by damage type using the shared categorization
   // (bitwise damage-type decode + canonical AOE/status id sets).
   const { damageTypeBreakdown, totalDamage } = React.useMemo(() => {
-    if (!damageEvents || !reportMasterData?.abilitiesById) {
+    // A resolved scope without targets must never fall through to aggregate
+    // metrics, even when a future categorizer changes its filter semantics.
+    if (
+      hasNoResolvedTargets(selectedTargetIds) ||
+      !damageEvents ||
+      !reportMasterData?.abilitiesById
+    ) {
       return { damageTypeBreakdown: [], totalDamage: 0 };
     }
 
-    const categorized = categorizeDamageEvents(damageEvents, reportMasterData.abilitiesById, {
-      includeEvent: (event) => {
-        // Only include events where the target is in selectedTargets
-        if (selectedTargetIds.size > 0 && !selectedTargetIds.has(event.targetID)) return false;
-        // Only include events from the selected player when one is chosen
-        if (selectedPlayerId != null && event.sourceID !== selectedPlayerId) return false;
-        return true;
-      },
+    const isSelectedEvent = (event: (typeof damageEvents)[number]): boolean => {
+      if (selectedTargetIds.size > 0 && !selectedTargetIds.has(event.targetID)) return false;
+      if (selectedPlayerId != null && event.sourceID !== selectedPlayerId) return false;
+      return true;
+    };
+    const {
+      all: categorized,
+      eligible: eligibleCategorized,
+      critical: criticalCategorized,
+      unknownHitType: unknownHitTypeCategorized,
+    } = categorizeDamageEventsWithMetrics(damageEvents, reportMasterData.abilitiesById, {
+      includeEvent: isSelectedEvent,
     });
 
     const breakdown: DamageTypeBreakdown[] = CATEGORY_META.filter(
       (meta) => categorized[meta.key].totalDamage > 0,
     ).map((meta) => {
       const bucket = categorized[meta.key];
-      const criticalRate = bucket.hitCount > 0 ? (bucket.criticalHits / bucket.hitCount) * 100 : 0;
+      const eligibleBucket = eligibleCategorized[meta.key];
+      const criticalBucket = criticalCategorized[meta.key];
+      const hasUnknownHitTypes = unknownHitTypeCategorized[meta.key].hitCount > 0;
+      const criticalRate =
+        eligibleBucket.hitCount > 0
+          ? (criticalBucket.hitCount / eligibleBucket.hitCount) * 100
+          : null;
+      const criticalDamageShare =
+        bucket.totalDamage > 0 && !hasUnknownHitTypes
+          ? (criticalBucket.totalDamage / bucket.totalDamage) * 100
+          : null;
       const averageDamage = bucket.hitCount > 0 ? bucket.totalDamage / bucket.hitCount : 0;
       return {
         damageType: meta.damageType,
         displayName: meta.displayName,
         totalDamage: bucket.totalDamage,
         hitCount: Math.round(bucket.hitCount),
-        criticalHits: Math.round(bucket.criticalHits),
+        eligibleHitCount: Math.round(eligibleBucket.hitCount),
+        criticalHits: Math.round(criticalBucket.hitCount),
         criticalRate,
+        criticalDamage: criticalBucket.totalDamage,
+        criticalDamageShare,
         averageDamage,
       };
     });
@@ -88,15 +119,23 @@ export const DamageTypeBreakdownPanel: React.FC<DamageTypeBreakdownPanelProps> =
     return { damageTypeBreakdown: breakdown, totalDamage: categorized.totalDamage };
   }, [damageEvents, reportMasterData?.abilitiesById, selectedTargetIds, selectedPlayerId]);
 
-  if (isMasterDataLoading || isDamageEventsLoading) {
-    return <DamageTypeBreakdownView damageTypeBreakdown={[]} totalDamage={0} isLoading={true} />;
-  }
+  const state = resolveAnalyzerPanelState({
+    error: damageEventsError,
+    hasData: damageTypeBreakdown.length > 0,
+    isComplete: damageEventsStatus === 'succeeded' && reportMasterData.loaded,
+    isLoading: isMasterDataLoading || isDamageEventsLoading,
+  });
 
   return (
     <DamageTypeBreakdownView
       damageTypeBreakdown={damageTypeBreakdown}
       totalDamage={totalDamage}
-      isLoading={false}
+      state={state}
+      stateDetail={
+        state === 'stale'
+          ? 'Damage events or ability data have not completed loading.'
+          : (damageEventsError ?? undefined)
+      }
     />
   );
 };

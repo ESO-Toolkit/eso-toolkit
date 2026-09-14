@@ -11,7 +11,7 @@ const baseUrl = process.env.BASE_URL || `http://localhost:${port}`;
 export default defineConfig({
   testDir: '../tests',
 
-  testMatch: ['**/accessibility.spec.ts'],
+  testMatch: ['**/accessibility.spec.ts', '**/analyzer-route.accessibility.spec.ts'],
 
   fullyParallel: false,
 

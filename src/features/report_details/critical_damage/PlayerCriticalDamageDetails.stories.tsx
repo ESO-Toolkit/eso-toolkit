@@ -7,10 +7,8 @@ import {
   noCriticalDamageSourcesMockData,
   performanceTestMockData,
   withEsoLogDecorators,
-  withLocalStorage,
   withMockReportFightContext,
 } from '../../../test';
-import { LOCAL_STORAGE_ACCESS_TOKEN_KEY } from '../../auth/auth';
 
 import { PlayerCriticalDamageDetails } from './PlayerCriticalDamageDetails';
 
@@ -18,13 +16,7 @@ import { PlayerCriticalDamageDetails } from './PlayerCriticalDamageDetails';
 const meta: Meta<typeof PlayerCriticalDamageDetails> = {
   title: 'Features/Report Details/Critical Damage/PlayerCriticalDamageDetails',
   component: PlayerCriticalDamageDetails,
-  decorators: [
-    withMockReportFightContext,
-    withLocalStorage({
-      [LOCAL_STORAGE_ACCESS_TOKEN_KEY]: 'some-key',
-    }),
-    withEsoLogDecorators(basicMockData),
-  ],
+  decorators: [withMockReportFightContext, withEsoLogDecorators(basicMockData)],
   parameters: {
     layout: 'fullscreen',
     docs: {

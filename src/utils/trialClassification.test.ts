@@ -1,3 +1,4 @@
+import { getFightOutcome as getReportFightOutcome } from '../features/report_details/fightGrouping';
 import type { FightFragment, ReportFragment } from '../graphql/gql/graphql';
 
 import {
@@ -77,34 +78,66 @@ describe('isFalsePositiveWipe', () => {
 
 describe('getFightOutcome', () => {
   it('marks a boss kill when boss health is <= 1%', () => {
-    const outcome = getFightOutcome(makeFight({ bossPercentage: 0.5 }));
+    const outcome = getFightOutcome(makeFight({ kill: null, bossPercentage: 0.5 }));
     expect(outcome).toMatchObject({ isBoss: true, isKill: true, isWipe: false });
   });
 
   it('marks a boss wipe when boss health remains', () => {
-    const outcome = getFightOutcome(makeFight({ bossPercentage: 60, endTime: 200000 }));
+    const outcome = getFightOutcome(
+      makeFight({ kill: false, bossPercentage: 60, endTime: 200000 }),
+    );
     expect(outcome).toMatchObject({ isBoss: true, isKill: false, isWipe: true });
     expect(outcome.bossPercentage).toBe(60);
   });
 
-  it('reclassifies a false-positive wipe as a kill', () => {
+  it('preserves a false-positive wipe as a replay annotation', () => {
     const outcome = getFightOutcome(
-      makeFight({ bossPercentage: 100, startTime: 0, endTime: 30000 }),
+      makeFight({ kill: false, bossPercentage: 100, startTime: 0, endTime: 30000 }),
     );
-    expect(outcome).toMatchObject({ isKill: true, isWipe: false, isFalsePositiveWipe: true });
+    expect(outcome).toMatchObject({ isKill: false, isWipe: true, isFalsePositiveWipe: true });
   });
 
   it('treats trash (no difficulty) via the kill flag', () => {
-    expect(getFightOutcome(makeFight({ difficulty: null, kill: true }))).toMatchObject({
+    expect(
+      getFightOutcome(makeFight({ encounterID: 0, difficulty: null, kill: true })),
+    ).toMatchObject({
       isBoss: false,
       isKill: true,
       isWipe: false,
       bossPercentage: null,
     });
-    expect(getFightOutcome(makeFight({ difficulty: null, kill: false }))).toMatchObject({
+    expect(
+      getFightOutcome(makeFight({ encounterID: 0, difficulty: null, kill: false })),
+    ).toMatchObject({
       isBoss: false,
       isKill: false,
       isWipe: true,
     });
+  });
+
+  it.each([
+    [
+      'explicit kill wins over contradictory boss health',
+      { kill: true, bossPercentage: 60 },
+      'kill',
+    ],
+    [
+      'explicit wipe wins over contradictory boss health',
+      { kill: false, bossPercentage: 0 },
+      'wipe',
+    ],
+    [
+      'non-boss fight with no kill remains unknown',
+      { encounterID: 0, difficulty: null, kill: null, bossPercentage: null },
+      'unknown',
+    ],
+  ] as const)('%s', (_description, overrides, expectedStatus) => {
+    const fight = makeFight(overrides);
+    const replayOutcome = getFightOutcome(fight);
+    const reportOutcome = getReportFightOutcome(fight);
+    const replayStatus = replayOutcome.isKill ? 'kill' : replayOutcome.isWipe ? 'wipe' : 'unknown';
+
+    expect(reportOutcome.status).toBe(expectedStatus);
+    expect(replayStatus).toBe(expectedStatus);
   });
 });

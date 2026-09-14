@@ -6,9 +6,9 @@ describe('computeCritDamageAdjustment', () => {
   it('subtracts both stars when included but disabled (pre-companion default)', () => {
     expect(
       computeCritDamageAdjustment({
-        fightingFinesseIncluded: true,
+        fightingFinesseInclusion: 'included',
         fightingFinesseEnabled: false,
-        backstabberIncluded: true,
+        backstabberInclusion: 'included',
         backstabberEnabled: false,
       }),
     ).toBe(CriticalDamageValues.FIGHTING_FINESSE + CriticalDamageValues.BACKSTABBER);
@@ -17,9 +17,9 @@ describe('computeCritDamageAdjustment', () => {
   it('does not subtract a star that is enabled', () => {
     expect(
       computeCritDamageAdjustment({
-        fightingFinesseIncluded: true,
+        fightingFinesseInclusion: 'included',
         fightingFinesseEnabled: true,
-        backstabberIncluded: true,
+        backstabberInclusion: 'included',
         backstabberEnabled: false,
       }),
     ).toBe(CriticalDamageValues.BACKSTABBER);
@@ -28,19 +28,30 @@ describe('computeCritDamageAdjustment', () => {
   it('never subtracts a star the worker did not bake in (double-subtract guard)', () => {
     expect(
       computeCritDamageAdjustment({
-        fightingFinesseIncluded: false,
+        fightingFinesseInclusion: 'excluded',
         fightingFinesseEnabled: false,
-        backstabberIncluded: false,
+        backstabberInclusion: 'excluded',
         backstabberEnabled: false,
       }),
     ).toBe(0);
     // Even if a not-included star is somehow marked enabled, it contributes nothing.
     expect(
       computeCritDamageAdjustment({
-        fightingFinesseIncluded: false,
+        fightingFinesseInclusion: 'excluded',
         fightingFinesseEnabled: true,
-        backstabberIncluded: false,
+        backstabberInclusion: 'excluded',
         backstabberEnabled: true,
+      }),
+    ).toBe(0);
+  });
+
+  it('does not subtract unknown source activity', () => {
+    expect(
+      computeCritDamageAdjustment({
+        fightingFinesseInclusion: 'unknown',
+        fightingFinesseEnabled: false,
+        backstabberInclusion: 'unknown',
+        backstabberEnabled: false,
       }),
     ).toBe(0);
   });

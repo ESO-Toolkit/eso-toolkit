@@ -4,8 +4,8 @@ import { useSelector } from 'react-redux';
 import { FightFragment } from '../../../graphql/gql/graphql';
 import { useReportMasterData } from '../../../hooks';
 import { useDamageEvents } from '../../../hooks/events/useDamageEvents';
-import { useWorkerDebuffLookup } from '../../../hooks/events/useDebuffEvents';
 import { useSelectedTargetIds } from '../../../hooks/useSelectedTargetIds';
+import { useDebuffLookupTask } from '../../../hooks/workerTasks/useDebuffLookupTask';
 import { useElementalWeaknessStacksTask } from '../../../hooks/workerTasks/useElementalWeaknessStacksTask';
 import { useStaggerStacksTask } from '../../../hooks/workerTasks/useStaggerStacksTask';
 import { useTouchOfZenStacksTask } from '../../../hooks/workerTasks/useTouchOfZenStacksTask';
@@ -28,6 +28,7 @@ import {
 import { calculateElementalWeaknessStacks } from '../../../workers/calculations/CalculateElementalWeaknessStacks';
 import { calculateStaggerStacks } from '../../../workers/calculations/CalculateStaggerStacks';
 import { calculateTouchOfZenStacks } from '../../../workers/calculations/CalculateTouchOfZenStacks';
+import { resolveAnalyzerPanelState } from '../AnalyzerPanelState';
 
 import { DebuffUptimesView } from './DebuffUptimesView';
 import { EffectUptimeTimelineModal } from './EffectUptimeTimelineModal';
@@ -63,7 +64,22 @@ export const IMPORTANT_DEBUFF_ABILITIES = new Set([
  * logical debuff (e.g., Major Maim applied by different source skills).
  * Properly merges overlapping intervals to avoid double-counting.
  */
-function computeGroupedMaimUptime(params: {
+export const averagePresentUptimePercentages = (
+  uptimePercentages: readonly (number | undefined)[],
+): number | undefined => {
+  const presentUptimes = uptimePercentages.filter(
+    (uptime): uptime is number =>
+      uptime !== undefined && Number.isFinite(uptime) && uptime >= 0 && uptime <= 100,
+  );
+
+  if (presentUptimes.length === 0) {
+    return undefined;
+  }
+
+  return presentUptimes.reduce((sum, uptime) => sum + uptime, 0) / presentUptimes.length;
+};
+
+export function computeGroupedMaimUptime(params: {
   debuffsLookup: BuffLookupData;
   abilityIds: ReadonlySet<number>;
   displayName: string;
@@ -84,7 +100,15 @@ function computeGroupedMaimUptime(params: {
     fightDuration,
   } = params;
 
-  if (!fightDuration) return null;
+  if (
+    !Number.isFinite(fightStartTime) ||
+    !Number.isFinite(fightEndTime) ||
+    !Number.isFinite(fightDuration) ||
+    fightDuration <= 0 ||
+    fightEndTime <= fightStartTime
+  ) {
+    return null;
+  }
 
   // Collect all intervals from all ability IDs in the group
   const allIntervals: { start: number; end: number }[] = [];
@@ -95,6 +119,7 @@ function computeGroupedMaimUptime(params: {
     intervalList.forEach((interval) => {
       // For debuffs, targetID is the enemy receiving the debuff — filter by enemy target if provided
       if (targetIds && !targetIds.has(interval.targetID)) return;
+      if (!Number.isFinite(interval.start) || !Number.isFinite(interval.end)) return;
       const start = Math.max(interval.start, fightStartTime);
       const end = Math.min(interval.end, fightEndTime);
       if (end > start) {
@@ -121,7 +146,9 @@ function computeGroupedMaimUptime(params: {
   const totalDuration = merged.reduce((sum, i) => sum + (i.end - i.start), 0);
   const uptimePercentage = (totalDuration / fightDuration) * 100;
 
-  if (uptimePercentage <= 0) return null;
+  if (!Number.isFinite(uptimePercentage) || uptimePercentage <= 0 || uptimePercentage > 100) {
+    return null;
+  }
 
   const groupKey = `grouped_maim_${displayName.toLowerCase().replace(/\s+/g, '_')}`;
 
@@ -160,25 +187,36 @@ export const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({
   selectedPlayerId,
 }) => {
   const { reportId, fightId } = useSelectedReportAndFight();
-  const { result: debuffsLookup, isLoading: isDebuffEventsLoading } = useWorkerDebuffLookup();
+  const {
+    debuffLookupData: debuffsLookup,
+    isDebuffLookupLoading: isDebuffEventsLoading,
+    debuffLookupError,
+  } = useDebuffLookupTask();
   const { reportMasterData, isMasterDataLoading } = useReportMasterData();
   const selectedTargetId = useSelector(selectSelectedTargetId);
   // Selected friendly player to filter debuffs by (shows only debuffs applied BY this player)
   const selectedFriendlyPlayerId = useSelector(selectSelectedFriendlyPlayerId);
 
   // Damage events for per-player stagger calculation
-  const { damageEvents } = useDamageEvents();
+  const { damageEvents, damageEventsError } = useDamageEvents();
 
   // Touch of Z'en stacks data
-  const { touchOfZenStacksData, allDotAbilityIds, isTouchOfZenStacksLoading } =
-    useTouchOfZenStacksTask();
+  const {
+    touchOfZenStacksData,
+    allDotAbilityIds,
+    isTouchOfZenStacksLoading,
+    touchOfZenStacksError,
+  } = useTouchOfZenStacksTask();
 
   // Stagger stacks data (group aggregate)
-  const { staggerStacksData, isStaggerStacksLoading } = useStaggerStacksTask();
+  const { staggerStacksData, isStaggerStacksLoading, staggerStacksError } = useStaggerStacksTask();
 
   // Elemental Weakness stacks data
-  const { elementalWeaknessStacksData, isElementalWeaknessStacksLoading } =
-    useElementalWeaknessStacksTask();
+  const {
+    elementalWeaknessStacksData,
+    isElementalWeaknessStacksLoading,
+    elementalWeaknessStacksError,
+  } = useElementalWeaknessStacksTask();
 
   // Note: allDotAbilityIds contains the unique DOT ability IDs used for Touch of Z'en calculation
 
@@ -192,7 +230,14 @@ export const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({
   // Extract stable fight properties
   const fightStartTime = fight?.startTime;
   const fightEndTime = fight?.endTime;
-  const fightDuration = fightEndTime && fightStartTime ? fightEndTime - fightStartTime : 0;
+  const hasValidFightWindow =
+    Number.isFinite(fightStartTime) &&
+    Number.isFinite(fightEndTime) &&
+    fightEndTime > fightStartTime;
+  const fightDuration = hasValidFightWindow ? fightEndTime - fightStartTime : 0;
+  const fightWindowError = hasValidFightWindow
+    ? null
+    : 'Uptime data is unavailable because this fight has an invalid time window.';
 
   // Memoize debuff ability IDs extraction separately (expensive but stable)
   const debuffAbilityIds = React.useMemo(() => {
@@ -274,7 +319,11 @@ export const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({
       : [];
 
     // If a player is selected and we have damage events, calculate per-player stagger
-    if (selectedPlayerId && damageEventsBySource.size > 0 && allFriendlyPlayers.length > 0) {
+    if (
+      selectedPlayerId != null &&
+      damageEventsBySource.size > 0 &&
+      allFriendlyPlayers.length > 0
+    ) {
       // Calculate stagger for each player to get group averages
       const playerStaggerResults = allFriendlyPlayers.map((playerId: number) => {
         const playerDamageEvents = damageEventsBySource.get(playerId) ?? [];
@@ -296,28 +345,24 @@ export const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({
 
       // For each stack level (1, 2, 3)
       [1, 2, 3].forEach((stackLevel) => {
-        const playerUptimesForStack = playerStaggerResults
-          .map(
-            (result: {
-              playerId: number;
-              stackResults: Array<{
-                stackLevel: number;
-                uptimePercentage: number;
-                abilityGameID: string;
-              }>;
-            }) => {
-              const stackData = result.stackResults.find(
-                (s: { stackLevel: number }) => s.stackLevel === stackLevel,
-              );
-              return stackData?.uptimePercentage || 0;
-            },
-          )
-          .filter((uptime: number) => uptime > 0); // Only count players who contributed
+        const playerUptimesForStack = playerStaggerResults.map(
+          (result: {
+            playerId: number;
+            stackResults: Array<{
+              stackLevel: number;
+              uptimePercentage: number;
+              abilityGameID: string;
+            }>;
+          }) => {
+            const stackData = result.stackResults.find(
+              (s: { stackLevel: number }) => s.stackLevel === stackLevel,
+            );
+            return stackData?.uptimePercentage;
+          },
+        );
+        const average = averagePresentUptimePercentages(playerUptimesForStack);
 
-        if (playerUptimesForStack.length > 0) {
-          const average =
-            playerUptimesForStack.reduce((sum: number, val: number) => sum + val, 0) /
-            playerUptimesForStack.length;
+        if (average !== undefined) {
           groupAveragesByStack.set(stackLevel, average);
         }
       });
@@ -425,11 +470,10 @@ export const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({
 
     // If a player is selected and we have damage/debuff data, calculate per-player Touch of Z'en
     if (
-      selectedPlayerId &&
+      selectedPlayerId != null &&
       debuffsLookup &&
       damageEventsBySource.size > 0 &&
-      fightStartTime &&
-      fightEndTime
+      hasValidFightWindow
     ) {
       // Calculate Touch of Z'en stacks for each player
       const playerTouchOfZenResults = allFriendlyPlayers.map((playerId: number) => {
@@ -457,16 +501,13 @@ export const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({
       const groupAveragesByStack = new Map<number, number>();
 
       [1, 2, 3, 4, 5].forEach((stackLevel) => {
-        const playerUptimesForStack = playerTouchOfZenResults
-          .map((result) => {
-            const stackData = result.stackResults.find((s) => s.stackLevel === stackLevel);
-            return stackData?.uptimePercentage || 0;
-          })
-          .filter((uptime) => uptime > 0);
+        const playerUptimesForStack = playerTouchOfZenResults.map((result) => {
+          const stackData = result.stackResults.find((s) => s.stackLevel === stackLevel);
+          return stackData?.uptimePercentage;
+        });
+        const average = averagePresentUptimePercentages(playerUptimesForStack);
 
-        if (playerUptimesForStack.length > 0) {
-          const average =
-            playerUptimesForStack.reduce((sum, val) => sum + val, 0) / playerUptimesForStack.length;
+        if (average !== undefined) {
           groupAveragesByStack.set(stackLevel, average);
         }
       });
@@ -554,6 +595,7 @@ export const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({
     buffIntervalsBySource,
     fightStartTime,
     fightEndTime,
+    hasValidFightWindow,
     reportMasterData?.abilitiesById,
     reportMasterData?.actorsById,
   ]);
@@ -571,7 +613,7 @@ export const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({
       : [];
 
     // If a player is selected and we have debuff data, calculate per-player Elemental Weakness
-    if (selectedPlayerId && debuffsLookup && fightStartTime && fightEndTime) {
+    if (selectedPlayerId != null && debuffsLookup && hasValidFightWindow) {
       // Calculate Elemental Weakness stacks for each player
       const playerElementalWeaknessResults = allFriendlyPlayers.map((playerId: number) => {
         const playerDebuffsLookup = {
@@ -595,16 +637,13 @@ export const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({
       const groupAveragesByStack = new Map<number, number>();
 
       [1, 2, 3].forEach((stackLevel) => {
-        const playerUptimesForStack = playerElementalWeaknessResults
-          .map((result) => {
-            const stackData = result.stackResults.find((s) => s.stackLevel === stackLevel);
-            return stackData?.uptimePercentage || 0;
-          })
-          .filter((uptime) => uptime > 0);
+        const playerUptimesForStack = playerElementalWeaknessResults.map((result) => {
+          const stackData = result.stackResults.find((s) => s.stackLevel === stackLevel);
+          return stackData?.uptimePercentage;
+        });
+        const average = averagePresentUptimePercentages(playerUptimesForStack);
 
-        if (playerUptimesForStack.length > 0) {
-          const average =
-            playerUptimesForStack.reduce((sum, val) => sum + val, 0) / playerUptimesForStack.length;
+        if (average !== undefined) {
           groupAveragesByStack.set(stackLevel, average);
         }
       });
@@ -690,19 +729,14 @@ export const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({
     buffIntervalsBySource,
     fightStartTime,
     fightEndTime,
+    hasValidFightWindow,
     reportMasterData?.abilitiesById,
     reportMasterData?.actorsById,
   ]);
 
   // Calculate debuff uptimes for selected targets using the utility function
   const allDebuffUptimes = React.useMemo(() => {
-    if (
-      !debuffsLookup ||
-      !fightDuration ||
-      !fightStartTime ||
-      !fightEndTime ||
-      debuffAbilityIds.size === 0
-    ) {
+    if (!debuffsLookup || !fightDuration || !hasValidFightWindow || debuffAbilityIds.size === 0) {
       return [];
     }
 
@@ -808,7 +842,7 @@ export const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({
 
       // Only show debuffs the player actually contributed to
       regularDebuffUptimes = playerDebuffsWithComparison;
-    } else if (selectedFriendlyPlayerId) {
+    } else if (selectedFriendlyPlayerId != null) {
       // Show debuffs applied only by this player (no comparison)
       regularDebuffUptimes = computeBuffUptimes(debuffsLookup, {
         abilityIds: debuffAbilityIds,
@@ -920,6 +954,7 @@ export const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({
     fightDuration,
     fightStartTime,
     fightEndTime,
+    hasValidFightWindow,
     realTargetIds,
     reportMasterData?.abilitiesById,
     touchOfZenStackUptimesWithGroupAvg,
@@ -968,13 +1003,8 @@ export const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({
     }
 
     // Still loading if fight data is not available
-    if (!fightDuration || !fightStartTime || !fightEndTime) {
-      return true;
-    }
-
-    // Still loading if target data is not available
-    if (realTargetIds.size === 0) {
-      return true;
+    if (!hasValidFightWindow) {
+      return false;
     }
 
     // Data is ready
@@ -986,14 +1016,36 @@ export const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({
     isStaggerStacksLoading,
     isElementalWeaknessStacksLoading,
     debuffsLookup,
-    fightDuration,
-    fightStartTime,
-    fightEndTime,
-    realTargetIds,
+    hasValidFightWindow,
   ]);
 
+  const requestError =
+    debuffLookupError ??
+    touchOfZenStacksError ??
+    staggerStacksError ??
+    elementalWeaknessStacksError ??
+    damageEventsError;
+  const panelState = resolveAnalyzerPanelState({
+    error: requestError ?? fightWindowError,
+    hasData: debuffUptimes.length > 0,
+    isComplete:
+      debuffsLookup !== null &&
+      touchOfZenStacksData !== null &&
+      staggerStacksData !== null &&
+      elementalWeaknessStacksData !== null &&
+      reportMasterData.loaded &&
+      hasValidFightWindow,
+    isLoading:
+      isDataLoading &&
+      (isMasterDataLoading ||
+        isDebuffEventsLoading ||
+        isTouchOfZenStacksLoading ||
+        isStaggerStacksLoading ||
+        isElementalWeaknessStacksLoading),
+  });
+
   const prefetchedSeries = React.useMemo(() => {
-    if (!debuffsLookup || !fightStartTime || !fightEndTime) {
+    if (!debuffsLookup || !hasValidFightWindow) {
       return [];
     }
 
@@ -1004,31 +1056,28 @@ export const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({
       fightEndTime,
       targetFilter: realTargetIds.size > 0 ? realTargetIds : null,
     });
-  }, [debuffUptimes, debuffsLookup, fightStartTime, fightEndTime, realTargetIds]);
+  }, [
+    debuffUptimes,
+    debuffsLookup,
+    fightStartTime,
+    fightEndTime,
+    realTargetIds,
+    hasValidFightWindow,
+  ]);
 
   const canOpenTimeline = prefetchedSeries.length > 0;
-
-  if (isDataLoading) {
-    return (
-      <DebuffUptimesView
-        selectedTargetId={selectedTargetId}
-        debuffUptimes={[]}
-        isLoading={true}
-        showAllDebuffs={showAllDebuffs}
-        onToggleShowAll={setShowAllDebuffs}
-        reportId={reportId}
-        fightId={fightId}
-        canOpenTimeline={false}
-      />
-    );
-  }
 
   return (
     <React.Fragment>
       <DebuffUptimesView
         selectedTargetId={selectedTargetId}
         debuffUptimes={debuffUptimes}
-        isLoading={false}
+        state={panelState}
+        stateDetail={
+          panelState === 'stale'
+            ? 'Showing the most recent debuff data while required sources are unavailable.'
+            : (requestError ?? fightWindowError ?? undefined)
+        }
         showAllDebuffs={showAllDebuffs}
         onToggleShowAll={setShowAllDebuffs}
         reportId={reportId}

@@ -26,6 +26,7 @@ import { createSkeletonDetector } from './utils/skeleton-detector';
 // ─── Mock data ───────────────────────────────────────────────────────────────
 
 const BOSS_SLUG = 'opulent-trio';
+const MOCK_LOG_START_MS = Date.parse('2026-08-01T12:00:00Z');
 
 const MOCK_ENCOUNTERS = {
   encounters: [
@@ -158,7 +159,7 @@ function mockParses(withBuild: boolean): Array<Record<string, unknown>> {
         rank: i + 1,
         amount: archetype.baseAmount + (archetype.count - i) * 250,
         duration_ms: 200_000,
-        log_start_ms: Date.now(),
+        log_start_ms: MOCK_LOG_START_MS,
         log_date: '2026-08-01',
         bracket_data: null,
         set1_id: archetype.fivePiece[0],
@@ -262,15 +263,11 @@ async function openBuildLeaderboard(
   const skeletonDetector = createSkeletonDetector(page);
   await page.goto(url);
   // Skill-mandated skeleton gate: wait out the workspace loading skeleton.
-  await skeletonDetector.waitForSkeletonsToDisappear({ timeout: 30_000 }).catch(() => {
-    // The build leaderboard's own skeleton is plain MUI Skeleton (not in the
-    // global detector's registry) — the row assertion below is the real gate.
-  });
+  await skeletonDetector.waitForSkeletonsToDisappear({ timeout: 30_000 });
 
   await expect(
     page.locator('[data-testid="archetype-row"], [data-testid="recommended-row"]').first(),
   ).toBeVisible({ timeout: 30_000 });
-  await page.waitForTimeout(1000);
 }
 
 test.describe('Build Leaderboard Page', () => {
@@ -803,7 +800,7 @@ test.describe('Build Leaderboard Page', () => {
 
       await page.goto('/build-leaderboard');
       await expect(page).toHaveTitle(/Build Leaderboard/i, { timeout: 30_000 });
-      await skeletonDetector.waitForSkeletonsToDisappear({ timeout: 30_000 }).catch(() => {});
+      await skeletonDetector.waitForSkeletonsToDisappear({ timeout: 30_000 });
 
       // Defensive: the page itself must survive
       await expect(
@@ -932,8 +929,10 @@ test.describe('Build Leaderboard Page', () => {
       await expect(evidenceTarget).toBeVisible();
       const evidenceTargetBox = await evidenceTarget.boundingBox();
       expect(evidenceTargetBox).not.toBeNull();
-      expect(evidenceTargetBox?.width ?? 0).toBeGreaterThanOrEqual(44);
-      expect(evidenceTargetBox?.height ?? 0).toBeGreaterThanOrEqual(44);
+      // Browser layout can represent a 44px CSS target as a value a few
+      // floating-point ulps below 44 (Firefox reports 43.9999847 here).
+      expect(evidenceTargetBox?.width ?? 0).toBeGreaterThanOrEqual(43.99);
+      expect(evidenceTargetBox?.height ?? 0).toBeGreaterThanOrEqual(43.99);
 
       await dialog.getByRole('button', { name: 'Close build evidence' }).click();
       await expect(dialog).not.toBeVisible();

@@ -21,6 +21,12 @@ import {
   type ContentType,
 } from '../../data/esoContentZones';
 import type { FightFragment, ReportFragment } from '../../graphql/gql/graphql';
+import {
+  bossHealthRemaining as sharedBossHealthRemaining,
+  getCanonicalFightOutcome,
+  isBossFight as sharedIsBossFight,
+  wasKill as sharedWasKill,
+} from '../../utils/fightOutcome';
 
 /** Index of canonical display name → content zone, for the name-based fallback. */
 const ZONE_BY_NAME = new Map(
@@ -49,7 +55,7 @@ export function effectiveEncounterId(fight: FightFragment): number {
  * `difficulty` is null for trash, so the union cannot promote real trash.)
  */
 export function isBossFight(fight: FightFragment): boolean {
-  return (fight.encounterID ?? 0) !== 0 || fight.difficulty != null;
+  return sharedIsBossFight(fight);
 }
 
 /**
@@ -62,16 +68,23 @@ export function isBossFight(fight: FightFragment): boolean {
  * `bossPercentage`.
  */
 export function wasKill(fight: FightFragment): boolean {
-  if (fight.kill === true) return true;
-  if (fight.kill === false) return false;
-  // kill == null → fall back to boss health remaining.
-  return fight.bossPercentage != null && fight.bossPercentage <= 1.0;
+  return sharedWasKill(fight);
 }
 
 /** Boss health % remaining at end of fight (0–100), or null if unknown. */
 export function bossHealthRemaining(fight: FightFragment): number | null {
-  if (fight.bossPercentage == null) return null;
-  return Math.max(0, Math.min(100, fight.bossPercentage));
+  return sharedBossHealthRemaining(fight);
+}
+
+export interface FightOutcome {
+  status: 'kill' | 'wipe' | 'unknown';
+  bossHealthRemaining: number | null;
+}
+
+/** A display-safe outcome that never turns missing health into a fabricated percentage. */
+export function getFightOutcome(fight: FightFragment): FightOutcome {
+  const { status, bossHealthRemaining: healthRemaining } = getCanonicalFightOutcome(fight);
+  return { status, bossHealthRemaining: healthRemaining };
 }
 
 /**

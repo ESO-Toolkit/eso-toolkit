@@ -1,12 +1,13 @@
 import React from 'react';
 
 import { useCurrentFight } from '../../hooks';
+import { useAnalyzerOnlineRecovery } from '../../hooks/useAnalyzerOnlineRecovery';
 import { useEagerEventPrefetch } from '../../hooks/useEagerEventPrefetch';
 import { useReportFightDetailsNavigation } from '../../ReportFightContext';
 
 import { FightDetailsView } from './FightDetailsView';
 
-export const FightDetails: React.FC = () => {
+const FightDetailsContent: React.FC = () => {
   const { selectedTabId, showExperimentalTabs, setSelectedTab, setShowExperimentalTabs } =
     useReportFightDetailsNavigation();
   const { fight, isFightLoading } = useCurrentFight();
@@ -61,4 +62,10 @@ export const FightDetails: React.FC = () => {
       />
     </div>
   );
+};
+
+export const FightDetails: React.FC = () => {
+  const recoveryGeneration = useAnalyzerOnlineRecovery();
+
+  return <FightDetailsContent key={recoveryGeneration} />;
 };

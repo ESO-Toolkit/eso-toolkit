@@ -2,11 +2,13 @@ import React from 'react';
 import { useSelector } from 'react-redux';
 
 import { executeDamageOverTimeTask } from '@/store/worker_results';
+import { damageOverTimeInputHash } from '@/store/worker_results/damageOverTimeSlice';
+import type { DamageOverTimeCalculationTask } from '@/workers/calculations/CalculateDamageOverTime';
 
 import { FightFragment } from '../../graphql/gql/graphql';
 import type { ReportFightContextInput } from '../../store/contextTypes';
 import {
-  selectDamageOverTimeResult,
+  selectDamageOverTimeTask,
   selectWorkerTaskLoading,
   selectWorkerTaskError,
   selectWorkerTaskProgress,
@@ -21,6 +23,21 @@ interface UseDamageOverTimeTaskOptions {
   context?: ReportFightContextInput;
 }
 
+interface DamageOverTimeTaskSnapshot {
+  result: unknown;
+  cacheMetadata: { lastInputHash: string | null };
+}
+
+export const getOwnedDamageOverTimeResult = (
+  taskInput: DamageOverTimeCalculationTask | null,
+  task: DamageOverTimeTaskSnapshot,
+): unknown => {
+  if (!taskInput) return null;
+  return task.cacheMetadata.lastInputHash === damageOverTimeInputHash(taskInput)
+    ? task.result
+    : null;
+};
+
 export function useDamageOverTimeTask(options?: UseDamageOverTimeTaskOptions): {
   damageOverTimeData: unknown;
   isDamageOverTimeLoading: boolean;
@@ -33,39 +50,37 @@ export function useDamageOverTimeTask(options?: UseDamageOverTimeTaskOptions): {
   const { damageEvents, isDamageEventsLoading } = useDamageEvents({ context: options?.context });
   const { playerData, isPlayerDataLoading } = usePlayerData({ context: options?.context });
 
+  const taskInput = React.useMemo<DamageOverTimeCalculationTask | null>(() => {
+    if (
+      !selectedFight ||
+      isPlayerDataLoading ||
+      !playerData?.playersById ||
+      isDamageEventsLoading ||
+      damageEvents === null
+    ) {
+      return null;
+    }
+
+    return {
+      fight: selectedFight,
+      players: playerData.playersById,
+      damageEvents,
+      bucketSizeMs: 1000,
+    };
+  }, [selectedFight, isPlayerDataLoading, playerData, isDamageEventsLoading, damageEvents]);
+
   // Execute task only when ALL dependencies are completely ready
   React.useEffect(() => {
-    // Check that all dependencies are completely loaded with data available
-    const allDependenciesReady =
-      selectedFight &&
-      !isPlayerDataLoading &&
-      playerData?.playersById &&
-      !isDamageEventsLoading &&
-      damageEvents !== null;
-
-    if (allDependenciesReady) {
-      const promise = dispatch(
-        executeDamageOverTimeTask({
-          fight: selectedFight,
-          players: playerData.playersById,
-          damageEvents: damageEvents,
-          bucketSizeMs: 1000, // 1 second buckets
-        }),
-      );
+    if (taskInput) {
+      const promise = dispatch(executeDamageOverTimeTask(taskInput));
       return () => {
         promise.abort();
       };
     }
-  }, [
-    dispatch,
-    selectedFight,
-    playerData,
-    damageEvents,
-    isDamageEventsLoading,
-    isPlayerDataLoading,
-  ]);
+  }, [dispatch, taskInput]);
 
-  const damageOverTimeData = useSelector(selectDamageOverTimeResult);
+  const damageOverTimeTask = useSelector(selectDamageOverTimeTask);
+  const damageOverTimeData = getOwnedDamageOverTimeResult(taskInput, damageOverTimeTask);
   const isDamageOverTimeTaskLoading = useSelector(
     selectWorkerTaskLoading('calculateDamageOverTimeData'),
   ) as boolean;

@@ -9,6 +9,7 @@ import { calculateBuffLookup } from './calculations/CalculateBuffLookups';
 import { calculateCriticalDamageData } from './calculations/CalculateCriticalDamage';
 import { calculateDamageOverTimeData } from './calculations/CalculateDamageOverTime';
 import { calculateDamageReductionData } from './calculations/CalculateDamageReduction';
+import { calculateDamageStatistics } from './calculations/CalculateDamageStatistics';
 import { calculateElementalWeaknessStacks } from './calculations/CalculateElementalWeaknessStacks';
 import { calculatePenetrationData } from './calculations/CalculatePenetration';
 import { calculatePlayerPanelAnalysis } from './calculations/CalculatePlayerPanelAnalysis';
@@ -25,6 +26,7 @@ const SHARED_WORKER = {
   calculateHostileBuffLookup: calculateBuffLookup,
   calculateCriticalDamageData,
   calculateDamageOverTimeData,
+  calculateDamageStatistics,
   calculateDamageReductionData,
   calculatePenetrationData,
   calculateStatusEffectUptimes,
@@ -54,7 +56,7 @@ export type SharedComputationWorkerTaskType = keyof typeof SHARED_WORKER;
  * Listing them here keeps the store's maps exhaustive over everything else — a
  * future report-scoped task that forgets its slice still fails to compile.
  */
-export type NonReduxWorkerTaskType = 'clusterDpsBuilds';
+export type NonReduxWorkerTaskType = 'clusterDpsBuilds' | 'calculateDamageStatistics';
 
 /** Worker tasks that store/worker_results provides a slice for. */
 export type ReduxBackedWorkerTaskType = Exclude<

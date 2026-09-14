@@ -2,13 +2,17 @@ import React from 'react';
 import { useSelector } from 'react-redux';
 
 import { ReportActorFragment } from '../../../graphql/gql/graphql';
-import {
-  selectCastEvents,
-  selectResourceEvents,
-  selectEventPlayers,
-} from '../../../store/events_data/actions';
+import { useCastEvents, useResolvedReportFightContext, useResourceEvents } from '../../../hooks';
+import { selectEventPlayers } from '../../../store/events_data/actions';
 import { selectCombinedMasterData } from '../../../store/master_data/masterDataSelectors';
+import { selectResourceEventsEntryForContext } from '../../../store/selectors/eventsSelectors';
+import type { RootState } from '../../../store/storeWithHistory';
 import { ResourceChangeEvent, UnifiedCastEvent } from '../../../types/combatlogEvents';
+import {
+  AnalyzerPanelState,
+  resolveAnalyzerPanelState,
+  type AnalyzerPanelStateKind,
+} from '../AnalyzerPanelState';
 
 import { RotationAnalysisPanelView } from './RotationAnalysisPanelView';
 
@@ -16,19 +20,66 @@ interface RotationAnalysisPanelProps {
   fight: { startTime?: number; endTime?: number; friendlyPlayers?: (number | null)[] | null };
 }
 
-interface RotationAnalysis {
+type FightWithResolvedWindow = RotationAnalysisPanelProps['fight'] & {
+  endTime: number;
+  startTime: number;
+};
+
+export const hasRotationFightWindow = (
+  fight: RotationAnalysisPanelProps['fight'],
+): fight is FightWithResolvedWindow =>
+  fight.startTime !== undefined &&
+  fight.endTime !== undefined &&
+  Number.isFinite(fight.startTime) &&
+  Number.isFinite(fight.endTime) &&
+  fight.endTime > fight.startTime;
+
+interface RotationPanelLifecycleInput {
+  castEventsError: string | null;
+  castEventsStatus: 'idle' | 'loading' | 'succeeded' | 'failed';
+  hasData: boolean;
+  resourceEventsError: string | null;
+  resourceEventsStatus: 'idle' | 'loading' | 'succeeded' | 'failed';
+}
+
+export const resolveRotationAnalysisPanelState = ({
+  castEventsError,
+  castEventsStatus,
+  hasData,
+  resourceEventsError,
+  resourceEventsStatus,
+}: RotationPanelLifecycleInput): AnalyzerPanelStateKind =>
+  resolveAnalyzerPanelState({
+    error:
+      castEventsError ??
+      resourceEventsError ??
+      (castEventsStatus === 'failed'
+        ? 'Cast event data failed to load.'
+        : resourceEventsStatus === 'failed'
+          ? 'Resource event data failed to load.'
+          : null),
+    hasData,
+    isComplete: castEventsStatus === 'succeeded' && resourceEventsStatus === 'succeeded',
+    isLoading: castEventsStatus === 'loading' || resourceEventsStatus === 'loading',
+  });
+
+export type RotationAnalysisDataState = 'ready' | 'partial' | 'unavailable' | 'invalid';
+
+export interface RotationAnalysis {
   playerId: string;
   playerName: string;
   abilities: AbilityUsage[];
-  averageAPM: number; // Actions per minute
+  /** Null means the event stream cannot support an APM measurement. */
+  averageAPM: number | null;
   resourceEfficiency: ResourceEfficiencyData;
+  dataState: RotationAnalysisDataState;
   rotationPattern: string[];
   skillPriorities: SkillPriority[];
   spammableSkills: SpammableSkill[];
   generalRotation: GeneralRotation;
 }
 
-interface AbilityUsage {
+export interface AbilityUsage {
   abilityId: number | string;
   abilityName: string;
   useCount: number;
@@ -38,43 +89,63 @@ interface AbilityUsage {
   timestamps: number[]; // Track when each cast occurred
 }
 
-interface SkillPriority {
+export interface SkillPriority {
   higherPrioritySkill: string;
   lowerPrioritySkill: string;
   interruptionCount: number; // How many times the higher priority skill interrupted the lower priority one
   confidence: number; // 0-1 confidence score based on frequency
 }
 
-interface SpammableSkill {
+export interface SpammableSkill {
   abilityName: string;
   averageInterval: number; // Average time between casts in seconds
   burstCount: number; // Number of times cast in quick succession (< 3 seconds apart)
   spammableScore: number; // 0-1 score indicating how spammable this skill is
 }
 
-interface GeneralRotation {
+export interface GeneralRotation {
   commonSequences: RotationSequence[];
   openerSequence: string[]; // Most common opening sequence
   fillerAbilities: string[]; // Abilities used to fill gaps
 }
 
-interface RotationSequence {
+export interface RotationSequence {
   sequence: string[];
   frequency: number;
   averageInterval: number; // Average time between abilities in this sequence
 }
 
-interface ResourceEfficiencyData {
-  magicka: {
-    averageLevel: number;
-    wastePercentage: number;
-    lowestPoint: number;
-  };
-  stamina: {
-    averageLevel: number;
-    wastePercentage: number;
-    lowestPoint: number;
-  };
+export interface ResourceMetric {
+  /** Null means no valid samples were received for this resource. */
+  averageLevel: number | null;
+  wastePercentage: number | null;
+  lowestPoint: number | null;
+}
+
+export interface ResourceEfficiencyData {
+  magicka: ResourceMetric;
+  stamina: ResourceMetric;
+}
+
+interface ResourcePlayerData {
+  magickaLevels: number[];
+  staminaLevels: number[];
+  magickaWaste: number;
+  staminaWaste: number;
+}
+
+export interface RotationAnalysisResult {
+  state: RotationAnalysisDataState;
+  message: string;
+  rotationAnalyses: RotationAnalysis[];
+}
+
+export interface RotationAnalysisInput {
+  fight: RotationAnalysisPanelProps['fight'] | null | undefined;
+  castEvents: readonly UnifiedCastEvent[] | null | undefined;
+  resourceEvents: readonly ResourceChangeEvent[] | null | undefined;
+  playersById: Record<string, ReportActorFragment>;
+  abilitiesById: Record<number | string, { name?: string | null } | undefined>;
 }
 
 /**
@@ -253,246 +324,310 @@ const analyzeGeneralRotation = (
   };
 };
 
-export const RotationAnalysisPanel: React.FC<RotationAnalysisPanelProps> = ({ fight }) => {
-  // SIMPLIFIED: Use basic selectors directly instead of complex object-creating selectors
-  const castEvents = useSelector(selectCastEvents);
-  const resourceEvents = useSelector(selectResourceEvents);
-  const playersArray = useSelector(selectEventPlayers);
-  const masterData = useSelector(selectCombinedMasterData);
+const MAX_FIGHT_DURATION_MS = 24 * 60 * 60 * 1000;
 
-  // Convert players array to record for efficient lookup
-  const playersById = React.useMemo(() => {
-    const result: Record<string, ReportActorFragment> = {};
-    playersArray.forEach((player) => {
-      if (player && player.id !== undefined && player.id !== null) {
-        result[String(player.id)] = player;
-      }
+const isFiniteNumber = (value: unknown): value is number =>
+  typeof value === 'number' && Number.isFinite(value);
+
+const emptyResourceMetric = (): ResourceMetric => ({
+  averageLevel: null,
+  wastePercentage: null,
+  lowestPoint: null,
+});
+
+const createAnalysis = (
+  playerId: string,
+  playersById: RotationAnalysisInput['playersById'],
+): RotationAnalysis => {
+  const playerInfo = playersById[playerId] as { displayName?: string; name?: string } | undefined;
+  return {
+    playerId,
+    playerName: playerInfo?.displayName || playerInfo?.name || `Player ${playerId}`,
+    abilities: [],
+    averageAPM: null,
+    resourceEfficiency: { magicka: emptyResourceMetric(), stamina: emptyResourceMetric() },
+    dataState: 'unavailable',
+    rotationPattern: [],
+    skillPriorities: [],
+    spammableSkills: [],
+    generalRotation: { commonSequences: [], openerSequence: [], fillerAbilities: [] },
+  };
+};
+
+const percentage = (current: unknown, maximum: unknown): number | null => {
+  if (!isFiniteNumber(current) || !isFiniteNumber(maximum) || current < 0 || maximum <= 0) {
+    return null;
+  }
+  return Math.min(100, (current / maximum) * 100);
+};
+
+const resourceMetric = (levels: number[], waste: number): ResourceMetric => {
+  if (!levels.length) return emptyResourceMetric();
+
+  const totalLevels = levels.reduce((sum, level) => sum + level, 0);
+  const wasteDenominator = waste + totalLevels;
+  return {
+    averageLevel: totalLevels / levels.length,
+    lowestPoint: Math.min(...levels),
+    wastePercentage: wasteDenominator > 0 ? (waste / wasteDenominator) * 100 : null,
+  };
+};
+
+/**
+ * Produces only measurements supported by valid fight and event data. Null metrics are
+ * intentionally distinct from measured zeroes so consumers never manufacture a score.
+ */
+export const calculateRotationAnalysis = ({
+  fight,
+  castEvents,
+  resourceEvents,
+  playersById,
+  abilitiesById,
+}: RotationAnalysisInput): RotationAnalysisResult => {
+  if (!fight || !isFiniteNumber(fight.startTime) || !isFiniteNumber(fight.endTime)) {
+    return {
+      state: 'invalid',
+      message: 'Rotation analysis is unavailable: invalid fight timing or duration.',
+      rotationAnalyses: [],
+    };
+  }
+
+  const fightDurationMs = fight.endTime - fight.startTime;
+  if (fightDurationMs <= 0 || fightDurationMs > MAX_FIGHT_DURATION_MS) {
+    return {
+      state: 'invalid',
+      message: 'Rotation analysis is unavailable: invalid fight timing or duration.',
+      rotationAnalyses: [],
+    };
+  }
+
+  const hasCastStream = Array.isArray(castEvents);
+  const hasResourceStream = Array.isArray(resourceEvents);
+  if (!hasCastStream && !hasResourceStream) {
+    return {
+      state: 'unavailable',
+      message: 'Rotation analysis is unavailable: event streams have not loaded.',
+      rotationAnalyses: [],
+    };
+  }
+
+  const friendlyPlayerIds = new Set(
+    (fight.friendlyPlayers || [])
+      .filter((id: number | null): id is number => id !== null && id !== undefined)
+      .map((id) => String(id)),
+  );
+  const analysisMap: Record<string, RotationAnalysis> = {};
+  const castEventsByPlayer: Record<string, UnifiedCastEvent[]> = {};
+  const resourceDataByPlayer: Record<string, ResourcePlayerData> = {};
+  const analysisFor = (playerId: string): RotationAnalysis =>
+    (analysisMap[playerId] ||= createAnalysis(playerId, playersById));
+  const resourceDataFor = (playerId: string): ResourcePlayerData =>
+    (resourceDataByPlayer[playerId] ||= {
+      magickaLevels: [],
+      staminaLevels: [],
+      magickaWaste: 0,
+      staminaWaste: 0,
     });
-    return result;
-  }, [playersArray]);
 
-  const rotationAnalyses = React.useMemo(() => {
-    if (!fight?.startTime || !fight?.endTime || !castEvents || !resourceEvents) return [];
+  castEvents?.forEach((castEvent) => {
+    if (
+      !castEvent.sourceIsFriendly ||
+      castEvent.type !== 'cast' ||
+      !isFiniteNumber(castEvent.timestamp) ||
+      castEvent.sourceID === undefined ||
+      castEvent.sourceID === null
+    )
+      return;
+    const playerId = String(castEvent.sourceID);
+    if (!friendlyPlayerIds.has(playerId)) return;
 
-    const fightDurationMs = fight.endTime - fight.startTime;
-    const analysisMap: Record<string, RotationAnalysis> = {};
+    const analysis = analysisFor(playerId);
+    (castEventsByPlayer[playerId] ||= []).push(castEvent);
+    const abilityId = castEvent.abilityGameID ?? 'unknown';
+    const abilityName = abilitiesById[abilityId]?.name || `Ability ${abilityId}`;
+    let abilityUsage = analysis.abilities.find((ability) => ability.abilityId === abilityId);
+    if (!abilityUsage) {
+      abilityUsage = {
+        abilityId,
+        abilityName,
+        useCount: 0,
+        averageCastTime: 0,
+        resourceCost: 0,
+        averageTimeBetweenCasts: 0,
+        timestamps: [],
+      };
+      analysis.abilities.push(abilityUsage);
+    }
+    abilityUsage.useCount++;
+    abilityUsage.timestamps.push(castEvent.timestamp);
+    analysis.rotationPattern.push(abilityName);
+    if (analysis.rotationPattern.length > 10) analysis.rotationPattern.shift();
+  });
 
-    // Get friendly player IDs for filtering
-    const friendlyPlayerIds = new Set(
-      (fight.friendlyPlayers || [])
-        .filter((id: number | null): id is number => id !== null && id !== undefined)
-        .map((id: number) => String(id)),
-    );
+  resourceEvents?.forEach((resourceEvent) => {
+    if (
+      resourceEvent.type !== 'resourcechange' ||
+      !isFiniteNumber(resourceEvent.timestamp) ||
+      resourceEvent.targetID === undefined ||
+      resourceEvent.targetID === null
+    )
+      return;
+    const playerId = String(resourceEvent.targetID);
+    if (!friendlyPlayerIds.has(playerId)) return;
 
-    // Group cast events per player in a single pass (avoids re-filtering the full
-    // castEvents array for every player in analyzeGeneralRotation)
-    const castEventsByPlayer: Record<string, UnifiedCastEvent[]> = {};
+    analysisFor(playerId);
+    const data = resourceDataFor(playerId);
+    const resources = resourceEvent.targetResources;
+    if (!resources) return;
 
-    // Process cast events for each player, filtering to only include friendly players
-    castEvents.forEach((castEvent: UnifiedCastEvent) => {
-      // Skip if not from a friendly player
-      if (!castEvent.sourceIsFriendly) return;
+    const magickaLevel = percentage(resources.magicka, resources.maxMagicka);
+    const staminaLevel = percentage(resources.stamina, resources.maxStamina);
+    if (magickaLevel !== null) data.magickaLevels.push(magickaLevel);
+    if (staminaLevel !== null) data.staminaLevels.push(staminaLevel);
 
-      // Exclude begincast events so each channeled/charged ability is counted once,
-      // keeping APM / spammable scores consistent with the Synergy panel
-      if (castEvent.type !== 'cast') return;
+    if (!isFiniteNumber(resourceEvent.resourceChange) || resourceEvent.resourceChange <= 0) return;
+    if (resourceEvent.resourceChangeType === 0 && magickaLevel === 100) {
+      data.magickaWaste += resourceEvent.resourceChange;
+    } else if (resourceEvent.resourceChangeType === 6 && staminaLevel === 100) {
+      data.staminaWaste += resourceEvent.resourceChange;
+    }
+  });
 
-      const playerId = String(castEvent.sourceID || '');
-
-      // Additional check: ensure this player is in the friendlyPlayers list
-      if (!friendlyPlayerIds.has(playerId)) return;
-
-      (castEventsByPlayer[playerId] ||= []).push(castEvent);
-
-      const playerInfo = playersById[playerId] as
-        { displayName?: string; name?: string } | undefined;
-      const playerName = playerInfo?.displayName || playerInfo?.name || `Player ${playerId}`;
-
-      if (!analysisMap[playerId]) {
-        analysisMap[playerId] = {
-          playerId,
-          playerName,
-          abilities: [],
-          averageAPM: 0,
-          resourceEfficiency: {
-            magicka: { averageLevel: 0, wastePercentage: 0, lowestPoint: 100 },
-            stamina: { averageLevel: 0, wastePercentage: 0, lowestPoint: 100 },
-          },
-          rotationPattern: [],
-          skillPriorities: [],
-          spammableSkills: [],
-          generalRotation: {
-            commonSequences: [],
-            openerSequence: [],
-            fillerAbilities: [],
-          },
-        };
-      }
-
-      // Track ability usage
-      const abilityId = castEvent.abilityGameID || 'unknown';
-      const ability = masterData.abilitiesById[abilityId];
-      const abilityName = ability?.name || `Ability ${abilityId}`;
-
-      let abilityUsage = analysisMap[playerId].abilities.find((a) => a.abilityId === abilityId);
-      if (!abilityUsage) {
-        abilityUsage = {
-          abilityId,
-          abilityName,
-          useCount: 0,
-          averageCastTime: 0,
-          resourceCost: 0,
-          averageTimeBetweenCasts: 0,
-          timestamps: [],
-        };
-        analysisMap[playerId].abilities.push(abilityUsage);
-      }
-
-      abilityUsage.useCount++;
-      abilityUsage.timestamps.push(castEvent.timestamp);
-
-      // Add to rotation pattern (keep only the last 10 abilities for pattern recognition)
-      analysisMap[playerId].rotationPattern.push(abilityName);
-      if (analysisMap[playerId].rotationPattern.length > 10) {
-        analysisMap[playerId].rotationPattern.shift();
-      }
-    });
-
-    // Post-process each player's data for advanced analysis
-    Object.values(analysisMap).forEach((analysis) => {
-      // Calculate APM (Actions Per Minute)
-      const totalCasts = analysis.abilities.reduce((sum, ability) => sum + ability.useCount, 0);
-      analysis.averageAPM = fightDurationMs > 0 ? (totalCasts / (fightDurationMs / 1000)) * 60 : 0;
-
-      // Analyze skill priorities
+  Object.values(analysisMap).forEach((analysis) => {
+    const totalCasts = analysis.abilities.reduce((sum, ability) => sum + ability.useCount, 0);
+    if (totalCasts > 0) {
+      analysis.averageAPM = (totalCasts / (fightDurationMs / 1000)) * 60;
       analysis.skillPriorities = analyzeSkillPriorities(analysis.abilities);
-
-      // Identify spammable skills
       analysis.spammableSkills = identifySpammableSkills(analysis.abilities);
-
-      // Generate general rotation analysis (pass the player's own cast slice to avoid
-      // re-filtering the full castEvents array per player)
       analysis.generalRotation = analyzeGeneralRotation(
         analysis.abilities,
         castEventsByPlayer[analysis.playerId] || [],
       );
-
-      // Calculate average time between casts for each ability
-      analysis.abilities.forEach((ability) => {
-        if (ability.timestamps.length > 1) {
-          const intervals = [];
-          for (let i = 1; i < ability.timestamps.length; i++) {
-            intervals.push((ability.timestamps[i] - ability.timestamps[i - 1]) / 1000);
-          }
-          ability.averageTimeBetweenCasts =
-            intervals.reduce((sum, interval) => sum + interval, 0) / intervals.length;
-        }
-      });
-    });
-
-    // Process resource events for efficiency analysis (only for friendly players)
-    const resourceDataByPlayer: Record<
-      string,
-      {
-        magickaLevels: number[];
-        staminaLevels: number[];
-        magickaWaste: number;
-        staminaWaste: number;
-      }
-    > = {};
-
-    resourceEvents.forEach((event: ResourceChangeEvent) => {
-      const resourceEvent = event as ResourceChangeEvent;
-      if (resourceEvent.type === 'resourcechange') {
-        const playerId = String(resourceEvent.targetID || '');
-
-        // Only process resource events for friendly players
-        if (!friendlyPlayerIds.has(playerId)) return;
-
-        if (!resourceDataByPlayer[playerId]) {
-          resourceDataByPlayer[playerId] = {
-            magickaLevels: [],
-            staminaLevels: [],
-            magickaWaste: 0,
-            staminaWaste: 0,
-          };
-        }
-
-        // Track resource levels over time, normalized to a 0-100 percentage so they
-        // match the '%' label and LinearProgress in the view (targetResources values
-        // are raw absolutes, not percentages)
-        const targetResources = resourceEvent.targetResources;
-        if (targetResources) {
-          if (targetResources.magicka !== undefined && targetResources.maxMagicka > 0) {
-            resourceDataByPlayer[playerId].magickaLevels.push(
-              (targetResources.magicka / targetResources.maxMagicka) * 100,
-            );
-          }
-          if (targetResources.stamina !== undefined && targetResources.maxStamina > 0) {
-            resourceDataByPlayer[playerId].staminaLevels.push(
-              (targetResources.stamina / targetResources.maxStamina) * 100,
-            );
-          }
-        }
-
-        // Track resource waste (gaining resource while already capped). Select the
-        // resource and its real cap by resourceChangeType (0 = magicka, 6 = stamina)
-        // rather than truthy-OR, so current value, cap, and waste bucket all key to
-        // the same resource. NOTE: resourceChangeType 0 is falsy, so guard against
-        // undefined explicitly rather than truthiness (otherwise magicka is dropped).
-        if (
-          targetResources &&
-          resourceEvent.resourceChangeType !== undefined &&
-          resourceEvent.resourceChange > 0
-        ) {
-          if (resourceEvent.resourceChangeType === 0) {
-            // Magicka
-            if (targetResources.magicka >= targetResources.maxMagicka) {
-              resourceDataByPlayer[playerId].magickaWaste += resourceEvent.resourceChange;
-            }
-          } else if (resourceEvent.resourceChangeType === 6) {
-            // Stamina
-            if (targetResources.stamina >= targetResources.maxStamina) {
-              resourceDataByPlayer[playerId].staminaWaste += resourceEvent.resourceChange;
-            }
-          }
-        }
+    }
+    analysis.abilities.forEach((ability) => {
+      if (ability.timestamps.length > 1) {
+        const intervals = ability.timestamps
+          .slice(1)
+          .map((timestamp, index) => (timestamp - ability.timestamps[index]) / 1000);
+        ability.averageTimeBetweenCasts =
+          intervals.reduce((sum, interval) => sum + interval, 0) / intervals.length;
       }
     });
 
-    // Calculate resource efficiency metrics
-    Object.keys(resourceDataByPlayer).forEach((playerId) => {
-      if (analysisMap[playerId]) {
-        const data = resourceDataByPlayer[playerId];
+    const resourceData = resourceDataByPlayer[analysis.playerId];
+    if (resourceData) {
+      analysis.resourceEfficiency.magicka = resourceMetric(
+        resourceData.magickaLevels,
+        resourceData.magickaWaste,
+      );
+      analysis.resourceEfficiency.stamina = resourceMetric(
+        resourceData.staminaLevels,
+        resourceData.staminaWaste,
+      );
+    }
+    const hasAnyResourceMetric =
+      analysis.resourceEfficiency.magicka.averageLevel !== null ||
+      analysis.resourceEfficiency.stamina.averageLevel !== null;
+    const hasAllResourceMetrics =
+      analysis.resourceEfficiency.magicka.averageLevel !== null &&
+      analysis.resourceEfficiency.stamina.averageLevel !== null;
+    analysis.dataState =
+      analysis.averageAPM !== null && hasAllResourceMetrics
+        ? 'ready'
+        : analysis.averageAPM !== null || hasAnyResourceMetric
+          ? 'partial'
+          : 'unavailable';
+  });
 
-        if (data.magickaLevels.length > 0) {
-          analysisMap[playerId].resourceEfficiency.magicka.averageLevel =
-            data.magickaLevels.reduce((sum, level) => sum + level, 0) / data.magickaLevels.length;
-          analysisMap[playerId].resourceEfficiency.magicka.lowestPoint = Math.min(
-            ...data.magickaLevels,
-          );
-          analysisMap[playerId].resourceEfficiency.magicka.wastePercentage =
-            (data.magickaWaste /
-              (data.magickaWaste + data.magickaLevels.reduce((sum, l) => sum + l, 0))) *
-            100;
-        }
+  const rotationAnalyses = Object.values(analysisMap);
+  if (!rotationAnalyses.length) {
+    return {
+      state: 'unavailable',
+      message: 'No valid cast or resource data is available for this fight.',
+      rotationAnalyses,
+    };
+  }
+  if (rotationAnalyses.every((analysis) => analysis.dataState === 'unavailable')) {
+    return {
+      state: 'unavailable',
+      message: 'No valid rotation measurements are available for this fight.',
+      rotationAnalyses,
+    };
+  }
+  const state: RotationAnalysisDataState =
+    !hasCastStream ||
+    !hasResourceStream ||
+    rotationAnalyses.some((analysis) => analysis.dataState !== 'ready')
+      ? 'partial'
+      : 'ready';
+  const message =
+    state === 'partial'
+      ? 'Rotation analysis is partial. Unavailable measurements are not scored.'
+      : 'Rotation analysis is based on available cast and resource events.';
+  return { state, message, rotationAnalyses };
+};
 
-        if (data.staminaLevels.length > 0) {
-          analysisMap[playerId].resourceEfficiency.stamina.averageLevel =
-            data.staminaLevels.reduce((sum, level) => sum + level, 0) / data.staminaLevels.length;
-          analysisMap[playerId].resourceEfficiency.stamina.lowestPoint = Math.min(
-            ...data.staminaLevels,
-          );
-          analysisMap[playerId].resourceEfficiency.stamina.wastePercentage =
-            (data.staminaWaste /
-              (data.staminaWaste + data.staminaLevels.reduce((sum, l) => sum + l, 0))) *
-            100;
-        }
-      }
+export const RotationAnalysisPanel: React.FC<RotationAnalysisPanelProps> = ({ fight }) => {
+  const { castEvents, castEventsError, castEventsStatus } = useCastEvents();
+  const { resourceEvents } = useResourceEvents();
+  const context = useResolvedReportFightContext();
+  const resourceEventsEntry = useSelector((state: RootState) =>
+    selectResourceEventsEntryForContext(state, context),
+  );
+  const playersArray = useSelector(selectEventPlayers);
+  const masterData = useSelector(selectCombinedMasterData);
+
+  const playersById = React.useMemo(() => {
+    const result: Record<string, ReportActorFragment> = {};
+    playersArray.forEach((player) => {
+      if (player && player.id !== undefined && player.id !== null)
+        result[String(player.id)] = player;
     });
+    return result;
+  }, [playersArray]);
 
-    return Object.values(analysisMap);
-  }, [fight, castEvents, resourceEvents, masterData, playersById]);
+  const rotationResult = React.useMemo(
+    () =>
+      calculateRotationAnalysis({
+        fight,
+        castEvents,
+        resourceEvents,
+        playersById,
+        abilitiesById: masterData.abilitiesById,
+      }),
+    [fight, castEvents, resourceEvents, masterData.abilitiesById, playersById],
+  );
 
-  return <RotationAnalysisPanelView rotationAnalyses={rotationAnalyses} fight={fight} />;
+  const sourcePanelState = resolveRotationAnalysisPanelState({
+    castEventsError,
+    castEventsStatus,
+    hasData: rotationResult.rotationAnalyses.length > 0,
+    resourceEventsError: resourceEventsEntry?.error ?? null,
+    resourceEventsStatus: resourceEventsEntry?.status ?? 'idle',
+  });
+  const panelState: AnalyzerPanelStateKind =
+    sourcePanelState === 'ready' || sourcePanelState === 'empty'
+      ? rotationResult.state === 'invalid'
+        ? 'failed'
+        : rotationResult.state === 'unavailable'
+          ? 'empty'
+          : rotationResult.state === 'partial'
+            ? 'partial'
+            : sourcePanelState
+      : sourcePanelState;
+  const sourceError = castEventsError ?? resourceEventsEntry?.error ?? undefined;
+  const detail = sourceError ?? (panelState === 'ready' ? undefined : rotationResult.message);
+
+  return (
+    <AnalyzerPanelState title="Rotation analysis" state={panelState} detail={detail}>
+      {rotationResult.rotationAnalyses.length > 0 && (
+        <RotationAnalysisPanelView
+          rotationAnalyses={rotationResult.rotationAnalyses}
+          dataState={rotationResult.state}
+          dataMessage={rotationResult.message}
+          fight={fight}
+        />
+      )}
+    </AnalyzerPanelState>
+  );
 };
