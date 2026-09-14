@@ -44,6 +44,16 @@ jobs:
         run: |
           npm ci --ignore-scripts --no-audit --no-fund
           npm run build
+        # The edge router serves this bundle directly, so it must receive the
+        # same production Vite inputs as the GitHub Pages deployment.
+        env:
+          NODE_ENV: production
+          VITE_BASE_URL: '/'
+          VITE_RELEASE_VERSION: ${{ github.sha }}
+          VITE_GA_MEASUREMENT_ID: ${{ secrets.VITE_GA_MEASUREMENT_ID }}
+          VITE_DISCORD_CLIENT_ID: ${{ vars.VITE_DISCORD_CLIENT_ID }}
+          VITE_ROSTER_HUB_API_URL: 'https://roster-hub-api.eso-toolkit.workers.dev'
+          VITE_HIRES_MAP_BASE: 'https://pub-87ec3d93bfd4456faec17c57e05093d9.r2.dev'
 
       - name: Setup Node.js for worker dependencies
         if: inputs.worker != 'edge-router'

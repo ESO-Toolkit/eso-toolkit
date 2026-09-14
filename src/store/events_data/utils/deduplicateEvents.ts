@@ -53,12 +53,46 @@ export function assertCompleteEventPage<TPage extends { data?: unknown }>(
 export const createEventFingerprint = (event: object): string => stableSerialize(event);
 
 export interface EventPageDeduplicationState {
+  previousBoundaryTimestamp: number | null;
   previousPageFingerprints: string[];
 }
 
 export const createEventPageDeduplicationState = (): EventPageDeduplicationState => ({
+  previousBoundaryTimestamp: null,
   previousPageFingerprints: [],
 });
+
+const finiteTimestamp = (event: object): number | null => {
+  const timestamp = (event as { timestamp?: unknown }).timestamp;
+  return typeof timestamp === 'number' && Number.isFinite(timestamp) ? timestamp : null;
+};
+
+const updateBoundaryState = <TEvent extends object>(
+  currentPage: readonly TEvent[],
+  state: EventPageDeduplicationState,
+): void => {
+  if (currentPage.length === 0) return;
+
+  const boundaryTimestamp = finiteTimestamp(currentPage[currentPage.length - 1]);
+  if (boundaryTimestamp === null) {
+    // Keep the generic helper correct for non-ESO event shapes, where a
+    // timestamp boundary cannot be used to narrow the comparison.
+    state.previousBoundaryTimestamp = null;
+    state.previousPageFingerprints = currentPage.map(createEventFingerprint);
+    return;
+  }
+
+  let boundaryStart = currentPage.length - 1;
+  while (
+    boundaryStart > 0 &&
+    finiteTimestamp(currentPage[boundaryStart - 1]) === boundaryTimestamp
+  ) {
+    boundaryStart -= 1;
+  }
+
+  state.previousBoundaryTimestamp = boundaryTimestamp;
+  state.previousPageFingerprints = currentPage.slice(boundaryStart).map(createEventFingerprint);
+};
 
 /**
  * Appends only the portion of a page that is new relative to the immediately
@@ -70,8 +104,32 @@ export const appendDeduplicatedEventPage = <TEvent extends object>(
   currentPage: readonly TEvent[],
   state: EventPageDeduplicationState,
 ): void => {
-  const currentPageFingerprints = currentPage.map(createEventFingerprint);
-  const maximumOverlap = Math.min(state.previousPageFingerprints.length, currentPage.length);
+  const firstTimestamp = currentPage.length > 0 ? finiteTimestamp(currentPage[0]) : null;
+  let comparablePrefixLength = currentPage.length;
+  if (state.previousBoundaryTimestamp !== null && firstTimestamp !== null) {
+    if (firstTimestamp !== state.previousBoundaryTimestamp) {
+      comparablePrefixLength = 0;
+    } else {
+      comparablePrefixLength = 1;
+      while (
+        comparablePrefixLength < currentPage.length &&
+        finiteTimestamp(currentPage[comparablePrefixLength]) === state.previousBoundaryTimestamp
+      ) {
+        comparablePrefixLength += 1;
+      }
+    }
+  }
+
+  // Pagination replay can only occur at the timestamp cursor. Fingerprinting
+  // that boundary instead of every event avoids repeatedly serializing large
+  // page payloads on the main thread while retaining conservative identity.
+  const currentPrefixFingerprints = currentPage
+    .slice(0, comparablePrefixLength)
+    .map(createEventFingerprint);
+  const maximumOverlap = Math.min(
+    state.previousPageFingerprints.length,
+    currentPrefixFingerprints.length,
+  );
   let overlapLength = 0;
 
   for (let candidateLength = maximumOverlap; candidateLength > 0; candidateLength -= 1) {
@@ -79,7 +137,7 @@ export const appendDeduplicatedEventPage = <TEvent extends object>(
     let matches = true;
     for (let index = 0; index < candidateLength; index += 1) {
       if (
-        state.previousPageFingerprints[previousOffset + index] !== currentPageFingerprints[index]
+        state.previousPageFingerprints[previousOffset + index] !== currentPrefixFingerprints[index]
       ) {
         matches = false;
         break;
@@ -94,9 +152,7 @@ export const appendDeduplicatedEventPage = <TEvent extends object>(
   for (let index = overlapLength; index < currentPage.length; index += 1) {
     destination.push(currentPage[index]);
   }
-  if (currentPageFingerprints.length > 0) {
-    state.previousPageFingerprints = currentPageFingerprints;
-  }
+  updateBoundaryState(currentPage, state);
 };
 
 /**

@@ -21,6 +21,22 @@ export function hasNoResolvedTargets(targetIds: ReadonlySet<number>): boolean {
   return targetIds.has(NO_TARGETS_SENTINEL);
 }
 
+function normalizeSelectedTargetIds(selectedTargetIds: readonly number[]): Set<number> {
+  const hasConcreteTarget = selectedTargetIds.some(
+    (id) =>
+      id !== ALL_TARGETS_SENTINEL && id !== ALL_ENEMIES_SENTINEL && id !== NO_TARGETS_SENTINEL,
+  );
+
+  return new Set(
+    selectedTargetIds.filter(
+      (id) =>
+        id !== ALL_TARGETS_SENTINEL &&
+        id !== ALL_ENEMIES_SENTINEL &&
+        (!hasConcreteTarget || id !== NO_TARGETS_SENTINEL),
+    ),
+  );
+}
+
 interface UseSelectedTargetIdsOptions {
   context?: ReportFightContextInput;
 }
@@ -37,10 +53,7 @@ export function useSelectedTargetIds(options?: UseSelectedTargetIdsOptions): Set
   );
 
   const selectedTargetsSet = React.useMemo(() => {
-    const filteredIds = selectedTargetIds.filter(
-      (id: number) => id !== ALL_TARGETS_SENTINEL && id !== ALL_ENEMIES_SENTINEL,
-    );
-    return new Set<number>(filteredIds);
+    return normalizeSelectedTargetIds(selectedTargetIds);
   }, [selectedTargetIds]);
 
   const hasAllTargetsSelected = React.useMemo(() => {

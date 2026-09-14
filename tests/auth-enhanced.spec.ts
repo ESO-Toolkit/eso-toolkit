@@ -148,9 +148,7 @@ test.describe('tab-scoped OAuth credentials', () => {
       });
   });
 
-  test('rejects a mismatched OAuth callback state before token exchange', async ({
-    page,
-  }) => {
+  test('rejects a mismatched OAuth callback state before token exchange', async ({ page }) => {
     let tokenRequests = 0;
     await page.route('**://www.esologs.com/oauth/token', async (route) => {
       tokenRequests += 1;
@@ -167,9 +165,7 @@ test.describe('tab-scoped OAuth credentials', () => {
       },
       { oauthStateKey: OAUTH_STATE_KEY, pkceVerifierKey: PKCE_VERIFIER_KEY },
     );
-    const oauthStateError = page
-      .getByRole('alert')
-      .filter({ hasText: 'OAuth state mismatch' });
+    const oauthStateError = page.getByRole('alert').filter({ hasText: 'OAuth state mismatch' });
 
     await page.goto('/oauth-redirect?code=forged-code&state=mismatched-state');
 
@@ -195,15 +191,10 @@ test.describe('tab-scoped OAuth credentials', () => {
         status: 200,
       });
     });
-    const oauthStateError = page
-      .getByRole('alert')
-      .filter({ hasText: 'OAuth state mismatch' });
-    await page.addInitScript(
-      (pkceVerifierKey) => {
-        window.sessionStorage.setItem(pkceVerifierKey, 'replayed-pkce-verifier');
-      },
-      PKCE_VERIFIER_KEY,
-    );
+    const oauthStateError = page.getByRole('alert').filter({ hasText: 'OAuth state mismatch' });
+    await page.addInitScript((pkceVerifierKey) => {
+      window.sessionStorage.setItem(pkceVerifierKey, 'replayed-pkce-verifier');
+    }, PKCE_VERIFIER_KEY);
 
     await page.goto('/oauth-redirect?code=replayed-code&state=replayed-state');
 
@@ -217,6 +208,56 @@ test.describe('tab-scoped OAuth credentials', () => {
         ),
       )
       .toBeNull();
+  });
+
+  test('renders malicious provider errors as inert text', async ({ page }) => {
+    const maliciousError = '<img src=x onerror="window.__oauthInjected=true">provider-denied';
+
+    await page.goto(`/oauth-redirect?error=${encodeURIComponent(maliciousError)}`);
+
+    const oauthErrorAlert = page.getByRole('alert').filter({ hasText: 'OAuth error:' });
+    await expect(oauthErrorAlert).toHaveText(`OAuth error: ${maliciousError}`);
+    await expect(oauthErrorAlert.locator('img, script')).toHaveCount(0);
+  });
+
+  test('redirects unauthenticated protected routes and preserves the intended destination', async ({
+    page,
+  }) => {
+    const protectedDestination = '/whoami?source=auth-contract#account';
+
+    await page.goto(protectedDestination);
+
+    await expect(page).toHaveURL(/\/login$/);
+    await expect(page.getByTestId('login-title')).toHaveText('ESO Toolkit');
+    await expect(page.getByRole('button', { name: 'Connect to ESO Logs' })).toBeVisible();
+    await expect
+      .poll(() =>
+        page.evaluate(
+          (intendedDestinationKey) => window.localStorage.getItem(intendedDestinationKey),
+          'eso_intended_destination',
+        ),
+      )
+      .toBe(protectedDestination);
+  });
+
+  test('fails closed on a protected route when token renewal is rejected', async ({ page }) => {
+    let renewalRequests = 0;
+    await page.route('**://www.esologs.com/oauth/token', async (route) => {
+      renewalRequests += 1;
+      await route.fulfill({
+        body: JSON.stringify({ error: 'invalid_grant' }),
+        contentType: 'application/json',
+        status: 401,
+      });
+    });
+    await installSessionCredentials(page, createToken(30 * 1000), 'protected-route-refresh-token');
+
+    await page.goto('/whoami');
+
+    await expect.poll(() => renewalRequests).toBeGreaterThan(0);
+    await expect(page).toHaveURL(/\/login$/);
+    await expect(page.getByTestId('login-title')).toHaveText('ESO Toolkit');
+    await expectCredentialsCleared(page);
   });
 
   test('removes legacy localStorage credentials instead of reviving or migrating them', async ({

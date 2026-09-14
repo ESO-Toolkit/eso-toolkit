@@ -168,7 +168,9 @@ export class EsoLogsClient {
                 // Refresh failed, clear tokens and notify user
                 logger.error('Token refresh failed - user needs to re-authenticate');
                 clearStoredTokens();
-                observer.error(new Error('Authentication failed. Please log in again.'));
+                observer.error(
+                  new Error('Your ESO Logs session has expired. Please log in again.'),
+                );
               }
             })
             .catch((err) => {
@@ -281,21 +283,18 @@ export class EsoLogsClient {
       throw toRequestFailure(networkError);
     }
 
-    // Check for GraphQL errors and reject if they exist
+    // This wrapper returns data rather than Apollo's full QueryResult, so it
+    // cannot expose field errors alongside partial data without allowing the
+    // caller to mistake a truncated response for a complete one. Reject every
+    // errored response and preserve the partial classification for recovery UI.
     if (result.error) {
       const operationAST = getOperationAST(options.query);
       const operationName = operationAST?.name?.value;
       const hasData = typeof result.data !== 'undefined' && result.data !== null;
-      const errorPolicy = options.errorPolicy ?? 'none';
-
-      if (errorPolicy === 'all' && hasData) {
-        throw toRequestFailure(result.error, { partial: true });
-      } else {
-        logger.error('GraphQL query error', result.error, {
-          query: operationName,
-        });
-        throw toRequestFailure(result.error);
-      }
+      logger.error('GraphQL query error', result.error, {
+        query: operationName,
+      });
+      throw toRequestFailure(result.error, hasData ? { partial: true } : undefined);
     }
 
     return result.data as TData;

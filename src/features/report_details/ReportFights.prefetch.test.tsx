@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 import '@testing-library/jest-dom';
 
@@ -68,6 +68,10 @@ describe('ReportFights prefetch wiring', () => {
     } as ReturnType<typeof useReportData>);
   });
 
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   afterAll(() => {
     if (originalConnection) {
       Object.defineProperty(navigator, 'connection', originalConnection);
@@ -126,5 +130,34 @@ describe('ReportFights prefetch wiring', () => {
 
     fireEvent.pointerEnter(screen.getByRole('button', { name: 'Target fight' }));
     expect(mockPreloadReportFightDetails).toHaveBeenCalledTimes(1);
+  });
+
+  it('warms fight details during idle time on a capable connection', () => {
+    jest.useFakeTimers();
+    setConnection({ effectiveType: '4g' });
+    render(<ReportFights />);
+
+    expect(mockPreloadReportFightDetails).not.toHaveBeenCalled();
+
+    act(() => {
+      jest.advanceTimersByTime(200);
+    });
+
+    expect(mockPreloadReportFightDetails).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([
+    ['Save-Data', { saveData: true }],
+    ['3g', { effectiveType: '3g' }],
+  ])('suppresses idle fight-detail warming when %s is active', (_label, connection) => {
+    jest.useFakeTimers();
+    setConnection(connection);
+    render(<ReportFights />);
+
+    act(() => {
+      jest.advanceTimersByTime(2500);
+    });
+
+    expect(mockPreloadReportFightDetails).not.toHaveBeenCalled();
   });
 });

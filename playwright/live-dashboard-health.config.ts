@@ -1,3 +1,4 @@
+/* eslint-disable import/no-default-export -- Playwright requires a default config export. */
 import { defineConfig, devices } from '@playwright/test';
 
 const requestedBaseUrl = process.env.LIVE_HEALTH_BASE_URL ?? process.env.FULL_BASE_URL;
@@ -16,6 +17,7 @@ export default defineConfig({
   expect: { timeout: 15_000 },
   reporter: [
     ['line'],
+    ['html', { outputFolder: '../playwright-report/live-dashboard-health', open: 'never' }],
     ['json', { outputFile: '../playwright-report-live-dashboard-health/results.json' }],
   ],
   use: {

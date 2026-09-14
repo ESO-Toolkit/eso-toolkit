@@ -236,7 +236,9 @@ export const LeaderboardLogsPage: React.FC = () => {
           query: GetEncounterFightRankingsDocument,
           variables,
           fetchPolicy: 'network-only',
-          errorPolicy: 'all',
+          // Rankings drive an Analyzer result; do not render a partial table
+          // as though it were a complete leaderboard.
+          errorPolicy: 'none',
         });
         return parseFightRankings(data, variables.page ?? 1, LEADERBOARD_PAGE_SIZE);
       };

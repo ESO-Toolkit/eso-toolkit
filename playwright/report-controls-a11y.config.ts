@@ -19,7 +19,12 @@ export default defineConfig({
   expect: {
     timeout: 15000,
   },
-  reporter: process.env.CI ? [['html'], ['github']] : 'html',
+  reporter: process.env.CI
+    ? [
+        ['html', { outputFolder: '../playwright-report/report-controls-a11y', open: 'never' }],
+        ['github'],
+      ]
+    : 'html',
   use: {
     baseURL: baseUrl,
     trace: 'retain-on-failure',

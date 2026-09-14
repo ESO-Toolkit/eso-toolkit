@@ -15,6 +15,7 @@ jest.mock('../../../hooks', () => ({
 }));
 
 jest.mock('../../../hooks/useSelectedTargetIds', () => ({
+  hasNoResolvedTargets: jest.fn(),
   useSelectedTargetIds: jest.fn(),
 }));
 
@@ -23,7 +24,9 @@ jest.mock('./DamageTypeBreakdownView', () => ({
 }));
 
 const { useDamageEvents, useReportMasterData } = jest.requireMock('../../../hooks');
-const { useSelectedTargetIds } = jest.requireMock('../../../hooks/useSelectedTargetIds');
+const { hasNoResolvedTargets, useSelectedTargetIds } = jest.requireMock(
+  '../../../hooks/useSelectedTargetIds',
+);
 
 interface RenderedDamageTypeBreakdown {
   displayName: string;
@@ -42,6 +45,12 @@ const getMagicBreakdown = (): RenderedDamageTypeBreakdown | undefined => {
   return breakdown.find((item) => item.displayName === 'Magic');
 };
 
+const getRenderedTotalDamage = (): number => {
+  const latestCall = mockDamageTypeBreakdownView.mock.calls.at(-1);
+  const props = latestCall?.[0] as { totalDamage: number } | undefined;
+  return props?.totalDamage ?? 0;
+};
+
 const setup = (damageEvents: ReturnType<typeof createMockDamageEvent>[]): void => {
   useDamageEvents.mockReturnValue({ damageEvents, isDamageEventsLoading: false });
   useReportMasterData.mockReturnValue({
@@ -53,6 +62,7 @@ const setup = (damageEvents: ReturnType<typeof createMockDamageEvent>[]): void =
     isMasterDataLoading: false,
   });
   useSelectedTargetIds.mockReturnValue(new Set());
+  hasNoResolvedTargets.mockReturnValue(false);
 };
 
 describe('DamageTypeBreakdownPanel critical metrics', () => {
@@ -110,5 +120,17 @@ describe('DamageTypeBreakdownPanel critical metrics', () => {
         criticalDamageShare: null,
       }),
     );
+  });
+
+  it('does not produce damage-type metrics when the resolved target scope has no targets', () => {
+    setup([createMockDamageEvent({ abilityGameID: 100, amount: 500, hitType: HitType.Normal })]);
+    const noTargets = new Set([-3]);
+    useSelectedTargetIds.mockReturnValue(noTargets);
+    hasNoResolvedTargets.mockImplementation((targetIds: ReadonlySet<number>) => targetIds.has(-3));
+
+    render(<DamageTypeBreakdownPanel fight={createMockFight()} />);
+
+    expect(getMagicBreakdown()).toBeUndefined();
+    expect(getRenderedTotalDamage()).toBe(0);
   });
 });

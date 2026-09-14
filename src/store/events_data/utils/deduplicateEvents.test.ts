@@ -106,6 +106,19 @@ describe('deduplicateEvents', () => {
     expect(deduplicateEventPages([[boundary], [], [boundary, next]])).toEqual([boundary, next]);
   });
 
+  it('limits boundary comparison to the shared cursor timestamp on large pages', () => {
+    const firstPage = Array.from({ length: 10_000 }, (_, index) =>
+      damageEvent({ timestamp: index, amount: index }),
+    );
+    const boundary = firstPage[firstPage.length - 1];
+    const next = damageEvent({ timestamp: 10_000, amount: 10_000 });
+
+    expect(deduplicateEventPages([firstPage, [{ ...boundary }, next]])).toEqual([
+      ...firstPage,
+      next,
+    ]);
+  });
+
   it.each([
     ['amount', { amount: 501 }],
     ['target', { targetID: 9 }],

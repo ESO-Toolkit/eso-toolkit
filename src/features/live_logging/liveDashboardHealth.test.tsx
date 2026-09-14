@@ -5,7 +5,7 @@ import {
   LIVE_NEW_PULL_NOTICE_MS,
   LIVE_SYNC_FRESH_MS,
   LIVE_SYNC_RETRY_BASE_MS,
-  LIVE_SYNC_RETRY_MAX_ATTEMPTS,
+  LIVE_SYNC_RETRY_MAX_MS,
   LIVE_SYNC_STALE_MS,
   getNewestReportActivityAt,
   useLiveDashboardHealth,
@@ -174,27 +174,27 @@ describe('useLiveDashboardHealth', () => {
     );
   });
 
-  it('limits automatic retry attempts until a successful recovery resets the budget', () => {
+  it('keeps retrying at the bounded maximum delay until a successful recovery', () => {
     const onRetry = jest.fn();
     const view = render(<HealthHarness apiError="Gateway failed" onRetry={onRetry} />);
 
-    for (let retry = 1; retry <= LIVE_SYNC_RETRY_MAX_ATTEMPTS; retry += 1) {
-      const delay = LIVE_SYNC_RETRY_BASE_MS * 2 ** (retry - 1);
+    for (let retry = 1; retry <= 6; retry += 1) {
+      const delay = Math.min(LIVE_SYNC_RETRY_BASE_MS * 2 ** (retry - 1), LIVE_SYNC_RETRY_MAX_MS);
       act(() => jest.advanceTimersByTime(delay));
       view.rerender(<HealthHarness apiError="Gateway failed" isLoading onRetry={onRetry} />);
       view.rerender(<HealthHarness apiError="Gateway failed" onRetry={onRetry} />);
     }
 
-    expect(onRetry).toHaveBeenCalledTimes(LIVE_SYNC_RETRY_MAX_ATTEMPTS);
+    expect(onRetry).toHaveBeenCalledTimes(6);
     expect(screen.getByLabelText('Live synchronization status')).toHaveTextContent(
-      new RegExp(`\\|null\\|${LIVE_SYNC_RETRY_MAX_ATTEMPTS}\\|`),
+      new RegExp(`\\|${start + 255_000}\\|6\\|`),
     );
 
     view.rerender(<HealthHarness isLoading onRetry={onRetry} />);
     view.rerender(<HealthHarness onRetry={onRetry} />);
     view.rerender(<HealthHarness apiError="Gateway failed" onRetry={onRetry} />);
     expect(screen.getByLabelText('Live synchronization status')).toHaveTextContent(
-      new RegExp(`\\|${start + 155_000}\\|null\\|${start + 160_000}\\|0\\|`),
+      new RegExp(`\\|${start + 195_000}\\|null\\|${start + 200_000}\\|0\\|`),
     );
   });
 
@@ -213,6 +213,30 @@ describe('useLiveDashboardHealth', () => {
     expect(onRetry).not.toHaveBeenCalled();
 
     Object.defineProperty(document, 'hidden', { configurable: true, value: false });
+  });
+
+  it('stops the one-second freshness tick while hidden and catches up when visible', () => {
+    const onRetry = jest.fn();
+    render(
+      <HealthHarness
+        lastSuccessfulSyncAt={start}
+        newestActivityAt={start - 1_000}
+        onRetry={onRetry}
+      />,
+    );
+
+    Object.defineProperty(document, 'hidden', { configurable: true, value: true });
+    act(() => document.dispatchEvent(new Event('visibilitychange')));
+    act(() => jest.advanceTimersByTime(LIVE_SYNC_STALE_MS + 1_000));
+    expect(screen.getByLabelText('Live synchronization status')).toHaveTextContent(
+      /^fresh\|.*\|1000\|/,
+    );
+
+    Object.defineProperty(document, 'hidden', { configurable: true, value: false });
+    act(() => document.dispatchEvent(new Event('visibilitychange')));
+    expect(screen.getByLabelText('Live synchronization status')).toHaveTextContent(
+      new RegExp(`^stale\\|${start}\\|${LIVE_SYNC_STALE_MS + 2_000}\\|`),
+    );
   });
 
   it('keeps the committed scope retry alive when a replacement render is abandoned', () => {

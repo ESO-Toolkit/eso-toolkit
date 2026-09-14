@@ -7,6 +7,7 @@ import {
   useFightForContext,
 } from '../../../hooks';
 import type { PhaseTransitionInfo } from '../../../hooks/usePhaseTransitions';
+import { hasNoResolvedTargets } from '../../../hooks/useSelectedTargetIds';
 import { usePenetrationDataTask } from '../../../hooks/workerTasks/usePenetrationDataTask';
 import type { ReportFightContextInput } from '../../../store/contextTypes';
 import { PlayerPenetrationData } from '../../../workers/calculations/CalculatePenetration';
@@ -30,7 +31,8 @@ export const PenetrationPanel: React.FC<PenetrationPanelProps> = ({
   const fight = useFightForContext(resolvedContext);
   // Use hooks to get data
   const { playerData, isPlayerDataLoading } = usePlayerData({ context: resolvedContext });
-  const selectedTargetIds = useSelectedTargetIds();
+  const selectedTargetIds = useSelectedTargetIds({ context: resolvedContext });
+  const noResolvedTargets = hasNoResolvedTargets(selectedTargetIds);
 
   // Use the worker-based penetration calculation
   const {
@@ -43,9 +45,14 @@ export const PenetrationPanel: React.FC<PenetrationPanelProps> = ({
 
   const penetrationData = allPlayersPenetrationData as Record<string, PlayerPenetrationData> | null;
   const hasPenetrationResults = penetrationData != null && Object.keys(penetrationData).length > 0;
-  const hasViewData = Boolean(hasPenetrationResults && playerData?.playersById && fight);
+  const hasViewData = Boolean(
+    (hasPenetrationResults || noResolvedTargets) && playerData?.playersById && fight,
+  );
   const hasCompleteInputs = Boolean(
-    fight && playerData?.playersById && playerData.status === 'succeeded' && penetrationData,
+    fight &&
+    playerData?.playersById &&
+    playerData.status === 'succeeded' &&
+    (penetrationData || noResolvedTargets),
   );
 
   // State to manage which accordion panels are expanded

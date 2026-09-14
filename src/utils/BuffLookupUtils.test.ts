@@ -48,10 +48,11 @@ describe('BuffLookupUtils', () => {
     timestamp: number,
     abilityGameID: number,
     targetID: number,
+    sourceID = 1,
   ): DebuffEvent => ({
     timestamp,
     type: 'applydebuff',
-    sourceID: 1,
+    sourceID,
     sourceIsFriendly: false,
     targetID,
     targetIsFriendly: false,
@@ -64,10 +65,11 @@ describe('BuffLookupUtils', () => {
     timestamp: number,
     abilityGameID: number,
     targetID: number,
+    sourceID = 1,
   ): DebuffEvent => ({
     timestamp,
     type: 'removedebuff',
-    sourceID: 1,
+    sourceID,
     sourceIsFriendly: false,
     targetID,
     targetIsFriendly: false,
@@ -153,6 +155,25 @@ describe('BuffLookupUtils', () => {
       expect(isBuffActiveOnTarget(lookup, 12345, 3000, 7)).toBe(true);
     });
 
+    it('closes every matching source lifecycle when an expiry has sourceID zero', () => {
+      const lookup = createBuffLookup(
+        [
+          createApplyBuffEvent(0, 12345, 7, 0),
+          createApplyBuffEvent(0, 12345, 7, 1),
+          createApplyBuffEvent(500, 12345, 7, 2),
+          createRemoveBuffEvent(1000, 12345, 7, 0),
+        ],
+        5000,
+      );
+
+      expect(lookup.buffIntervals['12345']).toEqual([
+        { start: 0, end: 1000, sourceID: 0, targetID: 7 },
+        { start: 0, end: 1000, sourceID: 1, targetID: 7 },
+        { start: 500, end: 1000, sourceID: 2, targetID: 7 },
+      ]);
+      expect(isBuffActiveOnTarget(lookup, 12345, 1000, 7)).toBe(false);
+    });
+
     it('uses half-open intervals at timestamp zero and preserves same-millisecond lifecycle order', () => {
       const lookup = createBuffLookup([
         createApplyBuffEvent(0, 12345, 1),
@@ -229,6 +250,17 @@ describe('BuffLookupUtils', () => {
 
       expect(isBuffActiveOnTarget(lookup, 12345, 0, 1)).toBe(true);
       expect(isBuffActiveOnTarget(lookup, 12345, 1000, 1)).toBe(false);
+    });
+
+    it('uses a source-less expiry to close matching debuff lifecycles', () => {
+      const lookup = createDebuffLookup(
+        [createApplyDebuffEvent(0, 12345, 7, 11), createRemoveDebuffEvent(1000, 12345, 7, 0)],
+        5000,
+      );
+
+      expect(lookup.buffIntervals['12345']).toEqual([
+        { start: 0, end: 1000, sourceID: 11, targetID: 7 },
+      ]);
     });
   });
 

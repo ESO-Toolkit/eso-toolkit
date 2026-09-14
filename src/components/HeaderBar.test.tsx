@@ -102,6 +102,10 @@ describe('HeaderBar', () => {
     } as ReturnType<typeof useAuth>);
   });
 
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   afterAll(() => {
     if (originalConnection) {
       Object.defineProperty(navigator, 'connection', originalConnection);
@@ -163,6 +167,36 @@ describe('HeaderBar', () => {
     renderHeader();
 
     fireEvent.touchStart(screen.getAllByRole('button', { name: /roster hub/i })[0]);
+
+    expect(mockPreloadHubRoutes).not.toHaveBeenCalled();
+  });
+
+  it('warms all hub routes during idle time on a capable connection', () => {
+    jest.useFakeTimers();
+    setConnection({ effectiveType: '4g' });
+    renderHeader();
+
+    expect(mockPreloadHubRoutes).not.toHaveBeenCalled();
+
+    act(() => {
+      jest.advanceTimersByTime(200);
+    });
+
+    expect(mockPreloadHubRoutes).toHaveBeenCalledTimes(1);
+    expect(mockPreloadHubRoutes).toHaveBeenCalledWith();
+  });
+
+  it.each([
+    ['Save-Data', { saveData: true }],
+    ['3g', { effectiveType: '3g' }],
+  ])('suppresses idle hub warming when %s is active', (_label, connection) => {
+    jest.useFakeTimers();
+    setConnection(connection);
+    renderHeader();
+
+    act(() => {
+      jest.advanceTimersByTime(2500);
+    });
 
     expect(mockPreloadHubRoutes).not.toHaveBeenCalled();
   });

@@ -344,11 +344,12 @@ describe('EsoLogsClient', () => {
       await expect(request).rejects.toMatchObject({ kind });
     });
 
-    it('rejects partial GraphQL data so consumers cannot render it as complete', async () => {
+    it('rejects partial GraphQL data even when Apollo errorPolicy is all', async () => {
       const client = new EsoLogsClient(mockAccessToken, mockProxyUrl);
       const apolloClient = client.getClient();
+      const partialData = { report: { code: 'partial' } };
       apolloClient.query = jest.fn().mockResolvedValue({
-        data: { report: { code: 'partial' } },
+        data: partialData,
         error: { errors: [{ message: 'Event stream timed out' }] },
       });
 
@@ -358,6 +359,72 @@ describe('EsoLogsClient', () => {
           errorPolicy: 'all',
         }),
       ).rejects.toMatchObject({ kind: 'partial', retryable: true });
+    });
+
+    it('rejects partial GraphQL data when the caller has not opted in', async () => {
+      const client = new EsoLogsClient(mockAccessToken, mockProxyUrl);
+      const apolloClient = client.getClient();
+      apolloClient.query = jest.fn().mockResolvedValue({
+        data: { report: { code: 'partial' } },
+        error: { errors: [{ message: 'Event stream timed out' }] },
+      });
+
+      await expect(
+        client.query({ query: parse('query Report { report { code } }') }),
+      ).rejects.toMatchObject({ kind: 'partial', retryable: true });
+    });
+
+    it('still rejects authentication failures even when Apollo returns partial data', async () => {
+      const client = new EsoLogsClient(mockAccessToken, mockProxyUrl);
+      const apolloClient = client.getClient();
+      apolloClient.query = jest.fn().mockResolvedValue({
+        data: { report: { code: 'partial' } },
+        error: {
+          errors: [{ message: 'Token expired', extensions: { code: 'UNAUTHENTICATED' } }],
+        },
+      });
+
+      await expect(
+        client.query({
+          query: parse('query Report { report { code } }'),
+          errorPolicy: 'all',
+        }),
+      ).rejects.toMatchObject({ kind: 'authentication', retryable: false });
+    });
+
+    it('still rejects forbidden failures even when Apollo returns partial data', async () => {
+      const client = new EsoLogsClient(mockAccessToken, mockProxyUrl);
+      const apolloClient = client.getClient();
+      apolloClient.query = jest.fn().mockResolvedValue({
+        data: { report: { code: 'partial' } },
+        error: {
+          statusCode: 403,
+          message: 'This report is private',
+        },
+      });
+
+      await expect(
+        client.query({
+          query: parse('query Report { report { code } }'),
+          errorPolicy: 'all',
+        }),
+      ).rejects.toMatchObject({ kind: 'forbidden', retryable: false });
+    });
+
+    it('still rejects a full GraphQL failure when errorPolicy all returns no data', async () => {
+      const client = new EsoLogsClient(mockAccessToken, mockProxyUrl);
+      const apolloClient = client.getClient();
+      apolloClient.query = jest.fn().mockResolvedValue({
+        data: undefined,
+        error: { errors: [{ message: 'Event stream timed out' }] },
+      });
+
+      await expect(
+        client.query({
+          query: parse('query Report { report { code } }'),
+          errorPolicy: 'all',
+        }),
+      ).rejects.toMatchObject({ kind: 'graphql', retryable: false });
     });
   });
 });

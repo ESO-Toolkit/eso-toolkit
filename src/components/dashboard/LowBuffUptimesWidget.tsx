@@ -6,6 +6,7 @@ import { FightFragment } from '../../graphql/gql/graphql';
 import { usePlayerData } from '../../hooks/usePlayerData';
 import { useBuffLookupTask } from '../../hooks/workerTasks/useBuffLookupTask';
 import { WidgetScope } from '../../store/dashboard/dashboardSlice';
+import { BuffTimeInterval } from '../../utils/BuffLookupUtils';
 
 import { BaseWidget, WidgetPlayerAvatar } from './BaseWidget';
 
@@ -29,6 +30,54 @@ interface LowUptimeInfo {
   buffName: string;
   uptime: number;
   expected: number;
+}
+
+/**
+ * Returns the covered duration after clipping intervals to one fight and
+ * merging any overlap. Several sources can maintain the same buff on one
+ * player simultaneously, but that player can only be covered once at a time.
+ */
+export function getClippedUnionDuration(
+  intervals: readonly BuffTimeInterval[],
+  fightStartTime: number,
+  fightEndTime: number,
+): number {
+  if (
+    !Number.isFinite(fightStartTime) ||
+    !Number.isFinite(fightEndTime) ||
+    fightEndTime <= fightStartTime
+  ) {
+    return 0;
+  }
+
+  const clippedIntervals = intervals
+    .map((interval) => ({
+      start: Math.max(interval.start, fightStartTime),
+      end: Math.min(interval.end, fightEndTime),
+    }))
+    .filter((interval) => interval.end > interval.start)
+    .sort((first, second) => first.start - second.start || first.end - second.end);
+
+  if (clippedIntervals.length === 0) {
+    return 0;
+  }
+
+  let coveredDuration = 0;
+  let currentStart = clippedIntervals[0].start;
+  let currentEnd = clippedIntervals[0].end;
+
+  for (const interval of clippedIntervals.slice(1)) {
+    if (interval.start > currentEnd) {
+      coveredDuration += currentEnd - currentStart;
+      currentStart = interval.start;
+      currentEnd = interval.end;
+    } else {
+      currentEnd = Math.max(currentEnd, interval.end);
+    }
+  }
+
+  coveredDuration += currentEnd - currentStart;
+  return Math.min(coveredDuration, fightEndTime - fightStartTime);
 }
 
 export const LowBuffUptimesWidget: React.FC<LowBuffUptimesWidgetProps> = ({
@@ -113,7 +162,8 @@ export const LowBuffUptimesWidget: React.FC<LowBuffUptimesWidgetProps> = ({
     relevantFights.forEach(({ fight, buffs }) => {
       if (!fight || !buffs) return;
 
-      const fightDuration = (fight.endTime ?? fight.startTime) - fight.startTime;
+      const fightEndTime = fight.endTime ?? fight.startTime;
+      const fightDuration = fightEndTime - fight.startTime;
       if (fightDuration <= 0) return;
 
       Object.values(playerData.playersById).forEach((player) => {
@@ -123,12 +173,11 @@ export const LowBuffUptimesWidget: React.FC<LowBuffUptimesWidgetProps> = ({
           const intervals = buffs.buffIntervals[buff.id.toString()] || [];
           const playerIntervals = intervals.filter((interval) => interval.targetID === player.id);
 
-          let fightUptime = 0;
-          playerIntervals.forEach((interval) => {
-            const start = Math.max(interval.start, fight.startTime);
-            const end = Math.min(interval.end, fight.endTime ?? fight.startTime);
-            fightUptime += Math.max(0, end - start);
-          });
+          const fightUptime = getClippedUnionDuration(
+            playerIntervals,
+            fight.startTime,
+            fightEndTime,
+          );
 
           const key = `${player.id}|${buff.id}`;
           const existing = playerBuffUptimes.get(key);
@@ -152,7 +201,7 @@ export const LowBuffUptimesWidget: React.FC<LowBuffUptimesWidgetProps> = ({
     const lowUptimeResults: LowUptimeInfo[] = [];
     playerBuffUptimes.forEach((data) => {
       if (data.totalDuration <= 0) return;
-      const avgUptimePercent = (data.totalUptime / data.totalDuration) * 100;
+      const avgUptimePercent = Math.min(100, (data.totalUptime / data.totalDuration) * 100);
 
       if (avgUptimePercent < data.minUptime) {
         lowUptimeResults.push({

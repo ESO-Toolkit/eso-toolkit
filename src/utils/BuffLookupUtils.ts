@@ -201,10 +201,24 @@ function createLookupFromLifecycleEvents(
       continue;
     }
 
+    // ESO Logs can emit an expiry with sourceID 0 even when applications used
+    // concrete sources. Treat that as source-less before attempting an exact
+    // match so a simultaneous source-0 lifecycle cannot leave the concrete
+    // lifecycles open until fight end.
+    if (event.sourceID === 0) {
+      closeSourceLessEffects(activeEffects, intervalsByAbility, event);
+      continue;
+    }
+
     const activeEffect = activeEffects.get(effectKey);
     if (activeEffect) {
-      activeEffects.delete(effectKey);
-      addInterval(intervalsByAbility, activeEffect, event.timestamp);
+      closeActiveEffect(
+        activeEffects,
+        intervalsByAbility,
+        effectKey,
+        activeEffect,
+        event.timestamp,
+      );
     }
   }
 
@@ -261,4 +275,31 @@ function addInterval(
     sourceID: activeEffect.sourceID,
   });
   intervalsByAbility.set(activeEffect.abilityGameID, intervals);
+}
+
+function closeActiveEffect(
+  activeEffects: Map<string, ActiveEffect>,
+  intervalsByAbility: Map<number, BuffTimeInterval[]>,
+  effectKey: string,
+  activeEffect: ActiveEffect,
+  endTime: number,
+): void {
+  activeEffects.delete(effectKey);
+  addInterval(intervalsByAbility, activeEffect, endTime);
+}
+
+function closeSourceLessEffects(
+  activeEffects: Map<string, ActiveEffect>,
+  intervalsByAbility: Map<number, BuffTimeInterval[]>,
+  event: LifecycleEvent,
+): void {
+  const matchingEffects = Array.from(activeEffects.entries()).filter(
+    ([, activeEffect]) =>
+      activeEffect.abilityGameID === event.abilityGameID &&
+      activeEffect.targetID === event.targetID,
+  );
+
+  matchingEffects.forEach(([effectKey, activeEffect]) => {
+    closeActiveEffect(activeEffects, intervalsByAbility, effectKey, activeEffect, event.timestamp);
+  });
 }

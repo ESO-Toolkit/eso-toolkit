@@ -116,6 +116,34 @@ describe('useLatestReportsQuery', () => {
     expect(result.current.reports.map((r) => r.code)).toEqual(['AAA']);
   });
 
+  it('does not opt into partial GraphQL responses for cache or network reads', async () => {
+    primeClient({ network: [pageResult([makeReport('COMPLETE')])] });
+
+    const { result } = renderHook(() => useLatestReportsQuery(baseInput));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    expect(result.current.reports.map((r) => r.code)).toEqual(['COMPLETE']);
+    expect(mockClient.query.mock.calls.every(([options]) => options.errorPolicy !== 'all')).toBe(
+      true,
+    );
+  });
+
+  it('surfaces a rejected partial response without replacing cached rows', async () => {
+    mockClient.query
+      .mockResolvedValueOnce(pageResult([makeReport('CACHED')]))
+      .mockRejectedValueOnce(new Error('The response contained incomplete data. Please retry.'));
+
+    const { result } = renderHook(() => useLatestReportsQuery(baseInput));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    expect(result.current.reports.map((r) => r.code)).toEqual(['CACHED']);
+    expect(result.current.error).toBe('The response contained incomplete data. Please retry.');
+    expect(mockClient.query).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({ fetchPolicy: 'network-only' }),
+    );
+  });
+
   it('hides empty logs on a mixed page (but reports how many were hidden)', async () => {
     primeClient({
       network: [pageResult([makeReport('REAL'), makeReport('EMPTY', { empty: true })])],

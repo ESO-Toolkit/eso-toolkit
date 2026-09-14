@@ -7,6 +7,7 @@ import { useSelectedReportAndFight } from '../../ReportFightContext';
 import { cleanArray } from '../../utils/cleanArray';
 import { preloadReportFightDetails } from '../../utils/reportRoutePreload';
 import {
+  canPrefetchHeavyRoute,
   shouldPrefetchHeavyRoute,
   type RoutePrefetchIntent,
 } from '../../utils/routePrefetchPolicy';
@@ -29,6 +30,33 @@ export const ReportFights: React.FC = () => {
   // Get current selected report and fight from context
   const { reportId, fightId } = useSelectedReportAndFight();
   const { reportData, isReportLoading, reportError, refetchReport } = useReportData();
+
+  // Every fight in this list links to the lazy fight-details route. Warm its
+  // chunk during idle time when the connection can afford it, preserving the
+  // immediate pointer, focus, and touch intent paths below for fast clicks.
+  React.useEffect(() => {
+    if (!canPrefetchHeavyRoute()) return undefined;
+
+    const warmFightDetails = (): void => {
+      if (canPrefetchHeavyRoute()) preloadReportFightDetails();
+    };
+    const ric = (
+      window as unknown as {
+        requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+        cancelIdleCallback?: (handle: number) => void;
+      }
+    ).requestIdleCallback;
+    if (typeof ric === 'function') {
+      const handle = ric(warmFightDetails, { timeout: 2500 });
+      return () => {
+        (
+          window as unknown as { cancelIdleCallback?: (handle: number) => void }
+        ).cancelIdleCallback?.(handle);
+      };
+    }
+    const timer = window.setTimeout(warmFightDetails, 200);
+    return () => window.clearTimeout(timer);
+  }, []);
 
   const memoizedFights = React.useMemo<FightFragment[]>((): FightFragment[] => {
     return cleanArray(reportData?.fights?.filter(Boolean));

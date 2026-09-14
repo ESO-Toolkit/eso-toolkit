@@ -5,7 +5,6 @@ export const LIVE_SYNC_STALE_MS = 30_000;
 export const LIVE_SYNC_TICK_MS = 1_000;
 export const LIVE_SYNC_RETRY_BASE_MS = 5_000;
 export const LIVE_SYNC_RETRY_MAX_MS = 60_000;
-export const LIVE_SYNC_RETRY_MAX_ATTEMPTS = 5;
 export const LIVE_NEW_PULL_NOTICE_MS = 15_000;
 
 export type LiveDashboardHealthStatus = 'fresh' | 'delayed' | 'stale' | 'offline' | 'api-error';
@@ -159,9 +158,12 @@ export const useLiveDashboardHealth = ({
   }, [apiError, autoRefreshEnabled, isDocumentVisible, isLoading, isOnline, onRetry, scopeKey]);
 
   React.useEffect(() => {
+    if (!isDocumentVisible) return;
+
+    setNow(Date.now());
     const tick = window.setInterval(() => setNow(Date.now()), LIVE_SYNC_TICK_MS);
     return () => window.clearInterval(tick);
-  }, []);
+  }, [isDocumentVisible]);
 
   React.useEffect(() => {
     if (previousScopeKeyRef.current === scopeKey) return;
@@ -288,14 +290,6 @@ export const useLiveDashboardHealth = ({
 
     if (previousErrorRef.current === apiError) return;
     previousErrorRef.current = apiError;
-
-    // A persistent failure must not leave an unbounded background retry loop.
-    // A subsequent successful request resets this budget; otherwise the user can
-    // still choose the explicit manual refresh action.
-    if (retryCount >= LIVE_SYNC_RETRY_MAX_ATTEMPTS) {
-      setNextRetryAt(null);
-      return;
-    }
 
     const nextCount = retryCount + 1;
     const retryAt = Date.now() + retryDelay(nextCount);

@@ -14,7 +14,7 @@ import {
 import { useCombatantInfoRecord } from '../events/useCombatantInfoRecord';
 import { useDamageEvents } from '../events/useDamageEvents';
 import { usePlayerData } from '../usePlayerData';
-import { useSelectedTargetIds } from '../useSelectedTargetIds';
+import { hasNoResolvedTargets, useSelectedTargetIds } from '../useSelectedTargetIds';
 
 import { useBuffLookupTask } from './useBuffLookupTask';
 import { useCompanionCritEvidence } from './useCompanionCritEvidence';
@@ -26,26 +26,29 @@ interface UseCriticalDamageTaskOptions {
   context?: ReportFightContextInput;
 }
 
-export function useCriticalDamageTask(_options?: UseCriticalDamageTaskOptions): {
+export function useCriticalDamageTask(options?: UseCriticalDamageTaskOptions): {
   criticalDamageData: SharedWorkerResultType<'calculateCriticalDamageData'> | null;
   isCriticalDamageLoading: boolean;
   criticalDamageError: string | null;
   criticalDamageProgress: number | null;
   selectedFight: ReturnType<typeof useWorkerTaskDependencies>['selectedFight'];
 } {
-  const { dispatch, selectedFight } = useWorkerTaskDependencies();
-  const { combatantInfoRecord, isCombatantInfoEventsLoading } = useCombatantInfoRecord();
-  const { playerData, isPlayerDataLoading } = usePlayerData();
-  const { buffLookupData, isBuffLookupLoading } = useBuffLookupTask();
-  const { debuffLookupData, isDebuffLookupLoading } = useDebuffLookupTask();
-  const { damageEvents, isDamageEventsLoading } = useDamageEvents();
-  const selectedTargetIds = useSelectedTargetIds();
-  const companionCritEvidence = useCompanionCritEvidence(_options?.context);
+  const context = options?.context;
+  const { dispatch, selectedFight } = useWorkerTaskDependencies(options);
+  const { combatantInfoRecord, isCombatantInfoEventsLoading } = useCombatantInfoRecord({ context });
+  const { playerData, isPlayerDataLoading } = usePlayerData({ context });
+  const { buffLookupData, isBuffLookupLoading } = useBuffLookupTask(options);
+  const { debuffLookupData, isDebuffLookupLoading } = useDebuffLookupTask(options);
+  const { damageEvents, isDamageEventsLoading } = useDamageEvents({ context });
+  const selectedTargetIds = useSelectedTargetIds({ context });
+  const noResolvedTargets = hasNoResolvedTargets(selectedTargetIds);
+  const companionCritEvidence = useCompanionCritEvidence(context);
 
   // Start the worker once all required report dependencies are available. The
   // selector below exposes the real worker result; there is no placeholder path.
   React.useEffect(() => {
     if (
+      !noResolvedTargets &&
       selectedFight &&
       !isBuffLookupLoading &&
       buffLookupData !== null &&
@@ -88,13 +91,14 @@ export function useCriticalDamageTask(_options?: UseCriticalDamageTaskOptions): 
     damageEvents,
     isDamageEventsLoading,
     selectedTargetIds,
+    noResolvedTargets,
     companionCritEvidence,
     isBuffLookupLoading,
     isDebuffLookupLoading,
     isCombatantInfoEventsLoading,
   ]);
 
-  const criticalDamageData = useSelector(selectCriticalDamageResult);
+  const selectedCriticalDamageData = useSelector(selectCriticalDamageResult);
   const isCriticalDamageTaskLoading = useSelector(
     selectWorkerTaskLoading('calculateCriticalDamageData'),
   ) as boolean;
@@ -106,11 +110,13 @@ export function useCriticalDamageTask(_options?: UseCriticalDamageTaskOptions): 
 
   // Include all dependency loading states in the overall loading state
   const isCriticalDamageLoading =
-    isCriticalDamageTaskLoading ||
-    isPlayerDataLoading ||
-    isCombatantInfoEventsLoading ||
-    isBuffLookupLoading ||
-    isDebuffLookupLoading;
+    !noResolvedTargets &&
+    (isCriticalDamageTaskLoading ||
+      isPlayerDataLoading ||
+      isCombatantInfoEventsLoading ||
+      isBuffLookupLoading ||
+      isDebuffLookupLoading);
+  const criticalDamageData = noResolvedTargets ? null : selectedCriticalDamageData;
 
   return React.useMemo(
     () => ({

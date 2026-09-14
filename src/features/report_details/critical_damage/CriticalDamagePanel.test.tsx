@@ -6,6 +6,7 @@ jest.mock('../../../hooks', () => ({
   useResolvedReportFightContext: jest.fn(),
   useFightForContext: jest.fn(),
   usePlayerData: jest.fn(),
+  useSelectedTargetIds: jest.fn(),
   useCriticalDamageTask: jest.fn(),
 }));
 
@@ -33,6 +34,7 @@ describe('CriticalDamagePanel lifecycle state', () => {
       },
       isPlayerDataLoading: true,
     });
+    hooks.useSelectedTargetIds.mockReturnValue(new Set([1]));
     hooks.useCriticalDamageTask.mockReturnValue({
       criticalDamageData: { playerDataMap: { 0: {} } },
       criticalDamageError: 'worker failed',
@@ -48,5 +50,28 @@ describe('CriticalDamagePanel lifecycle state', () => {
     );
     expect(screen.getByText('retained critical-damage results')).toBeInTheDocument();
     expect(screen.queryByLabelText('Critical damage: loading')).not.toBeInTheDocument();
+  });
+
+  it('renders a completed empty state when target resolution confirms there are no targets', () => {
+    hooks.usePlayerData.mockReturnValue({
+      playerData: {
+        status: 'succeeded',
+        playersById: {
+          0: { id: 0, name: 'Zero', role: 'dps' },
+        },
+      },
+      isPlayerDataLoading: false,
+    });
+    hooks.useSelectedTargetIds.mockReturnValue(new Set([-3]));
+    hooks.useCriticalDamageTask.mockReturnValue({
+      criticalDamageData: null,
+      criticalDamageError: null,
+      isCriticalDamageLoading: false,
+    });
+
+    render(<CriticalDamagePanel />);
+
+    expect(screen.getByRole('status')).toHaveTextContent('No data is available for this panel.');
+    expect(screen.queryByText('Panel data is not confirmed current.')).not.toBeInTheDocument();
   });
 });

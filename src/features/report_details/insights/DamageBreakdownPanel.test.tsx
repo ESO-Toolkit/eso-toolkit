@@ -14,6 +14,7 @@ jest.mock('../../../hooks', () => ({
 }));
 
 jest.mock('../../../hooks/useSelectedTargetIds', () => ({
+  hasNoResolvedTargets: jest.fn(),
   useSelectedTargetIds: jest.fn(),
 }));
 
@@ -22,7 +23,9 @@ jest.mock('./DamageBreakdownView', () => ({
 }));
 
 const { useDamageEvents, useReportMasterData } = jest.requireMock('../../../hooks');
-const { useSelectedTargetIds } = jest.requireMock('../../../hooks/useSelectedTargetIds');
+const { hasNoResolvedTargets, useSelectedTargetIds } = jest.requireMock(
+  '../../../hooks/useSelectedTargetIds',
+);
 
 interface RenderedDamageBreakdown {
   abilityGameID: string;
@@ -39,6 +42,12 @@ const getRenderedBreakdown = (): RenderedDamageBreakdown[] => {
   return props?.damageBreakdown ?? [];
 };
 
+const getRenderedTotalDamage = (): number => {
+  const latestCall = mockDamageBreakdownView.mock.calls.at(-1);
+  const props = latestCall?.[0] as { totalDamage: number } | undefined;
+  return props?.totalDamage ?? 0;
+};
+
 const setup = (damageEvents: ReturnType<typeof createMockDamageEvent>[]): void => {
   useDamageEvents.mockReturnValue({ damageEvents, isDamageEventsLoading: false });
   useReportMasterData.mockReturnValue({
@@ -50,6 +59,7 @@ const setup = (damageEvents: ReturnType<typeof createMockDamageEvent>[]): void =
     isMasterDataLoading: false,
   });
   useSelectedTargetIds.mockReturnValue(new Set());
+  hasNoResolvedTargets.mockReturnValue(false);
 };
 
 describe('DamageBreakdownPanel critical metrics', () => {
@@ -107,5 +117,17 @@ describe('DamageBreakdownPanel critical metrics', () => {
         criticalDamageShare: null,
       }),
     );
+  });
+
+  it('does not produce ability metrics when the resolved target scope has no targets', () => {
+    setup([createMockDamageEvent({ abilityGameID: 100, amount: 500, hitType: HitType.Normal })]);
+    const noTargets = new Set([-3]);
+    useSelectedTargetIds.mockReturnValue(noTargets);
+    hasNoResolvedTargets.mockImplementation((targetIds: ReadonlySet<number>) => targetIds.has(-3));
+
+    render(<DamageBreakdownPanel fight={createMockFight()} />);
+
+    expect(getRenderedBreakdown()).toEqual([]);
+    expect(getRenderedTotalDamage()).toBe(0);
   });
 });

@@ -146,10 +146,21 @@ export const installReportListsFixture = async (
   }
 
   const handle = async (request: Request, route: Route): Promise<void> => {
-    const body = request.postDataJSON() as {
+    let body: {
       operationName?: string;
       variables?: Record<string, unknown>;
     } | null;
+
+    try {
+      body = request.postDataJSON() as {
+        operationName?: string;
+        variables?: Record<string, unknown>;
+      } | null;
+    } catch {
+      errors.push(`Malformed GraphQL request: ${request.url()}`);
+      await route.abort();
+      return;
+    }
 
     // The broad route patterns also see bodyless requests (for example CORS
     // preflights). Those are not GraphQL operations and should pass through;

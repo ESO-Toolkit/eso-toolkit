@@ -2,7 +2,7 @@ import React from 'react';
 
 import { FightFragment } from '../../../graphql/gql/graphql';
 import { useDamageEvents, useReportMasterData } from '../../../hooks';
-import { useSelectedTargetIds } from '../../../hooks/useSelectedTargetIds';
+import { hasNoResolvedTargets, useSelectedTargetIds } from '../../../hooks/useSelectedTargetIds';
 import { parseDamageTypeFlags } from '../../../types/abilities';
 import { DamageEvent, HitType } from '../../../types/combatlogEvents';
 import { resolveAnalyzerPanelState } from '../AnalyzerPanelState';
@@ -40,7 +40,13 @@ export const DamageBreakdownPanel: React.FC<DamageBreakdownPanelProps> = ({
 
   // Calculate damage breakdown by ability
   const damageBreakdown = React.useMemo(() => {
-    if (!damageEvents || !reportMasterData?.abilitiesById) {
+    // NO_TARGETS is deliberately non-empty so legacy filters do not treat it
+    // as "all targets". Short-circuit here as well so it cannot produce metrics.
+    if (
+      hasNoResolvedTargets(selectedTargetIds) ||
+      !damageEvents ||
+      !reportMasterData?.abilitiesById
+    ) {
       return [];
     }
 

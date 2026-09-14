@@ -1,3 +1,4 @@
+/* eslint-disable import/no-default-export -- Playwright requires a default config export. */
 import { defineConfig, devices } from '@playwright/test';
 
 import { ciBlockExternalHeaders } from '../tests/utils/playwright-shared';
@@ -25,7 +26,9 @@ export default defineConfig({
     : 1,
   timeout: 120000,
   expect: { timeout: 15000 },
-  reporter: process.env.CI ? [['html'], ['github']] : 'line',
+  reporter: process.env.CI
+    ? [['html', { outputFolder: '../playwright-report/analyzer-route', open: 'never' }], ['github']]
+    : 'line',
   use: {
     baseURL,
     trace: 'retain-on-failure',

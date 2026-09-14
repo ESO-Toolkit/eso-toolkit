@@ -85,31 +85,6 @@ const workflowCardWrapperSx = {
   minWidth: 0,
 } as const;
 
-const ProductWorkflowAvailabilityNotice = ({
-  state,
-}: {
-  state: InsightsWorkflowState;
-}): React.ReactElement => {
-  return (
-    <Box component="section" aria-label="Advanced analysis availability" sx={workflowCardWrapperSx}>
-      <Alert
-        aria-live={state === 'failed' ? 'assertive' : 'polite'}
-        role={state === 'failed' ? 'alert' : 'status'}
-        severity={state === 'failed' ? 'error' : 'info'}
-      >
-        <Typography component="h2" variant="subtitle2">
-          Advanced analysis is unavailable
-        </Typography>
-        <Typography variant="body2" sx={{ mt: 0.5 }}>
-          Recommendations, pinned findings, comparisons, and pull progression are withheld until
-          this fight has authoritative rule evidence, context-compatible baselines, and privacy-safe
-          saved findings. Unknown data is not scored as zero.
-        </Typography>
-      </Alert>
-    </Box>
-  );
-};
-
 const ProductWorkflow = ({
   evidence,
 }: {
@@ -123,6 +98,84 @@ const ProductWorkflow = ({
         provenance={evidence.provenance}
         title="Evidence drilldown"
       />
+    </Box>
+  );
+};
+
+type ProductWorkflowStateCopy = Readonly<{
+  title: string;
+  message: string;
+  severity: 'error' | 'info' | 'warning';
+  role: 'alert' | 'status';
+}>;
+
+const PRODUCT_WORKFLOW_STATE_COPY: Record<InsightsWorkflowState, ProductWorkflowStateCopy> = {
+  loading: {
+    title: 'Contextual analysis is preparing',
+    message:
+      'Rules, baseline context, or event evidence are still loading. Recommendations are withheld until their provenance is available.',
+    severity: 'info',
+    role: 'status',
+  },
+  partial: {
+    title: 'Contextual analysis is provisional',
+    message:
+      'Some required rules, baseline context, or event evidence is unavailable. Recommendations that require those inputs are withheld.',
+    severity: 'warning',
+    role: 'status',
+  },
+  stale: {
+    title: 'Contextual analysis is provisional',
+    message:
+      'The available rules, baseline context, or event evidence may be out of date. Recommendations are withheld until the analysis refreshes.',
+    severity: 'warning',
+    role: 'status',
+  },
+  failed: {
+    title: 'Contextual analysis could not be verified',
+    message:
+      'Required rules, baseline context, or event evidence could not be loaded. Recommendations are withheld rather than scored as zero.',
+    severity: 'error',
+    role: 'alert',
+  },
+  unavailable: {
+    title: 'Contextual analysis is not available for this fight',
+    message:
+      'This fight has no authoritative encounter rules, compatible baseline, and validated event evidence for a recommendation. Unknown data is not scored as zero.',
+    severity: 'warning',
+    role: 'status',
+  },
+  'evidence-ready': {
+    title: 'Contextual analysis is awaiting validated evidence',
+    message:
+      'Analysis evidence was marked ready but no validated drilldown is available. Recommendations are withheld until evidence and provenance are available.',
+    severity: 'warning',
+    role: 'status',
+  },
+};
+
+const ProductWorkflowStateNotice = ({
+  state,
+}: {
+  state: InsightsWorkflowState;
+}): React.ReactElement => {
+  const copy = PRODUCT_WORKFLOW_STATE_COPY[state];
+
+  return (
+    <Box component="section" aria-label="Analysis workflow status" sx={workflowCardWrapperSx}>
+      <Alert
+        severity={copy.severity}
+        role={copy.role}
+        aria-live={copy.role === 'alert' ? 'assertive' : 'polite'}
+        aria-atomic="true"
+      >
+        <Typography component="h2" variant="subtitle2">
+          {copy.title}
+        </Typography>
+        <Typography variant="body2" sx={{ mt: 0.5 }}>
+          {copy.message}
+        </Typography>
+      </Alert>
     </Box>
   );
 };
@@ -512,9 +565,10 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
         </Box>
         {/* All panels in flexbox with 2 items per row */}
 
-        {productEvidence ? <ProductWorkflow evidence={productEvidence} /> : null}
-        {productWorkflowState && !productEvidence ? (
-          <ProductWorkflowAvailabilityNotice state={productWorkflowState} />
+        {productEvidence ? (
+          <ProductWorkflow evidence={productEvidence} />
+        ) : productWorkflowState ? (
+          <ProductWorkflowStateNotice state={productWorkflowState} />
         ) : null}
 
         <Box sx={insightCardWrapperSx}>

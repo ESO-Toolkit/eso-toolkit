@@ -13,6 +13,7 @@ jest.mock('../../esologsClient');
 jest.mock('./constants', () => ({
   ...jest.requireActual('./constants'),
   EVENT_MAX_INTERVALS_PER_STREAM: 2,
+  EVENT_MAX_PAGES_PER_STREAM: 1,
 }));
 
 describe('hostileBuffEventsSlice', () => {
@@ -105,7 +106,7 @@ describe('hostileBuffEventsSlice', () => {
     expect(client.query).toHaveBeenCalledTimes(2);
   });
 
-  it('deduplicates records repeated across adjacent intervals', async () => {
+  it('does not charge bounded base interval requests against the continuation-page budget', async () => {
     const store = createStore();
     const duplicate = buffEvent(1000);
     const client = {
@@ -142,6 +143,29 @@ describe('hostileBuffEventsSlice', () => {
     expect(getEntry(store)?.status).toBe('failed');
     expect(getEntry(store)?.error).toBe('Hostile buff event pagination cursor did not advance');
     expect(getEntry(store)?.events).toEqual([]);
+  });
+
+  it('still fails closed when continuation pages exceed the shared budget', async () => {
+    const store = createStore();
+    const client = {
+      query: jest
+        .fn()
+        .mockResolvedValueOnce({
+          reportData: { report: { events: { data: [], nextPageTimestamp: 1000 } } },
+        })
+        .mockResolvedValueOnce({
+          reportData: { report: { events: { data: [], nextPageTimestamp: 1500 } } },
+        }),
+    } as unknown as EsoLogsClient;
+
+    await dispatchFetch(store, client, { intervalSize: 2000 });
+
+    expect(getEntry(store)?.status).toBe('failed');
+    expect(getEntry(store)?.error).toBe(
+      'Hostile buff event pagination exceeded 1 continuation pages',
+    );
+    expect(getEntry(store)?.events).toEqual([]);
+    expect(client.query).toHaveBeenCalledTimes(2);
   });
 
   it('rejects an interval failure without fulfilling events from other intervals', async () => {

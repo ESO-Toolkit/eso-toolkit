@@ -389,6 +389,28 @@ describe('useSelectedTargetIds', () => {
     expect(Array.from(result.current)).toEqual([100]);
   });
 
+  it('should discard the no-target sentinel when concrete targets are selected', () => {
+    mockUseReportData.mockReturnValue({
+      reportData: mockReportData,
+      isReportLoading: false,
+    });
+
+    mockUseReportMasterData.mockReturnValue({
+      reportMasterData: mockMasterData,
+      isMasterDataLoading: false,
+    });
+
+    const { result } = renderHook(() => useSelectedTargetIds(), {
+      wrapper: ({ children }) => (
+        <TestWrapper fightId="1" selectedTargetIds={[NO_TARGETS_SENTINEL, 100]}>
+          {children}
+        </TestWrapper>
+      ),
+    });
+
+    expect(Array.from(result.current)).toEqual([100]);
+  });
+
   it('should return boss targets when no specific target is selected', () => {
     mockUseReportData.mockReturnValue({
       reportData: mockReportData,

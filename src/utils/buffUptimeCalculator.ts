@@ -50,6 +50,40 @@ export interface BuffUptimeCalculatorOptions {
   filterBySourceId?: boolean;
 }
 
+interface ClippedInterval {
+  start: number;
+  end: number;
+}
+
+/**
+ * Returns the length of the union of already-clipped intervals. Buff refreshes
+ * commonly overlap the previous application; counting their raw durations
+ * makes a target's uptime exceed the fight duration.
+ */
+function getUnionDuration(intervals: ClippedInterval[]): number {
+  if (intervals.length === 0) {
+    return 0;
+  }
+
+  const sortedIntervals = [...intervals].sort((a, b) => a.start - b.start || a.end - b.end);
+  let totalDuration = 0;
+  let currentStart = sortedIntervals[0].start;
+  let currentEnd = sortedIntervals[0].end;
+
+  for (const interval of sortedIntervals.slice(1)) {
+    if (interval.start <= currentEnd) {
+      currentEnd = Math.max(currentEnd, interval.end);
+      continue;
+    }
+
+    totalDuration += currentEnd - currentStart;
+    currentStart = interval.start;
+    currentEnd = interval.end;
+  }
+
+  return totalDuration + currentEnd - currentStart;
+}
+
 /**
  * Utility function to compute buff uptimes from a buff lookup with flexible filtering
  */
@@ -107,7 +141,7 @@ export function computeBuffUptimes(
     }
 
     // Calculate cumulative uptime across filtered intervals
-    const targetUptimes = new Map<string, { totalDuration: number; applications: number }>();
+    const targetUptimes = new Map<string, { intervals: ClippedInterval[]; applications: number }>();
 
     filteredIntervals.forEach((interval: BuffInterval) => {
       const targetId = String(interval.targetID);
@@ -116,9 +150,10 @@ export function computeBuffUptimes(
       const duration = end > start ? end - start : 0;
 
       if (duration > 0) {
-        const existing = targetUptimes.get(targetId) || { totalDuration: 0, applications: 0 };
+        const existing = targetUptimes.get(targetId) || { intervals: [], applications: 0 };
+        existing.intervals.push({ start, end });
         targetUptimes.set(targetId, {
-          totalDuration: existing.totalDuration + duration,
+          intervals: existing.intervals,
           applications: existing.applications + 1,
         });
       }
@@ -129,7 +164,8 @@ export function computeBuffUptimes(
       let totalUptimeSum = 0;
       let totalApplicationsSum = 0;
 
-      targetUptimes.forEach(({ totalDuration, applications }) => {
+      targetUptimes.forEach(({ intervals: targetIntervals, applications }) => {
+        const totalDuration = getUnionDuration(targetIntervals);
         totalUptimeSum += (totalDuration / fightDuration) * 100; // Convert to percentage
         totalApplicationsSum += applications;
       });
@@ -209,8 +245,10 @@ export function computeBuffUptimesWithGroupAverage(
   const { sourceIds, targetIds, fightStartTime, fightEndTime, fightDuration } = options;
   const filterBySourceId = options.filterBySourceId === true;
 
-  // abilityId -> playerId -> targetID -> accumulated duration
-  const accumulation = new Map<string, Map<number, Map<number, number>>>();
+  // abilityId -> playerId -> targetID -> clipped intervals. The union must be
+  // taken at this semantic scope: each player's uptime on each target cannot
+  // exceed the fight duration even when refreshes overlap.
+  const accumulation = new Map<string, Map<number, Map<number, ClippedInterval[]>>>();
 
   Object.entries(buffLookup.buffIntervals).forEach(([abilityGameIDStr, intervals]) => {
     const abilityGameID = parseInt(abilityGameIDStr, 10);
@@ -271,7 +309,9 @@ export function computeBuffUptimesWithGroupAverage(
           byTarget = new Map();
           byPlayer!.set(playerId, byTarget);
         }
-        byTarget.set(interval.targetID, (byTarget.get(interval.targetID) || 0) + duration);
+        const targetIntervals = byTarget.get(interval.targetID) || [];
+        targetIntervals.push({ start, end });
+        byTarget.set(interval.targetID, targetIntervals);
       });
     });
   });
@@ -283,7 +323,8 @@ export function computeBuffUptimesWithGroupAverage(
     byPlayer.forEach((byTarget, playerId) => {
       // Sum each target's uptime percentage for this player.
       let totalUptimeSum = 0;
-      byTarget.forEach((totalDuration) => {
+      byTarget.forEach((targetIntervals) => {
+        const totalDuration = getUnionDuration(targetIntervals);
         totalUptimeSum += (totalDuration / fightDuration) * 100;
       });
 

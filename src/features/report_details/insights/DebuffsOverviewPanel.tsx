@@ -55,28 +55,6 @@ export const DebuffsOverviewPanel: React.FC = () => {
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [debuffEvents, playerData?.playersById]);
 
-  // Create a mapping of abilityGameID + targetID to sourceIDs for filtering
-  const debuffSourceMapping = React.useMemo(() => {
-    if (!debuffEvents) return new Map<string, Set<number>>();
-
-    const mapping = new Map<string, Set<number>>();
-
-    debuffEvents.forEach((event) => {
-      if (event.type === 'applydebuff' || event.type === 'applydebuffstack') {
-        const key = `${event.abilityGameID}_${event.targetID}`;
-        if (!mapping.has(key)) {
-          mapping.set(key, new Set<number>());
-        }
-        const sourceSet = mapping.get(key);
-        if (sourceSet) {
-          sourceSet.add(event.sourceID);
-        }
-      }
-    });
-
-    return mapping;
-  }, [debuffEvents]);
-
   // Create a mapping of abilityGameID to all extraAbilityGameIDs for resolving extra abilities
   const extraAbilityMapping = React.useMemo(() => {
     if (!debuffEvents) return new Map<number, Set<number>>();
@@ -113,17 +91,16 @@ export const DebuffsOverviewPanel: React.FC = () => {
       const ability = reportMasterData.abilitiesById[abilityId];
 
       // Filter intervals by selected target if one is selected
-      let filteredIntervals = selectedTargetId
-        ? intervals.filter((interval) => interval.targetID === selectedTargetId)
-        : intervals;
+      let filteredIntervals =
+        selectedTargetId != null
+          ? intervals.filter((interval) => interval.targetID === selectedTargetId)
+          : intervals;
 
       // Filter by selected player (sourceID) if one is selected
-      if (selectedPlayerId) {
-        filteredIntervals = filteredIntervals.filter((interval) => {
-          const key = `${abilityId}_${interval.targetID}`;
-          const sources = debuffSourceMapping.get(key);
-          return sources && sources.has(selectedPlayerId);
-        });
+      if (selectedPlayerId != null) {
+        filteredIntervals = filteredIntervals.filter(
+          (interval) => interval.sourceID === selectedPlayerId,
+        );
       }
 
       // Skip abilities that have no intervals after filtering
@@ -174,14 +151,7 @@ export const DebuffsOverviewPanel: React.FC = () => {
       }
       return a.debuffName.localeCompare(b.debuffName);
     });
-  }, [
-    debuffLookupData,
-    reportMasterData,
-    selectedTargetId,
-    selectedPlayerId,
-    debuffSourceMapping,
-    extraAbilityMapping,
-  ]);
+  }, [debuffLookupData, reportMasterData, selectedTargetId, selectedPlayerId, extraAbilityMapping]);
 
   const hasRetainedData = debuffOverviewData.length > 0;
   const failureDetail =

@@ -69,7 +69,9 @@ export function useZoneOptions(): ZoneOptionsState {
       inflight = client
         .query<GetTrialZonesMetadataQuery>({
           query: GetTrialZonesMetadataDocument,
-          errorPolicy: 'all',
+          // Do not session-cache a partial metadata response as authoritative.
+          // A rejected request remains retryable on the next mount.
+          errorPolicy: 'none',
         })
         .then((result) => {
           const zones = (result.worldData?.zones ?? [])

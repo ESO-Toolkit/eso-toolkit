@@ -264,10 +264,14 @@ export const LiveLog: React.FC<React.PropsWithChildren> = (props) => {
     }),
     [reportId, latestFightId, selectedTabId, showExperimentalTabs],
   );
+  const liveDashboardAsOfValue = React.useMemo(
+    () => ({ asOf: health.lastSuccessfulSyncAt }),
+    [health.lastSuccessfulSyncAt],
+  );
 
   return (
     <ReportFightContext.Provider value={reportFightCtxValue}>
-      <LiveDashboardAsOfContext.Provider value={{ asOf: health.lastSuccessfulSyncAt }}>
+      <LiveDashboardAsOfContext.Provider value={liveDashboardAsOfValue}>
         <LiveDashboardHealthBar
           health={health}
           autoRefreshEnabled={autoRefreshEnabled}

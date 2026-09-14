@@ -38,7 +38,7 @@ interface IntervalFetchResult {
 
 interface PaginationBudget {
   events: number;
-  pages: number;
+  continuationPages: number;
 }
 
 type HostileBuffEventsRequest = ReturnType<typeof createCurrentRequest> | null;
@@ -137,10 +137,14 @@ const fetchEventsForInterval = async (
 
   do {
     signal.throwIfAborted();
-    if (budget.pages >= EVENT_MAX_PAGES_PER_STREAM) {
-      throw new Error(`Hostile buff event pagination exceeded ${EVENT_MAX_PAGES_PER_STREAM} pages`);
+    if (nextPageTimestamp != null) {
+      if (budget.continuationPages >= EVENT_MAX_PAGES_PER_STREAM) {
+        throw new Error(
+          `Hostile buff event pagination exceeded ${EVENT_MAX_PAGES_PER_STREAM} continuation pages`,
+        );
+      }
+      budget.continuationPages += 1;
     }
-    budget.pages += 1;
     const requestedStartTime = nextPageTimestamp ?? intervalStart;
     const response: GetBuffEventsQuery = await client.query({
       query: GetBuffEventsDocument,
@@ -196,7 +200,7 @@ export const fetchHostileBuffEvents = createAsyncThunk<
         error instanceof Error ? error.message : 'Invalid hostile buff event interval',
       );
     }
-    const paginationBudget: PaginationBudget = { events: 0, pages: 0 };
+    const paginationBudget: PaginationBudget = { events: 0, continuationPages: 0 };
     const intervalResults: IntervalFetchResult[] = new Array(intervals.length);
     const intervalAbortController = new AbortController();
     const abortIntervals = (): void => intervalAbortController.abort(signal.reason);

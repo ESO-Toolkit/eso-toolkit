@@ -3,10 +3,12 @@ import React from 'react';
 import {
   useCriticalDamageTask,
   usePlayerData,
+  useSelectedTargetIds,
   useResolvedReportFightContext,
   useFightForContext,
 } from '../../../hooks';
 import type { PhaseTransitionInfo } from '../../../hooks/usePhaseTransitions';
+import { hasNoResolvedTargets } from '../../../hooks/useSelectedTargetIds';
 import { useCompanionCritEvidence } from '../../../hooks/workerTasks/useCompanionCritEvidence';
 import type { ReportFightContextInput } from '../../../store/contextTypes';
 import { AnalyzerPanelState, resolveAnalyzerPanelState } from '../AnalyzerPanelState';
@@ -28,6 +30,8 @@ export const CriticalDamagePanel: React.FC<CriticalDamagePanelProps> = ({
   const resolvedContext = useResolvedReportFightContext(context);
   const fight = useFightForContext(resolvedContext);
   const { playerData, isPlayerDataLoading } = usePlayerData({ context: resolvedContext });
+  const selectedTargetIds = useSelectedTargetIds({ context: resolvedContext });
+  const noResolvedTargets = hasNoResolvedTargets(selectedTargetIds);
   const { criticalDamageData, isCriticalDamageLoading, criticalDamageError } =
     useCriticalDamageTask({ context: resolvedContext });
   // Built from the SAME snapshots + resolvedContext the crit-damage worker uses, so the
@@ -46,7 +50,7 @@ export const CriticalDamagePanel: React.FC<CriticalDamagePanelProps> = ({
     fight &&
     playerData?.playersById &&
     playerData.status === 'succeeded' &&
-    criticalDamagePlayerDataMap,
+    (criticalDamagePlayerDataMap || noResolvedTargets),
   );
 
   // Get all players for accordion

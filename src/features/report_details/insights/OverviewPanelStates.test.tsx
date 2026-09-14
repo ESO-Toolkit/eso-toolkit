@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 
 import { useCombatantInfoEvents, usePlayerData, useReportMasterData } from '../../../hooks';
@@ -38,7 +38,22 @@ jest.mock('../../../store/master_data/masterDataSelectors', () => ({
 }));
 jest.mock('../../../store/ui/uiSelectors', () => ({ selectSelectedTargetId: () => null }));
 jest.mock('../../../components/LazyDataGrid', () => ({
-  DataGrid: ({ title }: { title: string }) => <div>{title}</div>,
+  DataGrid: ({
+    data,
+    title,
+  }: {
+    data: Array<{ debuffId: number; totalApplications: number }>;
+    title: string;
+  }) => (
+    <div>
+      <div>{title}</div>
+      {data.map((debuff) => (
+        <div key={debuff.debuffId} data-testid={`debuff-applications-${debuff.debuffId}`}>
+          {debuff.totalApplications}
+        </div>
+      ))}
+    </div>
+  ),
 }));
 jest.mock('../../../components/LazySkillTooltip', () => ({
   LazySkillTooltip: () => null,
@@ -272,5 +287,61 @@ describe('DebuffsOverviewPanel lifecycle', () => {
 
     expect(screen.getByRole('alert')).toHaveTextContent('Players unavailable');
     expect(screen.queryByRole('button', { name: /try again/i })).not.toBeInTheDocument();
+  });
+
+  it('filters each debuff interval by its own source', () => {
+    mockUseDebuffEvents.mockReturnValue({
+      debuffEvents: [
+        {
+          timestamp: 0,
+          type: 'applydebuff',
+          sourceID: 7,
+          sourceIsFriendly: true,
+          targetID: 99,
+          targetIsFriendly: false,
+          abilityGameID: 101,
+          extraAbilityGameID: 0,
+          fight: 1,
+        },
+        {
+          timestamp: 500,
+          type: 'applydebuff',
+          sourceID: 8,
+          sourceIsFriendly: true,
+          targetID: 99,
+          targetIsFriendly: false,
+          abilityGameID: 101,
+          extraAbilityGameID: 0,
+          fight: 1,
+        },
+      ],
+      isDebuffEventsLoading: false,
+      debuffEventsStatus: 'succeeded',
+      debuffEventsError: null,
+      selectedFight: null,
+    });
+    mockUseDebuffLookupTask.mockReturnValue({
+      debuffLookupData: {
+        buffIntervals: {
+          101: [
+            { targetID: 99, sourceID: 7, start: 0, end: 1000 },
+            { targetID: 99, sourceID: 8, start: 500, end: 1000 },
+          ],
+        },
+      },
+      isDebuffLookupLoading: false,
+      debuffLookupError: null,
+      debuffLookupProgress: null,
+      selectedFight: null,
+    });
+
+    render(<DebuffsOverviewPanel />);
+
+    expect(screen.getByTestId('debuff-applications-101')).toHaveTextContent('2');
+
+    fireEvent.mouseDown(screen.getByRole('combobox', { name: 'Filter by Player' }));
+    fireEvent.click(screen.getByRole('option', { name: 'Arcanist' }));
+
+    expect(screen.getByTestId('debuff-applications-101')).toHaveTextContent('1');
   });
 });

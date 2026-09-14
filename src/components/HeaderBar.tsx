@@ -49,7 +49,11 @@ import {
   importRosterHubPage,
   preloadHubRoutes,
 } from '../utils/hubRoutePreload';
-import { shouldPrefetchHeavyRoute, type RoutePrefetchIntent } from '../utils/routePrefetchPolicy';
+import {
+  canPrefetchHeavyRoute,
+  shouldPrefetchHeavyRoute,
+  type RoutePrefetchIntent,
+} from '../utils/routePrefetchPolicy';
 
 import { PerfTierToggle } from './PerfTierToggle';
 import { ThemeToggle } from './ThemeToggle';
@@ -596,6 +600,34 @@ export const HeaderBar: React.FC = () => {
       void refetchUser();
     }
   }, [isLoggedIn, currentUser, userLoading, userError, refetchUser]);
+
+  // Warm the three hub route chunks during idle time so the first lateral
+  // transition captures the destination content without competing with the
+  // header's critical work. Keep the old idle warm-up, but honor the same
+  // connection policy as intentional pointer, focus, and touch prefetches.
+  React.useEffect(() => {
+    if (!canPrefetchHeavyRoute()) return undefined;
+
+    const warmRoutes = (): void => {
+      if (canPrefetchHeavyRoute()) preloadHubRoutes();
+    };
+    const ric = (
+      window as unknown as {
+        requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+        cancelIdleCallback?: (handle: number) => void;
+      }
+    ).requestIdleCallback;
+    if (typeof ric === 'function') {
+      const handle = ric(warmRoutes, { timeout: 2500 });
+      return () => {
+        (
+          window as unknown as { cancelIdleCallback?: (handle: number) => void }
+        ).cancelIdleCallback?.(handle);
+      };
+    }
+    const timer = window.setTimeout(warmRoutes, 200);
+    return () => window.clearTimeout(timer);
+  }, []);
 
   const userLabel = React.useMemo(() => {
     if (userDisplayName) return userDisplayName;

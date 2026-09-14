@@ -2,7 +2,7 @@ import React from 'react';
 
 import { FightFragment } from '../../../graphql/gql/graphql';
 import { useDamageEvents, useReportMasterData } from '../../../hooks';
-import { useSelectedTargetIds } from '../../../hooks/useSelectedTargetIds';
+import { hasNoResolvedTargets, useSelectedTargetIds } from '../../../hooks/useSelectedTargetIds';
 import { DamageTypeFlags } from '../../../types/abilities';
 import { resolveAnalyzerPanelState } from '../AnalyzerPanelState';
 
@@ -59,7 +59,13 @@ export const DamageTypeBreakdownPanel: React.FC<DamageTypeBreakdownPanelProps> =
   // Calculate damage breakdown by damage type using the shared categorization
   // (bitwise damage-type decode + canonical AOE/status id sets).
   const { damageTypeBreakdown, totalDamage } = React.useMemo(() => {
-    if (!damageEvents || !reportMasterData?.abilitiesById) {
+    // A resolved scope without targets must never fall through to aggregate
+    // metrics, even when a future categorizer changes its filter semantics.
+    if (
+      hasNoResolvedTargets(selectedTargetIds) ||
+      !damageEvents ||
+      !reportMasterData?.abilitiesById
+    ) {
       return { damageTypeBreakdown: [], totalDamage: 0 };
     }
 

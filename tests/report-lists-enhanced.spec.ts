@@ -1,11 +1,171 @@
 import { expect, test } from '@playwright/test';
+import type { Route } from '@playwright/test';
 
 import { createReport, installReportListsFixture } from './report-lists-fixtures';
 
 const latestRoute = '/latest-reports';
 const userRoute = '/my-reports';
 
+type LatestReportsRequestBody = { operationName?: string };
+
+const interceptLatestReports = async (
+  page: Parameters<typeof installReportListsFixture>[0],
+  handler: (route: Route, attempt: number) => Promise<void>,
+): Promise<() => number> => {
+  let attempts = 0;
+
+  await page.route('**/graphql**', async (route) => {
+    const request = route.request();
+    if (!request.postData()) {
+      await route.fallback();
+      return;
+    }
+
+    const body = request.postDataJSON() as LatestReportsRequestBody;
+    if (body.operationName !== 'getLatestReports') {
+      await route.fallback();
+      return;
+    }
+
+    attempts += 1;
+    await handler(route, attempts);
+  });
+
+  return () => attempts;
+};
+
+const graphqlErrorResponse = (message: string): object => ({
+  errors: [{ message, extensions: { code: 'INTERNAL_SERVER_ERROR' } }],
+});
+
+const pageResponse = (
+  body: object,
+  status = 200,
+  headers?: Record<string, string>,
+): Parameters<Route['fulfill']>[0] => ({
+  ...(headers ? { headers } : {}),
+  status,
+  contentType: 'application/json',
+  body: JSON.stringify(body),
+});
+
 test.describe('Latest Reports', () => {
+  test('shows the loading skeleton until the report list response arrives', async ({ page }) => {
+    const fixture = await installReportListsFixture(page);
+    let releaseRequest!: () => void;
+    const requestBlocked = new Promise<void>((resolve) => {
+      releaseRequest = resolve;
+    });
+    const attempts = await interceptLatestReports(page, async (route) => {
+      await requestBlocked;
+      await route.fallback();
+    });
+
+    await page.goto(latestRoute);
+    await expect(page.locator('.MuiSkeleton-root').first()).toBeVisible();
+    expect(attempts()).toBeGreaterThan(0);
+
+    releaseRequest();
+    await expect(page.getByText('Sunspire Report', { exact: true })).toBeVisible();
+    await expect(page.locator('.MuiSkeleton-root')).toHaveCount(0);
+    await fixture.assertNoErrors();
+  });
+
+  test('surfaces a GraphQL error without hiding the failure behind a skip', async ({ page }) => {
+    const fixture = await installReportListsFixture(page);
+    const attempts = await interceptLatestReports(page, async (route) => {
+      await route.fulfill(pageResponse(graphqlErrorResponse('Synthetic GraphQL failure')));
+    });
+
+    await page.goto(latestRoute);
+    await expect(
+      page.getByRole('heading', { name: 'No reports found', exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByText('ESO Logs rejected this query: Synthetic GraphQL failure', { exact: true }),
+    ).toBeVisible();
+    await expect(page.locator('.MuiSkeleton-root')).toHaveCount(0);
+    expect(attempts()).toBeGreaterThan(0);
+    await fixture.assertNoErrors();
+  });
+
+  test('classifies a network abort as a visible offline failure', async ({ page }) => {
+    const fixture = await installReportListsFixture(page);
+    const attempts = await interceptLatestReports(page, async (route) => {
+      await route.abort('connectionfailed');
+    });
+
+    await page.goto(latestRoute);
+    await expect(
+      page.getByText(
+        'Network error: Could not connect to the ESO Logs API. Please check your internet connection and try again.',
+        { exact: true },
+      ),
+    ).toBeVisible();
+    expect(attempts()).toBeGreaterThanOrEqual(3);
+    await fixture.assertNoErrors();
+  });
+
+  const httpFailureScenarios = [
+    {
+      name: 'HTTP 401 authentication failure',
+      status: 401,
+      message: 'Your ESO Logs session has expired. Please log in again.',
+    },
+    {
+      name: 'HTTP 429 rate-limit failure',
+      status: 429,
+      message: 'ESO Logs is rate limiting requests. Please wait a moment and try again.',
+    },
+    {
+      name: 'HTTP 503 transient failure',
+      status: 503,
+      message: 'ESO Logs is temporarily unavailable. Retrying shortly.',
+    },
+  ] as const;
+
+  for (const scenario of httpFailureScenarios) {
+    test(`surfaces the ${scenario.name} classification`, async ({ page }) => {
+      const fixture = await installReportListsFixture(page);
+      const attempts = await interceptLatestReports(page, async (route) => {
+        await route.fulfill(
+          pageResponse(
+            { errors: [{ message: `Synthetic HTTP ${scenario.status} failure` }] },
+            scenario.status,
+            scenario.status === 429 ? { 'retry-after': '0' } : undefined,
+          ),
+        );
+      });
+
+      await page.goto(latestRoute);
+      await expect(page.getByText(scenario.message, { exact: true })).toBeVisible();
+      await expect(page.locator('.MuiSkeleton-root')).toHaveCount(0);
+      expect(attempts()).toBeGreaterThan(0);
+      await fixture.assertNoErrors();
+    });
+  }
+
+  test('recovers successfully when a retried request returns a report page', async ({ page }) => {
+    const fixture = await installReportListsFixture(page);
+    const attempts = await interceptLatestReports(page, async (route, attempt) => {
+      if (attempt === 1) {
+        await route.fulfill(
+          pageResponse({ errors: [{ message: 'Synthetic rate-limit failure' }] }, 429, {
+            'retry-after': '0',
+          }),
+        );
+        return;
+      }
+      await route.fallback();
+    });
+
+    await page.goto(latestRoute);
+    await expect(page.getByText('Sunspire Report', { exact: true })).toBeVisible();
+    await expect(page.locator('.MuiSkeleton-root')).toHaveCount(0);
+    expect(attempts()).toBeGreaterThanOrEqual(2);
+    await fixture.assertNoErrors();
+  });
+
   test('renders populated reports from the current route', async ({ page }) => {
     const fixture = await installReportListsFixture(page);
     await page.goto(latestRoute);
