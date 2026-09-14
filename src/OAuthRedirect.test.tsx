@@ -4,9 +4,9 @@ import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 
 import { consumeAppAuthPortBinding } from './AppAuth';
-import { OAuthRedirect } from './OAuthRedirect';
 import * as auth from './features/auth/auth';
 import { useAuth } from './features/auth/AuthContext';
+import { OAuthRedirect } from './OAuthRedirect';
 import { useAppDispatch } from './store/useAppDispatch';
 
 jest.mock('./AppAuth', () => ({
@@ -56,9 +56,9 @@ describe('OAuthRedirect callback failures', () => {
     global.fetch = mockFetch as unknown as typeof fetch;
     mockConsumeAppAuthPortBinding.mockReturnValue(null);
     mockUseAppDispatch.mockReturnValue(jest.fn());
-    mockUseAuth.mockReturnValue(
-      { rebindAccessToken: jest.fn() } as unknown as ReturnType<typeof useAuth>,
-    );
+    mockUseAuth.mockReturnValue({ rebindAccessToken: jest.fn() } as unknown as ReturnType<
+      typeof useAuth
+    >);
     jest.spyOn(auth, 'getRedirectUri').mockReturnValue('https://example.test/oauth-redirect');
   });
 

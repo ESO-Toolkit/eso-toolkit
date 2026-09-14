@@ -153,6 +153,7 @@ test('uses a marker-free report-only CSP fallback if the built header asset is u
 
   const csp = response.headers.get('Content-Security-Policy-Report-Only');
   assert.ok(csp?.includes("frame-ancestors 'self'"));
+  assert.ok(csp?.includes("connect-src 'self' blob:"));
   assert.ok(!csp?.includes('__CSP_INLINE_SCRIPT_HASHES__'));
   const fallbackCsp = csp?.replace(`; report-uri ${CSP_REPORT_PATH}; report-to csp-violations`, '');
   assertSecurityHeaders(response, fallbackCsp);
