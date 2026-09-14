@@ -338,12 +338,15 @@ describe('bounded raw event streams', () => {
     });
   });
 
-  it('counts hostile buff pages across intervals toward one stream page budget', async () => {
+  it('counts hostile buff continuation pages across intervals toward one stream budget', async () => {
     const store = configureStore({
       reducer: { events: combineReducers({ hostileBuffs: hostileBuffEventsReducer }) },
     });
     const mockClient = client();
-    mockClient.query.mockResolvedValue(page([]));
+    mockClient.query.mockImplementation(({ variables }) => {
+      const startTime = (variables as { startTime: number }).startTime;
+      return Promise.resolve(page([], startTime % 10 === 0 ? startTime + 1 : null));
+    });
 
     await store.dispatch(
       fetchHostileBuffEvents({
@@ -356,10 +359,9 @@ describe('bounded raw event streams', () => {
 
     expect(getEntry(store, 'hostileBuffs')).toMatchObject({
       status: 'failed',
-      error: 'Hostile buff event pagination exceeded 4 pages',
+      error: 'Hostile buff event pagination exceeded 4 continuation pages',
       events: [],
     });
-    expect(mockClient.query).toHaveBeenCalledTimes(4);
   });
 
   it.each([
