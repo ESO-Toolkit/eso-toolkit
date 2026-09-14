@@ -31,13 +31,13 @@ import {
   Typography,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import React, { Suspense, useDeferredValue, useMemo } from 'react';
+import React, { Suspense, useMemo } from 'react';
 
 import { AnimatedTabContent } from '../../components/AnimatedTabContent';
 import { PanelErrorBoundary } from '../../components/PanelErrorBoundary';
 import { FightFragment } from '../../graphql/gql/graphql';
 import { useReportMasterData } from '../../hooks';
-import { usePhaseTransitions } from '../../hooks/usePhaseTransitions';
+import { type PhaseTransitionInfo, usePhaseTransitions } from '../../hooks/usePhaseTransitions';
 import { getSkeletonForTab, TabId } from '../../utils/getSkeletonForTab';
 
 import { CombinedFilterDropdown } from './insights/CombinedFilterDropdown';
@@ -132,6 +132,30 @@ interface FightDetailsViewProps {
   onToggleExperimentalTabs: (enabled: boolean) => void;
 }
 
+interface DeferredTabContentProps {
+  children: React.ReactNode;
+  fight: FightFragment;
+  phaseTransitionInfo: PhaseTransitionInfo;
+  showExperimentalTabs: boolean;
+  tabKey: TabId;
+}
+
+/**
+ * The panel JSX is recreated by the parent for urgent tab-highlight updates.
+ * Its output is fully determined by these stable inputs, so this boundary can
+ * safely defer reconciliation until the deferred tab value changes.
+ */
+const DeferredTabContent = React.memo(
+  function DeferredTabContent({ children, tabKey }: DeferredTabContentProps) {
+    return <AnimatedTabContent tabKey={tabKey}>{children}</AnimatedTabContent>;
+  },
+  (previous, next) =>
+    previous.tabKey === next.tabKey &&
+    previous.fight === next.fight &&
+    previous.phaseTransitionInfo === next.phaseTransitionInfo &&
+    previous.showExperimentalTabs === next.showExperimentalTabs,
+);
+
 export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
   fight,
   selectedTabId,
@@ -179,7 +203,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
   // the 1500+ element panel swap that follows in the next frame.
   // Re-validate the deferred value so it never points at a tab that has
   // been removed (e.g. when showExperimentalTabs flips to false mid-defer).
-  const deferredTabId = getValidTabId(useDeferredValue(validSelectedTabId));
+  const deferredTabId = getValidTabId(React.useDeferredValue(validSelectedTabId));
 
   // Get navigation data and functions
   const {
@@ -776,7 +800,12 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
         }}
         data-testid="fight-tab-content-container"
       >
-        <AnimatedTabContent tabKey={deferredTabId} data-testid={`tab-content-${deferredTabId}`}>
+        <DeferredTabContent
+          tabKey={deferredTabId}
+          fight={fight}
+          phaseTransitionInfo={phaseTransitionInfo}
+          showExperimentalTabs={showExperimentalTabs}
+        >
           {deferredTabId === TabId.INSIGHTS && (
             <PanelErrorBoundary panelName="Insights">
               <Suspense fallback={<PanelLoadingFallback tabId={TabId.INSIGHTS} />}>
@@ -917,7 +946,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
               </Suspense>
             </PanelErrorBoundary>
           )}
-        </AnimatedTabContent>
+        </DeferredTabContent>
       </Box>
     </React.Fragment>
   );

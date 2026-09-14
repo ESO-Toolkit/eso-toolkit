@@ -1,5 +1,5 @@
 import { ThemeProvider, createTheme } from '@mui/material/styles';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import '@testing-library/jest-dom';
 
@@ -28,8 +28,13 @@ jest.mock('./insights/CombinedFilterDropdown', () => ({
 }));
 
 jest.mock('./insights/PlayersPanel', () => ({
-  PlayersPanel: () => null,
+  PlayersPanel: () => {
+    mockPlayersPanelRender();
+    return null;
+  },
 }));
+
+const mockPlayersPanelRender = jest.fn();
 
 const mockUseReportMasterData = useReportMasterData as jest.MockedFunction<
   typeof useReportMasterData
@@ -105,5 +110,82 @@ describe('FightDetailsView', () => {
     panel.focus();
     expect(panel).toHaveFocus();
     expect(panel).toHaveAttribute('tabindex', '0');
+  });
+
+  it('does not rerender deferred panel content while the urgent tab selection changes', async () => {
+    const useDeferredValueSpy = jest
+      .spyOn(React, 'useDeferredValue')
+      .mockReturnValue(TabId.PLAYERS);
+    const fight = {
+      id: 1,
+      startTime: 0,
+      endTime: 60_000,
+      friendlyPlayers: [],
+      phaseTransitions: [],
+    } as unknown as FightFragment;
+    const phaseTransitionInfo = {
+      phaseTransitions: null,
+      fightStartTime: 0,
+      fightEndTime: 60_000,
+      isLoading: false,
+      source: null,
+    } as ReturnType<typeof usePhaseTransitions>;
+
+    mockUseReportMasterData.mockReturnValue({
+      isMasterDataLoading: false,
+      reportMasterData: { actorsById: {} },
+    } as never);
+    mockUsePhaseTransitions.mockReturnValue(phaseTransitionInfo);
+    mockUseFightNavigation.mockReturnValue({
+      navigationMode: 'all',
+      navigationData: {
+        currentIndex: 0,
+        previousFight: null,
+        nextFight: null,
+        totalCount: 1,
+        modeLabel: 'Fight',
+        currentFightType: 'boss',
+      },
+      navigateToPrevious: jest.fn(),
+      navigateToNext: jest.fn(),
+      handleNavigationModeChange: jest.fn(),
+    });
+    mockPlayersPanelRender.mockClear();
+
+    try {
+      const view = render(
+        <ThemeProvider theme={createTheme()}>
+          <FightDetailsView
+            fight={fight}
+            selectedTabId={TabId.PLAYERS}
+            onTabChange={jest.fn()}
+            showExperimentalTabs={false}
+            onToggleExperimentalTabs={jest.fn()}
+          />
+        </ThemeProvider>,
+      );
+
+      await waitFor(() => expect(mockPlayersPanelRender).toHaveBeenCalledTimes(1));
+
+      view.rerender(
+        <ThemeProvider theme={createTheme()}>
+          <FightDetailsView
+            fight={fight}
+            selectedTabId={TabId.INSIGHTS}
+            onTabChange={jest.fn()}
+            showExperimentalTabs={false}
+            onToggleExperimentalTabs={jest.fn()}
+          />
+        </ThemeProvider>,
+      );
+
+      expect(screen.getByRole('tab', { name: 'Insights' })).toHaveAttribute(
+        'aria-selected',
+        'true',
+      );
+      expect(mockPlayersPanelRender).toHaveBeenCalledTimes(1);
+    } finally {
+      useDeferredValueSpy.mockRestore();
+    }
   });
 });
