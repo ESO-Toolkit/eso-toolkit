@@ -3,6 +3,14 @@
  */
 
 import {
+  ACCESS_TOKEN_KEY,
+  clearStoredTokens,
+  getStoredAccessToken,
+  getStoredRefreshToken,
+  REFRESH_TOKEN_KEY,
+  setStoredToken,
+} from '../../features/auth/auth';
+import {
   getConsentState,
   hasRespondedToConsent,
   getConsentPreferences,
@@ -23,6 +31,7 @@ const CONSENT_KEY = 'eso-log-aggregator-cookie-consent';
 
 describe('consentManager', () => {
   beforeEach(() => {
+    clearStoredTokens();
     localStorage.clear();
     sessionStorage.clear();
   });
@@ -271,6 +280,23 @@ describe('consentManager', () => {
   });
 
   describe('deleteAllUserData', () => {
+    it('clears OAuth credentials held only by the in-memory fallback', () => {
+      setStoredToken(ACCESS_TOKEN_KEY, 'volatile-access');
+      setStoredToken(REFRESH_TOKEN_KEY, 'volatile-refresh');
+      // Leave the module-level fallback populated while proving that erasure
+      // does not depend on finding credentials in Web Storage.
+      sessionStorage.removeItem(ACCESS_TOKEN_KEY);
+      sessionStorage.removeItem(REFRESH_TOKEN_KEY);
+
+      expect(getStoredAccessToken()).toBe('volatile-access');
+      expect(getStoredRefreshToken()).toBe('volatile-refresh');
+
+      deleteAllUserData();
+
+      expect(getStoredAccessToken()).toBe('');
+      expect(getStoredRefreshToken()).toBe('');
+    });
+
     it('removes all known app storage keys', () => {
       localStorage.setItem('persist:root', 'test');
       localStorage.setItem('access_token', 'test');

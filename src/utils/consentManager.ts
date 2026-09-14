@@ -9,6 +9,8 @@
  * GDPR-compliant: No non-essential tracking occurs until explicit user consent.
  */
 
+import { clearStoredTokens } from '../features/auth/auth';
+
 const CONSENT_STORAGE_KEY = 'eso-log-aggregator-cookie-consent';
 const CONSENT_VERSION = '2'; // Bumped from '1' — granular categories
 
@@ -552,6 +554,11 @@ export const exportUserData = (): Record<string, unknown> => {
  * GDPR Article 17 — Right to erasure ("right to be forgotten").
  */
 export const deleteAllUserData = (): void => {
+  // OAuth credentials also have an in-memory fallback for browsers that block
+  // Web Storage. Clear that source first so deleting browser data cannot leave
+  // the current tab authenticated or allow a refresh token to revive it.
+  clearStoredTokens();
+
   const keys = new Set([
     ...APP_STORAGE_KEY_DEFINITIONS.map(({ key }) => key),
     ...getDynamicStorageKeys('localStorage'),
