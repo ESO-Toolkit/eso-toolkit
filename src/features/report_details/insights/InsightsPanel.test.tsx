@@ -4,6 +4,7 @@ import React from 'react';
 import type { FightFragment } from '../../../graphql/gql/graphql';
 
 import { InsightsPanel } from './InsightsPanel';
+import type { InsightsEvidenceWorkflow } from './InsightsPanelView';
 
 const mockUseDamageEvents = jest.fn();
 const mockUsePlayerData = jest.fn();
@@ -56,11 +57,15 @@ jest.mock('./InsightsPanelView', () => ({
     dataState,
     fightInitiator,
     onRetry,
+    productEvidence,
+    productWorkflowState,
     retryAvailability,
   }: {
     dataState: { kind: string };
     fightInitiator: { kind: string; message?: string; name?: string };
     onRetry: () => void;
+    productEvidence?: InsightsEvidenceWorkflow;
+    productWorkflowState?: string;
     retryAvailability: { canRetry: boolean; unavailableReason: string | null };
   }) => (
     <>
@@ -72,6 +77,10 @@ jest.mock('./InsightsPanelView', () => ({
       ) : null}
       <output data-testid="fight-initiator-state">
         {fightInitiator.kind === 'available' ? fightInitiator.name : fightInitiator.message}
+      </output>
+      <output data-testid="product-workflow-state">{productWorkflowState}</output>
+      <output data-testid="product-evidence">
+        {productEvidence ? JSON.stringify(productEvidence) : 'unavailable'}
       </output>
     </>
   ),
@@ -107,6 +116,43 @@ const succeededPlayerData = {
     error: null,
     playersById: {},
     status: 'succeeded' as const,
+  },
+};
+
+const fixedHeuristicEvidence: InsightsEvidenceWorkflow = {
+  input: {
+    context: {
+      difficulty: 'veteran',
+      encounterId: '1',
+      encounterVersion: '1',
+      esoUpdate: 'U50',
+      partitionId: 'pc-na-live',
+    },
+    entries: [
+      {
+        actorId: '42',
+        confidence: 'unknown',
+        difficulty: 'veteran',
+        encounterId: '1',
+        encounterVersion: '1',
+        estimatedImpact: 0,
+        esoUpdate: 'U50',
+        expected: 'Fixed heuristic output supplied by the Analyzer producer.',
+        id: 'analyzer-fixed-heuristic-42',
+        observed: 'Analyzer-derived metric was available for this fight.',
+        partitionId: 'pc-na-live',
+        phaseId: 'full-fight',
+        role: 'damage',
+        scoreContribution: 0,
+        timestamp: 0,
+      },
+    ],
+    fight: { endTimestamp: 65_000, startTimestamp: 0 },
+  },
+  provenance: {
+    period: 'report-1 / fight-1',
+    refreshedAt: '2026-09-13T00:00:00.000Z',
+    source: 'Analyzer fixed heuristic',
   },
 };
 
@@ -165,6 +211,64 @@ describe('InsightsPanel retry', () => {
     );
 
     expect(screen.getByTestId('fight-initiator-state')).toHaveTextContent('Initiating Player');
+  });
+
+  it('forwards authoritative fixed-heuristic evidence with its scoped context and provenance', () => {
+    mockUseDamageEvents.mockReturnValue({
+      damageEvents: [],
+      damageEventsError: null,
+      damageEventsStatus: 'succeeded' as const,
+      isDamageEventsLoading: false,
+      selectedFight: fight,
+    });
+
+    render(
+      <InsightsPanel
+        context={{ reportCode: 'report-1', fightId: 1 }}
+        fight={fight}
+        productEvidence={fixedHeuristicEvidence}
+      />,
+    );
+
+    expect(screen.getByTestId('product-workflow-state')).toHaveTextContent('evidence-ready');
+    expect(screen.getByTestId('product-evidence')).toHaveTextContent('Analyzer fixed heuristic');
+    expect(screen.getByTestId('product-evidence')).toHaveTextContent('pc-na-live');
+    expect(screen.getByTestId('product-evidence')).toHaveTextContent('U50');
+    expect(screen.getByTestId('product-evidence')).toHaveTextContent('report-1 / fight-1');
+  });
+
+  it('withholds malformed evidence and does not promote raw streams into an encounter finding', () => {
+    mockUseDamageEvents.mockReturnValue({
+      damageEvents: [{ sourceID: 42, sourceIsFriendly: true, timestamp: 0 }],
+      damageEventsError: null,
+      damageEventsStatus: 'succeeded' as const,
+      isDamageEventsLoading: false,
+      selectedFight: fight,
+    });
+
+    const malformedEvidence = {
+      ...fixedHeuristicEvidence,
+      input: {
+        ...fixedHeuristicEvidence.input,
+        entries: [
+          {
+            ...fixedHeuristicEvidence.input.entries[0],
+            partitionId: 'pc-eu-live',
+          },
+        ],
+      },
+    } as unknown as InsightsEvidenceWorkflow;
+
+    render(
+      <InsightsPanel
+        context={{ reportCode: 'report-1', fightId: 1 }}
+        fight={fight}
+        productEvidence={malformedEvidence}
+      />,
+    );
+
+    expect(screen.getByTestId('product-workflow-state')).toHaveTextContent('unavailable');
+    expect(screen.getByTestId('product-evidence')).toHaveTextContent('unavailable');
   });
 
   it('invalidates and directly refetches only the failed stream', () => {

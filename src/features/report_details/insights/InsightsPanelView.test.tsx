@@ -7,6 +7,7 @@ import type { FightFragment } from '../../../graphql/gql/graphql';
 import type { InsightsDataState, InsightsRetryAvailability } from './insightsDataState';
 import {
   InsightsPanelView,
+  type InsightsEvidenceWorkflow,
   type FightInitiatorState,
   type InsightsWorkflowState,
 } from './InsightsPanelView';
@@ -44,6 +45,42 @@ const availableRetry: InsightsRetryAvailability = { canRetry: true, unavailableR
 const unavailableFightInitiator: FightInitiatorState = {
   kind: 'unavailable' as const,
   message: 'No initiator data is available.',
+};
+const availableEvidence: InsightsEvidenceWorkflow = {
+  input: {
+    context: {
+      difficulty: 'veteran',
+      encounterId: '1',
+      encounterVersion: '1',
+      esoUpdate: 'U50',
+      partitionId: 'pc-na-live',
+    },
+    entries: [
+      {
+        actorId: '42',
+        confidence: 'unknown',
+        difficulty: 'veteran',
+        encounterId: '1',
+        encounterVersion: '1',
+        estimatedImpact: 0,
+        esoUpdate: 'U50',
+        expected: 'Authoritative Analyzer evidence is available for drilldown.',
+        id: 'evidence-ready-42',
+        observed: 'An Analyzer-derived metric was observed in this fight.',
+        partitionId: 'pc-na-live',
+        phaseId: 'full-fight',
+        role: 'damage',
+        scoreContribution: 0,
+        timestamp: 0,
+      },
+    ],
+    fight: { endTimestamp: 65_000, startTimestamp: 0 },
+  },
+  provenance: {
+    period: 'report-1 / fight-1',
+    refreshedAt: '2026-09-13T00:00:00.000Z',
+    source: 'Analyzer evidence',
+  },
 };
 
 const renderPanel = (
@@ -390,7 +427,10 @@ describe('InsightsPanelView data states', () => {
   });
 });
 
-const renderProductWorkflow = (productWorkflowState: InsightsWorkflowState) =>
+const renderProductWorkflow = (
+  productWorkflowState: InsightsWorkflowState,
+  productEvidence?: InsightsEvidenceWorkflow,
+) =>
   render(
     <ThemeProvider theme={createTheme()}>
       <InsightsPanelView
@@ -409,6 +449,7 @@ const renderProductWorkflow = (productWorkflowState: InsightsWorkflowState) =>
         onRetry={jest.fn()}
         retryAvailability={availableRetry}
         productWorkflowState={productWorkflowState}
+        productEvidence={productEvidence}
       />
     </ThemeProvider>,
   );
@@ -429,6 +470,22 @@ describe('InsightsPanelView product workflow', () => {
     );
     expect(screen.getByText(/No comparison score is available/)).toBeInTheDocument();
     expect(screen.getByText(/No trend or score is inferred/)).toBeInTheDocument();
+  });
+
+  it('announces validated evidence as ready without manufacturing a recommendation or baseline', () => {
+    renderProductWorkflow('evidence-ready', availableEvidence);
+
+    expect(
+      screen.getByText(/Validated timestamped evidence is ready for drilldown/),
+    ).toBeInTheDocument();
+    expect(screen.getByTestId('evidence-drilldown-panel')).toHaveTextContent(
+      'Analyzer evidence | report-1 / fight-1',
+    );
+    expect(screen.queryByTestId('evidence-drilldown-unavailable')).not.toBeInTheDocument();
+    expect(
+      screen.getByText(/does not establish a recommendation, benchmark, comparison, or score/),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/No comparison score is available/)).toBeInTheDocument();
   });
 
   it('orders the product workflow from decision through progression', () => {

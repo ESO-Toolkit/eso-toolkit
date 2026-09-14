@@ -34,7 +34,8 @@ import { PinnedFindingsPanel, type PinnedFindingsPanelState } from './findings/P
 import type { InsightsDataState, InsightsRetryAvailability } from './insightsDataState';
 import { StatusEffectUptimesPanel } from './StatusEffectUptimesPanel';
 
-export type InsightsWorkflowState = 'loading' | 'partial' | 'stale' | 'failed' | 'unavailable';
+export type InsightsWorkflowState =
+  'loading' | 'partial' | 'stale' | 'failed' | 'unavailable' | 'evidence-ready';
 
 /**
  * Evidence can only enter the workflow after an authoritative producer has
@@ -146,6 +147,12 @@ const toPinnedFindingsState = (state: InsightsWorkflowState): PinnedFindingsPane
         status: 'unavailable',
         reason: 'No persisted, privacy-safe findings are available for this analysis context.',
       };
+    case 'evidence-ready':
+      return {
+        status: 'unavailable',
+        reason:
+          'Validated evidence is available for drilldown, but no persisted, privacy-safe findings are available for this analysis context.',
+      };
   }
 };
 
@@ -184,6 +191,13 @@ const workflowStatus = (state: InsightsWorkflowState): React.ReactElement => {
         <Alert aria-live="polite" role="status" severity="info">
           This report has no authoritative encounter context, validated rule evidence, or
           context-compatible baseline for product findings yet. Unknown data is not scored as zero.
+        </Alert>
+      );
+    case 'evidence-ready':
+      return (
+        <Alert aria-live="polite" role="status" severity="success">
+          Validated timestamped evidence is ready for drilldown. It does not establish a
+          recommendation, benchmark, comparison, or score.
         </Alert>
       );
   }

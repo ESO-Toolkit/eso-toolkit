@@ -26,6 +26,7 @@ import { selectSelectedFriendlyPlayerId } from '../../../store/ui/uiSelectors';
 import { useAppDispatch } from '../../../store/useAppDispatch';
 import { KnownAbilities } from '../../../types/abilities';
 import { PlayerTalent } from '../../../types/playerDetails';
+import { createEvidenceDrilldownSnapshot } from '../../analysis/evidence/evidenceDrilldownModel';
 
 import {
   getInsightsDataState,
@@ -37,12 +38,18 @@ import {
 import {
   InsightsPanelView,
   type FightInitiatorState,
+  type InsightsEvidenceWorkflow,
   type InsightsWorkflowState,
 } from './InsightsPanelView';
 
 interface InsightsPanelProps {
   fight: FightFragment;
   context?: ReportFightContextInput;
+  /**
+   * Optional rule-backed evidence supplied by an authoritative producer. Raw
+   * Insights streams never become product evidence by themselves.
+   */
+  productEvidence?: InsightsEvidenceWorkflow;
 }
 
 interface RetryTracking {
@@ -86,7 +93,11 @@ const CHAMPION_POINT_MAPPINGS: Record<number, KnownAbilities> = {
   [KnownAbilities.FROM_THE_BRINK]: KnownAbilities.FROM_THE_BRINK,
 };
 
-export const InsightsPanel: React.FC<InsightsPanelProps> = ({ fight, context }) => {
+export const InsightsPanel: React.FC<InsightsPanelProps> = ({
+  fight,
+  context,
+  productEvidence,
+}) => {
   const durationMs = fight.endTime - fight.startTime;
   const dispatch = useAppDispatch();
   const selectedFriendlyPlayerId = useSelector(selectSelectedFriendlyPlayerId);
@@ -276,7 +287,14 @@ export const InsightsPanel: React.FC<InsightsPanelProps> = ({ fight, context }) 
       });
     }
   }, [retryContextKey, sourceOutcomes]);
-  const productWorkflowState = React.useMemo<InsightsWorkflowState>(() => {
+  const validatedProductEvidence = React.useMemo<InsightsEvidenceWorkflow | undefined>(() => {
+    if (!productEvidence || createEvidenceDrilldownSnapshot(productEvidence.input) === null) {
+      return undefined;
+    }
+
+    return productEvidence;
+  }, [productEvidence]);
+  const analysisInputWorkflowState = React.useMemo<InsightsWorkflowState>(() => {
     const sourceStatuses = [
       damageEventsStatus,
       combatantInfoEventsStatus,
@@ -311,6 +329,9 @@ export const InsightsPanel: React.FC<InsightsPanelProps> = ({ fight, context }) 
     playerData?.error,
     playerData?.status,
   ]);
+  const productWorkflowState: InsightsWorkflowState = validatedProductEvidence
+    ? 'evidence-ready'
+    : analysisInputWorkflowState;
 
   const abilityEquipped = React.useMemo(() => {
     const result: Partial<Record<KnownAbilities, string[]>> = {};
@@ -609,6 +630,7 @@ export const InsightsPanel: React.FC<InsightsPanelProps> = ({ fight, context }) 
       onRetry={retryFailedSources}
       retryAvailability={retryAvailability}
       productWorkflowState={productWorkflowState}
+      productEvidence={validatedProductEvidence}
     />
   );
 };
