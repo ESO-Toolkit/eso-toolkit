@@ -50,8 +50,25 @@ export const ActorsPanel: React.FC = () => {
     isLoading,
   });
 
+  // While loading or when the result is empty, the grid itself renders with no
+  // rows so its "No actors found" empty message stays visible.
+  const emptyGrid = (
+    <ActorsPanelView
+      actors={[]}
+      playersById={undefined}
+      actorsById={undefined}
+      combatantInfoEvents={[]}
+    />
+  );
+
   return (
-    <AnalyzerPanelState detail={failureDetail} state={state} title="Actors">
+    <AnalyzerPanelState
+      detail={failureDetail}
+      state={state}
+      title="Actors"
+      loadingFallback={emptyGrid}
+      emptyFallback={emptyGrid}
+    >
       {hasRetainedData && (
         <ActorsPanelView
           actors={actors}

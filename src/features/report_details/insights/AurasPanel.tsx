@@ -121,7 +121,15 @@ export const AurasPanel: React.FC = () => {
   });
 
   return (
-    <AnalyzerPanelState detail={failureDetail} state={state} title="Experimental: Auras overview">
+    <AnalyzerPanelState
+      detail={failureDetail}
+      state={state}
+      title="Experimental: Auras overview"
+      loadingFallback={
+        <AurasPanelView aurasData={[]} isLoading={true} reportId={reportId} fightId={fightId} />
+      }
+      emptyFallback={<AurasPanelView aurasData={[]} reportId={reportId} fightId={fightId} />}
+    >
       {hasRetainedData && (
         <AurasPanelView aurasData={aurasData} reportId={reportId} fightId={fightId} />
       )}

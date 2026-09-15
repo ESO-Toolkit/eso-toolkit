@@ -1,7 +1,8 @@
-import { Box } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 
+import { HealingDoneTableSkeleton } from '../../../components/HealingDoneTableSkeleton';
 import { PlayerCardModal } from '../../../components/PlayerCardModal';
 import {
   useCastEvents,
@@ -282,7 +283,19 @@ export const HealingDonePanel: React.FC<HealingDonePanelProps> = ({ context }) =
   });
 
   return (
-    <AnalyzerPanelState title="Healing done" state={panelState} detail={panelError ?? undefined}>
+    <AnalyzerPanelState
+      title="Healing done"
+      state={panelState}
+      detail={panelError ?? undefined}
+      loadingFallback={<HealingDoneTableSkeleton rowCount={8} />}
+      emptyFallback={
+        <Box sx={{ textAlign: 'center', py: 4 }}>
+          <Typography variant="body1" color="text.secondary">
+            No healing data available for this fight
+          </Typography>
+        </Box>
+      }
+    >
       {hasData && (
         <Box data-testid="healing-done-panel">
           <HealingDonePanelView healingRows={healingRows} onPlayerClick={handlePlayerClick} />

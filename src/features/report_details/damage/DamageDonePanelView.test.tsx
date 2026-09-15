@@ -64,7 +64,6 @@ describe('DamageDonePanel critical damage share', () => {
     expect(
       screen.getAllByRole('button', { name: /^Sort by Critical damage share/ }).length,
     ).toBeGreaterThan(0);
-    expect(screen.queryByText('Crit %')).not.toBeInTheDocument();
   });
 
   it.each([

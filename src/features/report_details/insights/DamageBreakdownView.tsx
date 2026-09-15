@@ -5,6 +5,7 @@ import {
   ListItem,
   LinearProgress,
   Avatar,
+  Skeleton,
   Chip,
   Tooltip,
   useTheme,
@@ -49,9 +50,31 @@ export const DamageBreakdownView: React.FC<DamageBreakdownViewProps> = React.mem
       return num.toString();
     };
 
+    const loadingSkeleton = (
+      <>
+        <Typography variant="h6" gutterBottom>
+          Damage Breakdown
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          Total damage dealt by friendly players:{' '}
+          <Skeleton variant="text" width="60px" sx={{ display: 'inline-block' }} />
+        </Typography>
+        <Skeleton variant="rectangular" width="100%" height={40} />
+        <Skeleton variant="rectangular" width="100%" height={300} sx={{ mt: 2 }} />
+      </>
+    );
+
     return (
       <Box sx={{ mt: 2 }}>
-        <AnalyzerPanelState title="Damage Breakdown" state={state} detail={stateDetail}>
+        <AnalyzerPanelState
+          title="Damage Breakdown"
+          state={state}
+          detail={stateDetail}
+          loadingFallback={loadingSkeleton}
+        >
+          <Typography variant="h6" gutterBottom>
+            Damage Breakdown
+          </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
             Total damage dealt by friendly players: {formatNumber(totalDamage)}
           </Typography>
@@ -79,18 +102,10 @@ export const DamageBreakdownView: React.FC<DamageBreakdownViewProps> = React.mem
                     Number.isFinite(damage.criticalDamageShare)
                       ? damage.criticalDamageShare
                       : null;
-                  const criticalRateLabel =
-                    criticalRate === null
-                      ? 'Crit hit rate unavailable'
-                      : `Crit hit rate ${criticalRate.toFixed(1)}%`;
                   const criticalRateTooltip =
                     criticalRate === null
                       ? 'Critical hit rate is unavailable because no eligible normal or critical hits were recorded.'
                       : `Critical hit rate: ${damage.criticalHits} critical hits out of ${damage.eligibleHitCount} eligible hits.`;
-                  const criticalDamageShareLabel =
-                    criticalDamageShare === null
-                      ? 'Crit damage share unavailable'
-                      : `Crit damage share ${criticalDamageShare.toFixed(1)}%`;
                   const criticalDamageShareTooltip =
                     criticalDamageShare === null
                       ? !hasDamageDenominator
@@ -98,9 +113,7 @@ export const DamageBreakdownView: React.FC<DamageBreakdownViewProps> = React.mem
                         : 'Critical damage share is unavailable because one or more hit types are unknown.'
                       : `Critical damage share: ${formatNumber(damage.criticalDamage)} critical damage out of ${formatNumber(damage.totalDamage)} total damage.`;
                   const damageShareLabel =
-                    percentage === null
-                      ? 'Damage share unavailable'
-                      : `${percentage.toFixed(1)}% dmg`;
+                    percentage === null ? 'Damage share unavailable' : `${percentage.toFixed(1)}%`;
                   const damageShareAriaLabel =
                     percentage === null
                       ? 'Damage share unavailable because total damage is zero'
@@ -128,45 +141,37 @@ export const DamageBreakdownView: React.FC<DamageBreakdownViewProps> = React.mem
                               mb: 0.5,
                             }}
                           >
-                            <Box sx={{ flex: 1, pr: 12 }}>
-                              <Box sx={{ mb: 0.5, display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                                <Tooltip title={criticalRateTooltip} arrow>
-                                  <Chip
-                                    aria-label={criticalRateTooltip}
-                                    label={criticalRateLabel}
-                                    size="small"
-                                    sx={{
-                                      height: 16,
-                                      fontSize: '0.625rem',
-                                      backgroundColor: isDarkMode
-                                        ? '#4e579857'
-                                        : 'rgba(67, 56, 202, 0.12)',
-                                      color: isDarkMode ? 'rgba(255, 255, 255, 0.87)' : '#3730a3',
-                                      border: isDarkMode
-                                        ? '1px solid #45566f'
-                                        : '1px solid rgba(67, 56, 202, 0.3)',
-                                    }}
-                                  />
-                                </Tooltip>
-                                <Tooltip title={criticalDamageShareTooltip} arrow>
-                                  <Chip
-                                    aria-label={criticalDamageShareTooltip}
-                                    label={criticalDamageShareLabel}
-                                    size="small"
-                                    sx={{
-                                      height: 16,
-                                      fontSize: '0.625rem',
-                                      backgroundColor: isDarkMode
-                                        ? '#4e579857'
-                                        : 'rgba(67, 56, 202, 0.12)',
-                                      color: isDarkMode ? 'rgba(255, 255, 255, 0.87)' : '#3730a3',
-                                      border: isDarkMode
-                                        ? '1px solid #45566f'
-                                        : '1px solid rgba(67, 56, 202, 0.3)',
-                                    }}
-                                  />
-                                </Tooltip>
-                              </Box>
+                            <Box sx={{ flex: 1 }}>
+                              {criticalRate !== null && criticalRate > 0 && (
+                                <Box sx={{ mb: 0.5 }}>
+                                  <Tooltip
+                                    arrow
+                                    title={
+                                      <Box>
+                                        <Box>{criticalRateTooltip}</Box>
+                                        <Box>{criticalDamageShareTooltip}</Box>
+                                      </Box>
+                                    }
+                                  >
+                                    <Chip
+                                      aria-label={`${criticalRateTooltip} ${criticalDamageShareTooltip}`}
+                                      label={`${criticalRate.toFixed(1)}% crit`}
+                                      size="small"
+                                      sx={{
+                                        height: 16,
+                                        fontSize: '0.625rem',
+                                        backgroundColor: isDarkMode
+                                          ? '#4e579857'
+                                          : 'rgba(67, 56, 202, 0.12)',
+                                        color: isDarkMode ? 'rgba(255, 255, 255, 0.87)' : '#3730a3',
+                                        border: isDarkMode
+                                          ? '1px solid #45566f'
+                                          : '1px solid rgba(67, 56, 202, 0.3)',
+                                      }}
+                                    />
+                                  </Tooltip>
+                                </Box>
+                              )}
                               <Typography variant="body2" sx={{ fontWeight: 600 }}>
                                 {damage.abilityName}
                               </Typography>
@@ -174,7 +179,7 @@ export const DamageBreakdownView: React.FC<DamageBreakdownViewProps> = React.mem
                             <Box
                               sx={{
                                 position: 'absolute',
-                                top: 0,
+                                top: criticalRate !== null && criticalRate > 0 ? 0 : 2,
                                 right: 0,
                               }}
                             >

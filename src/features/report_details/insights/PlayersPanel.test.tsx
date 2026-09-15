@@ -36,7 +36,7 @@ describe('resolvePlayersPanelState', () => {
     expect(resolvePlayersPanelState(input)).toBe(expected);
   });
 
-  it('does not report fresh empty before a fight is authoritative', () => {
+  it('shows the loading skeleton rather than fresh empty or stale: no fight yet', () => {
     expect(
       resolvePlayersPanelState({
         hasData: false,
@@ -44,7 +44,7 @@ describe('resolvePlayersPanelState', () => {
         hasFight: false,
         statuses: [...completeStatuses],
       }),
-    ).toBe('stale');
+    ).toBe('loading');
   });
 });
 

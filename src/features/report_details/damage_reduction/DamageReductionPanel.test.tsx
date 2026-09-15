@@ -102,6 +102,9 @@ describe('DamageReductionPanel lifecycle states', () => {
     renderPanel(overrides);
 
     expect(screen.getByText(expectedAnnouncement)).toBeInTheDocument();
+    if (_state === 'loading') {
+      expect(screen.getByTestId('damage-reduction-skeleton')).toBeInTheDocument();
+    }
     if (_state === 'partial' || _state === 'stale' || _state === 'failed' || _state === 'ready') {
       expect(screen.getByText('Retained damage reduction results')).toBeInTheDocument();
     } else {

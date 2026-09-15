@@ -103,4 +103,17 @@ describe('specialized Analyzer panel lifecycle states', () => {
     expect(within(panel).getByText('Origin Map')).toBeInTheDocument();
     expect(within(panel).getByText('0')).toBeInTheDocument();
   });
+
+  it('renders the Maps panel layout with its own empty message when no maps exist', () => {
+    const fight = { gameZone: null, id: 1, maps: null } as unknown as FightFragment;
+
+    render(<MapsPanel fight={fight} />);
+
+    const panel = screen.getByRole('region', { name: 'Fight maps' });
+    expect(within(panel).getByRole('status')).toHaveTextContent(
+      'No data is available for this panel.',
+    );
+    expect(within(panel).getByRole('heading', { name: 'Fight Maps' })).toBeInTheDocument();
+    expect(within(panel).getByText('No maps found for this fight.')).toBeInTheDocument();
+  });
 });

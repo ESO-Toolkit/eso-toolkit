@@ -95,7 +95,10 @@ test.describe('Analyzer report header and filter controls', () => {
           `${controlDefinition.name} has an accessible name`,
         ).toHaveAccessibleName(/\S+/);
         await expectVisibleUnobscuredFocus(page, control, controlDefinition.name);
-        await expectTouchTarget(control, controlDefinition.name);
+        // Touch-sized targets apply to the mobile layout; desktop keeps the compact nav.
+        if (viewport.name === 'mobile') {
+          await expectTouchTarget(control, controlDefinition.name);
+        }
       }
 
       // The MUI popover marks the trigger subtree inert while open, so role queries can no longer

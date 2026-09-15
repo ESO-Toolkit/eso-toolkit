@@ -1,5 +1,14 @@
 import HelpOutlineIcon from '@mui/icons-material/HelpOutlined';
-import { Box, Typography, List, ListItem, Avatar, IconButton, Tooltip } from '@mui/material';
+import {
+  Box,
+  Typography,
+  List,
+  ListItem,
+  Avatar,
+  Skeleton,
+  IconButton,
+  Tooltip,
+} from '@mui/material';
 import type { Theme } from '@mui/material/styles';
 import React, { useState } from 'react';
 
@@ -128,9 +137,85 @@ export const DamageTypeBreakdownView: React.FC<DamageTypeBreakdownViewProps> = (
     return num.toString();
   };
 
+  const loadingSkeleton = (
+    <>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+        <Typography variant="h6">Damage by Type</Typography>
+        <Tooltip title="Learn how damage types are calculated" arrow>
+          <IconButton
+            size="small"
+            onClick={handleOpenHelp}
+            aria-label="Open damage type help"
+            sx={{
+              color: 'text.secondary',
+              '&:hover': { color: 'primary.main' },
+            }}
+          >
+            <HelpOutlineIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+      </Box>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+        Damage breakdown by damage type from friendly players:{' '}
+        <Skeleton variant="text" width="60px" sx={{ display: 'inline-block' }} />
+      </Typography>
+      <Box sx={{ maxHeight: 350, overflowY: 'auto' }}>
+        {[...Array(4)].map((_, index) => (
+          <Box
+            key={index}
+            sx={{
+              py: 1.5,
+              pl: 0.5,
+              pr: 1.5,
+              borderBottom: '1px solid rgba(0,0,0,0.06)',
+            }}
+          >
+            <Box sx={{ width: '100%' }}>
+              <Box
+                sx={{
+                  position: 'relative',
+                  height: 48,
+                  borderRadius: 2,
+                  bgcolor: (theme: Theme) =>
+                    theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  px: 2,
+                }}
+              >
+                {/* Emoji icon placeholder */}
+                <Skeleton variant="rounded" width={32} height={32} />
+
+                {/* Text content */}
+                <Box sx={{ flex: 1, minWidth: 0, ml: 1.5 }}>
+                  <Skeleton variant="text" width="60%" height={16} />
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.25 }}>
+                    <Skeleton variant="text" width="40px" height={12} />
+                    <Skeleton variant="text" width="40px" height={12} />
+                  </Box>
+                </Box>
+
+                {/* Percentage only (no stack badge for damage types) */}
+                <Skeleton variant="text" width="40px" height={20} />
+              </Box>
+            </Box>
+          </Box>
+        ))}
+      </Box>
+
+      {/* Help Modal */}
+      <DamageTypeHelpModal open={helpModalOpen} onClose={handleCloseHelp} />
+    </>
+  );
+
   return (
     <Box sx={{ mt: 2 }}>
-      <AnalyzerPanelState title="Damage by Type" state={state} detail={stateDetail}>
+      <AnalyzerPanelState
+        title="Damage by Type"
+        state={state}
+        detail={stateDetail}
+        loadingFallback={loadingSkeleton}
+      >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
           <Typography variant="h6">Damage by Type</Typography>
           <Tooltip title="Learn how damage types are calculated" arrow>
@@ -319,48 +404,23 @@ export const DamageTypeBreakdownView: React.FC<DamageTypeBreakdownViewProps> = (
                                 {formatNumber(Math.round(damageType.averageDamage))} avg
                               </Typography>
                             </Box>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.25 }}>
-                              <Tooltip title={criticalRateTooltip} arrow>
-                                <Typography
-                                  aria-label={criticalRateTooltip}
-                                  variant="caption"
-                                  sx={{
-                                    color: 'rgba(255,255,255,0.9)',
-                                    textShadow: '1px 1px 1px rgba(0,0,0,0.8)',
-                                    fontWeight: 500,
-                                  }}
-                                >
-                                  {criticalRateLabel}
-                                </Typography>
-                              </Tooltip>
-                              <Typography
-                                variant="caption"
-                                sx={{
-                                  color: 'rgba(255,255,255,0.7)',
-                                  textShadow: '1px 1px 1px rgba(0,0,0,0.8)',
-                                }}
-                              >
-                                •
-                              </Typography>
-                              <Tooltip title={criticalDamageShareTooltip} arrow>
-                                <Typography
-                                  aria-label={criticalDamageShareTooltip}
-                                  variant="caption"
-                                  sx={{
-                                    color: 'rgba(255,255,255,0.9)',
-                                    textShadow: '1px 1px 1px rgba(0,0,0,0.8)',
-                                    fontWeight: 500,
-                                  }}
-                                >
-                                  {criticalDamageShareLabel}
-                                </Typography>
-                              </Tooltip>
-                            </Box>
                           </Box>
 
-                          {/* Percentage */}
-                          <Tooltip title={damageShareAriaLabel} arrow>
-                            <Box aria-label={damageShareAriaLabel} sx={{ textAlign: 'right' }}>
+                          {/* Percentage (crit metrics live in the tooltip to keep the bar to two lines) */}
+                          <Tooltip
+                            arrow
+                            title={
+                              <Box>
+                                <Box>{damageShareAriaLabel}</Box>
+                                <Box>{criticalRateLabel}</Box>
+                                <Box>{criticalDamageShareLabel}</Box>
+                              </Box>
+                            }
+                          >
+                            <Box
+                              aria-label={`${damageShareAriaLabel}. ${criticalRateTooltip} ${criticalDamageShareTooltip}`}
+                              sx={{ textAlign: 'right' }}
+                            >
                               <Typography
                                 variant="h6"
                                 sx={{
@@ -370,15 +430,6 @@ export const DamageTypeBreakdownView: React.FC<DamageTypeBreakdownViewProps> = (
                                 }}
                               >
                                 {damageShareLabel}
-                              </Typography>
-                              <Typography
-                                variant="caption"
-                                sx={{
-                                  color: 'rgba(255,255,255,0.9)',
-                                  textShadow: '1px 1px 1px rgba(0,0,0,0.8)',
-                                }}
-                              >
-                                overlapping damage share
                               </Typography>
                             </Box>
                           </Tooltip>

@@ -554,7 +554,36 @@ export const DeathEventPanel: React.FC<DeathEventPanelProps> = ({ context }) => 
   });
 
   return (
-    <AnalyzerPanelState detail={failureDetail} state={state} title="Deaths">
+    <AnalyzerPanelState
+      detail={failureDetail}
+      state={state}
+      title="Deaths"
+      loadingFallback={
+        fight && (
+          <DeathEventPanelView
+            deathInfos={[]}
+            actorsById={reportMasterData.actorsById}
+            reportId={reportId}
+            fightId={resolvedFightId ?? undefined}
+            fight={fight}
+            isLoading={true}
+          />
+        )
+      }
+      emptyFallback={
+        fight && (
+          <DeathEventPanelView
+            deathInfos={[]}
+            actorsById={reportMasterData.actorsById}
+            players={players}
+            reportId={reportId}
+            fightId={resolvedFightId ?? undefined}
+            fight={fight}
+            isLoading={false}
+          />
+        )
+      }
+    >
       {deathInfos.length > 0 && fight && (
         <DeathEventPanelView
           deathInfos={deathInfos}

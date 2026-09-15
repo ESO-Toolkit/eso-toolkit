@@ -9,10 +9,13 @@ import { BuffOverviewData } from './BuffsOverviewPanel';
 
 interface BuffsOverviewPanelViewProps {
   buffOverviewData: BuffOverviewData[];
+  /** Shows the grid's loading state under the visible header. */
+  isLoading?: boolean;
 }
 
 export const BuffsOverviewPanelView: React.FC<BuffsOverviewPanelViewProps> = ({
   buffOverviewData,
+  isLoading = false,
 }) => {
   // Column definitions for the DataGrid
   const columns = React.useMemo<ColumnDef<BuffOverviewData>[]>(
@@ -111,6 +114,17 @@ export const BuffsOverviewPanelView: React.FC<BuffsOverviewPanelViewProps> = ({
 
   return (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <Typography
+        variant="h6"
+        sx={{
+          mb: 2,
+          color: 'text.primary',
+          fontWeight: 600,
+        }}
+      >
+        Buffs Overview
+      </Typography>
+
       <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
         Shows all buffs applied to friendly players during this fight. Includes abilities,
         consumables, gear effects, and environmental buffs.
@@ -126,7 +140,7 @@ export const BuffsOverviewPanelView: React.FC<BuffsOverviewPanelViewProps> = ({
         enableSorting={true}
         enableFiltering={true}
         enablePagination={true}
-        loading={false}
+        loading={isLoading}
         emptyMessage="No buff data available"
       />
     </Box>

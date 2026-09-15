@@ -76,16 +76,21 @@ describe('AbilitiesDebugPanel lifecycle states', () => {
   it('announces loading when master data is still being fetched', () => {
     renderPanel({ loading: true });
 
-    expect(screen.getByLabelText('Abilities: loading')).toBeInTheDocument();
     expect(screen.getByRole('status')).toHaveTextContent('Loading data.');
-    expect(screen.queryByTestId('abilities-view')).not.toBeInTheDocument();
+    // The view renders its own loading design rather than the generic state card.
+    expect(screen.queryByLabelText('Abilities: loading')).not.toBeInTheDocument();
+    expect(screen.getByTestId('abilities-view')).toBeInTheDocument();
+    expect(screen.getByTestId('abilities-loading')).toHaveTextContent('true');
   });
 
   it('announces an empty result only after the request completes', () => {
     renderPanel({ loaded: true });
 
     expect(screen.getByRole('status')).toHaveTextContent('No data is available for this panel.');
-    expect(screen.queryByTestId('abilities-view')).not.toBeInTheDocument();
+    // The view's own grid renders with no rows so its empty message stays visible.
+    expect(screen.getByTestId('abilities-view')).toBeInTheDocument();
+    expect(screen.getByTestId('abilities-total')).toHaveTextContent('0');
+    expect(screen.getByTestId('abilities-loading')).toHaveTextContent('false');
   });
 
   it('shows retained abilities while a refresh is partial', () => {

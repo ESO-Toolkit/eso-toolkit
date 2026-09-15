@@ -23,7 +23,7 @@ describe('resolveHealingDonePanelState', () => {
     expect(resolveHealingDonePanelState(input)).toBe(expected);
   });
 
-  it('does not classify an unconfirmed result as fresh empty', () => {
+  it('shows the loading skeleton rather than fresh empty or stale: no fight yet', () => {
     expect(
       resolveHealingDonePanelState({
         hasData: false,
@@ -31,6 +31,6 @@ describe('resolveHealingDonePanelState', () => {
         hasFight: false,
         statuses: [...completeStatuses],
       }),
-    ).toBe('stale');
+    ).toBe('loading');
   });
 });

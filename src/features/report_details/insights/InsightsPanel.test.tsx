@@ -58,14 +58,12 @@ jest.mock('./InsightsPanelView', () => ({
     fightInitiator,
     onRetry,
     productEvidence,
-    productWorkflowState,
     retryAvailability,
   }: {
     dataState: { kind: string };
     fightInitiator: { kind: string; message?: string; name?: string };
     onRetry: () => void;
     productEvidence?: InsightsEvidenceWorkflow;
-    productWorkflowState?: string;
     retryAvailability: { canRetry: boolean; unavailableReason: string | null };
   }) => (
     <>
@@ -78,7 +76,6 @@ jest.mock('./InsightsPanelView', () => ({
       <output data-testid="fight-initiator-state">
         {fightInitiator.kind === 'available' ? fightInitiator.name : fightInitiator.message}
       </output>
-      <output data-testid="product-workflow-state">{productWorkflowState}</output>
       <output data-testid="product-evidence">
         {productEvidence ? JSON.stringify(productEvidence) : 'unavailable'}
       </output>
@@ -230,7 +227,6 @@ describe('InsightsPanel retry', () => {
       />,
     );
 
-    expect(screen.getByTestId('product-workflow-state')).toHaveTextContent('evidence-ready');
     expect(screen.getByTestId('product-evidence')).toHaveTextContent('Analyzer fixed heuristic');
     expect(screen.getByTestId('product-evidence')).toHaveTextContent('pc-na-live');
     expect(screen.getByTestId('product-evidence')).toHaveTextContent('U50');
@@ -267,7 +263,6 @@ describe('InsightsPanel retry', () => {
       />,
     );
 
-    expect(screen.getByTestId('product-workflow-state')).toHaveTextContent('unavailable');
     expect(screen.getByTestId('product-evidence')).toHaveTextContent('unavailable');
   });
 

@@ -348,6 +348,8 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({
               gridTemplateColumns: '2fr 3fr 1fr 1fr 1fr 1fr 1fr',
               gap: 2,
               p: 1.5,
+              // Keep each label and its sort glyph on one line in narrow columns.
+              '& > *': { whiteSpace: 'nowrap' },
               backgroundColor: 'transparent',
               borderBottom: roleColors.isDarkMode
                 ? '1px solid rgba(255, 255, 255, 0.08)'

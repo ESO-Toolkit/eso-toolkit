@@ -21,6 +21,13 @@ export interface AnalyzerPanelStateProps {
    */
   onRetry?: () => void;
   retryLabel?: string;
+  /** The panel's own loading design (skeleton). Rendered in place of the generic spinner card. */
+  loadingFallback?: React.ReactNode;
+  /**
+   * The panel's own empty-state design. Rendered in place of the generic card. When
+   * omitted, `children` render instead so views that handle their own empty case keep it.
+   */
+  emptyFallback?: React.ReactNode;
 }
 
 /**
@@ -34,9 +41,8 @@ export interface ResolveAnalyzerPanelStateInput {
   isComplete: boolean;
   isLoading: boolean;
   /**
-   * True only when the panel has a valid context and its first request has not
-   * started yet. This distinguishes the initial idle render from a stalled
-   * dependency without allowing missing-context panels to spin forever.
+   * Retained for callers; panels without data now resolve to `loading` until
+   * they complete or fail, whether or not the first request has started.
    */
   isInitialRequestPending?: boolean;
 }
@@ -46,15 +52,16 @@ export const resolveAnalyzerPanelState = ({
   hasData,
   isComplete,
   isLoading,
-  isInitialRequestPending = false,
 }: ResolveAnalyzerPanelStateInput): AnalyzerPanelStateKind => {
   if (error) return 'failed';
   if (isLoading) return hasData ? 'partial' : 'loading';
   if (isComplete) return hasData ? 'ready' : 'empty';
-  if (isInitialRequestPending && !hasData) return 'loading';
+  // Nothing to show and nothing has failed: requests are still being scheduled
+  // (the first render before a fetch starts). Show the panel's skeleton rather
+  // than flashing a "not confirmed current" warning card.
+  if (!hasData) return 'loading';
 
-  // A dependency has stopped making progress without confirming a fresh
-  // result. Do not disguise this as an empty panel or an endless skeleton.
+  // Retained data whose refresh has not confirmed a fresh result.
   return 'stale';
 };
 
@@ -88,6 +95,16 @@ const statePresentations: Record<AnalyzerPanelStateKind, StatePresentation> = {
 const canShowContent = (state: AnalyzerPanelStateKind): boolean =>
   state === 'partial' || state === 'stale' || state === 'failed' || state === 'ready';
 
+const visuallyHiddenSx = {
+  position: 'absolute',
+  width: 1,
+  height: 1,
+  margin: -1,
+  overflow: 'hidden',
+  clip: 'rect(0 0 0 0)',
+  whiteSpace: 'nowrap',
+} as const;
+
 /**
  * Shared state renderer for Analyzer widgets. It makes data freshness explicit
  * and preserves usable prior content when a refresh is incomplete or fails.
@@ -100,6 +117,8 @@ export const AnalyzerPanelState: React.FC<AnalyzerPanelStateProps> = ({
   detail,
   onRetry,
   retryLabel = 'Try again',
+  loadingFallback,
+  emptyFallback,
 }) => {
   const presentation = statePresentations[state];
   const titleId = React.useId();
@@ -107,6 +126,32 @@ export const AnalyzerPanelState: React.FC<AnalyzerPanelStateProps> = ({
   const announcement = detail
     ? `${presentation.announcement} ${detail}`
     : presentation.announcement;
+
+  // Panels keep their own designs wherever they supply one: populated content,
+  // the panel's own loading skeleton, and the panel's own empty state all render
+  // in place rather than inside the generic outlined card. Wrapping a populated
+  // table in the card narrows it and duplicates the panel's title, and the
+  // generic loading/empty copy replaces purpose-built designs. Every state is
+  // still announced to assistive technology.
+  const ownContent =
+    state === 'ready' || state === 'partial'
+      ? children
+      : state === 'loading'
+        ? loadingFallback
+        : state === 'empty'
+          ? (emptyFallback ?? children)
+          : undefined;
+
+  if (ownContent) {
+    return (
+      <Box component="section" aria-label={title}>
+        <Typography role="status" aria-live={presentation.live} sx={visuallyHiddenSx}>
+          {announcement}
+        </Typography>
+        {ownContent}
+      </Box>
+    );
+  }
 
   return (
     <Paper component="section" aria-labelledby={titleId} variant="outlined" sx={{ p: 2 }}>
@@ -161,17 +206,7 @@ export const AnalyzerPanelState: React.FC<AnalyzerPanelStateProps> = ({
       )}
 
       {state === 'ready' && (
-        <Typography
-          role="status"
-          aria-live={presentation.live}
-          sx={{
-            position: 'absolute',
-            width: 1,
-            height: 1,
-            overflow: 'hidden',
-            clip: 'rect(0 0 0 0)',
-          }}
-        >
+        <Typography role="status" aria-live={presentation.live} sx={visuallyHiddenSx}>
           {announcement}
         </Typography>
       )}

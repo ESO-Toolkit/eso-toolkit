@@ -8,6 +8,7 @@ import { FightFragment } from '../../../graphql/gql/graphql';
 import { usePlayerData } from '../../../hooks';
 import { PlayerTalent } from '../../../types/playerDetails';
 import { abilityIconUrl } from '../../../utils/abilityIconCorrections';
+import { getSkeletonForTab, TabId } from '../../../utils/getSkeletonForTab';
 import { resolveActorName } from '../../../utils/resolveActorName';
 import {
   AnalyzerPanelState,
@@ -236,6 +237,17 @@ export const TalentsGridPanel: React.FC<TalentsGridPanelProps> = ({ fight }) => 
       title="Player talents"
       state={panelState}
       detail={playerData?.error ?? undefined}
+      loadingFallback={getSkeletonForTab(TabId.TALENTS, false, false)}
+      emptyFallback={
+        <Box sx={{ p: 2, textAlign: 'center' }}>
+          <Typography variant="h6" color="text.secondary">
+            No talent data available for this fight
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+            Talent information may not be available for this report or fight.
+          </Typography>
+        </Box>
+      }
     >
       {talentRows.length > 0 && (
         <Box sx={{ p: 2 }}>

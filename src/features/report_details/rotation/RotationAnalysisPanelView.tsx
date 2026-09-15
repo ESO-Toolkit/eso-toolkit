@@ -52,9 +52,9 @@ export const RotationAnalysisPanelView: React.FC<RotationAnalysisPanelViewProps>
         <Typography variant="h6" gutterBottom>
           Rotation Analysis
         </Typography>
-        <Alert severity={dataState === 'invalid' ? 'error' : 'info'} role="status">
-          {dataMessage || 'No cast or resource data available for this fight.'}
-        </Alert>
+        <Typography color="textSecondary">
+          No cast or resource data available for this fight.
+        </Typography>
       </Paper>
     );
   }

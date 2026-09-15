@@ -44,7 +44,9 @@ jest.mock('./penetration/PenetrationPanelView', () => ({
   PenetrationPanelView: () => <div>penetration view</div>,
 }));
 jest.mock('./synergy/SynergyPanelView', () => ({
-  SynergyPanelView: () => <div>synergy view</div>,
+  SynergyPanelView: ({ isLoading }: { isLoading: boolean }) => (
+    <div>{isLoading ? 'synergy skeleton' : 'synergy view'}</div>
+  ),
 }));
 jest.mock('./synergy/synergyUtils', () => ({
   extractSynergyData: jest.fn(),
@@ -148,7 +150,9 @@ describe('Analyzer panel state integration', () => {
     render(<ActorsPanel />);
 
     expect(within(panel('Actors')).getByRole('status')).toHaveTextContent('Loading data.');
-    expect(within(panel('Actors')).getByLabelText('Actors: loading')).toBeInTheDocument();
+    // The actors grid renders with no rows instead of the generic state card.
+    expect(within(panel('Actors')).queryByLabelText('Actors: loading')).not.toBeInTheDocument();
+    expect(within(panel('Actors')).getByText('actors view')).toBeInTheDocument();
   });
 
   it('announces a fresh empty Actors result only after all sources complete', () => {
@@ -157,7 +161,8 @@ describe('Analyzer panel state integration', () => {
     expect(within(panel('Actors')).getByRole('status')).toHaveTextContent(
       'No data is available for this panel.',
     );
-    expect(screen.queryByText('actors view')).not.toBeInTheDocument();
+    // The grid keeps its own "No actors found" empty message visible.
+    expect(within(panel('Actors')).getByText('actors view')).toBeInTheDocument();
   });
 
   it('keeps retained Actors visible and announces a partial refresh', () => {
@@ -260,7 +265,7 @@ describe('Analyzer panel state integration', () => {
 
     expect(within(panel('Critical damage')).getByRole('status')).toHaveTextContent('Loading data.');
     expect(
-      within(panel('Critical damage')).getByLabelText('Critical damage: loading'),
+      within(panel('Critical damage')).getByTestId('critical-damage-skeleton'),
     ).toBeInTheDocument();
   });
 
@@ -283,7 +288,7 @@ describe('Analyzer panel state integration', () => {
     expect(screen.queryByText('critical damage view')).not.toBeInTheDocument();
   });
 
-  it('does not treat a missing critical-damage result as completed empty', () => {
+  it('shows loading, not completed empty, for a missing critical-damage result', () => {
     hooks.useCriticalDamageTask.mockReturnValue({
       criticalDamageData: null,
       isCriticalDamageLoading: false,
@@ -296,9 +301,7 @@ describe('Analyzer panel state integration', () => {
 
     render(<CriticalDamagePanel />);
 
-    expect(within(panel('Critical damage')).getByRole('status')).toHaveTextContent(
-      'Panel data is not confirmed current.',
-    );
+    expect(within(panel('Critical damage')).getByRole('status')).toHaveTextContent('Loading data.');
   });
 
   it('announces critical damage calculation errors as failures', () => {
@@ -369,7 +372,7 @@ describe('Analyzer panel state integration', () => {
     expect(screen.getByText('critical damage view')).toBeInTheDocument();
   });
 
-  it('marks a missing critical-damage fight context as stale even while dependencies load', () => {
+  it('shows loading for a missing critical-damage fight context while dependencies load', () => {
     hooks.useFightForContext.mockReturnValue(null);
     hooks.useCriticalDamageTask.mockReturnValue({
       criticalDamageData: null,
@@ -380,9 +383,7 @@ describe('Analyzer panel state integration', () => {
 
     render(<CriticalDamagePanel />);
 
-    expect(within(panel('Critical damage')).getByRole('status')).toHaveTextContent(
-      'Panel data is not confirmed current.',
-    );
+    expect(within(panel('Critical damage')).getByRole('status')).toHaveTextContent('Loading data.');
     expect(screen.queryByLabelText('Critical damage: loading')).not.toBeInTheDocument();
     expect(screen.queryByText('critical damage view')).not.toBeInTheDocument();
   });
@@ -425,10 +426,10 @@ describe('Analyzer panel state integration', () => {
     render(<PenetrationPanel />);
 
     expect(within(panel('Penetration')).getByRole('status')).toHaveTextContent('Loading data.');
-    expect(within(panel('Penetration')).getByLabelText('Penetration: loading')).toBeInTheDocument();
+    expect(within(panel('Penetration')).getByTestId('penetration-skeleton')).toBeInTheDocument();
   });
 
-  it('does not treat a missing penetration result as completed empty', () => {
+  it('shows loading, not completed empty, for a missing penetration result', () => {
     usePenetrationDataTask.mockReturnValue({
       penetrationData: null,
       isPenetrationDataLoading: false,
@@ -441,12 +442,10 @@ describe('Analyzer panel state integration', () => {
 
     render(<PenetrationPanel />);
 
-    expect(within(panel('Penetration')).getByRole('status')).toHaveTextContent(
-      'Panel data is not confirmed current.',
-    );
+    expect(within(panel('Penetration')).getByRole('status')).toHaveTextContent('Loading data.');
   });
 
-  it('marks a missing penetration fight context as stale even while dependencies load', () => {
+  it('shows loading for a missing penetration fight context while dependencies load', () => {
     hooks.useFightForContext.mockReturnValue(null);
     hooks.usePlayerData.mockReturnValue({ playerData: null, isPlayerDataLoading: true });
     usePenetrationDataTask.mockReturnValue({
@@ -457,9 +456,7 @@ describe('Analyzer panel state integration', () => {
 
     render(<PenetrationPanel />);
 
-    expect(within(panel('Penetration')).getByRole('status')).toHaveTextContent(
-      'Panel data is not confirmed current.',
-    );
+    expect(within(panel('Penetration')).getByRole('status')).toHaveTextContent('Loading data.');
     expect(screen.queryByLabelText('Penetration: loading')).not.toBeInTheDocument();
   });
 
@@ -567,10 +564,10 @@ describe('Analyzer panel state integration', () => {
     render(<SynergyPanel />);
 
     expect(within(panel('Synergies')).getByRole('status')).toHaveTextContent('Loading data.');
-    expect(within(panel('Synergies')).getByLabelText('Synergies: loading')).toBeInTheDocument();
+    expect(within(panel('Synergies')).getByText('synergy skeleton')).toBeInTheDocument();
   });
 
-  it('marks a missing synergy fight context as stale even while dependencies load', () => {
+  it('shows loading for a missing synergy fight context while dependencies load', () => {
     hooks.useFightForContext.mockReturnValue(null);
     hooks.useCastEvents.mockReturnValue({
       castEvents: [],
@@ -585,10 +582,7 @@ describe('Analyzer panel state integration', () => {
 
     render(<SynergyPanel />);
 
-    expect(within(panel('Synergies')).getByRole('status')).toHaveTextContent(
-      'Panel data is not confirmed current.',
-    );
-    expect(screen.queryByLabelText('Synergies: loading')).not.toBeInTheDocument();
+    expect(within(panel('Synergies')).getByRole('status')).toHaveTextContent('Loading data.');
   });
 
   it('announces a Synergy query failure instead of suppressing the error', () => {

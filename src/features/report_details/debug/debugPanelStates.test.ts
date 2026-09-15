@@ -58,7 +58,7 @@ describe('debug analyzer panel lifecycle states', () => {
     }
   });
 
-  it('does not treat null stream entries as successful empty data', () => {
-    expect(resolveDebugEventPanelState([], [null])).toEqual({ state: 'stale' });
+  it('shows loading, not successful empty data, for null stream entries', () => {
+    expect(resolveDebugEventPanelState([], [null])).toEqual({ state: 'loading' });
   });
 });

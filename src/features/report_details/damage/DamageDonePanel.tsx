@@ -1,7 +1,8 @@
-import { Box } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 
+import { DamageDoneTableSkeleton } from '../../../components/DamageDoneTableSkeleton';
 import { PlayerCardModal } from '../../../components/PlayerCardModal';
 import {
   useDamageEventsLookup,
@@ -433,6 +434,14 @@ export const DamageDonePanel: React.FC<DamageDonePanelProps> = ({ context }) => 
       state={panelState}
       detail={panelError ?? undefined}
       onRetry={damageStatisticsError ? retryDamageStatistics : undefined}
+      loadingFallback={<DamageDoneTableSkeleton rowCount={10} />}
+      emptyFallback={
+        <Box sx={{ textAlign: 'center', py: 4 }}>
+          <Typography variant="body1" color="text.secondary">
+            No damage data available for this fight
+          </Typography>
+        </Box>
+      }
     >
       {hasData && (
         <Box data-testid="damage-done-panel">
