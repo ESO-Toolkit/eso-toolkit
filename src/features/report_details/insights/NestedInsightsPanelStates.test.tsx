@@ -148,3 +148,47 @@ describe.each(views)('%s lifecycle', (_name, createView) => {
     expect(screen.getByText('Retained Effect')).toBeInTheDocument();
   });
 });
+
+const headings: Record<string, string> = {
+  'damage breakdown': 'Damage Breakdown',
+  'damage type breakdown': 'Damage by Type',
+  'buff uptimes': 'Buff Uptimes',
+  'debuff uptimes': 'Debuff Uptimes',
+  'status effect uptimes': 'Status Effect Uptimes',
+};
+
+describe.each(views)('%s own designs', (name, createView) => {
+  it('renders its own loading skeleton instead of the generic card', () => {
+    const { container } = render(createView('loading', false));
+
+    expect(screen.getByRole('heading', { level: 6, name: headings[name] })).toBeInTheDocument();
+    expect(container.querySelector('.MuiSkeleton-root')).toBeInTheDocument();
+    expect(container.querySelector('.MuiPaper-outlined')).not.toBeInTheDocument();
+  });
+
+  it('keeps its heading when populated', () => {
+    render(createView('ready', true));
+
+    expect(screen.getByRole('heading', { level: 6, name: headings[name] })).toBeInTheDocument();
+  });
+});
+
+describe('uptime empty states keep the Show All toggle', () => {
+  it('renders the buff empty message with the toggle', () => {
+    render(views[2][1]('empty', false));
+
+    expect(screen.getByRole('button', { name: 'Show All Buffs' })).toBeInTheDocument();
+    expect(
+      screen.getByText('No important buff events found. Try showing all buffs.'),
+    ).toBeInTheDocument();
+  });
+
+  it('renders the debuff empty message with the toggle', () => {
+    render(views[3][1]('empty', false));
+
+    expect(screen.getByRole('button', { name: 'Show All Debuffs' })).toBeInTheDocument();
+    expect(
+      screen.getByText('No important debuff events found. Try showing all debuffs.'),
+    ).toBeInTheDocument();
+  });
+});

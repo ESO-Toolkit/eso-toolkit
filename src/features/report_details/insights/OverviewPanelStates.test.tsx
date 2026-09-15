@@ -160,7 +160,12 @@ describe('AurasPanel lifecycle', () => {
     const { rerender } = render(<AurasPanel />);
 
     expect(screen.getByRole('status')).toHaveTextContent('Loading data.');
-    expect(screen.getByLabelText('Experimental: Auras overview: loading')).toBeInTheDocument();
+    // The view's header and grid stay visible while loading.
+    expect(
+      screen.queryByLabelText('Experimental: Auras overview: loading'),
+    ).not.toBeInTheDocument();
+    expect(screen.getByText(/Experimental: Auras Overview/)).toBeInTheDocument();
+    expect(screen.getByText('Auras (0 unique)')).toBeInTheDocument();
 
     mockUseCombatantInfoEvents.mockReturnValue({
       combatantInfoEvents: [],
@@ -172,6 +177,8 @@ describe('AurasPanel lifecycle', () => {
     rerender(<AurasPanel />);
 
     expect(screen.getByRole('status')).toHaveTextContent('No data is available for this panel.');
+    expect(screen.getByText(/Experimental: Auras Overview/)).toBeInTheDocument();
+    expect(screen.getByText('Auras (0 unique)')).toBeInTheDocument();
   });
 
   it('retains aura rows while a refresh is partial and announces a later failure', () => {
@@ -211,7 +218,7 @@ describe('AurasPanel lifecycle', () => {
 });
 
 describe('BuffsOverviewPanel lifecycle', () => {
-  it('does not report an unconfirmed worker result as an empty success', () => {
+  it('shows loading, not an empty success, for an unconfirmed worker result', () => {
     mockUseBuffLookupTask.mockReturnValue({
       buffLookupData: null,
       isBuffLookupLoading: false,
@@ -221,7 +228,7 @@ describe('BuffsOverviewPanel lifecycle', () => {
 
     render(<BuffsOverviewPanel />);
 
-    expect(screen.getByRole('status')).toHaveTextContent('not confirmed current');
+    expect(screen.getByRole('status')).toHaveTextContent('Loading data.');
   });
 
   it('announces a source failure instead of masking it as an empty grid', () => {
@@ -243,6 +250,7 @@ describe('BuffsOverviewPanel lifecycle', () => {
     render(<BuffsOverviewPanel />);
 
     expect(screen.getByRole('status')).toHaveTextContent('Data is ready.');
+    expect(screen.getByRole('heading', { name: 'Buffs Overview' })).toBeInTheDocument();
     expect(screen.getByText('Buffs (1 unique)')).toBeInTheDocument();
   });
 });
@@ -275,6 +283,8 @@ describe('DebuffsOverviewPanel lifecycle', () => {
     render(<DebuffsOverviewPanel />);
 
     expect(screen.getByRole('status')).toHaveTextContent('No data is available for this panel.');
+    expect(screen.getByRole('heading', { name: 'Debuffs Overview' })).toBeInTheDocument();
+    expect(screen.getByText('Debuffs (0 unique)')).toBeInTheDocument();
   });
 
   it('announces player-data failure without offering a nonexistent retry action', () => {

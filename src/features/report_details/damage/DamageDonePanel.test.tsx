@@ -85,7 +85,7 @@ describe('DamageDonePanel background calculation', () => {
 
     render(<DamageDonePanel />);
 
-    expect(screen.getByRole('progressbar', { name: 'Damage done: loading' })).toBeInTheDocument();
+    expect(screen.getByTestId('damage-done-table-skeleton')).toBeInTheDocument();
     expect(screen.getByRole('status')).toHaveTextContent('Loading data.');
     await waitFor(() => expect(mockRunDamageStatistics).toHaveBeenCalledTimes(1));
 
@@ -95,7 +95,7 @@ describe('DamageDonePanel background calculation', () => {
     );
 
     fireEvent.click(screen.getByRole('button', { name: /try again/i }));
-    expect(screen.getByRole('progressbar', { name: 'Damage done: loading' })).toBeInTheDocument();
+    expect(screen.getByTestId('damage-done-table-skeleton')).toBeInTheDocument();
     await waitFor(() => expect(mockRunDamageStatistics).toHaveBeenCalledTimes(2));
 
     await act(async () =>

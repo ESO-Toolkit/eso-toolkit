@@ -110,82 +110,93 @@ export const DiagnosticsPanel: React.FC<DiagnosticsPanelProps> = ({ context }) =
   }, [eventCounts]);
   const { state: panelState, detail } = resolveDebugEventPanelState(allEvents, streamEntries);
 
-  return (
-    <AnalyzerPanelState title="Diagnostics" state={panelState} detail={detail}>
-      <Box sx={{ mt: 2 }}>
-        <Typography variant="h6" gutterBottom>
-          Diagnostics
+  const content = (
+    <Box sx={{ mt: 2 }}>
+      <Typography variant="h6" gutterBottom>
+        Diagnostics
+      </Typography>
+      <Box sx={{ mb: 2 }}>
+        <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
+          Total Events: {totalEventsCount.toLocaleString()}
         </Typography>
-        <Box sx={{ mb: 2 }}>
-          <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
-            Total Events: {totalEventsCount.toLocaleString()}
-          </Typography>
-        </Box>
-
-        <Box sx={{ mt: 2 }}>
-          <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1 }}>
-            Events by Category:
-          </Typography>
-          <List dense>
-            {Object.entries(eventCounts)
-              .filter(([, count]) => count > 0)
-              .sort(([, a], [, b]) => b - a)
-              .map(([category, count]) => (
-                <ListItem key={category} sx={{ py: 0.5, px: 0 }}>
-                  <ListItemText
-                    primary={
-                      <Typography component="span">
-                        <Typography component="span" sx={{ fontWeight: 'medium', mr: 1 }}>
-                          {category}:
-                        </Typography>
-                        <Typography component="span" sx={{ color: 'text.secondary' }}>
-                          {count.toLocaleString()}
-                        </Typography>
-                      </Typography>
-                    }
-                  />
-                </ListItem>
-              ))}
-          </List>
-        </Box>
-
-        <Box sx={{ mt: 2 }}>
-          <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1 }}>
-            Events by Type:
-          </Typography>
-          <List dense>
-            {(
-              Object.entries(
-                allEvents.reduce(
-                  (acc, event) => {
-                    const type = event.type.toLowerCase();
-                    acc[type] = (acc[type] || 0) + 1;
-                    return acc;
-                  },
-                  {} as Record<string, number>,
-                ),
-              ) as Array<[string, number]>
-            )
-              .sort(([, a], [, b]) => b - a) // Sort by count descending
-              .map(([type, count]) => (
-                <ListItem key={type} sx={{ py: 0.5, px: 0 }}>
-                  <ListItemText
-                    primary={
-                      <Typography component="span">
-                        <Typography component="span" sx={{ fontWeight: 'medium', mr: 1 }}>
-                          {type}:
-                        </Typography>
-                        <Typography component="span" sx={{ color: 'text.secondary' }}>
-                          {count.toLocaleString()}
-                        </Typography>
-                      </Typography>
-                    }
-                  />
-                </ListItem>
-              ))}
-          </List>
-        </Box>
       </Box>
+
+      <Box sx={{ mt: 2 }}>
+        <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1 }}>
+          Events by Category:
+        </Typography>
+        <List dense>
+          {Object.entries(eventCounts)
+            .filter(([, count]) => count > 0)
+            .sort(([, a], [, b]) => b - a)
+            .map(([category, count]) => (
+              <ListItem key={category} sx={{ py: 0.5, px: 0 }}>
+                <ListItemText
+                  primary={
+                    <Typography component="span">
+                      <Typography component="span" sx={{ fontWeight: 'medium', mr: 1 }}>
+                        {category}:
+                      </Typography>
+                      <Typography component="span" sx={{ color: 'text.secondary' }}>
+                        {count.toLocaleString()}
+                      </Typography>
+                    </Typography>
+                  }
+                />
+              </ListItem>
+            ))}
+        </List>
+      </Box>
+
+      <Box sx={{ mt: 2 }}>
+        <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1 }}>
+          Events by Type:
+        </Typography>
+        <List dense>
+          {(
+            Object.entries(
+              allEvents.reduce(
+                (acc, event) => {
+                  const type = event.type.toLowerCase();
+                  acc[type] = (acc[type] || 0) + 1;
+                  return acc;
+                },
+                {} as Record<string, number>,
+              ),
+            ) as Array<[string, number]>
+          )
+            .sort(([, a], [, b]) => b - a) // Sort by count descending
+            .map(([type, count]) => (
+              <ListItem key={type} sx={{ py: 0.5, px: 0 }}>
+                <ListItemText
+                  primary={
+                    <Typography component="span">
+                      <Typography component="span" sx={{ fontWeight: 'medium', mr: 1 }}>
+                        {type}:
+                      </Typography>
+                      <Typography component="span" sx={{ color: 'text.secondary' }}>
+                        {count.toLocaleString()}
+                      </Typography>
+                    </Typography>
+                  }
+                />
+              </ListItem>
+            ))}
+        </List>
+      </Box>
+    </Box>
+  );
+
+  // Diagnostics always shows its counts; loading and empty render the same
+  // content (with zero totals) rather than a generic state card.
+  return (
+    <AnalyzerPanelState
+      title="Diagnostics"
+      state={panelState}
+      detail={detail}
+      loadingFallback={content}
+    >
+      {content}
     </AnalyzerPanelState>
   );
 };

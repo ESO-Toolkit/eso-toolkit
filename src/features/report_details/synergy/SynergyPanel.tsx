@@ -72,6 +72,30 @@ export const SynergyPanel: React.FC<SynergyPanelProps> = ({ context }) => {
       detail={masterDataError ?? castEventsError ?? undefined}
       state={state}
       title="Synergies"
+      loadingFallback={
+        fight && (
+          <SynergyPanelView
+            data={synergyData}
+            fight={fight}
+            isLoading={true}
+            actorsById={reportMasterData.actorsById}
+            reportCode={resolvedContext.reportCode}
+            fightId={resolvedContext.fightId}
+          />
+        )
+      }
+      emptyFallback={
+        fight && (
+          <SynergyPanelView
+            data={synergyData}
+            fight={fight}
+            isLoading={false}
+            actorsById={reportMasterData.actorsById}
+            reportCode={resolvedContext.reportCode}
+            fightId={resolvedContext.fightId}
+          />
+        )
+      }
     >
       {hasSynergyData && fight && (
         <SynergyPanelView

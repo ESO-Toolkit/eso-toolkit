@@ -401,6 +401,8 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
               gridTemplateColumns: '1.5fr 80px 80px 80px 60px 60px 60px',
               gap: 1,
               p: 1.5,
+              // Keep each label and its sort glyph on one line in narrow columns.
+              '& > *': { whiteSpace: 'nowrap' },
               backgroundColor: 'transparent',
               borderBottom: roleColors.isDarkMode
                 ? '1px solid rgba(255, 255, 255, 0.08)'

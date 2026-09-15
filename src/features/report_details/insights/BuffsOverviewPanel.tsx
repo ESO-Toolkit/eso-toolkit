@@ -77,7 +77,13 @@ export const BuffsOverviewPanel: React.FC = () => {
   });
 
   return (
-    <AnalyzerPanelState detail={failureDetail} state={state} title="Buffs overview">
+    <AnalyzerPanelState
+      detail={failureDetail}
+      state={state}
+      title="Buffs overview"
+      loadingFallback={<BuffsOverviewPanelView buffOverviewData={[]} isLoading={true} />}
+      emptyFallback={<BuffsOverviewPanelView buffOverviewData={[]} />}
+    >
       {hasRetainedData && <BuffsOverviewPanelView buffOverviewData={buffOverviewData} />}
     </AnalyzerPanelState>
   );

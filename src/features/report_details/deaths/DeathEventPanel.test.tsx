@@ -928,6 +928,7 @@ describe('DeathEventPanel lifecycle states', () => {
     renderPanel();
 
     expect(screen.getByText('Loading data.')).toBeInTheDocument();
+    expect(screen.getByTestId('deaths-skeleton')).toBeInTheDocument();
   });
 
   it('shows empty after every dependency confirms no player deaths', () => {
@@ -936,6 +937,8 @@ describe('DeathEventPanel lifecycle states', () => {
     renderPanel();
 
     expect(screen.getByText('No data is available for this panel.')).toBeInTheDocument();
+    expect(screen.getByText('Flawless')).toBeInTheDocument();
+    expect(screen.getByText('No deaths recorded in this fight.')).toBeInTheDocument();
   });
 
   it('shows retained deaths while a dependency is still refreshing', () => {

@@ -214,7 +214,7 @@ export const EventsGrid: React.FC<EventsGridProps> = ({
   if (!state) return grid;
 
   return (
-    <AnalyzerPanelState title={title} state={state} detail={stateDetail}>
+    <AnalyzerPanelState title={title} state={state} detail={stateDetail} loadingFallback={grid}>
       {grid}
     </AnalyzerPanelState>
   );

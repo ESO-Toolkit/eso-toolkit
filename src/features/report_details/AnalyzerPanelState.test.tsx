@@ -33,7 +33,7 @@ describe('AnalyzerPanelState', () => {
     [{ hasData: false, isComplete: true, isLoading: false }, 'empty'],
     [{ hasData: true, isComplete: false, isLoading: true }, 'partial'],
     [{ hasData: true, isComplete: false, isLoading: false }, 'stale'],
-    [{ hasData: false, isComplete: false, isLoading: false }, 'stale'],
+    [{ hasData: false, isComplete: false, isLoading: false }, 'loading'],
     [
       { hasData: false, isComplete: false, isLoading: false, isInitialRequestPending: true },
       'loading',
@@ -45,7 +45,7 @@ describe('AnalyzerPanelState', () => {
     expect(resolveAnalyzerPanelState(input)).toBe(expectedState);
   });
 
-  it('keeps an explicit initial request pending state scoped to panels without data', () => {
+  it('shows a skeleton for panels with no data yet and marks retained data stale', () => {
     expect(
       resolveAnalyzerPanelState({
         hasData: true,
@@ -61,7 +61,7 @@ describe('AnalyzerPanelState', () => {
         isLoading: false,
         isInitialRequestPending: false,
       }),
-    ).toBe('stale');
+    ).toBe('loading');
   });
 
   it('announces loading with an accessible progress indicator', () => {
@@ -72,11 +72,58 @@ describe('AnalyzerPanelState', () => {
     expect(screen.getByRole('status')).toHaveAttribute('aria-live', 'polite');
   });
 
-  it('announces an empty state without rendering stale content', () => {
-    renderPanel('empty', { children: <div>Old result</div> });
+  it('falls back to the generic empty card when the panel supplies no empty design', () => {
+    renderPanel('empty');
 
     expect(screen.getByRole('status')).toHaveTextContent('No data is available for this panel.');
-    expect(screen.queryByText('Old result')).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Damage breakdown' })).toBeInTheDocument();
+  });
+
+  it("renders the panel's own empty design in place of the generic card", () => {
+    const { rerender } = render(
+      <ThemeProvider theme={theme}>
+        <AnalyzerPanelState
+          state="empty"
+          title="Damage breakdown"
+          emptyFallback={<div>No damage events found</div>}
+        >
+          <div>View content</div>
+        </AnalyzerPanelState>
+      </ThemeProvider>,
+    );
+
+    expect(screen.getByText('No damage events found')).toBeInTheDocument();
+    expect(screen.queryByText('View content')).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Damage breakdown' })).not.toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('No data is available for this panel.');
+
+    // Views that handle their own empty case pass children without a fallback.
+    rerender(
+      <ThemeProvider theme={theme}>
+        <AnalyzerPanelState state="empty" title="Damage breakdown">
+          <div>View empty message</div>
+        </AnalyzerPanelState>
+      </ThemeProvider>,
+    );
+
+    expect(screen.getByText('View empty message')).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Damage breakdown' })).not.toBeInTheDocument();
+  });
+
+  it("renders the panel's own loading design in place of the generic spinner", () => {
+    render(
+      <ThemeProvider theme={theme}>
+        <AnalyzerPanelState
+          state="loading"
+          title="Damage breakdown"
+          loadingFallback={<div>Table skeleton</div>}
+        />
+      </ThemeProvider>,
+    );
+
+    expect(screen.getByText('Table skeleton')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Damage breakdown: loading')).not.toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('Loading data.');
   });
 
   it('announces partial data and retains the available content', () => {

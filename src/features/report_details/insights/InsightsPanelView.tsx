@@ -12,6 +12,7 @@ import {
 import React from 'react';
 
 import { AbilityIcon } from '../../../components/AbilityIcon';
+import { InsightsSkeletonLayout } from '../../../components/InsightsSkeletonLayout';
 import { FightFragment } from '../../../graphql/gql/graphql';
 import { KnownAbilities } from '../../../types/abilities';
 import type { EvidenceDrilldownInput } from '../../analysis/evidence/evidenceDrilldownModel';
@@ -172,6 +173,11 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
   const stateMessage = getStateMessage(dataState);
   const isRecoverable = dataState.failedSources.length > 0;
   const retryReasonId = 'insights-retry-unavailable-reason';
+
+  // Nothing has arrived yet: show the Insights skeleton rather than empty cards.
+  if (dataState.kind === 'loading') {
+    return <InsightsSkeletonLayout />;
+  }
 
   return (
     <>

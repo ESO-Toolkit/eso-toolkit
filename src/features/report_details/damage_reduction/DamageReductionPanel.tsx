@@ -4,6 +4,7 @@ import { usePlayerData, useResolvedReportFightContext, useFightForContext } from
 import type { PhaseTransitionInfo } from '../../../hooks/usePhaseTransitions';
 import { useDamageReductionTask } from '../../../hooks/workerTasks/useDamageReductionTask';
 import type { ReportFightContextInput } from '../../../store/contextTypes';
+import { getSkeletonForTab, TabId } from '../../../utils/getSkeletonForTab';
 import type { PlayerDamageReductionData } from '../../../workers/calculations/CalculateDamageReduction';
 import { AnalyzerPanelState, resolveAnalyzerPanelState } from '../AnalyzerPanelState';
 
@@ -80,7 +81,12 @@ export const DamageReductionPanel: React.FC<DamageReductionPanelProps> = ({
   });
 
   return (
-    <AnalyzerPanelState detail={failureDetail} state={state} title="Damage Reduction Analysis">
+    <AnalyzerPanelState
+      detail={failureDetail}
+      state={state}
+      title="Damage Reduction Analysis"
+      loadingFallback={getSkeletonForTab(TabId.DAMAGE_REDUCTION, false, false)}
+    >
       {hasRetainedData && fight && resolvedFightId != null && (
         <DamageReductionPanelView
           reportId={reportId}

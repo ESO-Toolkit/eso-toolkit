@@ -108,7 +108,7 @@ const renderPanel = (
 };
 
 describe('InsightsPanelView data states', () => {
-  it('keeps independent fight content visible while damage data is loading', () => {
+  it('shows the Insights skeleton until any fight insight data arrives', () => {
     renderPanel(
       {
         kind: 'loading',
@@ -124,17 +124,9 @@ describe('InsightsPanelView data states', () => {
       },
     );
 
-    expect(screen.getByRole('heading', { name: 'Fight Insights' })).toBeInTheDocument();
-    expect(screen.getByText('Duration:')).toBeInTheDocument();
-    expect(screen.getByText('1m 5.0s')).toBeInTheDocument();
-    expect(screen.getByText('Damage breakdown content')).toBeInTheDocument();
-    expect(screen.getByTestId('fight-initiator')).toHaveAttribute('aria-live', 'polite');
-    expect(screen.getByTestId('fight-initiator')).toHaveTextContent('Fight initiator: Loading');
-    expect(screen.getByTestId('fight-initiator')).toHaveTextContent(
-      'Loading damage events to identify the fight initiator.',
-    );
+    expect(screen.getByTestId('insights-skeleton-layout')).toBeInTheDocument();
+    expect(screen.queryByTestId('insights-panel')).not.toBeInTheDocument();
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
-    expect(screen.getByTestId('insights-panel')).toHaveAttribute('aria-busy', 'true');
   });
 
   it('updates the initiator label when damage data completes', () => {
@@ -335,8 +327,7 @@ describe('InsightsPanelView data states', () => {
     );
 
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
-    expect(screen.queryByRole('status')).not.toBeInTheDocument();
-    expect(screen.getByTestId('insights-panel')).toHaveAttribute('aria-busy', 'true');
+    expect(screen.getByTestId('insights-skeleton-layout')).toBeInTheDocument();
 
     rerender(
       <ThemeProvider theme={createTheme()}>

@@ -231,8 +231,10 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
     () => ({
       width: { xs: 44, md: 36 },
       height: { xs: 44, md: 36 },
-      minWidth: { xs: '44px !important', md: 36 },
-      minHeight: { xs: '44px !important', md: 36 },
+      // Both breakpoints need !important: a bare md value cannot override the
+      // xs !important rule, which MUI emits at every width.
+      minWidth: { xs: '44px !important', md: '36px !important' },
+      minHeight: { xs: '44px !important', md: '36px !important' },
       borderRadius: { xs: '8px', md: '10px' },
       backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.05)',
       color: isDarkMode ? 'rgba(255, 255, 255, 0.85)' : 'rgba(0, 0, 0, 0.7)',

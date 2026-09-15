@@ -20,6 +20,7 @@ import {
   CardContent,
   Switch,
   FormControlLabel,
+  Alert,
   Chip,
   Divider,
   Stack,
@@ -133,14 +134,24 @@ export const LocationHeatmapPanelView: React.FC<LocationHeatmapPanelViewProps> =
 }) => {
   const resolvedState = state ?? (locationData.length > 0 ? 'ready' : 'empty');
   if (resolvedState === 'empty' || resolvedState === 'loading') {
+    const noDataContent = (
+      <Box sx={{ p: 2 }}>
+        <Typography variant="h6" gutterBottom>
+          Tank Movement Tracker & ELMS Markers
+        </Typography>
+        <Alert severity="info">
+          No tank position data found in this fight. Position data is extracted from resource change
+          events and requires tanks to be present in the encounter.
+        </Alert>
+      </Box>
+    );
     return (
       <AnalyzerPanelState
         title="Tank Movement Tracker & ELMS Markers"
         state={resolvedState}
-        detail={
-          stateDetail ??
-          'No tank position data found in this fight. Position data requires resource changes with tank positions.'
-        }
+        detail={stateDetail}
+        loadingFallback={noDataContent}
+        emptyFallback={noDataContent}
       />
     );
   }

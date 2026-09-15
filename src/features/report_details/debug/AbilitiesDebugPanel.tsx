@@ -50,7 +50,13 @@ export const AbilitiesDebugPanel: React.FC<AbilitiesDebugPanelProps> = ({ fight:
   });
 
   return (
-    <AnalyzerPanelState detail={masterDataError ?? undefined} state={state} title="Abilities">
+    <AnalyzerPanelState
+      detail={masterDataError ?? undefined}
+      state={state}
+      title="Abilities"
+      loadingFallback={<AbilitiesDebugPanelView abilities={[]} totalCount={0} isLoading={true} />}
+      emptyFallback={<AbilitiesDebugPanelView abilities={[]} totalCount={0} isLoading={false} />}
+    >
       {hasRetainedData && (
         <AbilitiesDebugPanelView
           abilities={abilitiesData}

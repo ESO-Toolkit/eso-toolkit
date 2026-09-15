@@ -8,6 +8,7 @@ import { selectCombinedMasterData } from '../../../store/master_data/masterDataS
 import { selectResourceEventsEntryForContext } from '../../../store/selectors/eventsSelectors';
 import type { RootState } from '../../../store/storeWithHistory';
 import { ResourceChangeEvent, UnifiedCastEvent } from '../../../types/combatlogEvents';
+import { getSkeletonForTab, TabId } from '../../../utils/getSkeletonForTab';
 import {
   AnalyzerPanelState,
   resolveAnalyzerPanelState,
@@ -619,7 +620,13 @@ export const RotationAnalysisPanel: React.FC<RotationAnalysisPanelProps> = ({ fi
   const detail = sourceError ?? (panelState === 'ready' ? undefined : rotationResult.message);
 
   return (
-    <AnalyzerPanelState title="Rotation analysis" state={panelState} detail={detail}>
+    <AnalyzerPanelState
+      title="Rotation analysis"
+      state={panelState}
+      detail={detail}
+      loadingFallback={getSkeletonForTab(TabId.ROTATION_ANALYSIS, false, false)}
+      emptyFallback={<RotationAnalysisPanelView rotationAnalyses={[]} fight={fight} />}
+    >
       {rotationResult.rotationAnalyses.length > 0 && (
         <RotationAnalysisPanelView
           rotationAnalyses={rotationResult.rotationAnalyses}

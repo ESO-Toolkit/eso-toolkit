@@ -1,3 +1,4 @@
+import { Box, Typography } from '@mui/material';
 import React from 'react';
 import { useSelector } from 'react-redux';
 
@@ -38,6 +39,7 @@ import {
   type PlayerPanelAnalysisResult,
 } from '@/utils/playerPanelAnalysis';
 
+import { PlayersSkeleton } from '../../../components/PlayersSkeleton';
 import type { GrimoireData } from '../../../components/ScribingSkillsDisplay';
 import { PlayerAvatarsProvider } from '../../../contexts/PlayerAvatarsContext';
 import { CLASS_MASTERY_LINE_NAME } from '../../../data/skill-lines/class/classMastery';
@@ -1600,7 +1602,17 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
 
   return (
     <PlayerAvatarsProvider players={playersById}>
-      <AnalyzerPanelState title="Players" state={panelState} detail={panelError ?? undefined}>
+      <AnalyzerPanelState
+        title="Players"
+        state={panelState}
+        detail={panelError ?? undefined}
+        loadingFallback={<PlayersSkeleton />}
+        emptyFallback={
+          <Box sx={{ p: 3 }}>
+            <Typography>No player data available.</Typography>
+          </Box>
+        }
+      >
         {hasData && (
           <div data-testid="players-panel-loaded">
             <PlayersPanelView

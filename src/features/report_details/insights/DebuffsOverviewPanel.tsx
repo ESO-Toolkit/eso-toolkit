@@ -169,7 +169,31 @@ export const DebuffsOverviewPanel: React.FC = () => {
   });
 
   return (
-    <AnalyzerPanelState detail={failureDetail} state={state} title="Debuffs overview">
+    <AnalyzerPanelState
+      detail={failureDetail}
+      state={state}
+      title="Debuffs overview"
+      loadingFallback={
+        <DebuffsOverviewPanelView
+          debuffOverviewData={[]}
+          isLoading={true}
+          selectedTargetId={selectedTargetId}
+          selectedPlayerId={selectedPlayerId}
+          availablePlayers={availablePlayers}
+          onPlayerChange={setSelectedPlayerId}
+        />
+      }
+      emptyFallback={
+        // Keeps the player filter reachable so a filtered-empty result can be reset.
+        <DebuffsOverviewPanelView
+          debuffOverviewData={[]}
+          selectedTargetId={selectedTargetId}
+          selectedPlayerId={selectedPlayerId}
+          availablePlayers={availablePlayers}
+          onPlayerChange={setSelectedPlayerId}
+        />
+      }
+    >
       {hasRetainedData && (
         <DebuffsOverviewPanelView
           debuffOverviewData={debuffOverviewData}

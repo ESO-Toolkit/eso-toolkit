@@ -10,6 +10,7 @@ import type { PhaseTransitionInfo } from '../../../hooks/usePhaseTransitions';
 import { hasNoResolvedTargets } from '../../../hooks/useSelectedTargetIds';
 import { usePenetrationDataTask } from '../../../hooks/workerTasks/usePenetrationDataTask';
 import type { ReportFightContextInput } from '../../../store/contextTypes';
+import { getSkeletonForTab, TabId } from '../../../utils/getSkeletonForTab';
 import { PlayerPenetrationData } from '../../../workers/calculations/CalculatePenetration';
 import { AnalyzerPanelState, resolveAnalyzerPanelState } from '../AnalyzerPanelState';
 
@@ -93,7 +94,12 @@ export const PenetrationPanel: React.FC<PenetrationPanelProps> = ({
   });
 
   return (
-    <AnalyzerPanelState detail={panelError ?? undefined} state={state} title="Penetration">
+    <AnalyzerPanelState
+      detail={panelError ?? undefined}
+      state={state}
+      title="Penetration"
+      loadingFallback={getSkeletonForTab(TabId.PENETRATION, false, false)}
+    >
       {hasRetainedData && (
         <PenetrationPanelView
           players={players}

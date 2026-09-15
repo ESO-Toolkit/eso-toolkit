@@ -35,55 +35,68 @@ const renderView = (
 };
 
 describe('DamageBreakdownView critical metric labels', () => {
-  it('labels critical hit rate and critical damage share as distinct metrics', async () => {
+  it('renders the panel heading above the populated list', () => {
+    renderView(50, 90);
+
+    expect(screen.getByRole('heading', { name: 'Damage Breakdown' })).toBeInTheDocument();
+  });
+
+  it('describes critical hit rate and critical damage share as distinct metrics', async () => {
     const user = userEvent.setup();
     renderView(50, 90);
 
-    const criticalRate = screen.getByText('Crit hit rate 50.0%');
-    expect(screen.getByText('Crit damage share 90.0%')).toBeInTheDocument();
+    const criticalChip = screen.getByText('50.0% crit');
+    expect(screen.getByText('100.0%')).toBeInTheDocument();
     expect(screen.getByLabelText('Damage share: 100.0% of total damage')).toBeInTheDocument();
+    expect(
+      screen.getByLabelText(
+        'Critical hit rate: 1 critical hits out of 2 eligible hits. Critical damage share: 900 critical damage out of 1.0K total damage.',
+      ),
+    ).toBeInTheDocument();
 
-    await user.hover(criticalRate);
-    expect(await screen.findByRole('tooltip')).toHaveTextContent(
-      'Critical hit rate: 1 critical hits out of 2 eligible hits.',
-    );
-
-    await user.unhover(criticalRate);
-    await user.hover(screen.getByText('Crit damage share 90.0%'));
-    expect(await screen.findByRole('tooltip')).toHaveTextContent(
+    await user.hover(criticalChip);
+    const tooltip = await screen.findByRole('tooltip');
+    expect(tooltip).toHaveTextContent('Critical hit rate: 1 critical hits out of 2 eligible hits.');
+    expect(tooltip).toHaveTextContent(
       'Critical damage share: 900 critical damage out of 1.0K total damage.',
     );
   });
 
-  it('renders unavailable metrics instead of a zero percent rate or share', async () => {
-    renderView(null, null);
-
-    expect(screen.getByText('Crit hit rate unavailable')).toBeInTheDocument();
-    expect(screen.getByText('Crit damage share unavailable')).toBeInTheDocument();
-    expect(screen.queryByText('Crit hit rate 0.0%')).not.toBeInTheDocument();
-
+  it('explains an unavailable critical damage share instead of reporting zero', async () => {
     const user = userEvent.setup();
-    await user.hover(screen.getByText('Crit damage share unavailable'));
-    expect(await screen.findByRole('tooltip')).toHaveTextContent(
+    renderView(50, null);
+
+    await user.hover(screen.getByText('50.0% crit'));
+    const tooltip = await screen.findByRole('tooltip');
+    expect(tooltip).toHaveTextContent(
       'Critical damage share is unavailable because one or more hit types are unknown.',
     );
+    expect(tooltip).not.toHaveTextContent('Critical damage share: 0');
   });
 
-  it('renders a valid zero critical rate when eligible non-critical hits exist', () => {
+  it('does not render a crit chip or a fake zero rate when the rate is unavailable', () => {
+    renderView(null, null);
+
+    expect(screen.queryByText(/% crit$/)).not.toBeInTheDocument();
+    expect(screen.queryByText('0.0% crit')).not.toBeInTheDocument();
+  });
+
+  it('omits the crit chip for a valid zero critical rate', () => {
     renderView(0, 0);
 
-    expect(screen.getByText('Crit hit rate 0.0%')).toBeInTheDocument();
-    expect(screen.getByText('Crit damage share 0.0%')).toBeInTheDocument();
+    expect(screen.queryByText(/% crit$/)).not.toBeInTheDocument();
+    expect(screen.getByText('100.0%')).toBeInTheDocument();
   });
 
   it('renders unavailable labels for empty denominators instead of zero percentages', () => {
     renderView(0, 0, true);
 
-    expect(screen.getByText('Crit hit rate unavailable')).toBeInTheDocument();
-    expect(screen.getByText('Crit damage share unavailable')).toBeInTheDocument();
     expect(screen.getByText('Damage share unavailable')).toBeInTheDocument();
-    expect(screen.queryByText('Crit hit rate 0.0%')).not.toBeInTheDocument();
-    expect(screen.queryByText('Crit damage share 0.0%')).not.toBeInTheDocument();
-    expect(screen.queryByText('0.0% dmg')).not.toBeInTheDocument();
+    expect(
+      screen.getByLabelText('Damage share unavailable because total damage is zero'),
+    ).toBeInTheDocument();
+    expect(screen.queryByText('0.0%')).not.toBeInTheDocument();
+    expect(screen.queryByText('0.0% crit')).not.toBeInTheDocument();
+    expect(screen.queryByText(/% crit$/)).not.toBeInTheDocument();
   });
 });

@@ -11,6 +11,7 @@ import type { PhaseTransitionInfo } from '../../../hooks/usePhaseTransitions';
 import { hasNoResolvedTargets } from '../../../hooks/useSelectedTargetIds';
 import { useCompanionCritEvidence } from '../../../hooks/workerTasks/useCompanionCritEvidence';
 import type { ReportFightContextInput } from '../../../store/contextTypes';
+import { getSkeletonForTab, TabId } from '../../../utils/getSkeletonForTab';
 import { AnalyzerPanelState, resolveAnalyzerPanelState } from '../AnalyzerPanelState';
 
 import { CriticalDamagePanelView } from './CriticalDamagePanelView';
@@ -99,7 +100,12 @@ export const CriticalDamagePanel: React.FC<CriticalDamagePanelProps> = ({
   });
 
   return (
-    <AnalyzerPanelState detail={panelError ?? undefined} state={state} title="Critical damage">
+    <AnalyzerPanelState
+      detail={panelError ?? undefined}
+      state={state}
+      title="Critical damage"
+      loadingFallback={getSkeletonForTab(TabId.CRITICAL_DAMAGE, false, false)}
+    >
       {hasRetainedData && (
         <CriticalDamagePanelView
           players={players}
