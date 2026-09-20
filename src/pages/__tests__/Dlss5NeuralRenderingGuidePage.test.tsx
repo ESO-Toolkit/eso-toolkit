@@ -146,10 +146,46 @@ describe('Dlss5NeuralRenderingGuidePage', () => {
   });
 
   it('explains how to verify the depth buffer', () => {
-    renderPage();
+    const { container } = renderPage();
 
     expect(screen.getByRole('heading', { name: /Checking the depth buffer/i })).toBeInTheDocument();
     expect(screen.getByText(/Copy depth buffer before clear operations/i)).toBeInTheDocument();
+    expect(container.textContent ?? '').toMatch(/min 1, max 1.*zero variance/i);
+  });
+
+  it('scopes the feeder compatibility regression and recommends tested builds', () => {
+    const { container } = renderPage();
+
+    const text = container.textContent ?? '';
+    expect(text).toMatch(/version 6\.5\.3/);
+    expect(text).toMatch(/versions 4\.55 through 4\.70 failed/i);
+    expect(text).toMatch(/classic 2\.5 build is the tested fallback/i);
+    expect(text).toMatch(/not enough evidence.*general NVIDIA or Blackwell bug/i);
+  });
+
+  it('explains how to run and interpret the feeder host test', () => {
+    const { container } = renderPage();
+
+    const text = container.textContent ?? '';
+    expect(text).toMatch(/\.\\dlss5-feed-host64\.exe --test/);
+    expect(text).toMatch(/300\/300.*compatibility smoke test/i);
+    expect(text).toMatch(/does not prove.*motion vectors, depth or colour/i);
+  });
+
+  it('distinguishes sampled motion vectors from a full-frame failure', () => {
+    const { container } = renderPage();
+
+    const text = container.textContent ?? '';
+    expect(text).toMatch(/samples only the centre 64x64 area/i);
+    expect(text).toMatch(/zero sample.*does not prove.*every motion vector is zero/i);
+  });
+
+  it('tells readers to verify the actual feeder backbuffer resolution', () => {
+    const { container } = renderPage();
+
+    const text = container.textContent ?? '';
+    expect(text).toMatch(/borderless mode.*3840x2160 desktop backbuffer/i);
+    expect(text).toMatch(/building: 2560x1440/);
   });
 
   it('leads with the direct path and keeps the feeder as a labelled fallback', () => {
@@ -163,6 +199,16 @@ describe('Dlss5NeuralRenderingGuidePage', () => {
     const fallbackAt = text.indexOf('Fallback: the two-add-on feeder path');
     expect(setupAt).toBeGreaterThan(-1);
     expect(fallbackAt).toBeGreaterThan(setupAt);
+  });
+
+  it('routes an indefinitely waiting direct path to the feeder without calling it a runtime crash', () => {
+    const { container } = renderPage();
+
+    const text = container.textContent ?? '';
+    expect(text).toMatch(/direct path stays on Auto \(waiting\)/i);
+    expect(text).toMatch(/cannot manufacture the missing NGX call/i);
+    expect(text).toMatch(/separate direct-path limitation.*not evidence.*DLL crashed/i);
+    expect(text).toMatch(/stop waiting and use the two-add-on feeder path/i);
   });
 
   it('documents LoadFromDllMain, which is the failure that produces no error', () => {
