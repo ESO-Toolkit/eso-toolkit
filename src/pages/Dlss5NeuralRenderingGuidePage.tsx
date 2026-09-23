@@ -639,6 +639,14 @@ interface FailureSpec {
 
 const FAILURES: ReadonlyArray<FailureSpec> = [
   {
+    symptom: 'The direct path stays on Auto (waiting)',
+    defaultOpen: true,
+    log: 'Hook status: Auto (waiting)\n(no CreateFeature(Reserved18) or EvaluateFeature lines)',
+    cause:
+      'The add-on loaded, but it never observed ESO create or evaluate a native DLSS feature in this session. Forcing Hook Method to Upscaled cannot manufacture the missing NGX call. This is a separate direct-path limitation, not evidence that the Neural Rendering DLL crashed.',
+    fix: "First confirm LoadFromDllMain and ESO's native DLSS are configured exactly as described above. If the status remains Auto (waiting) after loading into the world and the log still has no native CreateFeature or EvaluateFeature lines, stop waiting and use the two-add-on feeder path below.",
+  },
+  {
     symptom: 'The add-on is listed in ReShade but nothing happens',
     defaultOpen: true,
     log: 'WARN  renodx-dlss.addon64 is not listed in ADDON.LoadFromDllMain.\n      Early DLSS hooks are not guaranteed for this session.',
@@ -688,6 +696,13 @@ const FAILURES: ReadonlyArray<FailureSpec> = [
     cause:
       'Only now is nvngx_dlssnr.dll a legitimate suspect. Check "Latest NR NGX result" in the add-on overlay. A non-zero code means the NR runtime itself would not initialise on your card, usually a generation mismatch.',
     fix: 'Confirm you have the build patched for your GPU generation. Do not start here: chase this only after you have seen "feature ready: ... DLAA" in dlss5-feed.log.',
+  },
+  {
+    symptom: 'The feeder creates features, then crashes during EvaluateFeature',
+    log: '[feed] evaluate raised 0xC0000005\n... nvngx_dlssnr.dll <- renodx-dlss5.addon64 <- dlss5-feed.addon64\n\nWindows Event Log: ucrtbase.dll / 0xC0000409',
+    cause:
+      'A host-test matrix on one RTX 5060 Ti / driver 616.92 / DLSS 310.9.1 / DLSS-NR 310.8.0 stack reproduced the failure with RenoDX 4.55, 4.60 and 4.70, while 2.5, 3.3.1, 3.3.4, 4.5, 5.2.1, 6.4.1 and 6.5.3 completed 300/300 evaluations. That isolates a RenoDX compatibility regression on the tested stack; it is not enough evidence to call it a general NVIDIA or Blackwell bug.',
+    fix: 'Use RenoDX DLSS5 6.5.3 on this stack. Keep the classic 2.5 build as a fallback if the current build fails in-game, and remove every other renodx-dlss5.addon64 copy before testing. Avoid 4.55 through 4.70 on this exact configuration. Run the host smoke test described in the feeder section, then still verify a real play session.',
   },
 ];
 
@@ -1318,6 +1333,16 @@ after NR:   feed CPU 11.82 ms/frame |  63.9 fps | feed is 75% of the frame`}
             </Box>
             .
           </Typography>
+          <Callout tone="info" label="Measure the backbuffer, not the menu setting" sx={{ mt: 2 }}>
+            <Typography variant="body2" sx={{ lineHeight: 1.7 }}>
+              The feeder works at the game&apos;s backbuffer resolution. In borderless mode,
+              changing ESO&apos;s internal resolution may leave a 3840x2160 desktop backbuffer
+              unchanged, so the log still says{' '}
+              <code>building: 3840x2160 work resolution (100%)</code> and the cost does not move.
+              For a real 1440p comparison, use a 2560x1440 desktop/output before launch or exclusive
+              fullscreen, then confirm the log says <code>building: 2560x1440</code>.
+            </Typography>
+          </Callout>
         </Box>
       </Section>
 
@@ -1385,212 +1410,251 @@ after NR:   feed CPU 11.82 ms/frame |  63.9 fps | feed is 75% of the frame`}
 
       {/* ── Steps ────────────────────────────────────────────────────── */}
       <Section id="feeder-setup" index={10} title="Fallback: the two-add-on feeder path">
-        <Box sx={{ ...cardSx, p: { xs: 2.5, md: 3.5 } }}>
-          <Stack component="ol" role="list" sx={{ listStyle: 'none', p: 0, m: 0 }}>
-            <StepRow n={1} last={false} title="Find your ESO client folder">
-              <Typography variant="body2" sx={proseSx}>
-                Every file in this guide goes in the folder that contains <code>eso64.exe</code>. On
-                a default Steam install that is:
-              </Typography>
-              <CodeBlock copyable wrap copyLabel="Copy client folder path" sx={{ mt: 1.25 }}>
-                {'steamapps\\common\\Zenimax Online\\The Elder Scrolls Online\\game\\client'}
-              </CodeBlock>
-              <Note>Keep this folder open; every remaining step drops a file here.</Note>
-            </StepRow>
+        <Stack spacing={2}>
+          <Callout tone="caution" label="Use a known-good RenoDX build">
+            <Typography variant="body2" sx={{ lineHeight: 1.7 }}>
+              Use <strong>RenoDX DLSS 5 version 6.5.3</strong> for this path. On one verified RTX
+              5060 Ti setup, versions 4.55 through 4.70 failed the host test while 6.5.3 completed
+              300/300 iterations and remained stable in-game. That establishes a RenoDX
+              compatibility regression on that tested stack; it is not enough evidence to label the
+              failure a general NVIDIA or Blackwell bug. If 6.5.3 does not work on your system, the
+              classic 2.5 build is the tested fallback. Keep exactly one copy of{' '}
+              <code>renodx-dlss5.addon64</code> in the game folder.
+            </Typography>
+          </Callout>
 
-            <StepRow n={2} last={false} title="Install ReShade with add-on support">
-              <Typography variant="body2" sx={proseSx}>
-                Install ReShade for <code>eso64.exe</code>, choosing DirectX 10/11/12 and the build{' '}
-                <strong>with full add-on support</strong>. The plain build cannot load{' '}
-                <code>.addon64</code> files at all, so nothing in this guide will work on it.
-                ReShade must land as <code>dxgi.dll</code> next to <code>eso64.exe</code>.
-              </Typography>
-              <Note>
-                Already have ReShade? Check that <code>dxgi.dll</code> exists in the client folder
-                and that it is version 6.8 or newer. Note that the add-on build is the unsigned one
-                — that is inherent to what add-on support is, and it is why some anti-cheat setups
-                treat it differently from the plain build. ESO has no kernel-level anti-cheat, but
-                if you share a ReShade install with a game that does, install this one for ESO only.
-              </Note>
-            </StepRow>
+          <Box sx={cardSx}>
+            <Typography
+              component="h3"
+              sx={{ fontWeight: W.heading, fontSize: '1.125rem', lineHeight: 1.4, mb: 1 }}
+            >
+              Run the compatibility smoke test first
+            </Typography>
+            <Typography variant="body2" sx={{ ...proseSx, mb: 1.5 }}>
+              Put the exact <code>renodx-dlss5.addon64</code> and NVIDIA DLLs you intend to use next
+              to <code>dlss5-feed-host64.exe</code>. Open PowerShell in that folder and run:
+            </Typography>
+            <CodeBlock copyable copyLabel="Copy host test command" sx={{ mb: 1.5 }}>
+              {'.\\dlss5-feed-host64.exe --test'}
+            </CodeBlock>
+            <Typography variant="body2" sx={proseSx}>
+              A <code>300/300</code> result is a compatibility smoke test, not a complete pass. It
+              proves that the host completed its create/evaluate loop with those files; it does not
+              prove that ESO is supplying correct motion vectors, depth or colour, nor does it prove
+              performance or long-session stability. Check those in-game.
+            </Typography>
+          </Box>
 
-            <StepRow n={3} last={false} title="Add the shaders">
-              <Typography variant="body2" sx={proseSx}>
-                The feeder&apos;s own shader, plus <strong>one</strong> motion-vector provider of
-                your choosing:
-              </Typography>
-              <Box
-                component="ul"
-                sx={{ pl: 2.5, mt: 0.75, mb: 0, '& li': { mb: 0.4, lineHeight: 1.7 } }}
-              >
-                <Typography component="li" variant="body2" sx={proseSx}>
-                  <code>DLSS5_Feed.fx</code> → <code>reshade-shaders\Shaders</code>
+          <Box sx={{ ...cardSx, p: { xs: 2.5, md: 3.5 } }}>
+            <Stack component="ol" role="list" sx={{ listStyle: 'none', p: 0, m: 0 }}>
+              <StepRow n={1} last={false} title="Find your ESO client folder">
+                <Typography variant="body2" sx={proseSx}>
+                  Every file in this guide goes in the folder that contains <code>eso64.exe</code>.
+                  On a default Steam install that is:
                 </Typography>
-                <Typography component="li" variant="body2" sx={proseSx}>
-                  <strong>LumeniteFX</strong> (recommended upstream): its <code>Shaders\</code>{' '}
-                  contents — the <code>lumenite_*.fx</code> files and their <code>include\</code> —
-                  into <code>reshade-shaders\Shaders</code>, and{' '}
-                  <code>lumenite_bluenoise256.png</code> into <code>reshade-shaders\Textures</code>
+                <CodeBlock copyable wrap copyLabel="Copy client folder path" sx={{ mt: 1.25 }}>
+                  {'steamapps\\common\\Zenimax Online\\The Elder Scrolls Online\\game\\client'}
+                </CodeBlock>
+                <Note>Keep this folder open; every remaining step drops a file here.</Note>
+              </StepRow>
+
+              <StepRow n={2} last={false} title="Install ReShade with add-on support">
+                <Typography variant="body2" sx={proseSx}>
+                  Install ReShade for <code>eso64.exe</code>, choosing DirectX 10/11/12 and the
+                  build <strong>with full add-on support</strong>. The plain build cannot load{' '}
+                  <code>.addon64</code> files at all, so nothing in this guide will work on it.
+                  ReShade must land as <code>dxgi.dll</code> next to <code>eso64.exe</code>.
                 </Typography>
-                <Typography component="li" variant="body2" sx={proseSx}>
-                  <strong>or iMMERSE LaunchPad</strong>: <code>MartysMods_LAUNCHPAD.fx</code> and
-                  the <code>MartysMods\</code> include folder into{' '}
-                  <code>reshade-shaders\Shaders</code>, and <code>iMMERSE_bluenoise_opt.png</code>{' '}
-                  into <code>reshade-shaders\Textures</code>
+                <Note>
+                  Already have ReShade? Check that <code>dxgi.dll</code> exists in the client folder
+                  and that it is version 6.8 or newer. Note that the add-on build is the unsigned
+                  one — that is inherent to what add-on support is, and it is why some anti-cheat
+                  setups treat it differently from the plain build. ESO has no kernel-level
+                  anti-cheat, but if you share a ReShade install with a game that does, install this
+                  one for ESO only.
+                </Note>
+              </StepRow>
+
+              <StepRow n={3} last={false} title="Add the shaders">
+                <Typography variant="body2" sx={proseSx}>
+                  The feeder&apos;s own shader, plus <strong>one</strong> motion-vector provider of
+                  your choosing:
                 </Typography>
-              </Box>
-              <Note>
-                Whichever you pick supplies the optical-flow motion vectors; without one the feeder
-                has nothing to hand NGX and sits idle. DLSS5-Feeder bundles none of them — each
-                provider comes from its own repository under its own licence. Install only one, and
-                see{' '}
                 <Box
-                  component="a"
-                  href="#overlay"
-                  sx={{
-                    color: accentText,
-                    fontWeight: W.semi,
-                    textDecoration: 'underline',
-                    textDecorationColor: isDark ? 'rgba(56,189,248,0.4)' : 'rgba(3,105,161,0.4)',
-                  }}
+                  component="ul"
+                  sx={{ pl: 2.5, mt: 0.75, mb: 0, '& li': { mb: 0.4, lineHeight: 1.7 } }}
                 >
-                  choosing a provider
-                </Box>{' '}
-                before you decide.
-              </Note>
-            </StepRow>
-
-            <StepRow n={4} last={false} title="Add the two add-ons">
-              <Typography variant="body2" sx={proseSx}>
-                Drop <code>dlss5-feed.addon64</code> and <code>renodx-dlss5.addon64</code> into the
-                client folder. ReShade auto-discovers <code>.addon64</code> files next to the game
-                exe, so there is no path to configure.
-              </Typography>
-              <Note>
-                ReShade.log will confirm both loaded: look for two &ldquo;Registered add-on&rdquo;
-                lines at startup.
-              </Note>
-            </StepRow>
-
-            <StepRow n={5} last={false} title="Add the NGX runtimes">
-              <Typography variant="body2" sx={proseSx}>
-                You need two NVIDIA DLLs in the client folder: <code>nvngx_dlss.dll</code> (the DLSS
-                super-resolution runtime) and <code>nvngx_dlssnr.dll</code> (the Neural Rendering
-                runtime). ESO already ships an <code>nvngx_dlss.dll</code>, so this is a{' '}
-                <strong>replacement</strong>, not a fresh install — back up the 2.2.16 copy and
-                overwrite it with the 310.x build.
-              </Typography>
-              <Note>
-                Version matters enormously. See{' '}
-                <Box
-                  component="a"
-                  href="#requirements"
-                  sx={{
-                    color: accentText,
-                    fontWeight: W.semi,
-                    textDecoration: 'underline',
-                    textDecorationColor: isDark ? 'rgba(56,189,248,0.4)' : 'rgba(3,105,161,0.4)',
-                  }}
-                >
-                  Requirements
+                  <Typography component="li" variant="body2" sx={proseSx}>
+                    <code>DLSS5_Feed.fx</code> → <code>reshade-shaders\Shaders</code>
+                  </Typography>
+                  <Typography component="li" variant="body2" sx={proseSx}>
+                    <strong>LumeniteFX</strong> (recommended upstream): its <code>Shaders\</code>{' '}
+                    contents — the <code>lumenite_*.fx</code> files and their <code>include\</code>{' '}
+                    — into <code>reshade-shaders\Shaders</code>, and{' '}
+                    <code>lumenite_bluenoise256.png</code> into{' '}
+                    <code>reshade-shaders\Textures</code>
+                  </Typography>
+                  <Typography component="li" variant="body2" sx={proseSx}>
+                    <strong>or iMMERSE LaunchPad</strong>: <code>MartysMods_LAUNCHPAD.fx</code> and
+                    the <code>MartysMods\</code> include folder into{' '}
+                    <code>reshade-shaders\Shaders</code>, and <code>iMMERSE_bluenoise_opt.png</code>{' '}
+                    into <code>reshade-shaders\Textures</code>
+                  </Typography>
                 </Box>
-                . This is where almost every failed setup goes wrong.
-              </Note>
-            </StepRow>
+                <Note>
+                  Whichever you pick supplies the optical-flow motion vectors; without one the
+                  feeder has nothing to hand NGX and sits idle. DLSS5-Feeder bundles none of them —
+                  each provider comes from its own repository under its own licence. Install only
+                  one, and see{' '}
+                  <Box
+                    component="a"
+                    href="#overlay"
+                    sx={{
+                      color: accentText,
+                      fontWeight: W.semi,
+                      textDecoration: 'underline',
+                      textDecorationColor: isDark ? 'rgba(56,189,248,0.4)' : 'rgba(3,105,161,0.4)',
+                    }}
+                  >
+                    choosing a provider
+                  </Box>{' '}
+                  before you decide.
+                </Note>
+              </StepRow>
 
-            <StepRow n={6} last={false} title="Replace ESO d3dcompiler_47.dll">
-              <Typography variant="body2" sx={proseSx}>
-                Without this, Neural Rendering silently never starts. Three actions:
-              </Typography>
-              <Box
-                component="ol"
-                sx={{ pl: 2.5, mt: 0.75, mb: 0, '& li': { mb: 0.4, lineHeight: 1.7 } }}
-              >
-                <Typography component="li" variant="body2" sx={proseSx}>
-                  Close ESO completely. The DLL is locked while the game runs.
+              <StepRow n={4} last={false} title="Add the two add-ons">
+                <Typography variant="body2" sx={proseSx}>
+                  Drop <code>dlss5-feed.addon64</code> and <code>renodx-dlss5.addon64</code> into
+                  the client folder. ReShade auto-discovers <code>.addon64</code> files next to the
+                  game exe, so there is no path to configure.
                 </Typography>
-                <Typography component="li" variant="body2" sx={proseSx}>
-                  Rename the client folder <code>d3dcompiler_47.dll</code> to{' '}
-                  <code>d3dcompiler_47.dll.bak</code>.
-                </Typography>
-                <Typography component="li" variant="body2" sx={proseSx}>
-                  Copy the system one in. Run this <strong>from inside the client folder</strong>.
-                  The trailing <code>.</code> is the destination:
-                </Typography>
-              </Box>
-              <CodeBlock copyable wrap copyLabel="Copy d3dcompiler command" sx={{ mt: 1.25 }}>
-                {'copy "C:\\Windows\\System32\\d3dcompiler_47.dll" .'}
-              </CodeBlock>
-              <Note>
-                To undo: delete the copied <code>d3dcompiler_47.dll</code> and rename{' '}
-                <code>d3dcompiler_47.dll.bak</code> back. Verifying game files also restores
-                ESO&apos;s own copy, which silently disables Neural Rendering until you redo this
-                step.
-              </Note>
-            </StepRow>
+                <Note>
+                  ReShade.log will confirm both loaded: look for two &ldquo;Registered add-on&rdquo;
+                  lines at startup.
+                </Note>
+              </StepRow>
 
-            <StepRow n={7} last={false} title="Turn off in-game anti-aliasing">
-              <Typography variant="body2" sx={proseSx}>
-                In ESO video settings set <strong>Sub-Sampling Quality</strong> to High. ESO has no
-                MSAA or SSAA option and no resolution-scale slider; Sub-Sampling Quality is the
-                render-resolution control, and the feeder needs the game rendering at full
-                resolution.
-              </Typography>
-              <Typography variant="body2" sx={{ ...proseSx, mt: 1.25 }}>
-                On an RTX card that same Anti-Aliasing dropdown also offers{' '}
-                <strong>DLSS and DLAA</strong>. Set it to <strong>None</strong> (or TAA if the image
-                falls apart without any AA) and leave both off. They are not a shortcut and they do
-                not stack with this setup:
-              </Typography>
-              <Box
-                component="ul"
-                sx={{ pl: 2.5, mt: 0.75, mb: 0, '& li': { mb: 0.4, lineHeight: 1.7 } }}
-              >
-                <Typography component="li" variant="body2" sx={proseSx}>
-                  <strong>ESO&apos;s DLSS breaks the depth buffer.</strong> It renders below your
-                  output resolution, so the depth buffer no longer matches the backbuffer. ReShade
-                  then latches the wrong buffer or a garbled one, and the feeder&apos;s depth
-                  contract — the thing step 7 exists to protect — is gone. This is the same failure
-                  as leaving MSAA on, arriving by a different route.
+              <StepRow n={5} last={false} title="Add the NGX runtimes">
+                <Typography variant="body2" sx={proseSx}>
+                  You need two NVIDIA DLLs in the client folder: <code>nvngx_dlss.dll</code> (the
+                  DLSS super-resolution runtime) and <code>nvngx_dlssnr.dll</code> (the Neural
+                  Rendering runtime). ESO already ships an <code>nvngx_dlss.dll</code>, so this is a{' '}
+                  <strong>replacement</strong>, not a fresh install — back up the 2.2.16 copy and
+                  overwrite it with the 310.x build.
                 </Typography>
-                <Typography component="li" variant="body2" sx={proseSx}>
-                  <strong>DLAA is subtler but still wrong.</strong> It renders at native resolution,
-                  so depth survives, but it resolves a jittered temporal pass before ReShade ever
-                  sees the frame. Your provider then estimates motion vectors from an
-                  already-temporally-filtered image and the feeder runs a second temporal pass over
-                  it. Expect extra softness and ghosting rather than an outright failure, so this
-                  one hides — if your image smears and step 7 looks done, check this dropdown.
-                </Typography>
-              </Box>
-              <Note>
-                Either way you are not losing anything: ESO&apos;s dropdown drives the same stale
-                2.2.16 runtime, which is exactly what this guide replaces. The 310.x DLL you
-                installed in step 5 is the one doing the work now.
-              </Note>
-            </StepRow>
+                <Note>
+                  Version matters enormously. See{' '}
+                  <Box
+                    component="a"
+                    href="#requirements"
+                    sx={{
+                      color: accentText,
+                      fontWeight: W.semi,
+                      textDecoration: 'underline',
+                      textDecorationColor: isDark ? 'rgba(56,189,248,0.4)' : 'rgba(3,105,161,0.4)',
+                    }}
+                  >
+                    Requirements
+                  </Box>
+                  . This is where almost every failed setup goes wrong.
+                </Note>
+              </StepRow>
 
-            <StepRow n={8} last title="Enable the effects in the right order">
-              <Typography variant="body2" sx={proseSx}>
-                Launch ESO, press <strong>Home</strong>, and enable your motion-vector provider
-                technique first, then DLSS5_Feed directly below it. Exactly one provider may be
-                enabled. See{' '}
+              <StepRow n={6} last={false} title="Replace ESO d3dcompiler_47.dll">
+                <Typography variant="body2" sx={proseSx}>
+                  Without this, Neural Rendering silently never starts. Three actions:
+                </Typography>
                 <Box
-                  component="a"
-                  href="#overlay"
-                  sx={{
-                    color: accentText,
-                    fontWeight: W.semi,
-                    textDecoration: 'underline',
-                    textDecorationColor: isDark ? 'rgba(56,189,248,0.4)' : 'rgba(3,105,161,0.4)',
-                  }}
+                  component="ol"
+                  sx={{ pl: 2.5, mt: 0.75, mb: 0, '& li': { mb: 0.4, lineHeight: 1.7 } }}
                 >
-                  the overlay walkthrough
-                </Box>{' '}
-                . Order is not cosmetic.
-              </Typography>
-            </StepRow>
-          </Stack>
-        </Box>
+                  <Typography component="li" variant="body2" sx={proseSx}>
+                    Close ESO completely. The DLL is locked while the game runs.
+                  </Typography>
+                  <Typography component="li" variant="body2" sx={proseSx}>
+                    Rename the client folder <code>d3dcompiler_47.dll</code> to{' '}
+                    <code>d3dcompiler_47.dll.bak</code>.
+                  </Typography>
+                  <Typography component="li" variant="body2" sx={proseSx}>
+                    Copy the system one in. Run this <strong>from inside the client folder</strong>.
+                    The trailing <code>.</code> is the destination:
+                  </Typography>
+                </Box>
+                <CodeBlock copyable wrap copyLabel="Copy d3dcompiler command" sx={{ mt: 1.25 }}>
+                  {'copy "C:\\Windows\\System32\\d3dcompiler_47.dll" .'}
+                </CodeBlock>
+                <Note>
+                  To undo: delete the copied <code>d3dcompiler_47.dll</code> and rename{' '}
+                  <code>d3dcompiler_47.dll.bak</code> back. Verifying game files also restores
+                  ESO&apos;s own copy, which silently disables Neural Rendering until you redo this
+                  step.
+                </Note>
+              </StepRow>
+
+              <StepRow n={7} last={false} title="Turn off in-game anti-aliasing">
+                <Typography variant="body2" sx={proseSx}>
+                  In ESO video settings set <strong>Sub-Sampling Quality</strong> to High. ESO has
+                  no MSAA or SSAA option and no resolution-scale slider; Sub-Sampling Quality is the
+                  render-resolution control, and the feeder needs the game rendering at full
+                  resolution.
+                </Typography>
+                <Typography variant="body2" sx={{ ...proseSx, mt: 1.25 }}>
+                  On an RTX card that same Anti-Aliasing dropdown also offers{' '}
+                  <strong>DLSS and DLAA</strong>. Set it to <strong>None</strong> (or TAA if the
+                  image falls apart without any AA) and leave both off. They are not a shortcut and
+                  they do not stack with this setup:
+                </Typography>
+                <Box
+                  component="ul"
+                  sx={{ pl: 2.5, mt: 0.75, mb: 0, '& li': { mb: 0.4, lineHeight: 1.7 } }}
+                >
+                  <Typography component="li" variant="body2" sx={proseSx}>
+                    <strong>ESO&apos;s DLSS breaks the depth buffer.</strong> It renders below your
+                    output resolution, so the depth buffer no longer matches the backbuffer. ReShade
+                    then latches the wrong buffer or a garbled one, and the feeder&apos;s depth
+                    contract — the thing step 7 exists to protect — is gone. This is the same
+                    failure as leaving MSAA on, arriving by a different route.
+                  </Typography>
+                  <Typography component="li" variant="body2" sx={proseSx}>
+                    <strong>DLAA is subtler but still wrong.</strong> It renders at native
+                    resolution, so depth survives, but it resolves a jittered temporal pass before
+                    ReShade ever sees the frame. Your provider then estimates motion vectors from an
+                    already-temporally-filtered image and the feeder runs a second temporal pass
+                    over it. Expect extra softness and ghosting rather than an outright failure, so
+                    this one hides — if your image smears and step 7 looks done, check this
+                    dropdown.
+                  </Typography>
+                </Box>
+                <Note>
+                  Either way you are not losing anything: ESO&apos;s dropdown drives the same stale
+                  2.2.16 runtime, which is exactly what this guide replaces. The 310.x DLL you
+                  installed in step 5 is the one doing the work now.
+                </Note>
+              </StepRow>
+
+              <StepRow n={8} last title="Enable the effects in the right order">
+                <Typography variant="body2" sx={proseSx}>
+                  Launch ESO, press <strong>Home</strong>, and enable your motion-vector provider
+                  technique first, then DLSS5_Feed directly below it. Exactly one provider may be
+                  enabled. See{' '}
+                  <Box
+                    component="a"
+                    href="#overlay"
+                    sx={{
+                      color: accentText,
+                      fontWeight: W.semi,
+                      textDecoration: 'underline',
+                      textDecorationColor: isDark ? 'rgba(56,189,248,0.4)' : 'rgba(3,105,161,0.4)',
+                    }}
+                  >
+                    the overlay walkthrough
+                  </Box>{' '}
+                  . Order is not cosmetic.
+                </Typography>
+              </StepRow>
+            </Stack>
+          </Box>
+        </Stack>
       </Section>
 
       {/* ── Overlay walkthrough ──────────────────────────────────────── */}
@@ -1638,6 +1702,19 @@ after NR:   feed CPU 11.82 ms/frame |  63.9 fps | feed is 75% of the frame`}
                 looks healthy, and DLSS quietly reads last frame&apos;s vectors — you see a soft,
                 one-frame-behind image and no reason for it. Enabling two providers at once does the
                 same thing. Tick exactly one, and drag it above DLSS5_Feed.
+              </Typography>
+            </Callout>
+            <Callout
+              tone="info"
+              label="A zero probe is not a zero motion-vector field"
+              sx={{ mt: 1.5 }}
+            >
+              <Typography variant="body2" sx={{ lineHeight: 1.7 }}>
+                The feeder&apos;s motion-vector telemetry samples only the centre 64x64 area. A zero
+                sample while the camera and that part of the scene are still is normal; it does not
+                prove that every motion vector is zero. Test while panning the camera and look for
+                non-zero samples, or use the provider&apos;s visual debug view to inspect the full
+                frame.
               </Typography>
             </Callout>
             <Typography variant="body2" sx={{ ...proseSx, mt: 1.5 }}>
@@ -1825,6 +1902,16 @@ after NR:   feed CPU 11.82 ms/frame |  63.9 fps | feed is 75% of the frame`}
               harder.
             </Typography>
           </Callout>
+
+          <Callout tone="info" label="When feature 18 is created again">
+            <Typography variant="body2" sx={{ lineHeight: 1.7 }}>
+              A feature recreation immediately after <code>ResizeBuffers</code>, a ReShade runtime
+              rebuild or a work-resolution change follows from that reset. Repeated same-size
+              recreations without one of those triggers are worth reporting with both logs. On
+              builds that print workset telemetry, <code>live=1</code>, <code>orphan=0</code> and{' '}
+              <code>retired=0</code> indicate that worksets are not accumulating.
+            </Typography>
+          </Callout>
         </Stack>
       </Section>
 
@@ -1880,7 +1967,8 @@ after NR:   feed CPU 11.82 ms/frame |  63.9 fps | feed is 75% of the frame`}
             <Typography variant="body2" sx={{ lineHeight: 1.7 }}>
               A correct setup logs <code>Depth 2560x1440 R32_FLOAT</code> (at your resolution) in{' '}
               <code>dlss5-feed.log</code>. If the resolution there does not match your monitor, the
-              wrong buffer is selected.
+              wrong buffer is selected. A probe that repeatedly reports <code>min 1, max 1</code>{' '}
+              and zero variance is also flat depth, even if a depth texture was technically bound.
             </Typography>
           </Callout>
         </Box>
