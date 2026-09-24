@@ -641,10 +641,10 @@ const FAILURES: ReadonlyArray<FailureSpec> = [
   {
     symptom: 'The direct path stays on Auto (waiting)',
     defaultOpen: true,
-    log: 'Hook status: Auto (waiting)\n(no CreateFeature(Reserved18) or EvaluateFeature lines)',
+    log: 'Hook status: Auto (waiting)',
     cause:
-      'The add-on loaded, but it never observed ESO create or evaluate a native DLSS feature in this session. Forcing Hook Method to Upscaled cannot manufacture the missing NGX call. This is a separate direct-path limitation, not evidence that the Neural Rendering DLL crashed.',
-    fix: "First confirm LoadFromDllMain and ESO's native DLSS are configured exactly as described above. If the status remains Auto (waiting) after loading into the world and the log still has no native CreateFeature or EvaluateFeature lines, stop waiting and use the two-add-on feeder path below.",
+      "Older ShortFuse builds could load without attaching to ESO's native DLSS call. The confirmed fix on the reported ESO setup was renodx-dlss-SF-26.0922.0041.",
+    fix: "Install renodx-dlss-SF-26.0922.0041, keep only renodx-dlss.addon64 on the direct path, and recheck LoadFromDllMain plus ESO's native DLSS setting. Do not judge this build by missing CreateFeature(Reserved18) or EvaluateFeature lines. Switch presets A/B/C and press F6 in gameplay; visible image changes are the reliable check.",
   },
   {
     symptom: 'The add-on is listed in ReShade but nothing happens',
@@ -998,12 +998,12 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
               body="renodx-dlss5.addon64 detours the NGX calls, and once a DLSS feature evaluates successfully it creates feature 18 (Neural Rendering) on top of it."
             />
           </Stack>
-          <Callout tone="caution" label="There may be a shorter route" sx={{ mt: 2.5 }}>
+          <Callout tone="good" label="Use the direct path first" sx={{ mt: 2.5 }}>
             <Typography variant="body2">
-              Upstream now suggests that 64-bit DirectX 11 games like ESO can skip the feeder
-              entirely and use ShortFuse&apos;s <code>renodx-dlss</code> add-on on its own, one
-              add-on instead of two. We have not tested that in ESO. This page documents the
-              two-add-on setup because that is the one verified working here, start to finish.
+              ShortFuse build <code>renodx-dlss-SF-26.0922.0041</code> is confirmed working in ESO
+              with a single <code>renodx-dlss.addon64</code>. It needs no feeder, motion-vector
+              shader, or enabled ReShade technique. The two-add-on feeder path remains below as a
+              fallback.
             </Typography>
           </Callout>
 
@@ -1116,8 +1116,10 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
 
             <StepRow n={4} last={false} title="Add the add-on">
               <Typography variant="body2" sx={proseSx}>
-                Put <code>renodx-dlss.addon64</code> next to <code>eso64.exe</code>. That is the
-                only add-on you need on this path.
+                Use <code>renodx-dlss.addon64</code> from ShortFuse build{' '}
+                <code>renodx-dlss-SF-26.0922.0041</code> and put it next to <code>eso64.exe</code>.
+                That is the only add-on needed on this path. Move <code>dlss5-feed.addon64</code>{' '}
+                and <code>renodx-dlss5.addon64</code> out of the client folder before testing.
               </Typography>
             </StepRow>
 
@@ -1161,8 +1163,9 @@ export const Dlss5NeuralRenderingGuidePage: React.FC = () => {
       <Section id="verify" index={4} title="Verify it's working">
         <Box sx={cardSx}>
           <Typography variant="body2" sx={{ ...proseSx, mb: 2 }}>
-            The effect is subtle and easy to imagine seeing. Trust <code>ReShade.log</code> in the
-            client folder. Load into the world, play for a minute or two, then read it.
+            Check that the add-on loaded early, then confirm Neural Rendering visually in gameplay.
+            The current ShortFuse build can run correctly without printing per-feature creation or
+            evaluation lines.
           </Typography>
 
           <Typography
@@ -1184,21 +1187,22 @@ Loading externally registered add-on "RenoDX DLSS"   <- correct`}
             component="h3"
             sx={{ fontWeight: W.heading, fontSize: '1.125rem', lineHeight: 1.4, mb: 1 }}
           >
-            Then, that Neural Rendering is running
+            Then confirm it in gameplay
           </Typography>
-          <CodeBlock copyable copyLabel="Copy expected NR lines" sx={{ mb: 2.5 }}>
-            {`DLSS-NR direct: backend-owned NVIDIA NGX core initialization succeeded
-DLSS-NR direct: CreateFeature(Reserved18) succeeded: performance=6 preset=1
-DLSS-NR direct: EvaluateFeature succeeded: evaluation=1
-DLSS-NR direct: EvaluateFeature succeeded: evaluation=4754`}
-          </CodeBlock>
-
           <Callout tone="good" label="What success looks like">
             <Typography variant="body2" sx={{ lineHeight: 1.7 }}>
-              <strong>Reserved18</strong> is the neural feature, and the <code>evaluation=</code>{' '}
-              counter has to <strong>climb</strong>. One evaluation that never increases means it
-              started and stopped. A counter in the thousands after a few minutes of play is a
-              healthy run.
+              Load into the world and switch between presets <strong>A/B/C</strong> while looking at
+              a detailed face or hair. The image should visibly change. Press <strong>F6</strong> to
+              toggle the add-on off and on; the image and frame rate should respond.
+            </Typography>
+          </Callout>
+
+          <Callout tone="info" label="Sparse logs are normal" sx={{ mt: 2 }}>
+            <Typography variant="body2" sx={{ lineHeight: 1.7 }}>
+              <code>renodx-dlss-SF-26.0922.0041</code> may not print{' '}
+              <code>CreateFeature(Reserved18)</code> or <code>EvaluateFeature</code> lines at all.
+              Their absence does not prove failure on this path. Use the visible preset changes and
+              the F6 toggle as the reliable check.
             </Typography>
           </Callout>
 
