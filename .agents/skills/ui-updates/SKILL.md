@@ -11,7 +11,7 @@ You are making UI changes to the ESO Log Aggregator application. Every component
 
 The app uses a **modern glassmorphism** aesthetic — blurred translucent panels, gradient overlays, subtle inset highlights, and smooth transitions. It is **not** fantasy/game-themed. The look is clean, tech-oriented, and polished.
 
-**Stack**: React 19+, MUI v7, Emotion (`styled()` + `sx`), Chart.js via `react-chartjs-2`.
+**Stack**: React 19+, MUI v9, Emotion (`styled()` + `sx`), ECharts 6 (via `src/utils/echartsTheme.ts` + `useEChartsTheme()`).
 
 ---
 
@@ -125,6 +125,33 @@ This is the defining visual style. Apply it to panels, cards, and elevated surfa
 }
 ```
 
+### Shared Recipe Modules (use these, don't re-type inline)
+
+| Recipe | Module | Notes |
+|---|---|---|
+| Accent glass card (bloom + 3px top strip + hover glow) | `src/theme/glassCardSurface.ts` (`glassCardSurfaceSx`, `SUMMARY_ACCENTS`) | The canonical "premium card" |
+| Dropdown/Select menu glass | `src/theme/dropdownMenu.ts` (`dropdownMenuPaperSx`) | Opaque fill must win via `&&` — global `!important` overrides exist |
+| Roster glass panels/chips | `src/components/roster/shared/glassSx.ts` | |
+| Build-editor glass/rarity/attribute tokens | `src/features/build-editor/theme/buildEditorTokens.ts` (`BE_TOKENS`) | |
+| ESO class colors (accent/glow/gradient/accentRgb) | `src/features/build-editor/theme/classColorMap.ts` (`CLASS_COLOR_MAP`) | Injected as `--be-accent*` CSS vars by `BuildEditorThemeProvider` |
+| Glossy chips (shine sweep + gloss dome, 11 variants) | `src/utils/playerCardStyleUtils.ts` (`getGlossyBaseSx`, `buildVariantSx`) | Several report_details files carry stale inline copies — import instead |
+| Filter-bar/field glass | `src/features/latest_reports/latestReportsStyles.ts` | Duplicated in roster-hub/build-hub/pack-hub FilterBars |
+| Accent tables/accordions/badges | `src/features/report_summary/summaryStyles.ts` (`accentTableSx`, …) | |
+| Replay control-deck surfaces | `src/features/fight_replay/constants/replayDesign.ts` | |
+
+### Blur Tier Ladder
+
+`backdrop-filter` blur tracks z-order — stay within the tier for your surface (always pair with `WebkitBackdropFilter`):
+chrome/appbar 8–10px · chips/pills 6–10px · cards/panels 12–16px · dialogs 10–20px · menus/popovers 20–24px · hero/tooltips 22–24px.
+
+### Boundary Idioms
+
+- **Accent top strip**: `::before` `height:3px; linear-gradient(90deg, transparent, rgba(A,0.95) 50%, transparent)` (see `glassCardSurface.ts`)
+- **Layout-safe selected/hover rail**: `boxShadow: 'inset 3px 0 0 <color>'` (not `borderLeft`, which shifts layout — or reserve with `borderLeft: '3px solid transparent'`)
+- **Gradient border ring** (the standard idiom): absolutely-positioned overlay with `padding:1.5px; background:<gradient>; WebkitMask:'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)'; WebkitMaskComposite:'xor'; maskComposite:'exclude'` (see `IconPickerGrid.tsx`). Avoid `borderImage` — the shorthand resets border-color (documented in `GlassPanel.tsx:6-9`)
+- **Accent glow**: append `0 0 <14–60>px rgba(A, 0.12–0.35)` after the depth shadow
+- **Inset top highlight**: `inset 0 1px 0 rgba(255,255,255,α)` — α 0.05–0.06 panels, 0.08–0.12 menus, 0.2–0.3 glossy chips, 0.6–0.9 light mode
+
 ### Gradient Patterns
 
 | Context       | Gradient                                                                                   |
@@ -193,11 +220,27 @@ Available inline via `sx` `@keyframes`:
 | `.u-hover-glow` | Accent glow on hover                                      |
 | `.u-focus-ring`  | 2px solid accent outline on `:focus-visible`              |
 | `.u-fade-in`     | Opacity fade-in animation                                  |
-| `.u-fade-in-up`  | Fade-in with upward slide                                 |
-| `.u-hover-lift`  | Translate-Y lift on hover                                 |
 | `.u-tabular`     | `fontVariantNumeric: 'tabular-nums'` for stat numbers     |
 
+> ⚠️ **Known defect**: `.u-hover-lift` and `.u-fade-in-up` are referenced by ~8 components but are **not defined anywhere** (only `.u-fade-in`, `.u-tab-enter`, `.u-hover-glow`, `.u-focus-ring`, `.u-tabular` exist in `ReduxThemeProvider.tsx:882-912`). Do not rely on them; if you need a lift/slide-up, write it explicitly.
+
 All animations respect `prefers-reduced-motion: reduce`.
+
+### View Transitions
+
+Route navigation uses the **View Transitions API Level 2**: `src/styles/view-transitions.css` defines 8 named types (`forward`, `back`, `hero`, `up`, `down`, `slide-left`, `slide-right`, …) driven by `html:active-view-transition-type(...)`, with easing tokens `--vt-decel`/`--vt-ease-out`/`--vt-snap`. Driver hook: `src/hooks/useViewTransitionNavigate.ts`; shared-element morphs via `data-vt-hero="<name>"`. Note `AnimatedTabContent` deliberately does **not** use view transitions (documented perf regression).
+
+### Performance Tiers
+
+A third theme axis: `<html data-perf="low|medium|high">` (set from `src/utils/detectPerfTier.ts`). At **low** tier, `src/index.css:136-186` strips all `backdrop-filter` and freezes animations (escape hatches: `--perf-anim-duration`, `--perf-anim-iteration`), `.glass-dialog` falls back to opaque `#0f172a`, and `SiteBackground` renders nothing. Any new glass/animated surface must look acceptable opaque and static.
+
+---
+
+## Legacy / Misleading Files (not the design system)
+
+- `src/landingpage.css`, `src/landingpage.html`, `src/landingpage.js` — dead, unimported; the real landing page is `src/components/LandingPage.tsx`
+- The `--site-*` `:root` block in `src/index.css:120-127` (`#121212`, `#7289da`) — legacy vars, not the app palette
+- `src/test/themes/storybookThemes.ts` — wrong palette (red/#121212); Storybook does not render the real theme
 
 ---
 
@@ -336,19 +379,14 @@ import { styled, alpha } from '@mui/material/styles';
 
 ---
 
-## Chart.js Styling
+## Chart Styling (ECharts 6)
 
-```tsx
-import { Chart as ChartJS, CategoryScale, LinearScale, ... } from 'chart.js';
-ChartJS.register(CategoryScale, LinearScale, ...);
-```
+Charts use **ECharts 6** (there is no Chart.js in the tree). The theme lives in `src/utils/echartsTheme.ts` and is consumed via `useEChartsTheme()` (`src/hooks/useEChartsTheme.ts`).
 
 Conventions:
-- **Disable animations**: `animation: { duration: 0 }`
-- **Interaction**: `interaction: { intersect: false, mode: 'index' }`
-- **Container**: `<Box sx={{ width: '100%', height: 300 }}><Line ... /></Box>`
-- Annotation lines: dashed, `#2e7d32` green for targets
-- Extract callbacks to module-level for performance
+- Palettes: 12-color `DARK_PALETTE` / `LIGHT_PALETTE` in `echartsTheme.ts` — never invent chart colors
+- Use `buildBaseOption()` as the option starting point; `glowLineStyle()` and `gradientAreaStyle()` for the signature glow-line/gradient-area look
+- Animation duration/easing switch on `perfTier` and the `intensity: 'subtle' | 'bold'` flag — don't hardcode
 - See `src/utils/chartPhaseAnnotationUtils.ts` for annotation patterns
 
 ---

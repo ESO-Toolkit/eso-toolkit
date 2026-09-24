@@ -1,0 +1,25 @@
+<!-- @dsCard group="Components" -->
+<meta charset="utf-8"><title>Header / Navbar</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>html,body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif;padding:20px;box-sizing:border-box}
+.nav{background:rgba(11,18,32,.95);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid rgba(56,189,248,.15);padding:10px 24px;display:flex;align-items:center;justify-content:space-between;border-radius:8px;min-height:64px;box-sizing:border-box}
+.logo{display:flex;align-items:center;gap:8px;font-family:'Space Grotesk',Inter,system-ui,sans-serif;font-size:18px;font-weight:800;letter-spacing:-.02em;background:linear-gradient(135deg,#ffffff 0%,#f8fafc 50%,#e2e8f0 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.logo img{width:30px;height:30px}
+.links{display:flex;gap:12px;list-style:none;margin:0;padding:0;align-items:center}
+.links a{display:inline-block;color:var(--text);text-decoration:none;font-size:14px;font-weight:500;padding:8px 16px;border-radius:20px;border:1px solid transparent;transition:all .3s cubic-bezier(.4,0,.2,1)}
+.links a:hover{background:rgba(56,189,248,.08);border-color:rgba(56,189,248,.2);transform:translateY(-1px);box-shadow:0 4px 20px rgba(56,189,248,.15),0 2px 8px rgba(0,0,0,.1)}
+.signin{font-family:'Space Grotesk',Inter,system-ui,sans-serif;font-weight:700;font-size:.85rem;color:#fff;padding:6px 20px;border-radius:10px;background:linear-gradient(135deg,#3b82f6 0%,#2563eb 100%);box-shadow:0 4px 16px rgba(59,130,246,.3),inset 0 1px 0 rgba(255,255,255,.15);text-decoration:none}
+.src{font-size:10px;color:var(--muted);font-family:Consolas,Menlo,monospace;margin-top:12px;line-height:1.6}
+</style>
+<nav class="nav">
+<div class="logo"><img src="../assets/eso-helper-icon.svg" onerror="this.style.display='none'">ESO Toolkit</div>
+<ul class="links">
+<li><a>👥 Roster Hub</a></li><li><a>🏗️ Build Hub</a></li><li><a>🧩 Pack Hub</a></li>
+<li><a>Reports ▾</a></li><li><a>Tools ▾</a></li>
+<li><a class="signin">Sign in</a></li>
+</ul>
+</nav>
+<div class="src">bar: rgba(11,18,32,.95) + blur(10px) + border-bottom rgba(56,189,248,.15) — MuiAppBar override, ReduxThemeProvider.tsx:150-154.<br>
+wordmark: Space Grotesk 800, ls -.02em, gradient #ffffff→#f8fafc→#e2e8f0 (dark) — HeaderBar.tsx:843-855; logo icon 30px.<br>
+nav buttons: pill (radius 20px), weight 500, hover rgba(56,189,248,.08) bg + .2 border + lift — navButtonSx, HeaderBar.tsx:258-299. No active underline in source.<br>
+Sign in: gradient #3b82f6→#2563eb, radius 10px — HeaderBar.tsx:1047-1056.</div>

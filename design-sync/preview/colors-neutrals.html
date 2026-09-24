@@ -1,0 +1,22 @@
+<!-- @dsCard group="Colors" -->
+<meta charset="utf-8"><title>Neutrals</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>html,body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif;padding:20px;box-sizing:border-box}
+.grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+.sw{aspect-ratio:2/1;border-radius:8px;border:1px solid var(--border);padding:8px;display:flex;flex-direction:column;justify-content:flex-end;font-family:Consolas,Menlo,monospace;font-size:10px;color:#fff;text-shadow:0 1px 2px #0008}
+.src{font-size:10px;color:var(--muted);font-family:Consolas,Menlo,monospace;margin-top:12px;line-height:1.6}
+</style>
+<div class="grid">
+<div class="sw" style="background:#030712;color:#94a3b8">#030712 paper-gradient floor</div>
+<div class="sw" style="background:#0b1220;color:#94a3b8">#0b1220 --bg</div>
+<div class="sw" style="background:#0f172a">#0f172a --panel</div>
+<div class="sw" style="background:#0d1430">#0d1430 --panel-2</div>
+<div class="sw" style="background:#1f2937">#1f2937 --border</div>
+<div class="sw" style="background:#1e293b">#1e293b menu-item hover</div>
+<div class="sw" style="background:#94a3b8;color:#0b1220">#94a3b8 --muted</div>
+<div class="sw" style="background:#e5e7eb;color:#0b1220">#e5e7eb --text</div>
+<div class="sw" style="background:#f8fafc;color:#0b1220">#f8fafc light --bg</div>
+<div class="sw" style="background:#ffffff;color:#0b1220">#ffffff light --panel</div>
+</div>
+<div class="src">Dark neutrals — src/ReduxThemeProvider.tsx:41-51 (tokens), :162 (paper gradient floor rgba(3,7,18,.66)), :186 (menu hover #1e293b); light :56-66.<br>
+Body text is #e5e7eb, not white — white-alpha "fg" ramps are not part of the current system.</div>
