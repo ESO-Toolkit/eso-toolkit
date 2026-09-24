@@ -201,14 +201,16 @@ describe('Dlss5NeuralRenderingGuidePage', () => {
     expect(fallbackAt).toBeGreaterThan(setupAt);
   });
 
-  it('routes an indefinitely waiting direct path to the feeder without calling it a runtime crash', () => {
+  it('documents the fixed direct build and visual checks for sparse logs', () => {
     const { container } = renderPage();
 
     const text = container.textContent ?? '';
     expect(text).toMatch(/direct path stays on Auto \(waiting\)/i);
-    expect(text).toMatch(/cannot manufacture the missing NGX call/i);
-    expect(text).toMatch(/separate direct-path limitation.*not evidence.*DLL crashed/i);
-    expect(text).toMatch(/stop waiting and use the two-add-on feeder path/i);
+    expect(text).toMatch(/renodx-dlss-SF-26\.0922\.0041/);
+    expect(text).toMatch(/may not print CreateFeature\(Reserved18\) or EvaluateFeature/i);
+    expect(text).toMatch(/presets A\/B\/C/i);
+    expect(text).toMatch(/Press F6/i);
+    expect(text).not.toMatch(/stop waiting and use the two-add-on feeder path/i);
   });
 
   it('documents LoadFromDllMain, which is the failure that produces no error', () => {
