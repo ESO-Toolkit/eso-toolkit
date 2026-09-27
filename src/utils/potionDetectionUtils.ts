@@ -85,6 +85,13 @@ const MAJOR_HEROISM_IDS = new Set([
 // potion restore rather than passive regen, proc, or channel tick.
 const MIN_POTION_RESOURCE_CHANGE = 500;
 
+// U51 consolidates the old Major Brutality/Sorcery and Major
+// Prophecy/Savagery buffs into hybrid buffs. Keep the old name-based pairs
+// below for historical reports, and treat the new pair as weapon-power for
+// current PotionType consumers.
+const MAJOR_BRUTALITY_AND_SORCERY_ID = 219246;
+const MAJOR_PROPHECY_AND_SAVAGERY_ID = 217672;
+
 // Window (ms) around a resource-restore anchor event to collect associated
 // applybuff/refreshbuff events for potion-type classification.
 // Empirically, potion buff events are atomically co-emitted (delta=0) with their
@@ -174,6 +181,8 @@ export function detectPotionType(
     hasTriStatGroupA ||
     hasTriStatGroupB ||
     hasHeroismBuff ||
+    auraIdSet.has(MAJOR_BRUTALITY_AND_SORCERY_ID) ||
+    auraIdSet.has(MAJOR_PROPHECY_AND_SAVAGERY_ID) ||
     // Legacy IDs kept for backward compatibility (always empty sets now):
     hasAuraById(auras, STAMINA_POTION_RESTORE_EFFECT) ||
     hasAuraById(auras, MAGICKA_POTION_RESTORE_EFFECT) ||
@@ -198,7 +207,13 @@ export function detectPotionType(
 
   // --- Stage 4: well-known buff combos (good confidence) -------------------
 
-  if (hasMajorBrutality && hasMajorSavagery) return 'weapon-power';
+  if (
+    (hasMajorBrutality && hasMajorSavagery) ||
+    (auraIdSet.has(MAJOR_BRUTALITY_AND_SORCERY_ID) &&
+      auraIdSet.has(MAJOR_PROPHECY_AND_SAVAGERY_ID))
+  ) {
+    return 'weapon-power';
+  }
   if (hasMajorSorcery && hasMajorProphecy) return 'spell-power';
 
   // --- Stage 5: single-buff name patterns (lower confidence) ---------------
@@ -271,6 +286,12 @@ function classifyFromClusters(
   if (buffNames.has('Major Sorcery') && buffNames.has('Major Prophecy')) return 'spell-power';
 
   // ── Weapon Power: Major Brutality + Major Savagery ──────────────────────
+  if (
+    buffIds.has(MAJOR_BRUTALITY_AND_SORCERY_ID) &&
+    buffIds.has(MAJOR_PROPHECY_AND_SAVAGERY_ID)
+  ) {
+    return 'weapon-power';
+  }
   if (buffNames.has('Major Brutality') && buffNames.has('Major Savagery')) return 'weapon-power';
 
   // ── Infer from resource restore IDs alone ───────────────────────────────
