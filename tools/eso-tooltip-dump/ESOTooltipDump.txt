@@ -2,7 +2,7 @@
 ## Author: ESO Toolkit
 ## Version: 1.1.2
 ## AddOnVersion: 112
-## APIVersion: 101050
+## APIVersion: 101050 101051
 ## Description: Dumps skill ability and gear set tooltip data to SavedVariables for offline processing.
 ## SavedVariables: ESOTooltipDumpSV
 ## OptionalDependsOn: LibSets

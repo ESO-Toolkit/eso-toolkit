@@ -93,7 +93,11 @@ export const ESO_MUNDUS_STONES: MundusDef[] = [
   { id: 'lady', label: 'The Lady', description: 'Increases Physical and Spell Resistance' },
   { id: 'steed', label: 'The Steed', description: 'Increases Movement Speed and Health Recovery' },
   { id: 'lord', label: 'The Lord', description: 'Increases Max Health' },
-  { id: 'apprentice', label: 'The Apprentice', description: 'Increases Spell Damage' },
+  {
+    id: 'apprentice',
+    label: 'The Apprentice',
+    description: 'Increases XP and Inspiration gain by 8%',
+  },
   { id: 'ritual', label: 'The Ritual', description: 'Increases Healing Done' },
   { id: 'atronach', label: 'The Atronach', description: 'Increases Magicka Recovery' },
 ];

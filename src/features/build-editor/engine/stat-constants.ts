@@ -266,13 +266,12 @@ export const CLASS_PASSIVES: ClassPassive[] = [
     value: 1314, // Weapon Critical rating
     isRating: true,
   },
-  // Sorcerer — Dark Magic: Exploitation grants Minor Prophecy to you + group.
+  // Update 51: Sorcerer — Dark Magic: Exploitation grants unique penetration.
   {
     skillLineId: 'class.dark-magic',
-    stat: 'critChance',
-    name: 'Exploitation (Minor Prophecy)',
-    value: 1314, // Spell Critical rating
-    isRating: true,
+    stat: 'penetration',
+    name: 'Exploitation',
+    value: 2974,
   },
   // Nightblade — Assassination: Pressure Points (+438 crit rating per NB
   // ability slotted; modeled at the fully-slotted 5 abilities, like the other
@@ -314,6 +313,13 @@ export const CLASS_PASSIVES: ClassPassive[] = [
     name: 'Balanced Warrior',
     value: 6,
     percentOfSubtotal: true,
+  },
+  // Update 51: Templar — Dawn's Wrath: Illuminate grants unique Armor.
+  {
+    skillLineId: 'class.dawns-wrath',
+    stat: 'armor',
+    name: 'Illuminate',
+    value: 2974,
   },
   // Dragonknight — Earthen Heart: Heart of Stone (+2974 Armor).
   {

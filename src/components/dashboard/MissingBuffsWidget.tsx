@@ -21,9 +21,13 @@ interface MissingBuffsWidgetProps {
 }
 
 const IMPORTANT_BUFFS = [
-  { id: 61746, name: 'Major Brutality', sub: 'DPS · checked @ midpoint', roles: ['dps' as const] },
-  { id: 61747, name: 'Major Sorcery', sub: 'DPS · checked @ midpoint', roles: ['dps' as const] },
-  { id: 61744, name: 'Minor Berserk', sub: 'DPS · checked @ midpoint', roles: ['dps' as const] },
+  {
+    ids: [219246, 61665, 61687, 183049],
+    name: 'Major Brutality',
+    sub: 'DPS · checked @ midpoint',
+    roles: ['dps' as const],
+  },
+  { ids: [61744], name: 'Minor Berserk', sub: 'DPS · checked @ midpoint', roles: ['dps' as const] },
 ];
 
 interface BuffMissingInfo {
@@ -69,11 +73,8 @@ export const MissingBuffsWidget: React.FC<MissingBuffsWidgetProps> = ({
         IMPORTANT_BUFFS.forEach((buff) => {
           if (!(buff.roles as readonly string[]).includes(player.role)) return;
 
-          const hasBuffAtMidpoint = isBuffActiveOnTarget(
-            buffLookupData,
-            buff.id,
-            fightMidpoint,
-            player.id,
+          const hasBuffAtMidpoint = buff.ids.some((buffId) =>
+            isBuffActiveOnTarget(buffLookupData, buffId, fightMidpoint, player.id),
           );
 
           if (!hasBuffAtMidpoint) {

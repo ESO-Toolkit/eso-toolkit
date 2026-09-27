@@ -209,8 +209,7 @@ export function detectPotionType(
 
   if (
     (hasMajorBrutality && hasMajorSavagery) ||
-    (auraIdSet.has(MAJOR_BRUTALITY_AND_SORCERY_ID) &&
-      auraIdSet.has(MAJOR_PROPHECY_AND_SAVAGERY_ID))
+    (auraIdSet.has(MAJOR_BRUTALITY_AND_SORCERY_ID) && auraIdSet.has(MAJOR_PROPHECY_AND_SAVAGERY_ID))
   ) {
     return 'weapon-power';
   }
@@ -286,10 +285,7 @@ function classifyFromClusters(
   if (buffNames.has('Major Sorcery') && buffNames.has('Major Prophecy')) return 'spell-power';
 
   // ── Weapon Power: Major Brutality + Major Savagery ──────────────────────
-  if (
-    buffIds.has(MAJOR_BRUTALITY_AND_SORCERY_ID) &&
-    buffIds.has(MAJOR_PROPHECY_AND_SAVAGERY_ID)
-  ) {
+  if (buffIds.has(MAJOR_BRUTALITY_AND_SORCERY_ID) && buffIds.has(MAJOR_PROPHECY_AND_SAVAGERY_ID)) {
     return 'weapon-power';
   }
   if (buffNames.has('Major Brutality') && buffNames.has('Major Savagery')) return 'weapon-power';

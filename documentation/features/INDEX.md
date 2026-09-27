@@ -32,6 +32,7 @@ Feature-specific documentation for ESO Toolkit.
 | [Cookie Consent](./cookie-consent.md)                                        | GDPR compliance implementation                       |
 | [Slot Inference](./SLOT_INFERENCE_SOLUTION.md)                               | Item slot inference and confidence model             |
 | [Build Editor Mobile UX Audit](./BUILD_EDITOR_MOBILE_UX_AUDIT_2026-06-12.md) | Mobile UX/UI audit and remediation plan (2026-06-12) |
+| [Update 51 Game-Data Readiness](./u51-game-data-update.md)                   | Verified prelaunch changes and live-data checklist   |
 
 ## Key Insight: Scribing Detection
 

@@ -10,7 +10,7 @@ bars. This add-on reads them live from the official ESO API and writes them to
 SavedVariables; ESOTK matches each snapshot to your uploaded log by character, server and
 timestamp, then overlays the build on the report.
 
-Current companion release: **0.1.0** · **ESO Update 50** · API **101049–101050**.
+Current companion release: **0.1.0** · **ESO Update 51** · API **101050–101051**.
 
 > Read-only (no input or combat automation), PC-only (console can't export SavedVariables).
 > See the full strategy in the
@@ -72,9 +72,9 @@ Account-wide via `ZO_SavedVars`, a ring buffer of per-fight snapshots:
 
 ```lua
 ESOTKCompanionSV = { Default = { ["@account"] = { ["$AccountWide"] = {
-  schemaVersion = 1, season = "U50", enabled = true,
+  schemaVersion = 1, season = "U51", enabled = true,
   snapshots = { [1] = {
-    schemaVersion = 1, season = "U50",
+    schemaVersion = 1, season = "U51",
     ts = 1749384000, char = "Charname", account = "@account", server = "NA",
     zoneId = 1196, classId = 6, className = "Arcanist",
     raceId = 4, raceName = "Khajiit", level = 50, cpRank = 3600,

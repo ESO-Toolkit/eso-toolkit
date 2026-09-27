@@ -32,7 +32,7 @@ local ADDON = {
   -- instead, so it can change without wiping users' captured builds. Only ever bump this if a
   -- deliberate, one-time wipe of all stored snapshots is actually intended.
   savedVarsVersion = 1,
-  season = "U50",          -- bump per ESO season; ESOTK uses this to pick the right caps/data
+  season = "U51",          -- bump per ESO season; ESOTK uses this to pick the right caps/data
   maxSnapshots = 200,      -- ring buffer; oldest dropped beyond this
   snapshotMode = "combatEnd",
 }

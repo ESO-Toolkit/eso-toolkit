@@ -20,8 +20,12 @@ interface LowBuffUptimesWidgetProps {
 }
 
 const UPTIME_BUFFS = [
-  { id: 61746, name: 'Major Brutality', minUptime: 95, roles: ['dps' as const] },
-  { id: 61747, name: 'Major Sorcery', minUptime: 95, roles: ['dps' as const] },
+  {
+    ids: [219246, 61665, 61687, 183049],
+    name: 'Major Brutality',
+    minUptime: 95,
+    roles: ['dps' as const],
+  },
 ];
 
 interface LowUptimeInfo {
@@ -170,8 +174,9 @@ export const LowBuffUptimesWidget: React.FC<LowBuffUptimesWidgetProps> = ({
         UPTIME_BUFFS.forEach((buff) => {
           if (!(buff.roles as readonly string[]).includes(player.role)) return;
 
-          const intervals = buffs.buffIntervals[buff.id.toString()] || [];
-          const playerIntervals = intervals.filter((interval) => interval.targetID === player.id);
+          const playerIntervals = buff.ids
+            .flatMap((buffId) => buffs.buffIntervals[buffId.toString()] || [])
+            .filter((interval) => interval.targetID === player.id);
 
           const fightUptime = getClippedUnionDuration(
             playerIntervals,
@@ -179,7 +184,7 @@ export const LowBuffUptimesWidget: React.FC<LowBuffUptimesWidgetProps> = ({
             fightEndTime,
           );
 
-          const key = `${player.id}|${buff.id}`;
+          const key = `${player.id}|${buff.name}`;
           const existing = playerBuffUptimes.get(key);
           if (existing) {
             existing.totalUptime += fightUptime;

@@ -10,7 +10,9 @@ import { getClippedUnionDuration, LowBuffUptimesWidget } from './LowBuffUptimesW
 jest.mock('../../hooks/usePlayerData', () => ({ usePlayerData: jest.fn() }));
 jest.mock('../../hooks/workerTasks/useBuffLookupTask', () => ({ useBuffLookupTask: jest.fn() }));
 jest.mock('./BaseWidget', () => ({
-  BaseWidget: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  BaseWidget: ({ children, isEmpty }: { children: React.ReactNode; isEmpty: boolean }) => (
+    <div data-empty={isEmpty}>{children}</div>
+  ),
   WidgetPlayerAvatar: () => null,
 }));
 
@@ -60,7 +62,7 @@ describe('LowBuffUptimesWidget', () => {
     mockUseBuffLookupTask.mockReturnValue({
       buffLookupData: {
         buffIntervals: {
-          61746: [
+          61665: [
             { start: -100, end: 600, sourceID: 1, targetID: 7 },
             { start: 500, end: 800, sourceID: 2, targetID: 7 },
             { start: 550, end: 800, sourceID: 3, targetID: 7 },
@@ -102,5 +104,32 @@ describe('LowBuffUptimesWidget', () => {
 
     expect(screen.getByText('90%')).toBeInTheDocument();
     expect(screen.queryByText('125%')).not.toBeInTheDocument();
+  });
+
+  it('does not report low uptime when the combined hybrid buff covers the fight', () => {
+    mockUseBuffLookupTask.mockReturnValue({
+      buffLookupData: {
+        buffIntervals: {
+          219246: [{ start: 0, end: 1000, sourceID: 7, targetID: 7 }],
+        },
+      },
+      isBuffLookupLoading: false,
+      buffLookupError: null,
+      buffLookupProgress: null,
+    });
+
+    const { container } = render(
+      <LowBuffUptimesWidget
+        id="low-buff-uptime"
+        scope="most-recent"
+        reportId="REPORT"
+        fights={fights}
+        onRemove={jest.fn()}
+        onScopeChange={jest.fn()}
+      />,
+    );
+
+    expect(screen.queryByText('Major Brutality')).not.toBeInTheDocument();
+    expect(container.querySelector('[data-empty="true"]')).toBeInTheDocument();
   });
 });

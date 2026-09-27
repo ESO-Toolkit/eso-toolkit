@@ -280,7 +280,7 @@ describe('detectBuildIssues', () => {
       expect(hasMinorSlayerIssueTank).toBe(false);
     });
 
-    it('requires magicka-focused players to maintain Major Sorcery and Major Prophecy', () => {
+    it('requires magicka-focused players to maintain Major Brutality and Major Savagery', () => {
       const magickaFocusedIssues = detectBuildIssues(
         [],
         mockBuffLookup,
@@ -295,19 +295,17 @@ describe('detectBuildIssues', () => {
 
       const magickaMajorIssues = magickaFocusedIssues.filter(
         (issue) =>
-          issue.message.includes('Major Sorcery') || issue.message.includes('Major Prophecy'),
+          issue.message.includes('Major Brutality') || issue.message.includes('Major Savagery'),
       );
-      // In modern ESO, Major Brutality/Sorcery are combined, so the message mentions both
-      // Similarly, Major Savagery/Prophecy are combined
       expect(magickaMajorIssues).toHaveLength(2);
       expect(
         magickaMajorIssues.some(
-          (issue) => 'buffName' in issue && issue.buffName === 'Major Sorcery',
+          (issue) => 'buffName' in issue && issue.buffName === 'Major Brutality',
         ),
       ).toBe(true);
       expect(
         magickaMajorIssues.some(
-          (issue) => 'buffName' in issue && issue.buffName === 'Major Prophecy',
+          (issue) => 'buffName' in issue && issue.buffName === 'Major Savagery',
         ),
       ).toBe(true);
     });
@@ -329,8 +327,6 @@ describe('detectBuildIssues', () => {
         (issue) =>
           issue.message.includes('Major Brutality') || issue.message.includes('Major Savagery'),
       );
-      // In modern ESO, Major Brutality/Sorcery are combined, so the message mentions both
-      // Similarly, Major Savagery/Prophecy are combined
       expect(staminaMajorIssues).toHaveLength(2);
       expect(
         staminaMajorIssues.some(
@@ -501,8 +497,8 @@ describe('detectBuildIssues', () => {
         9,
         { magicka: 34000, stamina: 18000 },
       );
-      expect(magickaIssues.some((issue) => issue.message.includes('Major Sorcery'))).toBe(false);
-      expect(magickaIssues.some((issue) => issue.message.includes('Major Prophecy'))).toBe(false);
+      expect(magickaIssues.some((issue) => issue.message.includes('Major Brutality'))).toBe(false);
+      expect(magickaIssues.some((issue) => issue.message.includes('Major Savagery'))).toBe(false);
     });
 
     it('should detect Minor Aegis from auras for tank players (passive from slotted abilities)', () => {

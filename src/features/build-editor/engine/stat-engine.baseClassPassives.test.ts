@@ -9,7 +9,12 @@ import reducer from '../store/buildEditorSlice';
 import type { Build, BuildSetup } from '../types/build.types';
 
 import { CRIT_CHANCE_DIVISOR } from './stat-constants';
-import { calculateArmor, calculateCritChance, calculateCritDamage } from './stat-engine';
+import {
+  calculateArmor,
+  calculateCritChance,
+  calculateCritDamage,
+  calculatePenetration,
+} from './stat-engine';
 import type { StatOverrides } from './stat-types';
 
 const baseBuild = (): Build => reducer(undefined, { type: '@@test/init' }).build;
@@ -76,6 +81,12 @@ describe('calculateArmor — U50 base-class armor passives', () => {
     expect(r.total).toBe(0);
   });
 
+  it("Illuminate (Templar Dawn's Wrath) adds 2974 Armor in Update 51", () => {
+    const r = calculateArmor(baseSetup(), buildWithLines(['class.dawns-wrath']), overrides());
+    expect(item(r, 'Illuminate')?.value).toBe(2974);
+    expect(r.total).toBe(2974);
+  });
+
   it('does nothing when the owning class line is not active', () => {
     const r = calculateArmor(baseSetup(), buildWithLines(['class.storm-calling']), overrides());
     expect(item(r, 'Heart of Stone')).toBeUndefined();
@@ -83,14 +94,18 @@ describe('calculateArmor — U50 base-class armor passives', () => {
   });
 });
 
-describe('calculateCritChance — U50 base-class crit-chance passives', () => {
-  it('Exploitation (Sorc Dark Magic) grants Minor Prophecy ≈ +6%', () => {
-    const r = calculateCritChance(baseSetup(), buildWithLines(['class.dark-magic']), overrides());
-    const it = item(r, 'Exploitation');
-    expect(it?.enabled).toBe(true);
-    expect(it?.value).toBe(parseFloat((1314 / CRIT_CHANCE_DIVISOR).toFixed(1))); // 6.0
+describe('calculatePenetration — Update 51 class passive', () => {
+  it('Exploitation (Sorcerer Dark Magic) adds 2974 penetration', () => {
+    const build = buildWithLines(['class.dark-magic']);
+    const r = calculatePenetration(baseSetup(), build, overrides());
+    expect(item(r, 'Exploitation')?.value).toBe(2974);
+    expect(
+      item(calculateCritChance(baseSetup(), build, overrides()), 'Exploitation'),
+    ).toBeUndefined();
   });
+});
 
+describe('calculateCritChance — base-class crit-chance passives', () => {
   it('Hemorrhage Minor Savagery (NB) adds its crit-chance half ≈ +6%', () => {
     const r = calculateCritChance(
       baseSetup(),
