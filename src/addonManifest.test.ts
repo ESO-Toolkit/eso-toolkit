@@ -8,14 +8,14 @@ describe('ESOTK Companion release metadata', () => {
   const source = readFileSync(resolve(ADDON_DIRECTORY, 'ESOTKCompanion.lua'), 'utf8');
   const readme = readFileSync(resolve(ADDON_DIRECTORY, 'README.md'), 'utf8');
 
-  it('targets the current Update 50 API and one prior API', () => {
+  it('targets the current Update 51 API and one prior API', () => {
     const apiLine = manifest.match(/^## APIVersion:\s+(.+)$/m);
 
-    expect(apiLine?.[1].trim().split(/\s+/)).toEqual(['101049', '101050']);
+    expect(apiLine?.[1].trim().split(/\s+/)).toEqual(['101050', '101051']);
   });
 
   it('keeps its payload season aligned with the manifest release', () => {
-    expect(source).toMatch(/\bseason\s*=\s*["']U50["']/);
+    expect(source).toMatch(/\bseason\s*=\s*["']U51["']/);
   });
 
   it('keeps the add-on version and slash command isolated from official ESOtk', () => {

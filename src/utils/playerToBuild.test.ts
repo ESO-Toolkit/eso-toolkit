@@ -65,6 +65,32 @@ const sorcererClassAnalysis: ClassAnalysisResult = {
   ],
 };
 
+describe('playerToBuild Update 51 power potion extraction', () => {
+  const baseData = {
+    playerName: 'Potion Tester',
+    gear: [],
+    talents: [],
+    mundusBuffs: [],
+    championPoints: [],
+  };
+
+  it('uses the restored resource to distinguish power potions with shared buffs', () => {
+    const magickaBuild = playerToBuild({
+      ...baseData,
+      potionType: 'weapon-power',
+      potionResourceRestored: 'magicka',
+    });
+    const staminaBuild = playerToBuild({
+      ...baseData,
+      potionType: 'spell-power',
+      potionResourceRestored: 'stamina',
+    });
+
+    expect(magickaBuild.setups[0].consumables.potions[0].id).toBe(9001);
+    expect(staminaBuild.setups[0].consumables.potions[0].id).toBe(9011);
+  });
+});
+
 describe('playerToBuild Class Mastery extraction', () => {
   it('keeps Class Mastery picks out of generic setup passives', () => {
     const result = convertSkills([

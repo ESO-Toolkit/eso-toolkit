@@ -714,6 +714,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
             ? { id: effectiveFoodAura.id, name: effectiveFoodAura.name }
             : undefined,
           potionType: potionStreamResult?.type,
+          potionResourceRestored: potionStreamResult?.resourceRestored,
         });
 
         const encoded = await encodeBuildToURL(build);

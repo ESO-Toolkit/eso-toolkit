@@ -36,12 +36,6 @@ interface PlayerResourceProfile {
   maxStamina?: number;
 }
 
-interface BuffRequirement {
-  abilityId: number;
-  name: string;
-  aliasIds?: number[];
-}
-
 // Role-specific minor buffs
 const ROLE_SPECIFIC_BUFFS = {
   tank: [
@@ -104,20 +98,6 @@ const EXPLOITER_CP_ID = 63880;
 
 // Fighters Guild Passive: Skilled Tracker - Increases Weapon and Spell Damage against certain enemy types
 const SKILLED_TRACKER_PASSIVE_ID = 40393;
-
-const MAGICKA_MAJOR_BUFF_REQUIREMENTS: BuffRequirement[] = [
-  // Note: In modern ESO, Major Sorcery and Major Brutality are the same buff
-  { abilityId: 61687, name: 'Major Sorcery', aliasIds: [219246, ...ALL_MAJOR_SORCERY_IDS] },
-  // Note: In modern ESO, Major Prophecy and Major Savagery are the same buff
-  { abilityId: 61689, name: 'Major Prophecy', aliasIds: [217672, ...ALL_MAJOR_PROPHECY_IDS] },
-];
-
-const STAMINA_MAJOR_BUFF_REQUIREMENTS: BuffRequirement[] = [
-  // Note: In modern ESO, Major Brutality and Major Sorcery are the same buff
-  { abilityId: 183049, name: 'Major Brutality', aliasIds: [219246, ...ALL_MAJOR_BRUTALITY_IDS] },
-  // Note: In modern ESO, Major Savagery and Major Prophecy are the same buff
-  { abilityId: 61667, name: 'Major Savagery', aliasIds: [217672, ...ALL_MAJOR_SAVAGERY_IDS] },
-];
 
 /**
  * Helper function to check if a buff is active in auras
@@ -290,17 +270,9 @@ export function detectBuildIssues(
         resourceFocus = 'stamina';
       }
 
-      const majorBuffsToCheck =
-        resourceFocus === 'magicka'
-          ? MAGICKA_MAJOR_BUFF_REQUIREMENTS
-          : resourceFocus === 'stamina'
-            ? STAMINA_MAJOR_BUFF_REQUIREMENTS
-            : [];
-
-      // In modern ESO, Major Brutality/Sorcery are combined, and Major Savagery/Prophecy are combined
-      // Check for the damage buff (Brutality/Sorcery)
-      if (majorBuffsToCheck.length > 0) {
-        // Check for Major Brutality/Sorcery (combined buff)
+      // Update 51 renamed the hybrid buffs to Brutality and Savagery. Retain
+      // historical Sorcery/Prophecy IDs so older combat reports still match.
+      if (resourceFocus) {
         const brutalityIds = [183049, ...ALL_MAJOR_BRUTALITY_IDS];
         const sorceryIds = [61687, 219246, ...ALL_MAJOR_SORCERY_IDS];
         const hasDamageBuff = wasBuffDetected({
@@ -308,20 +280,19 @@ export function detectBuildIssues(
           auras,
           damageEvents,
           playerId,
-          abilityIds: [...brutalityIds, ...sorceryIds], // Check for EITHER Brutality OR Sorcery
+          abilityIds: [...brutalityIds, ...sorceryIds],
         });
 
         if (!hasDamageBuff) {
           const orientationDescriptor = resourceFocus === 'magicka' ? 'Magicka' : 'Stamina';
-          const buffName = resourceFocus === 'magicka' ? 'Major Sorcery' : 'Major Brutality';
           issues.push({
-            buffName: buffName,
-            abilityId: resourceFocus === 'magicka' ? 61687 : 183049,
-            message: `Missing ${buffName} (also provides Major ${resourceFocus === 'magicka' ? 'Brutality' : 'Sorcery'}) - players with higher ${orientationDescriptor} should maintain this buff`,
+            buffName: 'Major Brutality',
+            abilityId: 183049,
+            message: `Missing Major Brutality - players with higher ${orientationDescriptor} should maintain this buff`,
           });
         }
 
-        // Check for Major Savagery/Prophecy (combined buff)
+        // Check current and historical IDs for the critical chance buff.
         const savageryIds = [61667, ...ALL_MAJOR_SAVAGERY_IDS];
         const prophecyIds = [61689, 217672, ...ALL_MAJOR_PROPHECY_IDS];
         const hasCritBuff = wasBuffDetected({
@@ -329,16 +300,15 @@ export function detectBuildIssues(
           auras,
           damageEvents,
           playerId,
-          abilityIds: [...savageryIds, ...prophecyIds], // Check for EITHER Savagery OR Prophecy
+          abilityIds: [...savageryIds, ...prophecyIds],
         });
 
         if (!hasCritBuff) {
           const orientationDescriptor = resourceFocus === 'magicka' ? 'Magicka' : 'Stamina';
-          const buffName = resourceFocus === 'magicka' ? 'Major Prophecy' : 'Major Savagery';
           issues.push({
-            buffName: buffName,
-            abilityId: resourceFocus === 'magicka' ? 61689 : 61667,
-            message: `Missing ${buffName} (also provides Major ${resourceFocus === 'magicka' ? 'Savagery' : 'Prophecy'}) - players with higher ${orientationDescriptor} should maintain this buff`,
+            buffName: 'Major Savagery',
+            abilityId: 61667,
+            message: `Missing Major Savagery - players with higher ${orientationDescriptor} should maintain this buff`,
           });
         }
       }

@@ -198,7 +198,9 @@ export function detectPotionType(
 
   // --- Stage 4: well-known buff combos (good confidence) -------------------
 
-  if (hasMajorBrutality && hasMajorSavagery) return 'weapon-power';
+  if (hasMajorBrutality && hasMajorSavagery) {
+    return 'weapon-power';
+  }
   if (hasMajorSorcery && hasMajorProphecy) return 'spell-power';
 
   // --- Stage 5: single-buff name patterns (lower confidence) ---------------

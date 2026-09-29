@@ -1947,7 +1947,7 @@ const MUNDUS_STONE_NAMES: Record<number, string> = {
   [MundusStones.THE_LADY]: 'The Lady (Resistance)',
   [MundusStones.THE_STEED]: 'The Steed (Movement Speed)',
   [MundusStones.THE_LORD]: 'The Lord (Max Health)',
-  [MundusStones.THE_APPRENTICE]: 'The Apprentice (Max Magicka)',
+  [MundusStones.THE_APPRENTICE]: 'The Apprentice (XP and Inspiration)',
   [MundusStones.THE_RITUAL]: 'The Ritual (Healing Done)',
   [MundusStones.THE_LOVER]: 'The Lover (Penetration)',
   [MundusStones.THE_ATRONACH]: 'The Atronach (Magicka Recovery)',
