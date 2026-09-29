@@ -50,21 +50,26 @@ const MIME = {
 };
 
 let onFrame = async () => {};
-let finish;
-const finished = new Promise((resolve) => (finish = resolve));
+// Signals from the page: 'done' when its range is finished, 'lost' if it crashes or drops a frame.
+let settle = () => {};
 
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, 'http://localhost');
   if (req.method === 'POST' && url.pathname === '/frame') {
-    const chunks = [];
-    for await (const c of req) chunks.push(c);
-    await onFrame(Number(url.searchParams.get('i')), Buffer.concat(chunks));
-    res.end('ok');
+    try {
+      const chunks = [];
+      for await (const c of req) chunks.push(c);
+      await onFrame(Number(url.searchParams.get('i')), Buffer.concat(chunks));
+      res.end('ok');
+    } catch {
+      // The page went away mid-upload; the frame is dropped and re-rendered on resume.
+      settle('lost');
+    }
     return;
   }
   if (req.method === 'POST' && url.pathname === '/done') {
     res.end('ok');
-    finish();
+    settle('done');
     return;
   }
   const file = path.join(ROOT, decodeURIComponent(url.pathname));
@@ -92,6 +97,7 @@ const rawInput = [
 ];
 
 let encoder;
+let next = start;
 if (stills) {
   onFrame = (i, buf) =>
     new Promise((resolve, reject) => {
@@ -151,6 +157,8 @@ if (stills) {
   const began = Date.now();
   onFrame = (i, buf) =>
     new Promise((resolve) => {
+      if (i !== next || buf.length !== W * H * 4) return resolve();
+      next++;
       if ((i - start) % 120 === 0) {
         const fps = (i - start) / ((Date.now() - began) / 1000 || 1);
         console.log(`frame ${i}/${end} (${fps.toFixed(1)} fps)`);
@@ -172,19 +180,33 @@ const browser = await chromium.launch({
     '--disable-frame-rate-limit',
   ],
 });
-const page = await browser.newPage({
-  viewport: { width: Math.min(W, 1920), height: Math.min(H, 1080) },
-});
-page.on('console', (m) => console.log(`[page] ${m.text()}`));
-page.on('pageerror', (e) => console.error(`[page error] ${e.message}`));
-
-const query = new URLSearchParams({
-  w: W,
-  h: H,
-  ...(stills ? { mode: 'stills', frames: stills.join(',') } : { mode: 'video', start, end }),
-});
-await page.goto(`http://localhost:${port}/engine/index.html?${query}`);
-await finished;
+// Renders run for over an hour; if the page crashes or drops a frame, reopen it and carry on
+// from the next frame the encoder is waiting for.
+for (let attempt = 0; ; attempt++) {
+  const page = await browser.newPage({
+    viewport: { width: Math.min(W, 1920), height: Math.min(H, 1080) },
+  });
+  page.on('console', (m) => console.log(`[page] ${m.text()}`));
+  page.on('pageerror', (e) => console.error(`[page error] ${e.message}`));
+  const outcome = new Promise((resolve) => {
+    settle = resolve;
+    page.on('crash', () => resolve('lost'));
+    page.on('close', () => resolve('lost'));
+  });
+  const query = new URLSearchParams({
+    w: W,
+    h: H,
+    ...(stills
+      ? { mode: 'stills', frames: stills.join(',') }
+      : { mode: 'video', start: next, end }),
+  });
+  await page.goto(`http://localhost:${port}/engine/index.html?${query}`);
+  const result = await outcome;
+  await page.close().catch(() => {});
+  if (result === 'done' || stills) break;
+  if (attempt >= 5) throw new Error(`Render failed repeatedly near frame ${next}`);
+  console.log(`page lost at frame ${next}; resuming`);
+}
 await browser.close();
 server.close();
 
