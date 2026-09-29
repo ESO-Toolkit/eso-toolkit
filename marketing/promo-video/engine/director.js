@@ -1,10 +1,11 @@
-// The film, as a function of time. Every beat is cued from the narration's word timings, so
-// panels move on the words that describe them.
+// The film, as a function of time. Every shot is full-bleed: a virtual camera moving over the
+// real ESO Logs and ESO Toolkit pages. Every beat is cued from the narration's word timings.
 //
 // Each frame returns:
-//   cards    - screenshots on 3D cards in stage space (see stage.js)
+//   cards    - full-frame footage (background layer) and flying elements (foreground layer)
 //   morphs   - pixel-particle transitions between cards
-//   overlays - Canvas2D draws (captions, labels, callouts) in output pixels
+//   overlays - Canvas2D type; captions, tags and pills register Liquid Glass panels
+//   fx       - camera blur (whip, zoom) and focus pulls for the compositor
 // The world particle field for the open and the end card is driven by particleState/camera.
 
 import TIMELINE from '../timeline.json' with { type: 'json' };
@@ -12,7 +13,6 @@ import WORDS from '../assets/narration/words.json' with { type: 'json' };
 import { LAYOUT } from './formations.js';
 import { catmull, ease, mat4, mix, project, range, smoothstep } from './math.js';
 import * as UI from './overlay.js';
-import { cardRect } from './stage.js';
 
 export { TIMELINE };
 
@@ -80,7 +80,6 @@ const M1 = {
   swirl: 150,
   color: [0.25, 0.62, 1.0],
 };
-const M2 = { t0: C.reads, t1: C.reads + 1.9, spread: 0.62, sweep: [1, 0, 0], swirl: 240 };
 const M3 = { t0: C.rebuild, t1: C.rebuild + 1.9, spread: 0.6, sweep: [0.15, 0.85, 0], swirl: 260 };
 const M4 = {
   t0: C.free - 0.55,
@@ -99,29 +98,6 @@ const M5 = {
   color: [0.3, 0.75, 1.0],
 };
 
-// Sound design reads these.
-C.whooshes = [
-  N.logs - 0.1,
-  C.reads + 0.4,
-  N.gear - 0.3,
-  C.groups + 0.3,
-  C.lays + 0.3,
-  C.sTk + 0.3,
-  N.replay - 0.4,
-  M3.t0 + 0.5,
-  C.send,
-  C.calc - 0.3,
-  N.outro - 0.3,
-  M4.t0 + 0.6,
-];
-C.hits = [
-  { t: M1.t1 - 0.3, size: 0.7 },
-  { t: M2.t1 - 0.3, size: 0.8 },
-  { t: C.assemble + 0.3, size: 0.9 },
-  { t: C.sTk + 1.0, size: 0.7 },
-  { t: M3.t1 - 0.2, size: 1.1 },
-  { t: C.free + 2.2, size: 1.3 },
-];
 C.duration = TIMELINE.duration;
 
 // ------------------------------------------------------------------------------------------
@@ -250,87 +226,205 @@ export function look(t) {
 }
 
 // ------------------------------------------------------------------------------------------
-// Screenshots
+// Full-bleed shots
+//
+// Every shot is a virtual camera over a real page: `view` is the visible region in page CSS
+// pixels (centre and width); the card fills its screen rectangle with exactly that region.
 
-// Crops in capture pixels (the stills are 2x; replay clips are 1x).
-const CROP = {
-  elDamage: [424, 288, 2621, 1747],
-  // 9:16 keeps the tabs, names and bars and drops the right-hand columns.
-  elDamageTall: [424, 540, 1560, 1500],
-  elPlayerTall: [420, 150, 1920, 1240],
-  tkInsights: [1100, 820, 1640, 1275],
-  elPlayer: [420, 150, 2640, 1240],
-  tkCard: [1102, 41, 802, 1168],
-  tkTip: [1134, 1425, 652, 788],
-  elReplayWide: [380, 268, 1525, 735],
-  elReplayTall: [860, 268, 760, 735],
-  tkReplayWide: [60, 0, 1778, 1000],
-  tkReplayTall: [600, 0, 700, 1000],
-  tkBuild: [418, 163, 3003, 1872],
-  tkCalc: [1075, 269, 1690, 1862],
-};
-
-// Scribing tooltip rows (label through value), in tk-scribing pixels.
-const TIP_ROWS = {
-  focus: [1156, 1791, 608, 98],
-  signature: [1156, 1889, 608, 132],
-  affix: [1156, 2021, 608, 186],
-};
-
-function fit(tex, uv, x, y, maxW, maxH, extra = {}) {
-  const s = Math.min(maxW / uv[2], maxH / uv[3]);
-  return { tex, uv, x, y, z: 0, w: uv[2] * s, h: uv[3] * s, alpha: 1, ...extra };
+function pageSize(R, tex) {
+  const [tw, th] = R.size[tex];
+  const dpr = tw / (tex.includes('tall') ? 1080 : 1920);
+  return { dpr, pw: tw / dpr, ph: th / dpr };
 }
 
-function between(a, b, k) {
+const clampN = (v, a, b) => (a > b ? (a + b) / 2 : Math.min(b, Math.max(a, v)));
+
+function fitView(R, tex, v, aspect) {
+  const { pw, ph } = pageSize(R, tex);
+  const vw = Math.min(v.vw, pw, ph * aspect);
+  const vh = vw / aspect;
+  return { cx: clampN(v.cx, vw / 2, pw - vw / 2), cy: clampN(v.cy, vh / 2, ph - vh / 2), vw, vh };
+}
+
+function shotCard(R, tex, v, screen, extra = {}) {
+  const [x, y, w, h] = screen;
+  const fv = fitView(R, tex, v, w / h);
+  const { dpr } = pageSize(R, tex);
+  const [dx, dy] = extra.offset ?? [0, 0];
   return {
-    ...b,
-    x: mix(a.x, b.x, k),
-    y: mix(a.y, b.y, k),
-    z: mix(a.z ?? 0, b.z ?? 0, k),
-    w: mix(a.w, b.w, k),
-    h: mix(a.h, b.h, k),
-    rotX: mix(a.rotX ?? 0, b.rotX ?? 0, k),
-    rotY: mix(a.rotY ?? 0, b.rotY ?? 0, k),
-    alpha: mix(a.alpha ?? 1, b.alpha ?? 1, k),
+    tex,
+    uv: [(fv.cx - fv.vw / 2) * dpr, (fv.cy - fv.vh / 2) * dpr, fv.vw * dpr, fv.vh * dpr],
+    x: x + w / 2 + dx,
+    y: y + h / 2 + dy,
+    z: 0,
+    w,
+    h,
+    radius: 0,
+    shadow: false,
+    alpha: 1,
+    layer: 'bg',
+    view: fv,
+    screen: [x + dx, y + dy, w, h],
+    ...extra,
   };
 }
 
-/** Enter from depth, hold, leave into depth. */
-function lifecycle(c, t, tIn, tOut, { from = {}, to = {}, dIn = 0.8, dOut = 0.7 } = {}) {
-  const kIn = ease.outCubic(range(t, tIn, tIn + dIn));
-  const kOut = ease.inCubic(range(t, tOut, tOut + dOut));
-  const enter = between({ ...c, z: (c.z ?? 0) - 420, alpha: 0, ...from }, c, kIn);
-  return between(enter, { ...enter, z: (c.z ?? 0) - 380, alpha: 0, ...to }, kOut);
+/** Screen rectangle (output pixels) of a page rectangle (CSS pixels) in an unrotated shot. */
+function pageToScreen(card, r) {
+  const v = card.view;
+  const [sx, sy, sw] = card.screen;
+  const k = sw / v.vw;
+  return [
+    sx + (r[0] - (v.cx - v.vw / 2)) * k,
+    sy + (r[1] - (v.cy - v.vh / 2)) * k,
+    r[2] * k,
+    r[3] * k,
+  ];
 }
 
-const visible = (c) => c.alpha > 0.002;
+/** Clips a page rectangle to the part of the page a shot shows. */
+function visiblePart(card, r) {
+  const v = card.view;
+  const x0 = Math.max(r[0], v.cx - v.vw / 2);
+  const x1 = Math.min(r[0] + r[2], v.cx + v.vw / 2);
+  return [x0, r[1], Math.max(1, x1 - x0), r[3]];
+}
 
-const screenBox = (a, b, k) => [
-  mix(a[0], b[0], k),
-  mix(a[1], b[1], k),
-  mix(a[2], b[2], k),
-  mix(a[3], b[3], k),
+const lerpView = (a, b, k) => ({
+  cx: mix(a.cx, b.cx, k),
+  cy: mix(a.cy, b.cy, k),
+  vw: Math.exp(mix(Math.log(a.vw), Math.log(b.vw), k)),
+});
+
+/** Camera path through view keyframes, eased per segment. */
+function path(keys, t) {
+  if (t <= keys[0].t) return keys[0].v;
+  for (let i = 0; i < keys.length - 1; i++) {
+    const a = keys[i];
+    const b = keys[i + 1];
+    if (t <= b.t) {
+      const k = (b.ease ?? ease.inOutCubic)(range(t, a.t, b.t));
+      const v = lerpView(a.v, b.v, k);
+      // centreLag holds the framing on the start point while the zoom begins.
+      if (b.centreLag) {
+        const kc = ease.inOutCubic(range(k, b.centreLag, 1));
+        v.cx = mix(a.v.cx, b.v.cx, kc);
+        v.cy = mix(a.v.cy, b.v.cy, kc);
+      }
+      return v;
+    }
+  }
+  return keys.at(-1).v;
+}
+
+const lerpRect = (a, b, k) => a.map((v, i) => mix(v, b[i], k));
+const centreOf = (r) => [r[0] + r[2] / 2, r[1] + r[3] / 2];
+const around = (r, vw) => ({ cx: r[0] + r[2] / 2, cy: r[1] + r[3] / 2, vw });
+const bell = (t, a, peak, b) => smoothstep(a, peak, t) * (1 - smoothstep(peak, b, t));
+
+// Page rectangles (CSS pixels) that are not in the capture layout files.
+const PAGE = {
+  buildHeader: [226, 88, 494, 76],
+};
+
+// Transition times.
+const T = {
+  wipe0: C.reads,
+  wipe1: C.reads + 1.5,
+  zoomCut: N.gear - 0.15,
+  dive: C.sTk + 0.45,
+  whipReplay: N.replay - 0.5,
+  whipBuild: C.send - 0.25,
+  whipCalc: C.calc - 0.4,
+};
+
+// Sound design reads these.
+C.whooshes = [
+  N.logs - 0.1,
+  T.wipe0 + 0.5,
+  T.zoomCut,
+  C.groups + 0.2,
+  C.lays + 0.3,
+  T.dive,
+  T.whipReplay,
+  M3.t0 + 0.5,
+  T.whipBuild,
+  T.whipCalc,
+  C.o1 - 0.1,
+  C.o2 - 0.1,
+  M4.t0 + 0.6,
+];
+C.hits = [
+  { t: M1.t1 - 0.3, size: 0.7 },
+  { t: T.wipe1 - 0.2, size: 0.8 },
+  { t: C.assemble + 0.3, size: 0.9 },
+  { t: T.dive + 0.6, size: 0.7 },
+  { t: M3.t1 - 0.2, size: 1.1 },
+  { t: C.free + 2.2, size: 1.3 },
 ];
 
-function label(out, cam, c, text, product, alpha) {
-  if (!visible(c) || alpha <= 0.002) return;
-  const r = cardRect(cam, c, [c.uv[0], c.uv[1], 0, 0]);
-  out.overlays.push((ctx) =>
-    UI.sourceLabel(ctx, { x: r[0], y: r[1] - 14, text, product, alpha: alpha * c.alpha }),
-  );
+function views(P) {
+  return P
+    ? {
+        elDmg: { cx: 520, cy: 560, vw: 600 },
+        elTabs: { cx: 470, cy: 470, vw: 470 },
+        elTabsEnd: { cx: 470, cy: 480, vw: 450 },
+        tkIns: { cx: 752, cy: 650, vw: 600 },
+        tkInsEnd: { cx: 752, cy: 640, vw: 560 },
+        elPlayer: { cx: 560, cy: 520, vw: 600 },
+        elRows: { cx: 600, cy: 515, vw: 560 },
+        tkCard: { cx: 751, cy: 330, vw: 440 },
+        scribe: { cx: 730, cy: 540, vw: 420 },
+        elReplay: { cx: 623, cy: 1056, vw: 886 },
+        tkReplay: { cx: 506, cy: 900, vw: 1012 },
+        build: { cx: 520, cy: 500, vw: 600 },
+        buildEnd: { cx: 470, cy: 360, vw: 520 },
+        calc: { cx: 880, cy: 700, vw: 600 },
+        calcEnd: { cx: 820, cy: 760, vw: 560 },
+        outroElFull: { cx: 520, cy: 560, vw: 600 },
+        outroEl: { cx: 720, cy: 600, vw: 1000 },
+        outroTk: { cx: 900, cy: 650, vw: 1000 },
+      }
+    : {
+        elDmg: { cx: 905, cy: 630, vw: 1500 },
+        elTabs: { cx: 700, cy: 470, vw: 1100 },
+        elTabsEnd: { cx: 690, cy: 470, vw: 1040 },
+        tkIns: { cx: 960, cy: 725, vw: 1180 },
+        tkInsEnd: { cx: 960, cy: 730, vw: 1120 },
+        elPlayer: { cx: 867, cy: 440, vw: 1480 },
+        elRows: { cx: 867, cy: 515, vw: 1360 },
+        tkCard: { cx: 751, cy: 330, vw: 1150 },
+        scribe: { cx: 730, cy: 537, vw: 840 },
+        elReplay: { cx: 1060, cy: 636, vw: 1300 },
+        tkReplay: { cx: 960, cy: 482, vw: 1700 },
+        build: { cx: 980, cy: 520, vw: 1560 },
+        buildEnd: { cx: 720, cy: 360, vw: 1150 },
+        calc: { cx: 960, cy: 700, vw: 1300 },
+        calcEnd: { cx: 960, cy: 771, vw: 1100 },
+        outroElFull: { cx: 905, cy: 630, vw: 1500 },
+        outroEl: { cx: 700, cy: 640, vw: 780 },
+        outroTk: { cx: 760, cy: 640, vw: 780 },
+      };
 }
 
 // ------------------------------------------------------------------------------------------
 
 export function frame(t, W, H, cam, R) {
   const P = H > W;
-  const out = { cards: [], morphs: [], overlays: [] };
-  const box = P
-    ? { x: W / 2, y: H * 0.42, w: W * 0.92, h: H * 0.6 }
-    : { x: W / 2, y: H * 0.46, w: W * 0.84, h: H * 0.78 };
+  const V = views(P);
+  const FULL = [0, 0, W, H];
+  const replayTex = P
+    ? { el: 'el-replay-tall', tk: 'tk-replay-tall' }
+    : { el: 'el-replay', tk: 'tk-replay' };
+  const out = {
+    cards: [],
+    morphs: [],
+    overlays: [],
+    fx: { whip: [0, 0], zoom: [0.5, 0.5, 0], focus: null },
+  };
+  const shot = (tex, v, extra = {}) => shotCard(R, tex, v, extra.screen ?? FULL, extra);
   const add = (c) => {
-    if (visible(c)) out.cards.push(c);
+    if (c.alpha > 0.002) out.cards.push(c);
     return c;
   };
   const addMorph = (m, from, to) => {
@@ -340,6 +434,22 @@ export function frame(t, W, H, cam, R) {
     if (from.card) from.card.dissolve = { morph: spec, role: 'from' };
     if (to.card) to.card.dissolve = { morph: spec, role: 'to' };
   };
+  const focus = (amount, rects, opts = {}) => {
+    if (amount > 0.001)
+      out.fx.focus = { amount, rects, blur: opts.blur ?? 0.85, dim: opts.dim ?? 0.45 };
+  };
+  const tagAt = P ? [56, 250] : [56, 104];
+  const tag = (text, product, alpha) =>
+    out.overlays.push((ctx) =>
+      UI.sourceLabel(ctx, { x: tagAt[0], y: tagAt[1], text, product, alpha, size: P ? 28 : 22 }),
+    );
+  const whipOut = (cut, dir = -1) => ({
+    offset: [dir * ease.inCubic(range(t, cut - 0.3, cut)) * W * 0.7, 0],
+  });
+  const whipIn = (cut, dir = -1) => ({
+    offset: [-dir * (1 - ease.outCubic(range(t, cut, cut + 0.45))) * W * 0.7, 0],
+  });
+  const whipBlur = (cut) => bell(t, cut - 0.3, cut, cut + 0.45) * W * 0.28;
 
   // --- Open --------------------------------------------------------------------------------
   out.overlays.push((ctx) =>
@@ -352,528 +462,560 @@ export function frame(t, W, H, cam, R) {
     }),
   );
 
-  // --- ESO Logs page forms from the stream, then becomes ESO Toolkit's read of it -------------
-  {
-    const push = 1 + 0.03 * range(t, M1.t1, M2.t0);
-    const base = fit(
+  // --- ESO Logs forms from the stream; a divider sweeps it into ESO Toolkit ------------------------
+  if (t >= M1.t0 && t < T.zoomCut + 0.05) {
+    const el = shot(
       'el-damage',
-      P ? CROP.elDamageTall : CROP.elDamage,
-      box.x,
-      box.y,
-      box.w,
-      box.h,
+      path(
+        [
+          { t: M1.t0, v: V.elDmg },
+          { t: C.hit - 0.8, v: V.elDmg },
+          { t: C.hit + 0.15, v: V.elTabs },
+          { t: T.wipe1, v: V.elTabsEnd },
+        ],
+        t,
+      ),
     );
-    const elDmg = { ...base, w: base.w * push, h: base.h * push };
-    const tkBase = fit('tk-insights', CROP.tkInsights, box.x, box.y, box.w, box.h);
-    const dimK = ease.inOutCubic(range(t, C.just - 0.2, C.just + 0.35));
-    const tkIns = lifecycle(
-      { ...tkBase, alpha: mix(1, 0.3, dimK), z: mix(0, -160, dimK) },
+    const wipe = ease.inOutCubic(range(t, T.wipe0, T.wipe1));
+    const divider = 1 - wipe;
+    const zoomIn = ease.inCubic(range(t, T.zoomCut - 0.45, T.zoomCut));
+    const tkV = path(
+      [
+        { t: T.wipe0, v: V.tkIns },
+        { t: C.just, v: V.tkInsEnd },
+      ],
       t,
-      M2.t0 - 1,
-      N.gear - 0.9,
-      { from: { z: 0, alpha: 1 } },
+    );
+    const tk = shot(
+      'tk-insights',
+      { ...tkV, vw: tkV.vw * mix(1, 0.5, zoomIn) },
+      { clip: [divider, -1, 2, 2] },
+    );
+    if (t <= T.wipe1) add(el);
+    if (t >= T.wipe0) add(tk);
+    addMorph(M1, { type: 'band' }, { type: 'card', card: el });
+
+    // Tabs light up with the narration: "every hit, every heal, every buff".
+    const tabs = R['el-damage'].tabs;
+    const tabRect = (name) => pageToScreen(el, tabs[name]);
+    let r = tabRect('Damage Done');
+    r = lerpRect(r, tabRect('Healing'), ease.inOutCubic(range(t, C.heal - 0.08, C.heal + 0.2)));
+    r = lerpRect(r, tabRect('Buffs'), ease.inOutCubic(range(t, C.buff - 0.08, C.buff + 0.2)));
+    const pad = 8;
+    focus(
+      up(t, C.hit - 0.1, 0.3) * down(t, T.wipe0 - 0.2, 0.4),
+      [{ rect: [r[0] - pad, r[1] - pad, r[2] + pad * 2, r[3] + pad * 2], radius: 12, feather: 70 }],
+      { blur: 0.75, dim: 0.5 },
     );
 
-    const showDmg = t >= M1.t0 && t <= M2.t1;
-    const showIns = t >= M2.t0 && t < N.gear;
-    if (showDmg) add(elDmg);
-    if (showIns) add(tkIns);
-    addMorph(M1, { type: 'band' }, { type: 'card', card: elDmg });
-    addMorph(M2, { type: 'card', card: elDmg }, { type: 'card', card: tkIns });
-
-    if (showDmg) {
-      label(out, cam, elDmg, 'ESO Logs', 'esologs', up(t, M1.t1 - 0.4, 0.4) * down(t, M2.t0, 0.4));
-      const tabs = R['el-damage'].tabs;
-      const beats = [
-        [C.hit, tabs['Damage Done']],
-        [C.heal, tabs.Healing],
-        [C.buff, tabs.Buffs],
-      ];
-      beats.forEach(([at, rect], i) => {
-        const next = beats[i + 1]?.[0] ?? 1e9;
-        const a =
-          up(t, at - 0.05, 0.2) * (1 - 0.6 * up(t, next - 0.05, 0.2)) * down(t, M2.t0 - 0.3, 0.4);
-        const r = cardRect(cam, elDmg, rect);
-        out.overlays.push((ctx) => UI.callout(ctx, r, { alpha: a, pad: 4, radius: 8 }));
+    // The divider.
+    if (wipe > 0 && wipe < 1) {
+      const x = divider * W;
+      const a = Math.sin(Math.PI * wipe);
+      out.overlays.push((ctx) => dividerLine(ctx, x, H, a, true));
+      out.overlays.push((ctx) => {
+        UI.sourceLabel(ctx, {
+          x: x - 250,
+          y: H / 2 + 22,
+          text: 'ESO Logs',
+          product: 'esologs',
+          alpha: a,
+        });
+        UI.sourceLabel(ctx, {
+          x: x + 24,
+          y: H / 2 + 22,
+          text: 'ESO Toolkit',
+          product: 'esotk',
+          alpha: a,
+        });
       });
     }
-    if (showIns)
-      label(
-        out,
-        cam,
-        tkIns,
-        'ESO Toolkit',
-        'esotk',
-        up(t, M2.t1 - 0.3, 0.3) * down(t, C.just - 0.2, 0.3),
-      );
+    tag('ESO Logs', 'esologs', up(t, M1.t1 - 0.3, 0.4) * down(t, T.wipe0, 0.3));
+    tag('ESO Toolkit', 'esotk', up(t, T.wipe1 - 0.1, 0.3) * down(t, C.just - 0.2, 0.3));
 
-    const pill = up(t, C.just - 0.15, 0.4) * down(t, N.gear - 0.7, 0.5);
-    if (pill > 0) {
+    // "Just paste the link."
+    const link = up(t, C.just - 0.15, 0.4) * down(t, T.zoomCut - 0.45, 0.35);
+    if (link > 0) {
+      focus(link, [], { blur: 1, dim: 0.55 });
       out.overlays.push((ctx) =>
         UI.linkPill(ctx, {
           x: W / 2,
-          y: box.y,
-          alpha: pill,
+          y: H / 2,
+          alpha: link,
           morph: range(t, C.paste + 0.1, C.paste + 0.9),
           from: 'esologs.com/reports/',
           to: 'esotk.com/report/',
           code: 'F4f2bMwWtgVKxjB9',
-          size: P ? 30 : 38,
+          size: P ? 34 : 52,
+        }),
+      );
+    }
+    out.fx.zoom = [0.5, 0.5, 0.2 * bell(t, T.zoomCut - 0.45, T.zoomCut, T.zoomCut + 0.5)];
+  }
+
+  // --- One tank's gear: rows lift out of ESO Logs and land as ESO Toolkit's set chips -----------------
+  const L = R['el-player'];
+  const K = R['tk-players'];
+  const S = R['tk-scribing'];
+  const icon = K.icons.find((i) => i.skill === 'Leashing Soul');
+  const tkCardShot = shot('tk-players', V.tkCard);
+  const cardRectOnScreen = pageToScreen(tkCardShot, K.card);
+  if (t >= T.zoomCut && t < C.groups + 0.7) {
+    const zoomOut = ease.outCubic(range(t, T.zoomCut, T.zoomCut + 0.55));
+    const v = path(
+      [
+        { t: T.zoomCut, v: V.elPlayer },
+        { t: C.thirteen - 0.4, v: V.elPlayer },
+        { t: C.thirteen + 0.5, v: V.elRows },
+      ],
+      t,
+    );
+    const el = add(
+      shot(
+        'el-player',
+        { ...v, vw: v.vw * mix(0.78, 1, zoomOut) },
+        { alpha: 1 - smoothstep(C.groups, C.groups + 0.55, t) },
+      ),
+    );
+    out.fx.zoom = [
+      0.5,
+      0.5,
+      Math.max(out.fx.zoom[2], 0.2 * (1 - smoothstep(T.zoomCut, T.zoomCut + 0.5, t))),
+    ];
+    tag('ESO Logs', 'esologs', up(t, T.zoomCut + 0.2, 0.4) * down(t, C.groups, 0.3));
+
+    // "Thirteen items, one per row."
+    if (t >= C.thirteen - 0.1) {
+      const rows = L.gear.map((g) => pageToScreen(el, visiblePart(el, g.rect)));
+      const i = Math.min(12, Math.max(0, Math.floor((t - C.thirteen) / 0.09)));
+      const table = [rows[0][0], rows[0][1], rows[0][2], rows[12][1] + rows[12][3] - rows[0][1]];
+      const r = lerpRect(
+        rows[i],
+        table,
+        ease.inOutCubic(range(t, C.thirteen + 1.2, C.thirteen + 1.6)),
+      );
+      focus(
+        up(t, C.thirteen - 0.1, 0.25) * down(t, C.groups - 0.1, 0.3),
+        [{ rect: r, radius: 6, feather: 60 }],
+        {
+          blur: 0.6,
+          dim: 0.5,
+        },
+      );
+      const lit = Math.min(13, i + 1);
+      const a = up(t, C.thirteen, 0.25) * down(t, C.groups - 0.2, 0.3);
+      out.overlays.push((ctx) =>
+        UI.glassText(ctx, `${lit} ${lit === 1 ? 'item' : 'items'}`, {
+          x: W - (P ? 170 : 150),
+          y: tagAt[1] - 22,
+          size: P ? 30 : 24,
+          alpha: a,
         }),
       );
     }
   }
 
-  // --- One tank's gear: rows become set chips, bar entries become icons ----------------------
-  const tkCardSide = P
-    ? fit('tk-players', CROP.tkCard, W / 2, H * 0.6, W * 0.9, H * 0.4)
-    : fit('tk-players', CROP.tkCard, W * 0.72, H * 0.46, W * 0.4, H * 0.8);
-  const tkCardScribe = P
-    ? fit('tk-players', CROP.tkCard, W / 2, H * 0.22, W * 0.9, H * 0.33)
-    : fit('tk-players', CROP.tkCard, W * 0.3, H * 0.46, W * 0.4, H * 0.8);
-  {
-    const L = R['el-player'];
-    const T = R['tk-players'];
-    const crop = P ? CROP.elPlayerTall : CROP.elPlayer;
-    const solo = fit('el-player', crop, box.x, box.y, box.w, box.h);
-    const side = P
-      ? fit('el-player', crop, W / 2, H * 0.21, W * 0.94, H * 0.3)
-      : fit('el-player', crop, W * 0.27, H * 0.46, W * 0.46, H * 0.5);
-    // Rows and bar entries lift out only as far as the visible crop.
-    const clip = (r) => [r[0], r[1], Math.min(r[0] + r[2], crop[0] + crop[2]) - r[0], r[3]];
-    const moved = between(solo, side, ease.inOutCubic(range(t, C.gMove, C.gMove + 0.7)));
-    const leaving = ease.inCubic(range(t, C.sTk, C.sTk + 0.5));
-    const elPlayer = lifecycle(
-      { ...moved, x: moved.x - leaving * 160, alpha: 1 - leaving },
+  if (t >= C.groups - 0.1 && t < T.dive) {
+    // ESO Toolkit's player card, soft until the build has landed, then an iris opens on it.
+    const tkV = path(
+      [
+        { t: C.that - 0.1, v: V.tkCard },
+        { t: C.sTk, v: around(icon.rect, P ? 300 : 620) },
+        { t: T.dive, v: around(icon.rect, 90), ease: ease.inCubic },
+      ],
       t,
-      N.gear - 0.5,
-      1e9,
     );
-    if (t > N.gear - 0.6 && t < C.sTk + 0.6) add(elPlayer);
-    label(out, cam, elPlayer, 'ESO Logs', 'esologs', up(t, N.gear, 0.4));
-
-    const toScribe = ease.inOutCubic(range(t, C.sTk, C.sTk + 0.7));
-    const tkCard = lifecycle(
-      {
-        ...between(tkCardSide, tkCardScribe, toScribe),
-        alpha: smoothstep(C.assemble, C.assemble + 0.6, t),
-      },
-      t,
-      -1,
-      N.replay - 0.8,
+    const tk = add(shot('tk-players', tkV, { alpha: up(t, C.groups - 0.1, 0.6) }));
+    const iris = ease.outCubic(range(t, C.assemble, C.assemble + 0.6));
+    const [cx, cy] = centreOf(cardRectOnScreen);
+    const irisRect = lerpRect([cx, cy, 1, 1], cardRectOnScreen, iris);
+    const checkRect = pageToScreen(tk, K.check);
+    const focusRect = lerpRect(
+      irisRect,
+      checkRect,
+      ease.inOutCubic(range(t, C.checks - 0.1, C.checks + 0.3)),
     );
-    if (t > C.assemble - 0.1 && t < N.replay) add(tkCard);
-    label(out, cam, tkCard, 'ESO Toolkit', 'esotk', up(t, C.assemble + 0.3, 0.4));
+    const iconRect = pageToScreen(tk, icon.rect);
+    const toIcon = ease.inOutCubic(range(t, C.that - 0.1, C.that + 0.3));
+    const rect = lerpRect(
+      focusRect,
+      [iconRect[0] - 6, iconRect[1] - 6, iconRect[2] + 12, iconRect[3] + 12],
+      toIcon,
+    );
+    focus(t < C.assemble ? 1 : 1, iris > 0.01 ? [{ rect, radius: 16, feather: 90 }] : [], {
+      blur: 1,
+      dim: iris > 0.01 ? 0.5 : 0.55,
+    });
+    out.fx.zoom = [0.5, 0.5, Math.max(out.fx.zoom[2], 0.24 * smoothstep(T.dive - 0.4, T.dive, t))];
+    tag('ESO Toolkit', 'esotk', up(t, C.assemble + 0.2, 0.4) * down(t, C.sTk, 0.3));
 
-    // "Thirteen items, one per row."
-    if (t > C.thirteen - 0.2 && t < C.gMove + 0.3) {
-      const lit = Math.min(13, Math.max(0, Math.floor((t - C.thirteen) / 0.09) + 1));
-      L.gear.forEach((row, i) => {
-        const at = C.thirteen + i * 0.09;
-        const a =
-          up(t, at, 0.12) * (1 - 0.65 * up(t, at + 0.25, 0.3)) * down(t, C.gMove - 0.2, 0.4);
-        const r = cardRect(cam, elPlayer, clip(row.rect));
-        out.overlays.push((ctx) =>
-          UI.callout(ctx, r, { alpha: a, pad: 1, radius: 4, width: 1.6, color: '#dfe3ea' }),
-        );
-      });
-      const r = cardRect(cam, elPlayer, [crop[0] + crop[2], crop[1], 0, 0]);
-      const a = up(t, C.thirteen, 0.25) * down(t, C.gMove - 0.2, 0.4);
-      out.overlays.push((ctx) =>
-        counterPill(ctx, r[0], r[1] - 14, `${lit} ${lit === 1 ? 'item' : 'items'}`, a),
-      );
-    }
-
-    // Flights: a copy of each row lifts out and lands on its set chip; bar entries land on icons.
-    const chipFor = (set) => T.chips.find((c) => c.label.endsWith(set));
-    const icons = T.icons
+    // Flights. The EL page is framed on the rows by now, so their screen positions are fixed.
+    const elRowsShot = shot('el-player', V.elRows);
+    const chipFor = (set) => K.chips.find((c) => c.label.endsWith(set));
+    const icons = K.icons
       .filter((i) => !i.skill.startsWith('@'))
       .sort(
-        (a, b) => Math.round(a.rect[1] / 50) - Math.round(b.rect[1] / 50) || a.rect[0] - b.rect[0],
+        (a, b) => Math.round(a.rect[1] / 25) - Math.round(b.rect[1] / 25) || a.rect[0] - b.rect[0],
       );
     const bars = [...L.bars].sort((a, b) => a.bar - b.bar || a.slot - b.slot);
-    const flights = [
-      ...L.gear.map((row, i) => ({
-        src: clip(row.rect),
-        dst: chipFor(row.set).rect,
-        at: C.groups + i * 0.055,
-        dur: 0.95,
-        mixFrom: 0.35,
-      })),
-      ...bars.map((b, i) => ({
-        src: clip(b.rect),
-        dst: icons[b.bar * 6 + b.slot].rect,
-        at: C.lays + i * 0.05,
-        dur: 0.85,
-        mixFrom: 0.2,
-      })),
-    ];
-    const settle = down(t, C.assemble + 0.45, 0.2);
-    for (const f of flights) {
-      if (t < f.at || t > C.assemble + 0.7) continue;
-      const k = range(t, f.at, f.at + f.dur);
+    const settle = down(t, C.assemble + 0.55, 0.25);
+    const dpr = pageSize(R, 'el-player').dpr;
+    const tkDpr = pageSize(R, 'tk-players').dpr;
+    const flight = (src, dst, at, dur, mixFrom, hover) => {
+      if (t < C.groups - 0.05 || t > C.assemble + 0.85) return;
+      const s = visiblePart(elRowsShot, src);
+      const a = pageToScreen(elRowsShot, s);
+      const b = pageToScreen(tkCardShot, dst);
+      const liftK = hover ? ease.outCubic(range(t, C.groups + hover, C.groups + hover + 0.5)) : 0;
+      const hoverRect = hover
+        ? lerpRect(a, [a[0] + a[2] * 0.04, a[1] - 20, a[2] * 0.92, a[3] * 0.92], liftK)
+        : a;
+      const k = range(t, at, at + dur);
       const e = ease.inOutCubic(k);
-      const a = cardRect(cam, side, f.src);
-      const b = cardRect(cam, tkCardSide, f.dst);
-      const r = screenBox(a, b, e);
+      const r = lerpRect(hoverRect, b, e);
       add({
         tex: 'el-player',
-        uv: f.src,
+        uv: s.map((v) => v * dpr),
         texB: 'tk-players',
-        uvB: f.dst,
-        mixB: smoothstep(f.mixFrom, 0.85, e),
+        uvB: dst.map((v) => v * tkDpr),
+        mixB: smoothstep(mixFrom, 0.85, e),
+        fit: 'height',
         x: r[0] + r[2] / 2,
         y: r[1] + r[3] / 2,
-        z: Math.sin(Math.PI * e) * 170,
+        z: Math.sin(Math.PI * e) * 170 + liftK * (1 - e) * 90,
         w: r[2],
         h: r[3],
         rotX: -Math.sin(Math.PI * e) * 0.3,
-        radius: mix(2, Math.min(18, b[3] / 2), e),
+        radius: mix(3, Math.min(18, b[3] / 2), e),
         alpha: settle,
-        shadow: k > 0.02 && k < 0.98,
-        bright: 0.95,
+        shadow: e > 0.02 && e < 0.98,
+        bright: 1.0,
+        layer: 'fg',
       });
-      out.overlays.push((ctx) => UI.dim(ctx, a, 0.55 * up(t, f.at, 0.2) * down(t, C.sTk, 0.4)));
       if (k >= 1) {
-        const glow = Math.exp(-(t - f.at - f.dur) * 5) * settle;
+        const glow = Math.exp(-(t - at - dur) * 5) * settle;
         out.overlays.push((ctx) =>
           UI.callout(ctx, b, { alpha: glow, pad: 3, radius: 12, width: 2 }),
         );
       }
-    }
+    };
+    L.gear.forEach((row, i) =>
+      flight(row.rect, chipFor(row.set).rect, C.groups + i * 0.055, 0.95, 0.35, 0),
+    );
+    bars.forEach((b, j) =>
+      flight(b.rect, icons[b.bar * 6 + b.slot].rect, C.lays + j * 0.05, 0.85, 0.2, j * 0.03),
+    );
 
     // "...and checks the build for common mistakes."
-    if (t > C.checks - 0.2 && t < N.scribe + 0.6) {
-      const a = up(t, C.checks - 0.1, 0.3) * down(t, N.scribe - 0.1, 0.4);
-      const r = cardRect(cam, tkCard, T.check);
-      out.overlays.push((ctx) =>
-        UI.callout(ctx, r, { alpha: a, color: '#4ade80', pad: 2, radius: 14 }),
-      );
-      if (!P) {
-        const s = cardRect(cam, side, [crop[0], crop[1] + crop[3], 0, 0]);
-        out.overlays.push((ctx) => checklist(ctx, s[0], s[1] + 70, t, C.checks + 0.15, a));
-      }
+    if (!P && t > C.checks - 0.2 && t < C.that + 0.3) {
+      const a = up(t, C.checks - 0.1, 0.3) * down(t, C.that - 0.2, 0.4);
+      const x = cardRectOnScreen[0] + cardRectOnScreen[2] + 48;
+      out.overlays.push((ctx) => checklist(ctx, x, H * 0.42, t, C.checks + 0.15, a));
     }
+  }
 
-    // --- The scribed skill ---------------------------------------------------------------------
-    const entry = L.bars.find((b) => b.skill === 'Leashing Soul');
-    const icon = T.icons.find((i) => i.skill === 'Leashing Soul');
-    if (t > C.that - 0.2 && t < C.sTk + 0.9) {
-      const a = up(t, C.that - 0.05, 0.25) * down(t, C.sTk + 0.2, 0.4);
-      const er = cardRect(cam, elPlayer, clip(entry.rect));
-      const ir = cardRect(cam, tkCard, icon.rect);
-      out.overlays.push((ctx) => {
-        UI.callout(ctx, er, {
-          alpha: a * elPlayer.alpha,
-          color: '#dfe3ea',
-          pad: 2,
-          radius: 6,
-          width: 1.8,
-        });
-        UI.callout(ctx, ir, { alpha: a, pad: 4, radius: 12 });
-        if (!P)
-          connector(
-            ctx,
-            [er[0] + er[2], er[1] + er[3] / 2],
-            [ir[0], ir[1] + ir[3] / 2],
-            a * elPlayer.alpha,
-          );
-      });
-    }
-    const tipTarget = P
-      ? fit('tk-scribing', CROP.tkTip, W / 2, H * 0.59, W * 0.9, H * 0.38)
-      : fit('tk-scribing', CROP.tkTip, W * 0.68, H * 0.46, W * 0.5, H * 0.8);
-    if (t > C.sTk + 0.15 && t < N.replay) {
-      const k = ease.outCubic(range(t, C.sTk + 0.2, C.sTk + 1.05));
-      const ir = cardRect(cam, tkCardScribe, icon.rect);
-      const from = {
-        ...tipTarget,
-        x: ir[0] + ir[2] / 2,
-        y: ir[1] + ir[3] / 2,
-        w: ir[2],
-        h: ir[3],
-        alpha: 0,
-      };
-      const grown = between(from, tipTarget, k);
-      const tip = lifecycle(
-        { ...grown, alpha: Math.min(1, k * 3), z: Math.sin(Math.PI * k) * 120 },
-        t,
-        -1,
-        N.replay - 0.8,
-      );
-      add(tip);
-      label(out, cam, tip, 'Scribing, decoded', 'esotk', up(t, C.sTk + 0.9, 0.4) * tip.alpha);
+  // --- The scribed skill: dive into the icon, surface in its tooltip ---------------------------------
+  if (t >= T.dive && t < T.whipReplay + 0.05) {
+    const tipIcon = S.icon;
+    const v = path(
       [
-        ['focus', C.focus],
-        ['signature', C.signature],
-        ['affix', C.affix],
-      ].forEach(([row, at], i, all) => {
-        const next = all[i + 1]?.[1] ?? 1e9;
-        const a = up(t, at - 0.05, 0.25) * (1 - 0.55 * up(t, next - 0.05, 0.25)) * tip.alpha;
-        const r = cardRect(cam, tip, TIP_ROWS[row]);
-        out.overlays.push((ctx) =>
-          UI.callout(ctx, r, { alpha: a, color: UI.INK.gold, pad: 2, radius: 8, fill: 0.1 }),
-        );
-      });
-    }
-  }
-
-  // --- Replay: from above, then in 3D -------------------------------------------------------------
-  {
-    const base = P
-      ? fit('el-replay', CROP.elReplayTall, W / 2, H * 0.42, W * 0.92, H * 0.6)
-      : fit('el-replay', CROP.elReplayWide, W / 2, H * 0.46, W * 0.86, H * 0.8);
-    const kt = ease.inOutCubic(range(t, C.tilt, C.tilt + 1.0));
-    const tilted = { ...base, rotX: kt * deg(58), y: base.y + kt * H * 0.08, z: -kt * 120 };
-    const elReplay = lifecycle(tilted, t, N.replay - 0.7, 1e9);
-    elReplay.frame = Math.min(538, Math.max(0, Math.floor((t - (N.replay - 0.7)) * 60)));
-    const tkBase = P
-      ? fit('tk-replay', CROP.tkReplayTall, W / 2, H * 0.42, W * 0.92, H * 0.62)
-      : {
-          tex: 'tk-replay',
-          uv: CROP.tkReplayWide,
-          x: W / 2,
-          y: H / 2,
-          z: 0,
-          w: W,
-          h: H,
-          alpha: 1,
-          radius: 0,
-          shadow: false,
-        };
-    const push = 1 + 0.05 * range(t, M3.t1, N.tools);
-    const tkReplay = lifecycle(
-      { ...tkBase, w: tkBase.w * push, h: tkBase.h * push },
+        { t: T.dive, v: around(tipIcon, 90) },
+        { t: T.dive + 1.0, v: V.scribe, ease: ease.outCubic, centreLag: 0.3 },
+        { t: T.whipReplay, v: { ...V.scribe, vw: V.scribe.vw * 0.95 } },
+      ],
       t,
-      -1,
-      N.tools - 0.7,
-      { to: { z: -300 } },
     );
-    tkReplay.frame = Math.min(598, Math.max(0, Math.floor((t - M3.t0) * 60)));
-    if (t > N.replay - 0.8 && t <= M3.t1) add(elReplay);
-    if (t >= M3.t0 && t < N.tools + 0.2) add(tkReplay);
-    addMorph(M3, { type: 'card', card: elReplay }, { type: 'card', card: tkReplay });
-    label(
-      out,
-      cam,
-      elReplay,
-      'ESO Logs replay',
-      'esologs',
-      up(t, N.replay - 0.2, 0.4) * down(t, C.tilt, 0.3),
-    );
-    const tkLabel = up(t, M3.t1 - 0.2, 0.4) * down(t, N.tools - 0.8, 0.3);
-    if (tkLabel > 0) {
-      if (P) label(out, cam, tkReplay, 'ESO Toolkit 3D replay', 'esotk', tkLabel);
-      else
-        out.overlays.push((ctx) =>
-          UI.sourceLabel(ctx, {
-            x: 64,
-            y: 96,
-            text: 'ESO Toolkit 3D replay',
-            product: 'esotk',
-            alpha: tkLabel,
-          }),
-        );
-    }
-  }
-
-  // --- Tools --------------------------------------------------------------------------------
-  {
-    const buildTarget = P
-      ? fit('tk-build', CROP.tkBuild, W / 2, H * 0.27, W * 0.94, H * 0.3)
-      : fit('tk-build', CROP.tkBuild, W * 0.4, H * 0.46, W * 0.66, H * 0.74, { rotY: -0.12 });
-    const calcTarget = P
-      ? fit('tk-calculator', CROP.tkCalc, W / 2, H * 0.61, W * 0.9, H * 0.34)
-      : fit('tk-calculator', CROP.tkCalc, W * 0.75, H * 0.49, W * 0.4, H * 0.74, {
-          rotY: -0.16,
-          z: 80,
-        });
-    const kCalc = ease.inOutCubic(range(t, C.calc - 0.45, C.calc + 0.4));
-    const buildNow = P
-      ? buildTarget
-      : {
-          ...buildTarget,
-          x: buildTarget.x - kCalc * W * 0.06,
-          tint: [0.7, 0.72, 0.8],
-          tintAmt: kCalc,
-        };
-    const tkBuild = lifecycle(buildNow, t, C.send - 0.3, N.outro - 0.7, {
-      from: P ? { y: H * 1.2, z: 0 } : { x: W * 1.3, rotY: -0.6, z: 0 },
-    });
-    const tkCalc = lifecycle(calcTarget, t, C.calc - 0.5, N.outro - 0.6, {
-      from: P ? { y: H * 1.3, z: 0 } : { x: W * 1.35, rotY: -0.7, z: 80 },
-    });
-    if (t > C.send - 0.4 && t < N.outro + 0.2) add(tkBuild);
-    if (t > C.calc - 0.6 && t < N.outro + 0.2) add(tkCalc);
-    label(
-      out,
-      cam,
-      tkBuild,
-      'Build Editor',
-      'esotk',
-      up(t, C.send + 0.3, 0.4) * down(t, N.outro - 0.8, 0.3),
-    );
-    label(
-      out,
-      cam,
-      tkCalc,
-      'Calculators',
-      'esotk',
-      up(t, C.calc + 0.2, 0.4) * down(t, N.outro - 0.8, 0.3),
-    );
-  }
-
-  // --- Outro: the thesis, then everything collapses into the mark -------------------------------
-  {
-    const elDmg = lifecycle(
-      P
-        ? fit('el-damage', CROP.elDamageTall, W / 2, H * 0.2, W * 0.8, H * 0.28)
-        : fit('el-damage', CROP.elDamage, W * 0.29, H * 0.44, W * 0.42, H * 0.52),
-      t,
-      C.o1 - 0.35,
-      1e9,
-    );
-    const tkIns = lifecycle(
-      P
-        ? fit('tk-insights', CROP.tkInsights, W / 2, H * 0.6, W * 0.84, H * 0.28)
-        : fit('tk-insights', CROP.tkInsights, W * 0.71, H * 0.44, W * 0.42, H * 0.52),
-      t,
-      C.o2 - 0.35,
-      1e9,
-    );
-    if (t > C.o1 - 0.4 && t <= M4.t1) add(elDmg);
-    if (t > C.o2 - 0.4 && t <= M5.t1) add(tkIns);
-    const point = worldToScreen(C.free + 1, W, H, [0, 0, 0]) ?? [W / 2, H / 2];
-    addMorph(M4, { type: 'card', card: elDmg }, { type: 'point', at: [point[0], point[1], 0] });
-    addMorph(M5, { type: 'card', card: tkIns }, { type: 'point', at: [point[0], point[1], 0] });
-    const tagOut = down(t, M4.t0 - 0.1, 0.35);
-    label(out, cam, elDmg, 'ESO Logs', 'esologs', up(t, C.o1, 0.4) * tagOut);
-    label(out, cam, tkIns, 'ESO Toolkit', 'esotk', up(t, C.o2, 0.4) * tagOut);
-    const tag = (c, text, at) => {
-      if (!visible(c)) return;
-      const r = cardRect(cam, c, [c.uv[0], c.uv[1] + c.uv[3], c.uv[2], 0]);
-      out.overlays.push((ctx) =>
-        tagline(ctx, text, r[0] + r[2] / 2, r[1] + (P ? 64 : 70), t, at, tagOut, P ? 40 : 44),
-      );
+    const tip = add(shot('tk-scribing', v, whipOut(T.whipReplay)));
+    out.fx.zoom = [0.5, 0.5, 0.24 * (1 - smoothstep(T.dive, T.dive + 0.5, t))];
+    const tooltip = S.tooltip;
+    const rows = {
+      focus: [tooltip[0] + 5, S.focus[1] - 7, tooltip[2] - 10, S.signature[1] - S.focus[1] - 2],
+      signature: [
+        tooltip[0] + 5,
+        S.signature[1] - 7,
+        tooltip[2] - 10,
+        S.affix[1] - S.signature[1] - 2,
+      ],
+      affix: [
+        tooltip[0] + 5,
+        S.affix[1] - 7,
+        tooltip[2] - 10,
+        tooltip[1] + tooltip[3] - S.affix[1] - 2,
+      ],
     };
-    tag(elDmg, 'Records the fight.', C.o1 + 0.3);
-    tag(tkIns, 'Helps you understand it.', C.o2 + 0.3);
+    const tipRect = pageToScreen(tip, tooltip);
+    let r = pageToScreen(tip, rows.focus);
+    r = lerpRect(
+      r,
+      pageToScreen(tip, rows.signature),
+      ease.inOutCubic(range(t, C.signature - 0.08, C.signature + 0.2)),
+    );
+    r = lerpRect(
+      r,
+      pageToScreen(tip, rows.affix),
+      ease.inOutCubic(range(t, C.affix - 0.08, C.affix + 0.2)),
+    );
+    const onRows = up(t, C.focus - 0.12, 0.3);
+    const rect = lerpRect(tipRect, r, onRows);
+    focus(
+      up(t, T.dive + 0.5, 0.4) * down(t, T.whipReplay - 0.35, 0.2),
+      [{ rect, radius: 12, feather: 70 }],
+      {
+        blur: 0.8,
+        dim: 0.55,
+      },
+    );
+    if (onRows > 0) {
+      out.overlays.push((ctx) =>
+        UI.callout(ctx, r, {
+          alpha: onRows * down(t, T.whipReplay - 0.35, 0.2),
+          color: UI.INK.gold,
+          pad: 2,
+          radius: 10,
+          width: 2,
+        }),
+      );
+    }
+    tag('Scribing, decoded', 'esotk', up(t, T.dive + 0.7, 0.4) * down(t, T.whipReplay - 0.35, 0.2));
+    out.fx.whip = [-whipBlur(T.whipReplay), 0];
+  }
 
-    const L = LAYOUT.logo;
-    const c = worldToScreen(t, W, H, L.center);
-    const e = worldToScreen(t, W, H, [L.center[0] + L.size / 2, L.center[1], L.center[2]]);
+  // --- Replay: from above, then rebuilt in 3D ------------------------------------------------------
+  if (t >= T.whipReplay && t < T.whipBuild + 0.05) {
+    const kt = ease.inOutCubic(range(t, C.tilt, C.tilt + 1.0));
+    const el = shot(replayTex.el, V.elReplay, whipIn(T.whipReplay));
+    el.frame = Math.min(538, Math.max(0, Math.floor((t - (T.whipReplay - 0.2)) * 60)));
+    Object.assign(el, { rotX: kt * deg(58), y: el.y + kt * H * 0.08, z: -kt * 120 });
+    const pushK = range(t, M3.t1, T.whipBuild);
+    const tk = shot(
+      replayTex.tk,
+      { ...V.tkReplay, vw: V.tkReplay.vw * mix(1, 0.93, pushK) },
+      whipOut(T.whipBuild),
+    );
+    tk.frame = Math.min(598, Math.max(0, Math.floor((t - M3.t0) * 60)));
+    if (t <= M3.t1) add(el);
+    if (t >= M3.t0) add(tk);
+    addMorph(M3, { type: 'card', card: el }, { type: 'card', card: tk });
+    out.fx.whip = [-whipBlur(T.whipReplay) - whipBlur(T.whipBuild), 0];
+    tag('ESO Logs replay', 'esologs', up(t, T.whipReplay + 0.3, 0.4) * down(t, C.tilt, 0.3));
+    tag(
+      'ESO Toolkit 3D replay',
+      'esotk',
+      up(t, M3.t1 - 0.2, 0.4) * down(t, T.whipBuild - 0.3, 0.2),
+    );
+  }
+
+  // --- Tools: whip to the Build Editor, then to the Calculators -------------------------------------
+  if (t >= T.whipBuild && t < T.whipCalc + 0.05) {
+    const v = path(
+      [
+        { t: T.whipBuild, v: V.build },
+        { t: T.whipCalc, v: V.buildEnd },
+      ],
+      t,
+    );
+    const build = add(
+      shot('tk-build', v, {
+        ...whipIn(T.whipBuild),
+        ...(t > T.whipCalc - 0.3 ? whipOut(T.whipCalc) : {}),
+      }),
+    );
+    const r = pageToScreen(build, PAGE.buildHeader);
+    focus(
+      up(t, C.send + 0.5, 0.4) * down(t, T.whipCalc - 0.3, 0.2),
+      [{ rect: r, radius: 14, feather: 90 }],
+      {
+        blur: 0.7,
+        dim: 0.5,
+      },
+    );
+    out.fx.whip = [-whipBlur(T.whipBuild) - whipBlur(T.whipCalc), 0];
+    tag('Build Editor', 'esotk', up(t, T.whipBuild + 0.3, 0.4) * down(t, T.whipCalc - 0.3, 0.2));
+  }
+  if (t >= T.whipCalc && t < C.o1 + 0.35) {
+    const v = path(
+      [
+        { t: T.whipCalc, v: V.calc },
+        { t: N.outro, v: V.calcEnd },
+      ],
+      t,
+    );
+    const leave = ease.inOutCubic(range(t, C.o1 - 0.35, C.o1 + 0.3));
+    const calc = add(
+      shot(
+        'tk-calculator',
+        { ...v, vw: v.vw * mix(1, 1.15, leave) },
+        { ...whipIn(T.whipCalc), alpha: 1 - leave * 0.9 },
+      ),
+    );
+    const r = pageToScreen(calc, R['tk-calculator'].total);
+    focus(up(t, C.calc + 0.2, 0.4) * (1 - leave), [{ rect: r, radius: 16, feather: 90 }], {
+      blur: 0.7,
+      dim: 0.5,
+    });
+    out.fx.whip = [-whipBlur(T.whipCalc), 0];
+    tag('Calculators', 'esotk', up(t, T.whipCalc + 0.3, 0.4) * down(t, C.o1 - 0.4, 0.3));
+  }
+
+  // --- Outro: side by side, then everything collapses into the mark -------------------------------
+  if (t >= C.o1 - 0.35 && t <= M5.t1) {
+    const left = P ? [0, 0, W, H / 2] : [0, 0, W / 2, H];
+    const right = P ? [0, H / 2, W, H / 2] : [W / 2, 0, W / 2, H];
+    // ESO Logs takes the full frame first, then squeezes into its half as ESO Toolkit slides in.
+    const inL = ease.outCubic(range(t, C.o1 - 0.35, C.o1 + 0.3));
+    const split = ease.inOutCubic(range(t, C.o2 - 0.35, C.o2 + 0.45));
+    const inR = split;
+    const elScreen = lerpRect(FULL, left, split);
+    const elView = lerpView(V.outroElFull, V.outroEl, split);
+    const el = shot(
+      'el-damage',
+      { ...elView, vw: elView.vw * mix(1.08, 1, inL) },
+      { screen: elScreen, alpha: inL },
+    );
+    const rightFrom = P ? [0, H, W, H / 2] : [W, 0, W / 2, H];
+    const tk = shot('tk-insights', V.outroTk, { screen: lerpRect(rightFrom, right, split) });
+    if (t <= M4.t1) add(el);
+    if (split > 0 && t <= M5.t1) add(tk);
+    const point = worldToScreen(C.free + 1, W, H, [0, 0, 0]) ?? [W / 2, H / 2];
+    addMorph(M4, { type: 'card', card: el }, { type: 'point', at: [point[0], point[1], 0] });
+    addMorph(M5, { type: 'card', card: tk }, { type: 'point', at: [point[0], point[1], 0] });
+    const fade = down(t, M4.t0 - 0.1, 0.35);
+    const both = inR * fade;
+    if (both > 0)
+      out.overlays.push((ctx) =>
+        P ? dividerLineH(ctx, H / 2, W, both) : dividerLine(ctx, W / 2, H, both, false),
+      );
+    const lt = UI.presence(t, C.o1 + 0.2, undefined, 0.8);
+    const rt = UI.presence(t, C.o2 + 0.2, undefined, 0.8);
+    out.overlays.push((ctx) => {
+      UI.sourceLabel(ctx, {
+        x: elScreen[0] + 48,
+        y: elScreen[1] + (P ? 200 : 104),
+        text: 'ESO Logs',
+        product: 'esologs',
+        alpha: inL * fade,
+      });
+      UI.sourceLabel(ctx, {
+        x: right[0] + 48,
+        y: right[1] + 104,
+        text: 'ESO Toolkit',
+        product: 'esotk',
+        alpha: inR * fade,
+      });
+      UI.glassText(ctx, 'Records the fight.', {
+        x: elScreen[0] + elScreen[2] / 2,
+        y: elScreen[1] + elScreen[3] - (P ? 110 : 150),
+        size: P ? 44 : 46,
+        alpha: lt.v * fade,
+        rise: (1 - lt.i) * 18,
+      });
+      UI.glassText(ctx, 'Helps you understand it.', {
+        x: right[0] + right[2] / 2,
+        y: right[1] + right[3] - (P ? 330 : 150),
+        size: P ? 44 : 46,
+        alpha: rt.v * fade,
+        rise: (1 - rt.i) * 18,
+      });
+    });
+  }
+
+  // End card.
+  {
+    const Lg = LAYOUT.logo;
+    const c = worldToScreen(t, W, H, Lg.center);
+    const e = worldToScreen(t, W, H, [Lg.center[0] + Lg.size / 2, Lg.center[1], Lg.center[2]]);
     if (c && e && t > C.free + 1.8) {
       out.overlays.push((ctx) => endCard(ctx, t, W, H, P, c, Math.abs(e[0] - c[0]) * 2));
     }
   }
 
   // --- Captions -----------------------------------------------------------------------------------
-  const scrim = P ? 0 : up(t, M3.t1 - 0.4, 0.4) * down(t, N.tools - 0.7, 0.5);
-  if (scrim > 0) out.overlays.push((ctx) => bottomScrim(ctx, W, H, scrim));
   out.overlays.push((ctx) =>
     UI.captions(ctx, P ? CAPTIONS.tall : CAPTIONS.wide, t, {
       x: W / 2,
-      y: P ? H * 0.84 : H - 44,
-      size: P ? 44 : 34,
-      maxWidth: W - 120,
+      y: P ? H * 0.8 : H - 78,
+      size: P ? 42 : 32,
+      maxWidth: W - 160,
     }),
   );
 
-  out.cards.sort((a, b) => (a.z ?? 0) - (b.z ?? 0));
+  out.cards.sort((a, b) => (a.layer === b.layer ? (a.z ?? 0) - (b.z ?? 0) : 0));
   return out;
 }
 
 // ------------------------------------------------------------------------------------------
 // Small overlay pieces
 
-function bottomScrim(ctx, W, H, alpha) {
-  const g = ctx.createLinearGradient(0, H - 240, 0, H);
-  g.addColorStop(0, 'rgba(3, 5, 12, 0)');
-  g.addColorStop(1, `rgba(3, 5, 12, ${0.72 * alpha})`);
-  ctx.fillStyle = g;
-  ctx.fillRect(0, H - 240, W, 240);
-}
-
-function counterPill(ctx, right, y, text, alpha) {
+function dividerLine(ctx, x, H, alpha, sparks) {
   if (alpha <= 0.002) return;
   ctx.save();
   ctx.globalAlpha = alpha;
-  ctx.font = `600 22px ${UI.FONT.body}`;
-  const w = ctx.measureText(text).width + 36;
-  UI.roundRect(ctx, right - w, y - 40, w, 40, 20);
-  ctx.fillStyle = 'rgba(22, 24, 30, 0.92)';
-  ctx.fill();
-  ctx.strokeStyle = 'rgba(223, 227, 234, 0.55)';
-  ctx.lineWidth = 1.2;
-  ctx.stroke();
-  ctx.fillStyle = '#eef2f8';
-  ctx.fillText(text, right - w + 18, y - 12);
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, 'rgba(125, 211, 252, 0)');
+  g.addColorStop(0.5, 'rgba(186, 230, 253, 1)');
+  g.addColorStop(1, 'rgba(125, 211, 252, 0)');
+  ctx.fillStyle = g;
+  ctx.shadowColor = '#38bdf8';
+  ctx.shadowBlur = 28;
+  ctx.fillRect(x - 1.5, 0, 3, H);
+  if (sparks) {
+    for (let i = 0; i < 26; i++) {
+      const y = ((i * 97.13) % 1) * H + ((i * 41) % H);
+      const off = Math.sin(i * 12.9898) * 26;
+      ctx.globalAlpha = alpha * (0.4 + 0.6 * ((i * 0.618) % 1));
+      ctx.beginPath();
+      ctx.arc(x + off, y % H, 1.6 + (i % 3), 0, Math.PI * 2);
+      ctx.fillStyle = '#e0f2fe';
+      ctx.fill();
+    }
+  }
+  ctx.restore();
+}
+
+function dividerLineH(ctx, y, W, alpha) {
+  if (alpha <= 0.002) return;
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  const g = ctx.createLinearGradient(0, 0, W, 0);
+  g.addColorStop(0, 'rgba(125, 211, 252, 0)');
+  g.addColorStop(0.5, 'rgba(186, 230, 253, 1)');
+  g.addColorStop(1, 'rgba(125, 211, 252, 0)');
+  ctx.fillStyle = g;
+  ctx.shadowColor = '#38bdf8';
+  ctx.shadowBlur = 28;
+  ctx.fillRect(0, y - 1.5, W, 3);
   ctx.restore();
 }
 
 function checklist(ctx, x, y, t, at, alpha) {
   if (alpha <= 0.002) return;
   const items = ['Enchant quality', 'Gear quality', 'CP 160 gear', 'Key buffs'];
-  ctx.save();
-  ctx.font = `600 18px ${UI.FONT.body}`;
-  ctx.globalAlpha = alpha;
-  ctx.fillStyle = UI.INK.faint;
-  ctx.fillText('Build check', x, y);
   items.forEach((item, i) => {
-    const a = up(t, at + i * 0.18, 0.25) * alpha;
-    if (a <= 0) return;
-    const ix = x + (i % 2) * 230;
-    const iy = y + 44 + Math.floor(i / 2) * 44;
+    const p = UI.presence(t, at + i * 0.16, undefined, 0.5);
+    const a = p.v * alpha;
+    if (a <= 0.002) return;
+    ctx.save();
+    ctx.font = `500 22px ${UI.FONT.body}`;
+    const w = ctx.measureText(item).width + 82;
+    const h = 52;
+    const iy = y + i * 68 + (1 - p.i) * 12;
+    UI.glass(ctx, x, iy, w, h, h / 2, a);
     ctx.globalAlpha = a;
     ctx.beginPath();
-    ctx.arc(ix + 11, iy - 7, 11, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(74, 222, 128, 0.18)';
+    ctx.arc(x + 28, iy + h / 2, 12, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(74, 222, 128, 0.22)';
     ctx.fill();
     ctx.strokeStyle = '#4ade80';
-    ctx.lineWidth = 2.2;
+    ctx.lineWidth = 2.4;
     ctx.beginPath();
-    ctx.moveTo(ix + 6, iy - 7);
-    ctx.lineTo(ix + 10, iy - 3);
-    ctx.lineTo(ix + 17, iy - 12);
+    ctx.moveTo(x + 22, iy + h / 2);
+    ctx.lineTo(x + 27, iy + h / 2 + 5);
+    ctx.lineTo(x + 35, iy + h / 2 - 5);
     ctx.stroke();
-    ctx.font = `500 20px ${UI.FONT.body}`;
     ctx.fillStyle = UI.INK.text;
-    ctx.fillText(item, ix + 32, iy);
+    ctx.fillText(item, x + 52, iy + h / 2 + 8);
+    ctx.restore();
   });
-  ctx.restore();
-}
-
-function connector(ctx, a, b, alpha) {
-  if (alpha <= 0.002) return;
-  ctx.save();
-  ctx.globalAlpha = alpha;
-  const g = ctx.createLinearGradient(a[0], a[1], b[0], b[1]);
-  g.addColorStop(0, 'rgba(223, 227, 234, 0.8)');
-  g.addColorStop(1, UI.INK.sky);
-  ctx.strokeStyle = g;
-  ctx.lineWidth = 2;
-  ctx.setLineDash([6, 6]);
-  ctx.beginPath();
-  ctx.moveTo(a[0] + 8, a[1]);
-  const mx = (a[0] + b[0]) / 2;
-  ctx.bezierCurveTo(mx, a[1], mx, b[1], b[0] - 10, b[1]);
-  ctx.stroke();
-  ctx.restore();
-}
-
-function tagline(ctx, text, x, y, t, at, fade, size) {
-  const p = UI.presence(t, at, undefined, 0.8);
-  const a = p.v * fade;
-  if (a <= 0.002) return;
-  ctx.save();
-  ctx.globalAlpha = a;
-  ctx.font = `600 ${size}px ${UI.FONT.display}`;
-  ctx.textAlign = 'center';
-  ctx.fillStyle = UI.INK.text;
-  const blur = (1 - p.i) * 8;
-  if (blur > 0.3) ctx.filter = `blur(${blur.toFixed(2)}px)`;
-  ctx.fillText(text, x, y + (1 - p.i) * 16);
-  ctx.restore();
 }
 
 function endCard(ctx, t, W, H, P, c, size) {
@@ -897,15 +1039,14 @@ function endCard(ctx, t, W, H, P, c, size) {
     ctx.fillText('esotk.com', c[0], ty + (1 - p.i) * 20);
     ctx.restore();
   }
-  UI.line(ctx, 'Paste any ESO Logs report. Free, with no ads.', {
-    t,
-    a: C.url + 1.1,
+  const q = UI.presence(t, C.url + 1.1, undefined, 0.8);
+  UI.glassText(ctx, 'Paste any ESO Logs report. Free, with no ads.', {
     x: c[0],
-    y: ty + (P ? 84 : 62),
-    size: P ? 34 : 28,
-    align: 'center',
-    color: UI.INK.text,
+    y: ty + (P ? 100 : 78),
+    size: P ? 30 : 24,
+    alpha: q.v,
     weight: 500,
+    rise: (1 - q.i) * 12,
   });
   const legal = P
     ? [

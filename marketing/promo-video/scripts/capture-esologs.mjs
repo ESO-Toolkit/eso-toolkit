@@ -8,7 +8,7 @@
 import { chromium } from 'playwright';
 import { writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { OUT, clip, rects, still } from './capture-lib.mjs';
+import { DPR, OUT, clip, rects, still } from './capture-lib.mjs';
 
 const REPORT = 'https://www.esologs.com/reports/F4f2bMwWtgVKxjB9?fight=39';
 // Saint Olms the Just, the same fight as the ESO Toolkit replay clip.
@@ -23,16 +23,16 @@ const page = ctx.pages().find((p) => p.url().includes('esologs.com')) ?? (await 
 
 await page.bringToFront();
 const cdp = await ctx.newCDPSession(page);
-const scale = (deviceScaleFactor) =>
+const scale = (deviceScaleFactor, width = 1920, height = 1080) =>
   cdp.send('Emulation.setDeviceMetricsOverride', {
-    width: 1920,
-    height: 1080,
+    width,
+    height,
     deviceScaleFactor,
     mobile: false,
   });
 
-// Playwright's screenshot resets the device scale, so take 2x stills through DevTools directly.
-async function still2x(name) {
+// Playwright's screenshot resets the device scale, so take hi-dpi stills through DevTools.
+async function stillHiDpi(name) {
   const { data } = await cdp.send('Page.captureScreenshot', { format: 'png' });
   await writeFile(path.join(OUT, `${name}.png`), Buffer.from(data, 'base64'));
   console.log(`  saved ${name}.png`);
@@ -46,17 +46,40 @@ async function open(url, wait = 9000) {
   await page.mouse.move(1915, 540);
 }
 
+async function replay(name, width, height) {
+  await scale(1, width, height);
+  await open(REPLAY, 12000);
+  const bar = await page
+    .locator('svg')
+    .filter({ has: page.locator('*') })
+    .last()
+    .boundingBox();
+  const timeline =
+    bar && bar.width > width * 0.8 ? bar : { x: 1, y: height - 74, width: width - 16, height: 40 };
+  await page.getByText('2x', { exact: true }).click();
+  await page.mouse.click(
+    timeline.x + (timeline.width * SEEK_SECONDS) / FIGHT_SECONDS,
+    timeline.y + timeline.height / 2,
+  );
+  await page.waitForTimeout(800);
+  // Play button, bottom-left of the transport bar.
+  await page.mouse.click(24, timeline.y + timeline.height + 16);
+  await page.waitForTimeout(1200);
+  await page.mouse.move(width - 5, 150);
+  await clip(page, name, 9000);
+}
+
 const shots = {
   damage: async () => {
-    await scale(2);
+    await scale(DPR);
     await open(`${REPORT}&type=damage-done`);
-    await still2x('el-damage');
+    await stillHiDpi('el-damage');
     await rects(
       'el-damage',
       await page.evaluate(() => {
         const box = (el) => {
           const r = el.getBoundingClientRect();
-          return [r.x * 2, r.y * 2, r.width * 2, r.height * 2];
+          return [r.x, r.y, r.width, r.height];
         };
         const tab = (label) =>
           [...document.querySelectorAll('a')].find((a) => a.textContent.trim() === label);
@@ -70,18 +93,18 @@ const shots = {
   },
   player: async () => {
     // One player's summary: both action bars and the gear list.
-    await scale(2);
+    await scale(DPR);
     await open(`${REPORT}&source=1`);
     await page.mouse.wheel(0, 560);
     await page.waitForTimeout(1500);
     await page.mouse.move(1915, 540);
-    await still2x('el-player');
+    await stillHiDpi('el-player');
     await rects(
       'el-player',
       await page.evaluate(() => {
         const box = (el) => {
           const r = el.getBoundingClientRect();
-          return [r.x * 2, r.y * 2, r.width * 2, r.height * 2];
+          return [r.x, r.y, r.width, r.height];
         };
         const tables = [...document.querySelectorAll('table')];
         const gearTable = tables.find(
@@ -104,28 +127,9 @@ const shots = {
       }),
     );
   },
-  replay: async () => {
-    await scale(1);
-    await open(REPLAY, 12000);
-    const bar = await page
-      .locator('svg')
-      .filter({ has: page.locator('*') })
-      .last()
-      .boundingBox();
-    const timeline = bar && bar.width > 1000 ? bar : { x: 1, y: 1006, width: 1904, height: 40 };
-    await page.getByText('2x', { exact: true }).click();
-    await page.mouse.click(
-      timeline.x + (timeline.width * SEEK_SECONDS) / FIGHT_SECONDS,
-      timeline.y + timeline.height / 2,
-    );
-    await page.waitForTimeout(800);
-    // Play button, bottom-left of the transport bar.
-    await page.mouse.click(24, timeline.y + timeline.height + 16);
-    await page.waitForTimeout(1200);
-    await page.mouse.move(1915, 150);
-    await clip(page, 'el-replay', 9000);
-    await still(page, 'el-replay-end');
-  },
+  replay: () => replay('el-replay', 1920, 1080),
+  // Portrait viewport, for the 9:16 cut.
+  replayTall: () => replay('el-replay-tall', 1080, 1920),
 };
 
 for (const [name, run] of Object.entries(shots)) {

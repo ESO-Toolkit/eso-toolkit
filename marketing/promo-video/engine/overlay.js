@@ -118,6 +118,14 @@ export function line(
   ctx.restore();
 }
 
+/**
+ * Registers a Liquid Glass panel (drawn by the compositor, under this layer's type).
+ * Coordinates are output pixels.
+ */
+export function glass(ctx, x, y, w, h, r, alpha = 1) {
+  if (alpha > 0.002) ctx.glass?.push({ x, y, w, h, r, alpha });
+}
+
 export function roundRect(ctx, x, y, w, h, r) {
   ctx.beginPath();
   ctx.roundRect(x, y, w, h, r);
@@ -274,16 +282,19 @@ export function captions(ctx, chunks, t, { x, y, size, maxWidth }) {
   const widths = words.map((w) => ctx.measureText(w.text).width);
   const total = widths.reduce((s, w) => s + w, 0) + space * (words.length - 1);
   const scale = Math.min(1, maxWidth / total);
-  ctx.translate(x, y + (1 - fadeIn) * 10);
+  const padX = size * 0.9;
+  const padY = size * 0.55;
+  const pw = total * scale + padX * 2;
+  const ph = size * scale * 1.2 + padY * 2;
+  glass(ctx, x - pw / 2, y - ph / 2, pw, ph, ph / 2, a);
+  ctx.translate(x, y + size * scale * 0.36 + (1 - fadeIn) * 8);
   ctx.scale(scale, scale);
   let cx = -total / 2;
-  ctx.shadowColor = 'rgba(0, 0, 0, 0.85)';
-  ctx.shadowBlur = 18;
   words.forEach((w, k) => {
     const said = t >= w.start;
     const live = t >= w.start && t < w.end + 0.06;
-    ctx.globalAlpha = a * (said ? 1 : 0.42);
-    ctx.fillStyle = live ? INK.sky : INK.text;
+    ctx.globalAlpha = a * (said ? 1 : 0.5);
+    ctx.fillStyle = live ? '#7dd3fc' : INK.text;
     ctx.fillText(w.text, cx, 0);
     cx += widths[k] + space;
   });
@@ -334,31 +345,45 @@ export function spokenHeadline(ctx, words, t, { x, y, size, end, maxWidth = 1e9 
   ctx.restore();
 }
 
-/** Source label that sits above a panel: which product the viewer is looking at. */
-export function sourceLabel(ctx, { x, y, text, product, alpha }) {
+/** A glass tag naming what is on screen (which product, which view). */
+export function sourceLabel(ctx, { x, y, text, product, alpha, size = 22 }) {
   if (alpha <= 0.001) return;
   ctx.save();
+  ctx.font = `600 ${size}px ${FONT.body}`;
+  const h = size * 2;
+  const w = ctx.measureText(text).width + h + size * 0.9;
+  glass(ctx, x, y - h, w, h, h / 2, alpha);
   ctx.globalAlpha = alpha;
-  ctx.font = `600 20px ${FONT.body}`;
-  const w = ctx.measureText(text).width + (product === 'esotk' ? 58 : 46);
-  const h = 38;
-  roundRect(ctx, x, y - h, w, h, h / 2);
-  ctx.fillStyle = product === 'esotk' ? 'rgba(10, 34, 56, 0.9)' : 'rgba(22, 24, 30, 0.9)';
-  ctx.fill();
-  ctx.lineWidth = 1.2;
-  ctx.strokeStyle = product === 'esotk' ? 'rgba(56, 189, 248, 0.75)' : 'rgba(200, 205, 215, 0.4)';
-  ctx.stroke();
   if (product === 'esotk') {
-    logo(ctx, x + 23, y - h / 2, 24, alpha);
+    logo(ctx, x + h / 2 + 2, y - h / 2, size * 1.25, alpha);
   } else {
     ctx.beginPath();
-    ctx.arc(x + 20, y - h / 2, 5, 0, Math.PI * 2);
-    ctx.fillStyle = '#c8cdd7';
+    ctx.arc(x + h / 2 + 2, y - h / 2, size * 0.26, 0, Math.PI * 2);
+    ctx.fillStyle = '#d7dce5';
     ctx.fill();
   }
   ctx.globalAlpha = alpha;
-  ctx.fillStyle = product === 'esotk' ? '#e8f7ff' : '#dfe3ea';
-  ctx.fillText(text, x + (product === 'esotk' ? 42 : 34), y - h / 2 + 7);
+  ctx.fillStyle = '#f4f7fb';
+  ctx.fillText(text, x + h, y - h / 2 + size * 0.36);
+  ctx.restore();
+}
+
+/** A centred glass pill with a line of text. */
+export function glassText(
+  ctx,
+  text,
+  { x, y, size, alpha, weight = 600, color = INK.text, rise = 0 },
+) {
+  if (alpha <= 0.001) return;
+  ctx.save();
+  ctx.font = `${weight} ${size}px ${FONT.display}`;
+  const w = ctx.measureText(text).width + size * 1.6;
+  const h = size * 2.1;
+  glass(ctx, x - w / 2, y - h / 2 + rise, w, h, h / 2, alpha);
+  ctx.globalAlpha = alpha;
+  ctx.textAlign = 'center';
+  ctx.fillStyle = color;
+  ctx.fillText(text, x, y + size * 0.36 + rise);
   ctx.restore();
 }
 
@@ -427,17 +452,17 @@ export function linkPill(ctx, { x, y, alpha, morph, from, to, code, size = 34, s
   const w = dw + cw + size * 2.6;
   const h = size * 2.1;
   const left = x - w / 2;
-  roundRect(ctx, left, y - h / 2, w, h, h / 2);
-  ctx.fillStyle = 'rgba(12, 18, 32, 0.92)';
-  ctx.fill();
+  glass(ctx, left, y - h / 2, w, h, h / 2, alpha);
   const done = ease.outCubic(range(morph, 0.85, 1));
-  ctx.strokeStyle =
-    done > 0 ? `rgba(56, 189, 248, ${0.35 + 0.5 * done})` : 'rgba(200, 205, 215, 0.35)';
-  ctx.lineWidth = 1.5;
-  ctx.shadowColor = INK.sky;
-  ctx.shadowBlur = 30 * done;
-  ctx.stroke();
-  ctx.shadowBlur = 0;
+  if (done > 0) {
+    roundRect(ctx, left, y - h / 2, w, h, h / 2);
+    ctx.strokeStyle = `rgba(56, 189, 248, ${0.6 * done})`;
+    ctx.lineWidth = 1.5;
+    ctx.shadowColor = INK.sky;
+    ctx.shadowBlur = 30 * done;
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+  }
   // Link glyph.
   ctx.strokeStyle = INK.muted;
   ctx.lineWidth = 2.4;

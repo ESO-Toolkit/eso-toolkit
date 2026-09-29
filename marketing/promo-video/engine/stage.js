@@ -139,6 +139,11 @@ uniform vec3 uSweep;
 uniform vec2 uGrid;
 uniform vec3 uTint;
 uniform float uTintAmt;
+// Visible part of the card in local uv (x0, y0, x1, y1), for split screens and wipes.
+uniform vec4 uClip;
+// Share of the card width each texture spans when scaled to the card height and anchored
+// left (0 = stretch to fill). Keeps shared-element flights from distorting their content.
+uniform vec2 uFit;
 ${STAGGER}
 float box(vec2 p, vec2 b, float r) {
   vec2 q = abs(p) - b + r;
@@ -156,14 +161,30 @@ void main() {
   float mask = clamp(0.5 - d, 0.0, 1.0);
   if (mask <= 0.0) discard;
   vec2 uv = vLocal + 0.5;
+  if (uv.x < uClip.x || uv.y < uClip.y || uv.x > uClip.z || uv.y > uClip.w) discard;
   if (uDissolve != 0) {
     float k = flight(uv, uGrid, uSweep, uP, uSpread);
     mask *= uDissolve == 1 ? 1.0 - smoothstep(0.0, HANDOFF, k) : smoothstep(1.0, 1.0 + HANDOFF, k);
     if (mask <= 0.0) discard;
   }
-  vec3 a = lin(texture(uTexA, uUvA.xy + uv * uUvA.zw).rgb);
-  vec3 c = a;
-  if (uMixB > 0.0) c = mix(a, lin(texture(uTexB, uUvB.xy + uv * uUvB.zw).rgb), uMixB);
+  vec2 uvA = uv;
+  vec2 uvB = uv;
+  float covA = 1.0;
+  float covB = 1.0;
+  if (uFit.x > 0.0) {
+    uvA.x = uv.x / uFit.x;
+    uvB.x = uv.x / uFit.y;
+    covA = clamp((1.0 - uvA.x) * uSize.x * uFit.x + 0.5, 0.0, 1.0);
+    covB = clamp((1.0 - uvB.x) * uSize.x * uFit.y + 0.5, 0.0, 1.0);
+  }
+  vec3 a = lin(texture(uTexA, uUvA.xy + min(uvA, 1.0) * uUvA.zw).rgb);
+  vec3 b = uMixB > 0.0 ? lin(texture(uTexB, uUvB.xy + min(uvB, 1.0) * uUvB.zw).rgb) : a;
+  float wa = covA * (1.0 - uMixB);
+  float wb = covB * uMixB;
+  float cov = wa + wb;
+  if (cov <= 0.0) discard;
+  vec3 c = (a * wa + b * wb) / cov;
+  mask *= min(cov, 1.0);
   c = mix(c, c * uTint, uTintAmt);
   // A faint lit rim, like the edge of a glass panel.
   float rim = smoothstep(-2.5, -0.5, d) * (1.0 - smoothstep(-0.5, 0.5, d));
@@ -197,6 +218,7 @@ uniform vec3 uBandColor;
 uniform float uGain;
 uniform float uD;
 uniform float uCell;
+uniform vec4 uClipA;   // source card's visible region; cells outside it never fly
 ${STAGGER}
 out vec3 vCol;
 out float vA;
@@ -226,6 +248,7 @@ void main() {
   float alpha = uFromMode == 1 ? 1.0 : smoothstep(0.0, HANDOFF, k);
   alpha *= uToMode == 2 ? 1.0 - smoothstep(0.65, 1.0, e) : 1.0 - smoothstep(1.0, 1.0 + HANDOFF, k);
   if (uFromMode == 1) alpha *= 0.55 + 0.45 * aSeed.w;
+  if (aUv.x < uClipA.x || aUv.y < uClipA.y || aUv.x > uClipA.z || aUv.y > uClipA.w) alpha = 0.0;
 
   gl_Position = uVP * vec4(p, 1.0);
   float depth = max(10.0, uD - p.z);
@@ -329,7 +352,15 @@ export function createStage(gl) {
       .f('uMixB', c.mixB ?? 0)
       .f('uBright', c.bright ?? 0.93)
       .f('uTint', ...(c.tint ?? [1, 1, 1]))
-      .f('uTintAmt', c.tintAmt ?? 0);
+      .f('uTintAmt', c.tintAmt ?? 0)
+      .f('uClip', ...(c.clip ?? [-1, -1, 2, 2]));
+    if (c.fit === 'height') {
+      const aspect = c.w / c.h;
+      const uvB = c.uvB ?? c.uv;
+      p.f('uFit', c.uv[2] / c.uv[3] / aspect, uvB[2] / uvB[3] / aspect);
+    } else {
+      p.f('uFit', 0, 0);
+    }
     const d = c.dissolve;
     p.i('uDissolve', d ? (d.role === 'from' ? 1 : 2) : 0);
     if (d) morphUniforms(p, d.morph);
@@ -372,7 +403,8 @@ export function createStage(gl) {
       .f('uBandColor', ...(m.color ?? [0.35, 0.72, 1.0]))
       .f('uGain', gain * (m.gain ?? 1))
       .f('uD', cam.D)
-      .f('uCell', Math.max(1.5, cellW) * ss);
+      .f('uCell', Math.max(1.5, cellW) * ss)
+      .f('uClipA', ...(from?.clip ?? [-1, -1, 2, 2]));
     morphUniforms(p, m);
     gl.bindVertexArray(morphVao);
     gl.drawArrays(gl.POINTS, 0, n);

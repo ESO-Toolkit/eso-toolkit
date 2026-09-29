@@ -56,6 +56,11 @@ export function program(gl, vertex, fragment) {
       gl.uniform1i(loc(name), v);
       return this;
     },
+    /** vec4 array uniform from a flat Float32Array. */
+    v4(name, data) {
+      gl.uniform4fv(loc(name), data);
+      return this;
+    },
     m4(name, m) {
       gl.uniformMatrix4fv(loc(name), false, m);
       return this;

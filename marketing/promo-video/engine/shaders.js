@@ -190,18 +190,124 @@ void main() {
   o = vec4(c, 1.0);
 }`;
 
+export const MAX_GLASS = 16;
+export const MAX_FOCUS = 4;
+
+// Composites the frame: background layer (with camera blur and focus pulls), the sharp
+// foreground layer, Liquid Glass panels that refract the blurred background, then the type.
 export const COMPOSITE_FS = `#version 300 es
 precision highp float;
 in vec2 vUv;
 out vec4 o;
-uniform sampler2D uScene;
+uniform sampler2D uBg;
+uniform sampler2D uBlur;
+uniform sampler2D uFg;
 uniform sampler2D uUi;
+uniform vec2 uRes;
 uniform float uExposure;
+uniform vec2 uWhip;       // motion-blur vector in output pixels
+uniform vec3 uZoom;       // zoom-blur centre (uv) and strength
+uniform float uFocusAmt;  // 0 = no focus pull
+uniform float uFocusBlur;
+uniform float uFocusDim;
+uniform int uFocusN;
+uniform vec4 uFocus[${MAX_FOCUS}];   // x, y, w, h in output pixels (y down)
+uniform vec4 uFocusP[${MAX_FOCUS}];  // radius, feather
+uniform int uGlassN;
+uniform vec4 uGlass[${MAX_GLASS}];   // x, y, w, h in output pixels (y down)
+uniform vec4 uGlassP[${MAX_GLASS}];  // radius, alpha
+
+float box(vec2 p, vec2 b, float r) {
+  vec2 q = abs(p) - b + r;
+  return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - r;
+}
+
+// Outward normal of a rounded box.
+vec2 boxNormal(vec2 p, vec2 b, float r) {
+  vec2 q = abs(p) - (b - r);
+  vec2 n = max(q, 0.0);
+  if (n.x <= 0.0 && n.y <= 0.0) n = q.x > q.y ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
+  return normalize(n) * sign(p + 1e-6);
+}
+
+vec3 background(vec2 uv) {
+  float whip = length(uWhip);
+  if (whip < 0.5 && uZoom.z < 0.001) return texture(uBg, uv).rgb;
+  vec3 acc = vec3(0.0);
+  const int TAPS = 24;
+  for (int i = 0; i < TAPS; i++) {
+    float t = float(i) / float(TAPS - 1) - 0.5;
+    vec2 off = uWhip / uRes * t * vec2(1.0, -1.0);
+    vec2 z = (uv - uZoom.xy) * (1.0 - uZoom.z * (t + 0.5));
+    acc += texture(uBg, uZoom.z > 0.001 ? uZoom.xy + z + off : uv + off).rgb;
+  }
+  return acc / float(TAPS);
+}
+
 void main() {
-  vec3 scene = texture(uScene, vUv).rgb * uExposure;
-  vec4 ui = texture(uUi, vUv);
-  vec3 uiLin = pow(max(ui.rgb, 0.0), vec3(2.2)) * ui.a;
-  o = vec4(scene * (1.0 - ui.a) + uiLin, 1.0);
+  vec2 uv = vUv;
+  vec2 px = vec2(uv.x, 1.0 - uv.y) * uRes;
+
+  vec3 col = background(uv);
+  vec3 soft = texture(uBlur, uv).rgb;
+
+  // Focus pull: everything outside the focus rectangles goes soft and dark.
+  if (uFocusAmt > 0.001) {
+    float inside = 0.0;
+    for (int i = 0; i < ${MAX_FOCUS}; i++) {
+      if (i >= uFocusN) break;
+      vec4 r = uFocus[i];
+      float d = box(px - (r.xy + r.zw * 0.5), r.zw * 0.5, uFocusP[i].x);
+      inside = max(inside, 1.0 - smoothstep(0.0, uFocusP[i].y, d));
+    }
+    float outside = uFocusAmt * (1.0 - inside);
+    col = mix(col, soft, outside * uFocusBlur);
+    col *= 1.0 - outside * uFocusDim;
+  }
+
+  vec4 fg = texture(uFg, uv);
+  col = (col * (1.0 - fg.a) + fg.rgb) * uExposure;
+
+  // Liquid Glass: refract and frost the background, light the rim, soft contact shadow.
+  for (int i = 0; i < ${MAX_GLASS}; i++) {
+    if (i >= uGlassN) break;
+    vec4 r = uGlass[i];
+    float radius = uGlassP[i].x;
+    float alpha = uGlassP[i].y;
+    vec2 p = px - (r.xy + r.zw * 0.5);
+    vec2 half_ = r.zw * 0.5;
+    float d = box(p, half_, radius);
+    if (d > 0.0) {
+      float sh = 1.0 - smoothstep(0.0, 34.0, d);
+      col *= 1.0 - 0.28 * alpha * sh * sh;
+      continue;
+    }
+    float inside = clamp(-d, 0.0, 1.0) * alpha;
+    float depth = clamp(-d / 26.0, 0.0, 1.0);
+    vec2 n = boxNormal(p, half_, radius);
+    vec2 bend = -n * pow(1.0 - depth, 2.0) * 34.0;
+    vec3 g = texture(uBlur, uv + bend / uRes * vec2(1.0, -1.0)).rgb * uExposure;
+    g = g * 0.78 + vec3(0.035, 0.045, 0.06);
+    float rimLight = pow(1.0 - depth, 5.0);
+    float facing = 0.5 + 0.5 * dot(n, normalize(vec2(-0.55, -0.85)));
+    g += vec3(0.55, 0.62, 0.72) * rimLight * (0.35 + 0.65 * facing);
+    g += vec3(0.06) * (1.0 - smoothstep(0.0, half_.y * 1.6, p.y + half_.y));
+    col = mix(col, g, inside);
+  }
+
+  vec4 ui = texture(uUi, uv);
+  col = col * (1.0 - ui.a) + pow(max(ui.rgb, 0.0), vec3(2.2)) * ui.a;
+  o = vec4(col, 1.0);
+}`;
+
+// A plain copy (downsample step without threshold) for the background blur chain.
+export const COPY_FS = `#version 300 es
+precision highp float;
+in vec2 vUv;
+out vec4 o;
+uniform sampler2D uSrc;
+void main() {
+  o = vec4(texture(uSrc, vUv).rgb, 1.0);
 }`;
 
 export const PREFILTER_FS = `#version 300 es

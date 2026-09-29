@@ -10,19 +10,19 @@ with burned-in, word-synced captions.
 Every beat is cued from the narration's word timestamps, so each panel moves on the word that
 describes it.
 
-| Narration                                        | Picture                                                                                  |
-| ------------------------------------------------ | ---------------------------------------------------------------------------------------- |
-| "Every pull you log is full of answers."         | A particle stream of combat events.                                                      |
-| "ESO Logs records all of it…"                    | The stream forms ESO Logs' damage page. Its tabs light on "hit", "heal" and "buff".      |
-| "ESO Toolkit reads that same log…"               | The page dissolves into particles that re-form as ESO Toolkit's Insights for that fight. |
-| "Just paste the link."                           | The link's domain scrambles from esologs.com to esotk.com. The report code stays put.    |
-| "…thirteen items, one per row…"                  | ESO Logs' gear rows for one tank light up one by one.                                    |
-| "…groups them into sets, lays out both bars…"    | The rows fly into ESO Toolkit's three set chips; the skill-bar entries become icons.     |
-| "…checks the build for common mistakes."         | The full player card assembles; the build check lights green.                            |
-| "That scribed skill?…"                           | Leashing Soul opens into ESO Toolkit's detected grimoire, focus, signature and affix.    |
-| "ESO Logs replays a fight from above…"           | ESO Logs' 2D replay tips back like a floor and dissolves into ESO Toolkit's 3D replay.   |
-| "Then send any build to the editor…"             | The extracted build in the Build Editor, then the Calculators.                           |
-| "ESO Logs records the fight. ESO Toolkit helps…" | Both side by side, then everything collapses into the ESO Toolkit mark.                  |
+| Narration                                        | Picture                                                                                                                               |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
+| "Every pull you log is full of answers."         | A particle stream of combat events.                                                                                                   |
+| "ESO Logs records all of it…"                    | The stream forms ESO Logs' damage page, full frame. Focus pulls to its tabs on "hit", "heal" and "buff".                              |
+| "ESO Toolkit reads that same log…"               | A lit divider wipes across the frame and reveals ESO Toolkit's Insights for that fight.                                               |
+| "Just paste the link."                           | The page blurs behind a glass link pill. The domain scrambles from esologs.com to esotk.com; the report code stays put.               |
+| "…thirteen items, one per row…"                  | A zoom-through lands on ESO Logs' gear table, and a spotlight counts the rows.                                                        |
+| "…groups them into sets, lays out both bars…"    | The rows lift off the page and fold into ESO Toolkit's three set chips; the skill-bar entries collapse onto their icons.              |
+| "…checks the build for common mistakes."         | An iris opens on the full player card and the build check lights green.                                                               |
+| "That scribed skill?…"                           | The camera dives into the Leashing Soul icon and surfaces in its tooltip. Focus steps through the focus, signature and affix scripts. |
+| "ESO Logs replays a fight from above…"           | A whip-pan to ESO Logs' 2D replay, which tips back like a floor and dissolves into ESO Toolkit's 3D replay.                           |
+| "Then send any build to the editor…"             | Whip-pans to the extracted build in the Build Editor, then the Calculators.                                                           |
+| "ESO Logs records the fight. ESO Toolkit helps…" | ESO Logs fills the frame, then squeezes into a split screen as ESO Toolkit slides in. Everything collapses into the ESO Toolkit mark. |
 
 ## How it is made
 
@@ -30,10 +30,12 @@ describes it.
   (Tideborn Taleria, veteran hard mode) and the same Saint Olms replay. The capture scripts also
   record where each gear row, set chip, skill icon and tooltip row sits, so panels can move
   between the two sites element by element.
-- **Renderer:** hand-written WebGL2 in `engine/`, with no video framework. It places the
-  screenshots on 3D cards, runs pixel-particle morphs that carry each image's real colours from
-  one card to the next, and draws the particle field for the open and the end card. HDR bloom,
-  a neutral tone map and grain follow. Captions and labels are drawn with Canvas2D.
+- **Renderer:** hand-written WebGL2 in `engine/`, with no video framework. Every scene is a
+  full-bleed camera move over real page captures (3× stills), cut together with focus pulls,
+  whip-pans, zoom-throughs and a divider wipe. Captions and labels sit on glass that refracts
+  the blurred frame behind it. Shared-element flights carry gear rows and skill entries from one
+  site's layout to the other's, and pixel-particle morphs carry each image's real colours from
+  one page to the next. HDR bloom, a neutral tone map and grain follow.
 - **Narration:** ElevenLabs Eleven v4, voice "Brian", one request per line with the
   neighbouring lines as context. The audio and word timings are committed in
   `assets/narration/`, so rendering does not need an API key.
@@ -71,20 +73,20 @@ cut, change the line start times in `timeline.json`; picture, captions and audio
 
 ## Structure
 
-| Path                          | Purpose                                                                    |
-| ----------------------------- | -------------------------------------------------------------------------- |
-| `narration.json`              | Voice, model, settings and the script, one entry per line.                 |
-| `timeline.json`               | When each narration line starts, and the total length.                     |
-| `engine/director.js`          | Every beat: cards, morphs, callouts and captions, cued from the narration. |
-| `engine/stage.js`             | 3D screenshot cards and the pixel-particle morph.                          |
-| `engine/main.js`              | Frame renderer and post-processing.                                        |
-| `engine/formations.js`        | Particle layouts for the open and the end card.                            |
-| `engine/overlay.js`           | Captions, labels, callouts, the link pill and the end card type.           |
-| `scripts/capture-esologs.mjs` | ESO Logs stills, layout data and the replay clip (manual human check).     |
-| `scripts/capture-esotk.mjs`   | ESO Toolkit stills, layout data and the 3D replay clip.                    |
-| `scripts/voiceover.mjs`       | ElevenLabs narration with word timestamps.                                 |
-| `scripts/soundtrack.mjs`      | Music, sound design, narration mix and mastering.                          |
-| `scripts/render.mjs`          | Frame-accurate capture in headless Chrome, encoded with ffmpeg.            |
+| Path                          | Purpose                                                                                       |
+| ----------------------------- | --------------------------------------------------------------------------------------------- |
+| `narration.json`              | Voice, model, settings and the script, one entry per line.                                    |
+| `timeline.json`               | When each narration line starts, and the total length.                                        |
+| `engine/director.js`          | Every beat: camera views, flights, morphs, focus pulls and captions, cued from the narration. |
+| `engine/stage.js`             | Screenshot cards, shared-element flights and the pixel-particle morph.                        |
+| `engine/main.js`              | Frame renderer: layers, blur, focus pulls, glass, bloom and tone map.                         |
+| `engine/formations.js`        | Particle layouts for the open and the end card.                                               |
+| `engine/overlay.js`           | Glass captions and tags, callouts, the link pill and the end card type.                       |
+| `scripts/capture-esologs.mjs` | ESO Logs stills, layout data and the replay clip (manual human check).                        |
+| `scripts/capture-esotk.mjs`   | ESO Toolkit stills, layout data and the 3D replay clip.                                       |
+| `scripts/voiceover.mjs`       | ElevenLabs narration with word timestamps.                                                    |
+| `scripts/soundtrack.mjs`      | Music, sound design, narration mix and mastering.                                             |
+| `scripts/render.mjs`          | Frame-accurate capture in headless Chrome, encoded with ffmpeg.                               |
 
 ## Content rules
 

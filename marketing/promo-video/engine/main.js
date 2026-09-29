@@ -1,6 +1,8 @@
-// Frame renderer. The backdrop, particles, screenshot cards and pixel morphs are drawn with
-// WebGL2; typography with Canvas2D; then bloom, tone mapping and grain. `renderFrame(i)` is
-// deterministic for a given index.
+// Frame renderer. Two WebGL2 layers: the background (full-frame footage, backdrop, particle
+// field) and a sharp foreground (flying elements, pixel morphs). The compositor blurs and dims
+// the background for focus pulls, applies camera blur, draws Liquid Glass panels that refract
+// it, then lays the Canvas2D type on top; bloom, tone mapping and grain follow.
+// `renderFrame(i)` is deterministic for a given index.
 
 import { PALETTE, TIMELINE, camera, frame as direct, look, particleState } from './director.js';
 import { COUNT, buildFormations } from './formations.js';
@@ -28,7 +30,20 @@ const STILLS = [
   'tk-build',
   'tk-calculator',
 ];
-const CLIPS = { 'el-replay': 539, 'tk-replay': 599 };
+const CLIPS = {
+  'el-replay': [1920, 1080],
+  'tk-replay': [1920, 1080],
+  'el-replay-tall': [1080, 1920],
+  'tk-replay-tall': [1080, 1920],
+};
+const LAYOUTS = [
+  'el-damage',
+  'el-player',
+  'tk-players',
+  'tk-scribing',
+  'tk-build',
+  'tk-calculator',
+];
 
 async function bitmap(url) {
   const res = await fetch(url);
@@ -57,6 +72,7 @@ async function init() {
     particles: program(gl, SH.PARTICLE_VS, SH.SPRITE_FS),
     nebula: program(gl, FULLSCREEN_VS, SH.NEBULA_FS),
     composite: program(gl, FULLSCREEN_VS, SH.COMPOSITE_FS),
+    copy: program(gl, FULLSCREEN_VS, SH.COPY_FS),
     prefilter: program(gl, FULLSCREEN_VS, SH.PREFILTER_FS),
     down: program(gl, FULLSCREEN_VS, SH.DOWN_FS),
     up: program(gl, FULLSCREEN_VS, SH.UP_FS),
@@ -104,8 +120,8 @@ async function init() {
   gl.generateMipmap(gl.TEXTURE_2D);
   textures.white = { tex: white, width: 1, height: 1 };
   const clipFrame = {};
-  for (const name of Object.keys(CLIPS)) {
-    textures[name] = { tex: makeTexture(), width: 1920, height: 1080 };
+  for (const [name, [width, height]] of Object.entries(CLIPS)) {
+    textures[name] = { tex: makeTexture(), width, height };
     clipFrame[name] = -1;
   }
   async function useClipFrame(name, index) {
@@ -119,12 +135,15 @@ async function init() {
   }
   const tex = (name) => textures[name];
 
-  const RECTS = {};
+  // Layout rectangles (CSS pixels) plus each texture's size, so the director can map page
+  // coordinates to texture pixels.
+  const RECTS = { size: {} };
   await Promise.all(
-    ['el-damage', 'el-player', 'tk-players', 'tk-scribing'].map(async (name) => {
+    LAYOUTS.map(async (name) => {
       RECTS[name] = await (await fetch(`${CAPTURES}/${name}.json`)).json();
     }),
   );
+  for (const [name, t] of Object.entries(textures)) RECTS.size[name] = [t.width, t.height];
 
   // --- World particles ---------------------------------------------------------------------------
   const F = await buildFormations();
@@ -199,8 +218,14 @@ async function init() {
   }
 
   // --- Render targets and overlay ------------------------------------------------------------------
-  const scene = target(gl, W * SS, H * SS);
+  const bg = target(gl, W * SS, H * SS);
+  const fg = target(gl, W * SS, H * SS);
   const hdr = target(gl, W, H);
+  // Frosted copy of the background for focus pulls and glass: quarter-res, blurred down and up.
+  const blurDown = [W, W / 2, W / 4, W / 8].map((w, k) =>
+    target(gl, Math.round(w), Math.round(H / 2 ** k)),
+  );
+  const blurUp = [W / 4, W / 2].map((w) => target(gl, Math.round(w), Math.round((H * w) / W)));
   const mips = [];
   for (let k = 1, w = W / 2, h = H / 2; k <= 6; k++, w /= 2, h /= 2)
     mips.push(target(gl, Math.max(2, Math.round(w)), Math.max(2, Math.round(h))));
@@ -222,8 +247,8 @@ async function init() {
     const shot = direct(t, W, H, stageCam, RECTS);
     for (const c of shot.cards) if (c.frame !== undefined) await useClipFrame(c.tex, c.frame);
 
-    // Backdrop.
-    bindTarget(gl, scene);
+    // Background layer: backdrop, particle field, full-frame footage.
+    bindTarget(gl, bg);
     const wc = camera(t, W, H);
     progs.nebula
       .use()
@@ -232,19 +257,19 @@ async function init() {
       .f('uTime', t)
       .f('uIntensity', L.nebula);
     draw();
-
-    // World particles, motion-blurred.
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.ONE, gl.ONE);
     for (let k = 0; k < SUBFRAMES; k++)
       drawWorld(t + ((k + 0.5) / SUBFRAMES - 0.5) * (SHUTTER / FPS), 1 / SUBFRAMES);
-
-    // Screenshot cards, back to front.
     gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-    for (const c of shot.cards) stage.drawCard(stageCam, c, tex, SS);
+    for (const c of shot.cards) if (c.layer !== 'fg') stage.drawCard(stageCam, c, tex, SS);
 
-    // Pixel morphs, motion-blurred.
-    gl.blendFunc(gl.ONE, gl.ONE);
+    // Foreground layer: flying elements (premultiplied over) and pixel morphs (additive light).
+    bindTarget(gl, fg);
+    gl.clearColor(0, 0, 0, 0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    for (const c of shot.cards) if (c.layer === 'fg') stage.drawCard(stageCam, c, tex, SS);
+    gl.blendFuncSeparate(gl.ONE, gl.ONE, gl.ZERO, gl.ONE);
     if (shot.morphs.length) {
       for (let k = 0; k < SUBFRAMES; k++) {
         const ts = t + ((k + 0.5) / SUBFRAMES - 0.5) * (SHUTTER / FPS);
@@ -254,10 +279,33 @@ async function init() {
     }
     gl.disable(gl.BLEND);
 
-    // Typography.
+    // Frosted background.
+    let src = bg;
+    for (const t2 of blurDown) {
+      bindTarget(gl, t2);
+      progs.down
+        .use()
+        .tex('uSrc', 0, src.tex)
+        .f('uTexel', 1 / src.width, 1 / src.height);
+      draw();
+      src = t2;
+    }
+    for (const t2 of blurUp) {
+      bindTarget(gl, t2);
+      progs.up
+        .use()
+        .tex('uSrc', 0, src.tex)
+        .f('uTexel', 1 / src.width, 1 / src.height)
+        .f('uWeight', 1);
+      draw();
+      src = t2;
+    }
+
+    // Typography; overlays register their glass panels as they draw.
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, ui.width, ui.height);
     ctx.setTransform(SS, 0, 0, SS, 0, 0);
+    ctx.glass = [];
     for (const o of shot.overlays) o(ctx);
     gl.bindTexture(gl.TEXTURE_2D, uiTex);
     // Upload straight (unpremultiplied) alpha; the composite shader premultiplies in linear light.
@@ -265,12 +313,41 @@ async function init() {
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, ui);
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
 
+    const glass = ctx.glass.slice(0, SH.MAX_GLASS);
+    const glassRects = new Float32Array(SH.MAX_GLASS * 4);
+    const glassParams = new Float32Array(SH.MAX_GLASS * 4);
+    glass.forEach((g, i) => {
+      glassRects.set([g.x, g.y, g.w, g.h], i * 4);
+      glassParams.set([g.r, g.alpha, 0, 0], i * 4);
+    });
+    const focus = shot.fx.focus ?? { amount: 0, rects: [] };
+    const focusRects = new Float32Array(SH.MAX_FOCUS * 4);
+    const focusParams = new Float32Array(SH.MAX_FOCUS * 4);
+    focus.rects.slice(0, SH.MAX_FOCUS).forEach((f, i) => {
+      focusRects.set(f.rect, i * 4);
+      focusParams.set([f.radius ?? 16, f.feather ?? 90, 0, 0], i * 4);
+    });
+
     bindTarget(gl, hdr);
     progs.composite
       .use()
-      .tex('uScene', 0, scene.tex)
-      .tex('uUi', 1, uiTex)
-      .f('uExposure', L.exposure);
+      .tex('uBg', 0, bg.tex)
+      .tex('uBlur', 1, src.tex)
+      .tex('uFg', 2, fg.tex)
+      .tex('uUi', 3, uiTex)
+      .f('uRes', W, H)
+      .f('uExposure', L.exposure)
+      .f('uWhip', ...(shot.fx.whip ?? [0, 0]))
+      .f('uZoom', ...(shot.fx.zoom ?? [0.5, 0.5, 0]))
+      .f('uFocusAmt', focus.amount)
+      .f('uFocusBlur', focus.blur ?? 0.85)
+      .f('uFocusDim', focus.dim ?? 0.45)
+      .i('uFocusN', Math.min(SH.MAX_FOCUS, focus.rects.length))
+      .v4('uFocus', focusRects)
+      .v4('uFocusP', focusParams)
+      .i('uGlassN', glass.length)
+      .v4('uGlass', glassRects)
+      .v4('uGlassP', glassParams);
     draw();
 
     // Bloom.

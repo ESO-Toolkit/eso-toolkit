@@ -3,7 +3,7 @@
 //   node scripts/capture-esotk.mjs            # every shot
 //   node scripts/capture-esotk.mjs replay     # shots whose name contains "replay"
 import { chromium } from 'playwright';
-import { clip, rects, still } from './capture-lib.mjs';
+import { DPR, clip, rects, still } from './capture-lib.mjs';
 
 const SITE = 'https://esotk.com';
 // Tideborn Taleria veteran hard mode kill: the same fight as the ESO Logs captures.
@@ -60,6 +60,31 @@ async function open(page, url, wait) {
   await page.mouse.move(5, 5);
 }
 
+async function replay(page, name, width, height) {
+  await open(page, REPLAY, 16000);
+  await page.getByRole('button', { name: 'Enter fullscreen', exact: true }).click();
+  await page.waitForTimeout(2000);
+  await page.evaluate(() =>
+    document.activeElement instanceof HTMLElement ? document.activeElement.blur() : undefined,
+  );
+  // Jump to 0:50, the moment the ESO Logs clip starts from, and play at 2x.
+  for (let i = 0; i < 5; i++) await page.keyboard.press('Shift+ArrowRight');
+  // A tall viewport frames the default camera too tight; "frame all" fits the arena instead.
+  if (height > width) await page.keyboard.press('g');
+  await page.keyboard.press('Space');
+  await page.mouse.move(width - 1, height - 1);
+  await page.waitForTimeout(1500);
+  // Slow orbit: drag across the canvas while recording.
+  const x0 = width * 0.4;
+  const y0 = height * 0.57;
+  await page.mouse.move(x0, y0);
+  await page.mouse.down();
+  await clip(page, name, 10000, async (elapsed) => {
+    await page.mouse.move(x0 + elapsed * 0.008, y0 - elapsed * 0.001);
+  });
+  await page.mouse.up();
+}
+
 const shots = {
   home: async (page) => {
     await open(page, `${SITE}/`, 6000);
@@ -81,7 +106,7 @@ const shots = {
       await page.evaluate(() => {
         const box = (el) => {
           const r = el.getBoundingClientRect();
-          return [r.x * 2, r.y * 2, r.width * 2, r.height * 2];
+          return [r.x, r.y, r.width, r.height];
         };
         const name = [...document.querySelectorAll('*')].find(
           (e) => e.childElementCount === 0 && e.textContent.trim() === '@Onyx643',
@@ -104,7 +129,7 @@ const shots = {
           .map((e) => ({ label: e.textContent.trim(), rect: box(e) }));
         const icons = inCard('img[alt]')
           .map((img) => ({ skill: img.getAttribute('alt'), rect: box(img) }))
-          .filter((i) => i.rect[2] > 40 && i.rect[2] < 140);
+          .filter((i) => i.rect[2] > 20 && i.rect[2] < 70);
         const check = inCard('*').find(
           (e) => e.childElementCount === 0 && /Build checks out/.test(e.textContent),
         );
@@ -126,6 +151,9 @@ const shots = {
   },
   scribing: async (page) => {
     await open(page, `${FIGHT}/players`, 15000);
+    // Scroll so the tooltip opens fully inside the viewport, below the icon.
+    await page.mouse.wheel(0, 380);
+    await page.waitForTimeout(1500);
     const icon = page.locator('img[alt="Leashing Soul"]').first();
     await icon.hover();
     await page.waitForTimeout(1200);
@@ -135,7 +163,7 @@ const shots = {
       await page.evaluate(() => {
         const box = (el) => {
           const r = el.getBoundingClientRect();
-          return [r.x * 2, r.y * 2, r.width * 2, r.height * 2];
+          return [r.x, r.y, r.width, r.height];
         };
         const tip = document.querySelector('[role=tooltip]');
         const leaf = (re) =>
@@ -179,31 +207,39 @@ const shots = {
     await editor.waitForTimeout(9000);
     await editor.mouse.move(5, 5);
     await still(editor, 'tk-build');
+    await rects(
+      'tk-build',
+      await editor.evaluate(() => {
+        // The build name is an editable input ("@Onyx643's Build").
+        const title = [...document.querySelectorAll('input, textarea')].find((e) =>
+          (e.value || '').startsWith('@Onyx643'),
+        );
+        let header = title;
+        while (header && header.getBoundingClientRect().width < 400) header = header.parentElement;
+        const r = header.getBoundingClientRect();
+        return { header: [r.x, r.y, r.width, r.height] };
+      }),
+    );
   },
   calculator: async (page) => {
     await open(page, `${SITE}/calculator`, 7000);
     await still(page, 'tk-calculator');
-  },
-  replay: async (page) => {
-    await open(page, REPLAY, 16000);
-    await page.getByRole('button', { name: 'Enter fullscreen', exact: true }).click();
-    await page.waitForTimeout(2000);
-    await page.evaluate(() =>
-      document.activeElement instanceof HTMLElement ? document.activeElement.blur() : undefined,
+    await rects(
+      'tk-calculator',
+      await page.evaluate(() => {
+        const label = [...document.querySelectorAll('*')].find(
+          (e) => e.childElementCount === 0 && /^total penetration$/i.test(e.textContent.trim()),
+        );
+        let panel = label;
+        while (panel && panel.getBoundingClientRect().width < 600) panel = panel.parentElement;
+        const r = panel.getBoundingClientRect();
+        return { total: [r.x, r.y, r.width, r.height] };
+      }),
     );
-    // Jump to 0:50, the moment the ESO Logs clip starts from, and play at 2x.
-    for (let i = 0; i < 5; i++) await page.keyboard.press('Shift+ArrowRight');
-    await page.keyboard.press('Space');
-    await page.mouse.move(1919, 1079);
-    await page.waitForTimeout(1500);
-    // Slow orbit: drag across the canvas while recording.
-    await page.mouse.move(760, 620);
-    await page.mouse.down();
-    await clip(page, 'tk-replay', 10000, async (elapsed) => {
-      await page.mouse.move(760 + elapsed * 0.008, 620 - elapsed * 0.001);
-    });
-    await page.mouse.up();
   },
+  replay: (page) => replay(page, 'tk-replay', 1920, 1080),
+  // Portrait viewport, for the 9:16 cut.
+  replayTall: (page) => replay(page, 'tk-replay-tall', 1080, 1920),
 };
 
 const browser = await chromium.launch({
@@ -215,8 +251,8 @@ for (const [name, run] of Object.entries(shots)) {
   if (only && !name.includes(only)) continue;
   console.log('capturing', name);
   const ctx = await browser.newContext({
-    viewport: { width: 1920, height: 1080 },
-    deviceScaleFactor: name === 'replay' ? 1 : 2,
+    viewport: name === 'replayTall' ? { width: 1080, height: 1920 } : { width: 1920, height: 1080 },
+    deviceScaleFactor: name.startsWith('replay') ? 1 : DPR,
     colorScheme: 'dark',
   });
   await ctx.addInitScript(setup);

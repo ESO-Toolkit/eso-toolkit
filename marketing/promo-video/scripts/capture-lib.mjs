@@ -4,6 +4,9 @@ import path from 'node:path';
 
 export const OUT = path.resolve(import.meta.dirname, '..', 'out', 'captures');
 
+/** Device scale for stills: 3x keeps full-screen close-ups sharp at 1080p. */
+export const DPR = 3;
+
 export async function still(page, name, clip) {
   await mkdir(OUT, { recursive: true });
   await page.screenshot({ path: path.join(OUT, `${name}.png`), clip, animations: 'disabled' });
@@ -24,11 +27,14 @@ export async function clip(page, name, durationMs, onTick) {
     frames.push({ data, t: metadata.timestamp });
     await cdp.send('Page.screencastFrameAck', { sessionId }).catch(() => {});
   });
+  const size =
+    page.viewportSize() ??
+    (await page.evaluate(() => ({ width: innerWidth, height: innerHeight })));
   await cdp.send('Page.startScreencast', {
     format: 'jpeg',
     quality: 92,
-    maxWidth: 1920,
-    maxHeight: 1080,
+    maxWidth: size.width,
+    maxHeight: size.height,
   });
   const start = Date.now();
   while (Date.now() - start < durationMs) {
@@ -61,7 +67,7 @@ export async function clip(page, name, durationMs, onTick) {
   );
 }
 
-/** Saves layout rectangles (in screenshot pixels) next to a still, for shared-element moves. */
+/** Saves layout rectangles (in CSS pixels) next to a still, for shared-element moves. */
 export async function rects(name, data) {
   await mkdir(OUT, { recursive: true });
   await writeFile(path.join(OUT, `${name}.json`), `${JSON.stringify(data, null, 2)}\n`);
