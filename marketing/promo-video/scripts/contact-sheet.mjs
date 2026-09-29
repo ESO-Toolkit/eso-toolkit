@@ -14,13 +14,16 @@ const files = readdirSync(dir)
   .filter((f) => /\.(png|jpe?g)$/.test(f) && (!only || only.test(f)))
   .sort();
 
+// Vertical renders get tall cells so the whole frame is visible.
+const tall = files.every((f) => f.includes('9x16'));
+const [cw, ch, cols] = tall ? [320, 569, 6] : [640, 360, 3];
 const cells = files
   .map(
     (f) =>
-      `<figure style="margin:0"><img src="${pathToFileURL(path.join(dir, f)).href}" style="width:640px;height:360px;object-fit:cover;object-position:top;display:block"><figcaption>${f}</figcaption></figure>`,
+      `<figure style="margin:0"><img src="${pathToFileURL(path.join(dir, f)).href}" style="width:${cw}px;height:${ch}px;object-fit:cover;object-position:top;display:block"><figcaption>${f}</figcaption></figure>`,
   )
   .join('');
-const html = `<body style="margin:0;background:#111;display:grid;grid-template-columns:repeat(3,640px);gap:8px;font:14px sans-serif;color:#fff">${cells}</body>`;
+const html = `<body style="margin:0;background:#111;display:grid;grid-template-columns:repeat(${cols},${cw}px);gap:8px;font:14px sans-serif;color:#fff">${cells}</body>`;
 
 const browser = await chromium.launch({ channel: 'chrome' });
 const page = await browser.newPage({ viewport: { width: 1936, height: 400 } });

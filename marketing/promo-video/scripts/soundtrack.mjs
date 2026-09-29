@@ -1,16 +1,20 @@
-// Synthesizes the promo soundtrack (music bed + sound design) offline, locked to the
-// video's cues in timeline.json (seconds). No samples, no licences: every sound is built
-// from oscillators and seeded noise, so the output is identical on every run.
+// Builds the promo soundtrack: synthesized music bed and sound design, the ElevenLabs narration
+// on top, the music ducked under the voice, then loudness-normalized with ffmpeg. Every cue
+// comes from engine/director.js, so the audio follows the picture exactly. No samples or
+// licences: the music and effects are oscillators and seeded noise.
 //
 //   node scripts/soundtrack.mjs   ->   out/soundtrack.wav
+import { execFileSync, spawnSync } from 'node:child_process';
+import { mkdirSync, writeFileSync } from 'node:fs';
+import path from 'node:path';
+import ffmpegPath from 'ffmpeg-static';
 import { OfflineAudioContext } from 'node-web-audio-api';
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { CUES, TIMELINE } from '../engine/director.js';
 
-const timeline = JSON.parse(readFileSync(new URL('../timeline.json', import.meta.url), 'utf8'));
-const { bpm, scenes, hits } = timeline;
+const ROOT = path.resolve(import.meta.dirname, '..');
 const SR = 48000;
-const DURATION = timeline.duration;
-const BEAT = 60 / bpm;
+const DURATION = CUES.duration;
+const BEAT = 0.5; // 120 bpm
 const BAR = BEAT * 4;
 
 const ctx = new OfflineAudioContext({
@@ -97,9 +101,17 @@ const rumble = filter('highpass', 30, 0.7, comp);
 lowShelf.connect(highShelf).connect(rumble);
 const master = gainNode(0.9, lowShelf);
 
-const duck = gainNode(1, master);
-const music = gainNode(0.8, duck);
-const sfx = gainNode(1, master);
+// The music is ducked under the narration (voiceDuck) and by the kick (duck).
+const voiceDuck = gainNode(1, master);
+const duck = gainNode(1, voiceDuck);
+const music = gainNode(0.6, duck);
+const sfxDuck = gainNode(1, master);
+const sfx = gainNode(0.9, sfxDuck);
+// The narration skips the tilt EQ and the bus compressor (ElevenLabs output is already levelled);
+// ffmpeg's loudnorm handles the final true-peak ceiling.
+// STEM=music renders the bed without the narration (for checking the voice/music balance).
+const STEM = process.env.STEM;
+const voice = gainNode(STEM === 'music' ? 0 : 2.8, filter('highpass', 70, 0.7, ctx.destination));
 
 // Plate-ish reverb from decaying stereo noise.
 const reverb = ctx.createConvolver();
@@ -139,13 +151,15 @@ const CHORDS = {
   D: { bass: 38, notes: [50, 54, 57, 64, 69] },
 };
 const LOOP = ['Dm', 'Bb', 'F', 'C'];
-// The drop lands with the arena; the groove thins for the math, and resolves on the logo.
-const drop = hits[0].t;
-const lift = scenes.insights[0] + 0.5;
-const full = scenes.builds[0] + 0.5;
-const calm = scenes.math[0] + 0.5;
-const ctaHit = hits[hits.length - 1].t;
-const padStart = scenes.numbers[0] - 0.05;
+// Pads under ESO Logs; a pulse when ESO Toolkit takes over; light drums while the build is
+// decoded; the full groove on the 3D reveal; back to pads for the outro, resolving on the logo.
+const C = CUES;
+const padStart = TIMELINE.narration.logs - 0.2;
+const drop = C.reads + 0.9;
+const lift = C.groups - 0.25;
+const full = C.hits[4].t;
+const calm = C.o1 - 0.2;
+const ctaHit = C.free + 2.2;
 
 const chordAtBar = (bar) => LOOP[(bar + 400) % 4];
 
@@ -258,7 +272,7 @@ for (let bar = 0; barStart(bar) < ctaHit - 0.05; bar++) {
     const t = t0 + i * (BEAT / 2);
     if (t < drop - 0.01 || t >= ctaHit - 0.02) continue;
     const accent = i % 2 === 0 ? 1 : 0.7;
-    bassNote(t, chord.bass + 12, BEAT / 2, (inCalm ? 0.12 : 0.16) * accent);
+    bassNote(t, chord.bass + 12, BEAT / 2, (inCalm ? 0.1 : 0.13) * accent);
   }
 
   // Sixteenth-note arpeggio while the analysis is on screen.
@@ -324,17 +338,17 @@ const clap = (t, level = 1) => {
   noiseSource(t, 0.1, filter('highpass', 4000, 0.7, snap));
 };
 
-for (let beatIndex = 0; drop + beatIndex * BEAT < ctaHit - 0.01; beatIndex++) {
-  const t = drop + beatIndex * BEAT;
-  const inCalm = t >= calm;
-  kick(t, inCalm ? 0.6 : 1);
-  if (!inCalm) {
-    hat(t + BEAT / 2, t >= lift ? 1 : 0.7, t >= full && beatIndex % 4 === 3);
-    if (t >= lift && beatIndex % 2 === 1) clap(t, t >= full ? 1 : 0.8);
-    if (t >= full) {
-      hat(t + BEAT / 4, 0.45);
-      hat(t + (BEAT * 3) / 4, 0.45);
-    }
+// Drums sit on the pad's bar grid, from the build section until the outro.
+for (let beatIndex = 0; padStart + beatIndex * BEAT < calm - 0.01; beatIndex++) {
+  const t = padStart + beatIndex * BEAT;
+  if (t < lift - 0.01) continue;
+  const big = t >= full;
+  kick(t, big ? 0.9 : 0.55);
+  hat(t + BEAT / 2, big ? 0.9 : 0.6, big && beatIndex % 4 === 3);
+  if (big && beatIndex % 2 === 1) clap(t, 0.8);
+  if (big) {
+    hat(t + BEAT / 4, 0.4);
+    hat(t + (BEAT * 3) / 4, 0.4);
   }
 }
 
@@ -451,92 +465,181 @@ const uiClick = (t) => {
   o.stop(t + 0.08);
 };
 
-// Hook: a heartbeat under the drone, then the first spark.
-for (let t = 0.05; t < scenes.numbers[0] - 0.1; t += BEAT) kick(t, 0.3);
-bell(timeline.spark, 74, 0.55, 2.4);
-bell(timeline.spark + 0.08, 81, 0.3, 2.0);
+// Open: a heartbeat under the drone, then the first spark.
+for (let t = 0.05; t < padStart - 0.1; t += BEAT) kick(t, 0.28);
+bell(0.5, 74, 0.55, 2.4);
+bell(0.58, 81, 0.3, 2.0);
 
-// The table forming: a tick per row.
-timeline.ticks.forEach((t, i) => tick(t, 0.9, 2600 - i * 90));
+// Tabs lighting up on "every hit, every heal, every buff".
+[C.hit, C.heal, C.buff].forEach((t, i) => tick(t, 0.9, 2200 + i * 300));
+// The link's domain scrambling from esologs.com to esotk.com.
+for (let k = 0; k < 12; k++) tick(C.paste + 0.1 + k * 0.065, 0.55, 2600 + (k % 4) * 250);
+// Rows landing on set chips, then skill-bar entries landing on icons.
+for (let i = 0; i < 13; i++) tick(C.groups + i * 0.055 + 0.95, 0.5, 1800 + i * 60);
+for (let i = 0; i < 12; i++) tick(C.lays + i * 0.05 + 0.85, 0.45, 2600 + i * 50);
+// Scribing rows highlighting as they are named.
+[C.focus, C.signature, C.affix].forEach((t) => uiClick(t));
 
-// Scene changes.
-timeline.whooshes.forEach((t, i) => whoosh(t, i === 0 ? 0.7 : 0.55, 0.8));
-
-// Hits: riser, impact, crash and a rising chime.
+// Transitions and reveals.
+C.whooshes.forEach((t) => whoosh(t, 0.5, 0.8));
 const CHIMES = [
   [74, 77, 81],
   [77, 81, 84],
   [81, 86, 89],
-  [74, 81, 86, 89],
+  [74, 81, 86],
+  [81, 86, 89, 93],
+  [74, 78, 81, 86],
 ];
-hits.forEach(({ t, size, chime }, i) => {
-  const first = i === 0;
-  const last = i === hits.length - 1;
-  if (first || last) riser(t - 1.6, t, 0.8);
-  impact(t, first || last ? size * 0.9 : size * 0.45);
-  if (first || last) crash(t, 0.9);
-  CHIMES[chime].forEach((n, j) =>
-    bell(t + 0.02 + j * 0.07, n, first || last ? 1 : 0.6, first || last ? 2.4 : 1.4),
-  );
-  if (last) [98, 101, 105].forEach((n, j) => bell(t + 0.32 + j * 0.05, n, 0.3, 1.2));
+C.hits.forEach(({ t, size }, i) => {
+  const big = size >= 1.1;
+  if (big) {
+    riser(t - 1.6, t, 0.75);
+    impact(t, size * 0.85);
+    crash(t, 0.8);
+  }
+  CHIMES[i].forEach((n, j) => bell(t + 0.02 + j * 0.07, n, big ? 0.9 : 0.5, big ? 2.4 : 1.4));
 });
 
-// Scribing detection read-out and the penetration count-up.
-[23.4, 23.62, 23.84].forEach((t) => uiClick(t));
-for (let k = 0; k < 16; k++) tick(27.9 + k * 0.1 * (1 + k * 0.05), 0.5, 3000 + k * 60);
-bell(29.7, 86, 0.5, 1.4);
+// ---------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------
+// Narration, and the music ducking under it.
+
+const decode = (file) => {
+  const raw = execFileSync(
+    ffmpegPath,
+    [
+      '-hide_banner',
+      '-loglevel',
+      'error',
+      '-i',
+      file,
+      '-f',
+      'f32le',
+      '-ac',
+      '1',
+      '-ar',
+      String(SR),
+      '-',
+    ],
+    {
+      maxBuffer: 1 << 28,
+    },
+  );
+  return new Float32Array(raw.buffer, raw.byteOffset, raw.byteLength / 4);
+};
+const speech = new Float32Array(Math.ceil(DURATION * SR));
+for (const [id, start] of Object.entries(TIMELINE.narration)) {
+  const pcm = decode(path.join(ROOT, 'assets', 'narration', `${id}.mp3`));
+  const buf = ctx.createBuffer(1, pcm.length, SR);
+  buf.copyToChannel(pcm, 0);
+  const src = ctx.createBufferSource();
+  src.buffer = buf;
+  src.connect(voice);
+  src.start(start);
+  speech.set(
+    pcm.subarray(0, Math.max(0, speech.length - Math.round(start * SR))),
+    Math.round(start * SR),
+  );
+}
+
+// Voice activity at 100 Hz: RMS in dB mapped to 0..1, with a fast attack and slow release.
+const HOP = SR / 100;
+const activity = new Float32Array(Math.ceil(speech.length / HOP));
+let level = 0;
+for (let k = 0; k < activity.length; k++) {
+  let sum = 0;
+  for (let i = k * HOP; i < Math.min(speech.length, (k + 1) * HOP); i++)
+    sum += speech[i] * speech[i];
+  const db = 10 * Math.log10(sum / HOP + 1e-12);
+  const target = Math.min(1, Math.max(0, (db + 48) / 16));
+  level += (target - level) * (target > level ? 0.35 : 0.035);
+  activity[k] = level;
+}
+voiceDuck.gain.setValueCurveAtTime(
+  activity.map((a) => 1 - 0.8 * a),
+  0,
+  activity.length / 100,
+);
+sfxDuck.gain.setValueCurveAtTime(
+  activity.map((a) => 1 - 0.7 * a),
+  0,
+  activity.length / 100,
+);
 
 // ---------------------------------------------------------------------------------------------
-// Render, normalise, fade and write a 16-bit WAV.
+// Render, then loudness-normalize to -14 LUFS / -1.5 dBTP with ffmpeg (two-pass, linear).
 
 const rendered = await ctx.startRendering();
 const L = rendered.getChannelData(0);
 const R = rendered.getChannelData(1);
-
-let sumSq = 0;
-for (let i = 0; i < L.length; i++) sumSq += L[i] * L[i] + R[i] * R[i];
-const rms = Math.sqrt(sumSq / (L.length * 2));
-const targetRms = 10 ** (-15.5 / 20);
-const gain = targetRms / rms;
-const ceiling = 10 ** (-1 / 20);
-const soft = (x) => {
-  const y = x * gain;
-  const a = Math.abs(y);
-  if (a <= 0.8 * ceiling) return y;
-  // Smooth knee into the ceiling.
-  const over = (a - 0.8 * ceiling) / (0.2 * ceiling);
-  return Math.sign(y) * (0.8 * ceiling + 0.2 * ceiling * Math.tanh(over));
-};
-
+let peak = 0;
+for (let i = 0; i < L.length; i++) peak = Math.max(peak, Math.abs(L[i]), Math.abs(R[i]));
+const scale = STEM ? 1 : 10 ** (-3 / 20) / peak;
 const fadeOut = Math.floor(1.2 * SR);
 const frames = L.length;
-const pcm = Buffer.alloc(44 + frames * 4);
-pcm.write('RIFF', 0);
-pcm.writeUInt32LE(36 + frames * 4, 4);
-pcm.write('WAVE', 8);
-pcm.write('fmt ', 12);
-pcm.writeUInt32LE(16, 16);
-pcm.writeUInt16LE(1, 20);
-pcm.writeUInt16LE(2, 22);
-pcm.writeUInt32LE(SR, 24);
-pcm.writeUInt32LE(SR * 4, 28);
-pcm.writeUInt16LE(4, 32);
-pcm.writeUInt16LE(16, 34);
-pcm.write('data', 36);
-pcm.writeUInt32LE(frames * 4, 40);
-let peak = 0;
+const wav = Buffer.alloc(44 + frames * 8);
+wav.write('RIFF', 0);
+wav.writeUInt32LE(36 + frames * 8, 4);
+wav.write('WAVE', 8);
+wav.write('fmt ', 12);
+wav.writeUInt32LE(16, 16);
+wav.writeUInt16LE(3, 20); // IEEE float
+wav.writeUInt16LE(2, 22);
+wav.writeUInt32LE(SR, 24);
+wav.writeUInt32LE(SR * 8, 28);
+wav.writeUInt16LE(8, 32);
+wav.writeUInt16LE(32, 34);
+wav.write('data', 36);
+wav.writeUInt32LE(frames * 8, 40);
 for (let i = 0; i < frames; i++) {
   const fade = i > frames - fadeOut ? (frames - i) / fadeOut : 1;
-  const l = soft(L[i]) * fade;
-  const r = soft(R[i]) * fade;
-  peak = Math.max(peak, Math.abs(l), Math.abs(r));
-  pcm.writeInt16LE(Math.round(Math.max(-1, Math.min(1, l)) * 32767), 44 + i * 4);
-  pcm.writeInt16LE(Math.round(Math.max(-1, Math.min(1, r)) * 32767), 46 + i * 4);
+  wav.writeFloatLE(L[i] * scale * fade, 44 + i * 8);
+  wav.writeFloatLE(R[i] * scale * fade, 48 + i * 8);
+}
+const outDir = path.join(ROOT, 'out');
+mkdirSync(outDir, { recursive: true });
+const raw = path.join(outDir, STEM ? `stem-${STEM}.wav` : 'soundtrack.raw.wav');
+writeFileSync(raw, wav);
+if (STEM) {
+  console.log(`wrote ${path.relative(ROOT, raw)} (unnormalized)`);
+  process.exit(0);
 }
 
-mkdirSync(new URL('../out/', import.meta.url), { recursive: true });
-writeFileSync(new URL('../out/soundtrack.wav', import.meta.url), pcm);
+// Measure integrated loudness, then apply one static gain to -14 LUFS and catch the few
+// transients above the ceiling with a fast limiter (no dynamic loudness riding).
+const probe = spawnSync(
+  ffmpegPath,
+  [
+    '-hide_banner',
+    '-i',
+    raw,
+    '-af',
+    'loudnorm=I=-14:TP=-1.5:LRA=11:print_format=json',
+    '-f',
+    'null',
+    '-',
+  ],
+  {
+    encoding: 'utf8',
+  },
+).stderr;
+const stats = JSON.parse(probe.slice(probe.lastIndexOf('{')));
+const gainDb = -14 - Number(stats.input_i);
+execFileSync(ffmpegPath, [
+  '-hide_banner',
+  '-loglevel',
+  'error',
+  '-y',
+  '-i',
+  raw,
+  '-af',
+  `volume=${gainDb.toFixed(2)}dB,alimiter=limit=0.83:attack=2:release=60:level=disabled`,
+  '-ar',
+  String(SR),
+  '-c:a',
+  'pcm_s16le',
+  path.join(outDir, 'soundtrack.wav'),
+]);
 console.log(
-  `soundtrack.wav: ${DURATION.toFixed(2)}s, pre-gain RMS ${(20 * Math.log10(rms)).toFixed(1)} dBFS, ` +
-    `gain ${(20 * Math.log10(gain)).toFixed(1)} dB, peak ${(20 * Math.log10(peak)).toFixed(1)} dBFS`,
+  `soundtrack.wav: ${DURATION.toFixed(2)}s, ${stats.input_i} LUFS + ${gainDb.toFixed(1)} dB -> -14 LUFS`,
 );

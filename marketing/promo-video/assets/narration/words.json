@@ -1,0 +1,912 @@
+{
+  "open": {
+    "duration": 2.56,
+    "words": [
+      {
+        "say": "Every",
+        "start": 0,
+        "end": 0.32,
+        "text": "Every"
+      },
+      {
+        "say": "pull",
+        "start": 0.4,
+        "end": 0.56,
+        "text": "pull"
+      },
+      {
+        "say": "you",
+        "start": 0.64,
+        "end": 0.8,
+        "text": "you"
+      },
+      {
+        "say": "log",
+        "start": 0.96,
+        "end": 1.12,
+        "text": "log"
+      },
+      {
+        "say": "is",
+        "start": 1.2,
+        "end": 1.36,
+        "text": "is"
+      },
+      {
+        "say": "full",
+        "start": 1.52,
+        "end": 1.68,
+        "text": "full"
+      },
+      {
+        "say": "of",
+        "start": 1.76,
+        "end": 1.84,
+        "text": "of"
+      },
+      {
+        "say": "answers.",
+        "start": 2.12,
+        "end": 2.56,
+        "text": "answers."
+      }
+    ]
+  },
+  "logs": {
+    "duration": 5.92,
+    "words": [
+      {
+        "say": "E-S-O",
+        "start": 0,
+        "end": 0.8,
+        "text": "ESO"
+      },
+      {
+        "say": "Logs",
+        "start": 1,
+        "end": 1.2,
+        "text": "Logs"
+      },
+      {
+        "say": "records",
+        "start": 1.28,
+        "end": 1.76,
+        "text": "records"
+      },
+      {
+        "say": "all",
+        "start": 1.92,
+        "end": 2,
+        "text": "all"
+      },
+      {
+        "say": "of",
+        "start": 2.08,
+        "end": 2.16,
+        "text": "of"
+      },
+      {
+        "say": "it.",
+        "start": 2.4,
+        "end": 2.68,
+        "text": "it."
+      },
+      {
+        "say": "Every",
+        "start": 2.72,
+        "end": 3.04,
+        "text": "Every"
+      },
+      {
+        "say": "hit,",
+        "start": 3.32,
+        "end": 3.64,
+        "text": "hit,"
+      },
+      {
+        "say": "every",
+        "start": 3.68,
+        "end": 3.92,
+        "text": "every"
+      },
+      {
+        "say": "heal,",
+        "start": 4,
+        "end": 4.6,
+        "text": "heal,"
+      },
+      {
+        "say": "every",
+        "start": 4.64,
+        "end": 4.96,
+        "text": "every"
+      },
+      {
+        "say": "buff.",
+        "start": 5.4,
+        "end": 5.92,
+        "text": "buff."
+      }
+    ]
+  },
+  "toolkit": {
+    "duration": 5.92,
+    "words": [
+      {
+        "say": "E-S-O",
+        "start": 0,
+        "end": 0.64,
+        "text": "ESO"
+      },
+      {
+        "say": "Toolkit",
+        "start": 0.72,
+        "end": 1.28,
+        "text": "Toolkit"
+      },
+      {
+        "say": "reads",
+        "start": 1.36,
+        "end": 1.6,
+        "text": "reads"
+      },
+      {
+        "say": "that",
+        "start": 1.72,
+        "end": 1.84,
+        "text": "that"
+      },
+      {
+        "say": "same",
+        "start": 1.92,
+        "end": 2.16,
+        "text": "same"
+      },
+      {
+        "say": "log,",
+        "start": 2.24,
+        "end": 2.853,
+        "text": "log,"
+      },
+      {
+        "say": "and",
+        "start": 2.907,
+        "end": 2.96,
+        "text": "and"
+      },
+      {
+        "say": "shows",
+        "start": 3.04,
+        "end": 3.28,
+        "text": "shows"
+      },
+      {
+        "say": "you",
+        "start": 3.32,
+        "end": 3.36,
+        "text": "you"
+      },
+      {
+        "say": "what",
+        "start": 3.44,
+        "end": 3.52,
+        "text": "what"
+      },
+      {
+        "say": "it",
+        "start": 3.56,
+        "end": 3.6,
+        "text": "it"
+      },
+      {
+        "say": "means.",
+        "start": 3.68,
+        "end": 4.44,
+        "text": "means."
+      },
+      {
+        "say": "Just",
+        "start": 4.48,
+        "end": 4.64,
+        "text": "Just"
+      },
+      {
+        "say": "paste",
+        "start": 4.72,
+        "end": 4.88,
+        "text": "paste"
+      },
+      {
+        "say": "the",
+        "start": 4.96,
+        "end": 5.04,
+        "text": "the"
+      },
+      {
+        "say": "link.",
+        "start": 5.44,
+        "end": 5.92,
+        "text": "link."
+      }
+    ]
+  },
+  "gear": {
+    "duration": 13.2,
+    "words": [
+      {
+        "say": "Here's",
+        "start": 0,
+        "end": 0.32,
+        "text": "Here's"
+      },
+      {
+        "say": "one",
+        "start": 0.4,
+        "end": 0.56,
+        "text": "one"
+      },
+      {
+        "say": "tank's",
+        "start": 0.64,
+        "end": 0.96,
+        "text": "tank's"
+      },
+      {
+        "say": "gear",
+        "start": 1.04,
+        "end": 1.2,
+        "text": "gear"
+      },
+      {
+        "say": "in",
+        "start": 1.28,
+        "end": 1.44,
+        "text": "in"
+      },
+      {
+        "say": "E-S-O",
+        "start": 1.52,
+        "end": 1.92,
+        "text": "ESO"
+      },
+      {
+        "say": "Logs.",
+        "start": 2,
+        "end": 2.84,
+        "text": "Logs."
+      },
+      {
+        "say": "Thirteen",
+        "start": 2.88,
+        "end": 3.28,
+        "text": "Thirteen"
+      },
+      {
+        "say": "items,",
+        "start": 3.36,
+        "end": 4.04,
+        "text": "items,"
+      },
+      {
+        "say": "one",
+        "start": 4.08,
+        "end": 4.24,
+        "text": "one"
+      },
+      {
+        "say": "per",
+        "start": 4.32,
+        "end": 4.4,
+        "text": "per"
+      },
+      {
+        "say": "row.",
+        "start": 4.48,
+        "end": 5.32,
+        "text": "row."
+      },
+      {
+        "say": "E-S-O",
+        "start": 5.36,
+        "end": 5.84,
+        "text": "ESO"
+      },
+      {
+        "say": "Toolkit",
+        "start": 5.92,
+        "end": 6.4,
+        "text": "Toolkit"
+      },
+      {
+        "say": "groups",
+        "start": 6.48,
+        "end": 6.72,
+        "text": "groups"
+      },
+      {
+        "say": "them",
+        "start": 6.8,
+        "end": 6.88,
+        "text": "them"
+      },
+      {
+        "say": "into",
+        "start": 7,
+        "end": 7.12,
+        "text": "into"
+      },
+      {
+        "say": "sets,",
+        "start": 7.48,
+        "end": 7.92,
+        "text": "sets,"
+      },
+      {
+        "say": "lays",
+        "start": 8.04,
+        "end": 8.16,
+        "text": "lays"
+      },
+      {
+        "say": "out",
+        "start": 8.24,
+        "end": 8.48,
+        "text": "out"
+      },
+      {
+        "say": "both",
+        "start": 8.6,
+        "end": 8.72,
+        "text": "both"
+      },
+      {
+        "say": "skill",
+        "start": 8.8,
+        "end": 9.04,
+        "text": "skill"
+      },
+      {
+        "say": "bars",
+        "start": 9.2,
+        "end": 9.36,
+        "text": "bars"
+      },
+      {
+        "say": "the",
+        "start": 9.4,
+        "end": 9.44,
+        "text": "the"
+      },
+      {
+        "say": "way",
+        "start": 9.52,
+        "end": 9.6,
+        "text": "way"
+      },
+      {
+        "say": "they",
+        "start": 9.68,
+        "end": 9.76,
+        "text": "they"
+      },
+      {
+        "say": "look",
+        "start": 9.84,
+        "end": 9.92,
+        "text": "look"
+      },
+      {
+        "say": "in",
+        "start": 10,
+        "end": 10.08,
+        "text": "in"
+      },
+      {
+        "say": "game,",
+        "start": 10.4,
+        "end": 10.76,
+        "text": "game,"
+      },
+      {
+        "say": "and",
+        "start": 10.8,
+        "end": 10.96,
+        "text": "and"
+      },
+      {
+        "say": "checks",
+        "start": 11.04,
+        "end": 11.28,
+        "text": "checks"
+      },
+      {
+        "say": "the",
+        "start": 11.36,
+        "end": 11.44,
+        "text": "the"
+      },
+      {
+        "say": "build",
+        "start": 11.56,
+        "end": 11.68,
+        "text": "build"
+      },
+      {
+        "say": "for",
+        "start": 11.72,
+        "end": 11.76,
+        "text": "for"
+      },
+      {
+        "say": "common",
+        "start": 11.84,
+        "end": 12.08,
+        "text": "common"
+      },
+      {
+        "say": "mistakes.",
+        "start": 12.16,
+        "end": 13.2,
+        "text": "mistakes."
+      }
+    ]
+  },
+  "scribe": {
+    "duration": 7.28,
+    "words": [
+      {
+        "say": "That",
+        "start": 0,
+        "end": 0.16,
+        "text": "That"
+      },
+      {
+        "say": "scribed",
+        "start": 0.24,
+        "end": 0.56,
+        "text": "scribed"
+      },
+      {
+        "say": "skill?",
+        "start": 0.64,
+        "end": 1.36,
+        "text": "skill?"
+      },
+      {
+        "say": "E-S-O",
+        "start": 1.44,
+        "end": 1.84,
+        "text": "ESO"
+      },
+      {
+        "say": "Toolkit",
+        "start": 2,
+        "end": 2.48,
+        "text": "Toolkit"
+      },
+      {
+        "say": "works",
+        "start": 2.56,
+        "end": 2.8,
+        "text": "works"
+      },
+      {
+        "say": "out",
+        "start": 2.88,
+        "end": 2.96,
+        "text": "out"
+      },
+      {
+        "say": "its",
+        "start": 3.04,
+        "end": 3.12,
+        "text": "its"
+      },
+      {
+        "say": "focus,",
+        "start": 3.2,
+        "end": 3.92,
+        "text": "focus,"
+      },
+      {
+        "say": "signature",
+        "start": 4,
+        "end": 4.48,
+        "text": "signature"
+      },
+      {
+        "say": "and",
+        "start": 4.64,
+        "end": 4.8,
+        "text": "and"
+      },
+      {
+        "say": "affix",
+        "start": 4.88,
+        "end": 5.2,
+        "text": "affix"
+      },
+      {
+        "say": "scripts",
+        "start": 5.28,
+        "end": 5.68,
+        "text": "scripts"
+      },
+      {
+        "say": "from",
+        "start": 5.76,
+        "end": 5.92,
+        "text": "from"
+      },
+      {
+        "say": "the",
+        "start": 5.96,
+        "end": 6,
+        "text": "the"
+      },
+      {
+        "say": "fight",
+        "start": 6.08,
+        "end": 6.24,
+        "text": "fight"
+      },
+      {
+        "say": "itself.",
+        "start": 6.32,
+        "end": 7.28,
+        "text": "itself."
+      }
+    ]
+  },
+  "replay": {
+    "duration": 11.28,
+    "words": [
+      {
+        "say": "E-S-O",
+        "start": 0,
+        "end": 0.56,
+        "text": "ESO"
+      },
+      {
+        "say": "Logs",
+        "start": 0.64,
+        "end": 1.04,
+        "text": "Logs"
+      },
+      {
+        "say": "replays",
+        "start": 1.12,
+        "end": 1.52,
+        "text": "replays"
+      },
+      {
+        "say": "a",
+        "start": 1.6,
+        "end": 1.68,
+        "text": "a"
+      },
+      {
+        "say": "fight",
+        "start": 1.8,
+        "end": 1.92,
+        "text": "fight"
+      },
+      {
+        "say": "from",
+        "start": 2,
+        "end": 2.08,
+        "text": "from"
+      },
+      {
+        "say": "above.",
+        "start": 2.16,
+        "end": 3.16,
+        "text": "above."
+      },
+      {
+        "say": "E-S-O",
+        "start": 3.2,
+        "end": 3.76,
+        "text": "ESO"
+      },
+      {
+        "say": "Toolkit",
+        "start": 3.84,
+        "end": 4.4,
+        "text": "Toolkit"
+      },
+      {
+        "say": "rebuilds",
+        "start": 4.52,
+        "end": 4.88,
+        "text": "rebuilds"
+      },
+      {
+        "say": "it",
+        "start": 4.92,
+        "end": 4.96,
+        "text": "it"
+      },
+      {
+        "say": "in",
+        "start": 5.04,
+        "end": 5.2,
+        "text": "in"
+      },
+      {
+        "say": "3D.",
+        "start": 5.32,
+        "end": 6.44,
+        "text": "3D."
+      },
+      {
+        "say": "Orbit",
+        "start": 6.48,
+        "end": 6.72,
+        "text": "Orbit"
+      },
+      {
+        "say": "the",
+        "start": 6.76,
+        "end": 6.8,
+        "text": "the"
+      },
+      {
+        "say": "arena,",
+        "start": 6.88,
+        "end": 7.56,
+        "text": "arena,"
+      },
+      {
+        "say": "follow",
+        "start": 7.6,
+        "end": 7.92,
+        "text": "follow"
+      },
+      {
+        "say": "any",
+        "start": 8,
+        "end": 8.16,
+        "text": "any"
+      },
+      {
+        "say": "player,",
+        "start": 8.24,
+        "end": 8.96,
+        "text": "player,"
+      },
+      {
+        "say": "and",
+        "start": 9.04,
+        "end": 9.12,
+        "text": "and"
+      },
+      {
+        "say": "rewatch",
+        "start": 9.28,
+        "end": 9.6,
+        "text": "rewatch"
+      },
+      {
+        "say": "the",
+        "start": 9.68,
+        "end": 9.76,
+        "text": "the"
+      },
+      {
+        "say": "moment",
+        "start": 9.88,
+        "end": 10,
+        "text": "moment"
+      },
+      {
+        "say": "that",
+        "start": 10.08,
+        "end": 10.24,
+        "text": "that"
+      },
+      {
+        "say": "mattered.",
+        "start": 10.28,
+        "end": 11.28,
+        "text": "mattered."
+      }
+    ]
+  },
+  "tools": {
+    "duration": 4.88,
+    "words": [
+      {
+        "say": "Then",
+        "start": 0,
+        "end": 0.24,
+        "text": "Then"
+      },
+      {
+        "say": "send",
+        "start": 0.32,
+        "end": 0.64,
+        "text": "send"
+      },
+      {
+        "say": "any",
+        "start": 0.72,
+        "end": 0.88,
+        "text": "any"
+      },
+      {
+        "say": "build",
+        "start": 0.96,
+        "end": 1.2,
+        "text": "build"
+      },
+      {
+        "say": "to",
+        "start": 1.24,
+        "end": 1.28,
+        "text": "to"
+      },
+      {
+        "say": "the",
+        "start": 1.36,
+        "end": 1.44,
+        "text": "the"
+      },
+      {
+        "say": "editor,",
+        "start": 1.52,
+        "end": 2.04,
+        "text": "editor,"
+      },
+      {
+        "say": "and",
+        "start": 2.08,
+        "end": 2.24,
+        "text": "and"
+      },
+      {
+        "say": "check",
+        "start": 2.36,
+        "end": 2.48,
+        "text": "check"
+      },
+      {
+        "say": "the",
+        "start": 2.56,
+        "end": 2.64,
+        "text": "the"
+      },
+      {
+        "say": "math",
+        "start": 2.8,
+        "end": 2.96,
+        "text": "math"
+      },
+      {
+        "say": "with",
+        "start": 3.04,
+        "end": 3.12,
+        "text": "with"
+      },
+      {
+        "say": "the",
+        "start": 3.2,
+        "end": 3.28,
+        "text": "the"
+      },
+      {
+        "say": "built-in",
+        "start": 3.36,
+        "end": 3.68,
+        "text": "built-in"
+      },
+      {
+        "say": "calculators.",
+        "start": 3.88,
+        "end": 4.88,
+        "text": "calculators."
+      }
+    ]
+  },
+  "outro": {
+    "duration": 8.56,
+    "words": [
+      {
+        "say": "E-S-O",
+        "start": 0,
+        "end": 0.64,
+        "text": "ESO"
+      },
+      {
+        "say": "Logs",
+        "start": 0.88,
+        "end": 1.12,
+        "text": "Logs"
+      },
+      {
+        "say": "records",
+        "start": 1.36,
+        "end": 1.6,
+        "text": "records"
+      },
+      {
+        "say": "the",
+        "start": 1.68,
+        "end": 1.76,
+        "text": "the"
+      },
+      {
+        "say": "fight.",
+        "start": 1.84,
+        "end": 2.64,
+        "text": "fight."
+      },
+      {
+        "say": "E-S-O",
+        "start": 2.68,
+        "end": 3.2,
+        "text": "ESO"
+      },
+      {
+        "say": "Toolkit",
+        "start": 3.48,
+        "end": 3.76,
+        "text": "Toolkit"
+      },
+      {
+        "say": "helps",
+        "start": 3.84,
+        "end": 4.08,
+        "text": "helps"
+      },
+      {
+        "say": "you",
+        "start": 4.12,
+        "end": 4.16,
+        "text": "you"
+      },
+      {
+        "say": "understand",
+        "start": 4.24,
+        "end": 4.72,
+        "text": "understand"
+      },
+      {
+        "say": "it.",
+        "start": 5,
+        "end": 5.44,
+        "text": "it."
+      },
+      {
+        "say": "Free,",
+        "start": 5.72,
+        "end": 6.04,
+        "text": "Free,"
+      },
+      {
+        "say": "at",
+        "start": 6.08,
+        "end": 6.24,
+        "text": "at"
+      },
+      {
+        "say": "E-S-O-T-K",
+        "start": 6.32,
+        "end": 7.52,
+        "text": "esotk.com."
+      },
+      {
+        "say": "dot",
+        "start": 7.6,
+        "end": 7.84,
+        "text": ""
+      },
+      {
+        "say": "com.",
+        "start": 8,
+        "end": 8.56,
+        "text": ""
+      }
+    ]
+  }
+}

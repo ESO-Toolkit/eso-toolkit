@@ -1,0 +1,40 @@
+{
+  "voice": { "id": "nPczCjzI2devNBz1zQrb", "name": "Brian" },
+  "model": "eleven_v4",
+  "settings": {
+    "stability": 0.55,
+    "similarity_boost": 0.8,
+    "style": 0.18,
+    "use_speaker_boost": true,
+    "speed": 0.96
+  },
+  "captions": { "E-S-O": "ESO", "E-S-O-T-K": "esotk.com.", "dot": "", "com.": "" },
+  "lines": [
+    { "id": "open", "say": "Every pull you log is full of answers." },
+    { "id": "logs", "say": "E-S-O Logs records all of it. Every hit, every heal, every buff." },
+    {
+      "id": "toolkit",
+      "say": "E-S-O Toolkit reads that same log, and shows you what it means. Just paste the link."
+    },
+    {
+      "id": "gear",
+      "say": "Here's one tank's gear in E-S-O Logs. Thirteen items, one per row. E-S-O Toolkit groups them into sets, lays out both skill bars the way they look in game, and checks the build for common mistakes."
+    },
+    {
+      "id": "scribe",
+      "say": "That scribed skill? E-S-O Toolkit works out its focus, signature and affix scripts from the fight itself."
+    },
+    {
+      "id": "replay",
+      "say": "E-S-O Logs replays a fight from above. E-S-O Toolkit rebuilds it in 3D. Orbit the arena, follow any player, and rewatch the moment that mattered."
+    },
+    {
+      "id": "tools",
+      "say": "Then send any build to the editor, and check the math with the built-in calculators."
+    },
+    {
+      "id": "outro",
+      "say": "E-S-O Logs records the fight. E-S-O Toolkit helps you understand it. Free, at E-S-O-T-K dot com."
+    }
+  ]
+}

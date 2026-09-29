@@ -1,49 +1,60 @@
-// Frame renderer. Everything is drawn from code: particles on the GPU, typography in Canvas2D,
-// then bloom, tone mapping and grain. `renderFrame(i)` is deterministic for a given index.
+// Frame renderer. The backdrop, particles, screenshot cards and pixel morphs are drawn with
+// WebGL2; typography with Canvas2D; then bloom, tone mapping and grain. `renderFrame(i)` is
+// deterministic for a given index.
 
-import {
-  POINT_COUNT,
-  PALETTE,
-  TIMELINE,
-  camera,
-  look,
-  overlay,
-  particleState,
-  points,
-} from './director.js';
+import { PALETTE, TIMELINE, camera, frame as direct, look, particleState } from './director.js';
 import { COUNT, buildFormations } from './formations.js';
 import { FULLSCREEN_VS, bindTarget, createContext, fullscreen, program, target } from './gl.js';
 import { mat4, rng } from './math.js';
 import { loadLogo } from './overlay.js';
 import * as SH from './shaders.js';
+import { createStage, stageCamera } from './stage.js';
 
 const params = new URLSearchParams(location.search);
 const W = Number(params.get('w') ?? 1920);
 const H = Number(params.get('h') ?? 1080);
-const SS = 2; // supersampling for the particle pass
-const SUBFRAMES = Number(params.get('subframes') ?? 4); // motion blur samples per frame
-const SHUTTER = 0.5; // fraction of a frame the shutter stays open
+const SS = 2; // supersampling
+const SUBFRAMES = Number(params.get('subframes') ?? 4); // particle motion-blur samples
+const SHUTTER = 0.5;
 const FPS = TIMELINE.fps;
 
-const status = (msg) => {
-  document.title = msg;
-};
+const CAPTURES = '../out/captures';
+const STILLS = [
+  'el-damage',
+  'el-player',
+  'tk-insights',
+  'tk-players',
+  'tk-scribing',
+  'tk-build',
+  'tk-calculator',
+];
+const CLIPS = { 'el-replay': 539, 'tk-replay': 599 };
+
+async function bitmap(url) {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Missing ${url} - run the capture scripts first`);
+  return createImageBitmap(await res.blob(), {
+    premultiplyAlpha: 'none',
+    colorSpaceConversion: 'none',
+  });
+}
 
 async function init() {
-  await Promise.all(
-    ['500', '600', '700']
-      .map((w) => document.fonts.load(`${w} 64px "Space Grotesk"`))
-      .concat(['400', '500', '600'].map((w) => document.fonts.load(`${w} 24px "Inter"`))),
-  );
+  await Promise.all([
+    ...['500', '600', '700'].map((w) => document.fonts.load(`${w} 64px "Space Grotesk"`)),
+    ...['400', '500', '600'].map((w) => document.fonts.load(`${w} 24px "Inter"`)),
+  ]);
   await loadLogo();
 
   const canvas = document.getElementById('gl');
   const gl = createContext(canvas, W, H);
+  const aniso = gl.getExtension('EXT_texture_filter_anisotropic');
   const draw = fullscreen(gl);
+  const stage = createStage(gl);
+  const stageCam = stageCamera(W, H);
 
   const progs = {
     particles: program(gl, SH.PARTICLE_VS, SH.SPRITE_FS),
-    points: program(gl, SH.POINTS_VS, SH.SPRITE_FS),
     nebula: program(gl, FULLSCREEN_VS, SH.NEBULA_FS),
     composite: program(gl, FULLSCREEN_VS, SH.COMPOSITE_FS),
     prefilter: program(gl, FULLSCREEN_VS, SH.PREFILTER_FS),
@@ -52,7 +63,70 @@ async function init() {
     final: program(gl, FULLSCREEN_VS, SH.FINAL_FS),
   };
 
-  // Formations -> GPU buffers.
+  // --- Textures ------------------------------------------------------------------------------
+  const upload = (tex, source) => {
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, source);
+    gl.generateMipmap(gl.TEXTURE_2D);
+  };
+  const makeTexture = () => {
+    const tex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    if (aniso) gl.texParameterf(gl.TEXTURE_2D, aniso.TEXTURE_MAX_ANISOTROPY_EXT, 8);
+    return tex;
+  };
+  const textures = {};
+  await Promise.all(
+    STILLS.map(async (name) => {
+      const img = await bitmap(`${CAPTURES}/${name}.png`);
+      const tex = makeTexture();
+      upload(tex, img);
+      textures[name] = { tex, width: img.width, height: img.height };
+      img.close();
+    }),
+  );
+  const white = makeTexture();
+  gl.texImage2D(
+    gl.TEXTURE_2D,
+    0,
+    gl.RGBA,
+    1,
+    1,
+    0,
+    gl.RGBA,
+    gl.UNSIGNED_BYTE,
+    new Uint8Array([255, 255, 255, 255]),
+  );
+  gl.generateMipmap(gl.TEXTURE_2D);
+  textures.white = { tex: white, width: 1, height: 1 };
+  const clipFrame = {};
+  for (const name of Object.keys(CLIPS)) {
+    textures[name] = { tex: makeTexture(), width: 1920, height: 1080 };
+    clipFrame[name] = -1;
+  }
+  async function useClipFrame(name, index) {
+    if (clipFrame[name] === index) return;
+    const img = await bitmap(`${CAPTURES}/${name}/f${String(index).padStart(4, '0')}.jpg`);
+    upload(textures[name].tex, img);
+    textures[name].width = img.width;
+    textures[name].height = img.height;
+    img.close();
+    clipFrame[name] = index;
+  }
+  const tex = (name) => textures[name];
+
+  const RECTS = {};
+  await Promise.all(
+    ['el-damage', 'el-player', 'tk-players', 'tk-scribing'].map(async (name) => {
+      RECTS[name] = await (await fetch(`${CAPTURES}/${name}.json`)).json();
+    }),
+  );
+
+  // --- World particles ---------------------------------------------------------------------------
   const F = await buildFormations();
   const buffers = {};
   for (const [name, f] of Object.entries(F)) {
@@ -70,7 +144,6 @@ async function init() {
   const seedBuf = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, seedBuf);
   gl.bufferData(gl.ARRAY_BUFFER, seedData, gl.STATIC_DRAW);
-
   const particleVao = gl.createVertexArray();
   const bindFormations = (from, to) => {
     gl.bindVertexArray(particleVao);
@@ -85,59 +158,16 @@ async function init() {
     attach(3, buffers[to].extra, 3);
     attach(4, seedBuf, 4);
   };
-
-  // Dynamic sprites: players and the boss.
-  const pointData = new Float32Array(POINT_COUNT * 8);
-  const pointVao = gl.createVertexArray();
-  const pointBuf = gl.createBuffer();
-  gl.bindVertexArray(pointVao);
-  gl.bindBuffer(gl.ARRAY_BUFFER, pointBuf);
-  gl.bufferData(gl.ARRAY_BUFFER, pointData.byteLength, gl.DYNAMIC_DRAW);
-  gl.enableVertexAttribArray(0);
-  gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 32, 0);
-  gl.enableVertexAttribArray(1);
-  gl.vertexAttribPointer(1, 4, gl.FLOAT, false, 32, 12);
-  gl.enableVertexAttribArray(2);
-  gl.vertexAttribPointer(2, 1, gl.FLOAT, false, 32, 28);
-  gl.bindVertexArray(null);
-
-  // Render targets.
-  const scene = target(gl, W * SS, H * SS);
-  const hdr = target(gl, W, H);
-  const mips = [];
-  for (let k = 1, w = W / 2, h = H / 2; k <= 6; k++, w /= 2, h /= 2)
-    mips.push(target(gl, Math.max(2, Math.round(w)), Math.max(2, Math.round(h))));
-
-  // Overlay canvas.
-  const ui = document.createElement('canvas');
-  ui.width = W;
-  ui.height = H;
-  const ctx = ui.getContext('2d');
-  const uiTex = gl.createTexture();
-  gl.bindTexture(gl.TEXTURE_2D, uiTex);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-
   const srgb = (hex) => [1, 3, 5].map((i) => (parseInt(hex.slice(i, i + 2), 16) / 255) ** 2.2);
 
-  function viewProjAt(t) {
+  function drawWorld(t, weight) {
+    const s = particleState(t);
+    if (s.gain <= 0.001) return;
     const cam = camera(t, W, H);
     const view = mat4.lookAt(cam.eye, cam.target);
-    const proj = mat4.perspective(cam.fov, W / H, 0.1, 400);
-    return { cam, view, viewProj: mat4.multiply(proj, view) };
-  }
-
-  function drawScene(t, weight) {
-    const { cam, view, viewProj } = viewProjAt(t);
-    const s = particleState(t);
+    const viewProj = mat4.multiply(mat4.perspective(cam.fov, W / H, 0.1, 400), view);
     const [colF, accF, acc2F] = PALETTE[s.seg.from].map(srgb);
     const [colT, accT, acc2T] = PALETTE[s.seg.to].map(srgb);
-
-    gl.enable(gl.BLEND);
-    gl.blendFunc(gl.ONE, gl.ONE);
-
     progs.particles
       .use()
       .m4('uViewProj', viewProj)
@@ -165,54 +195,76 @@ async function init() {
       .f('uGain', s.gain * weight);
     bindFormations(s.seg.from, s.seg.to);
     gl.drawArrays(gl.POINTS, 0, COUNT);
-
-    const n = points(t, pointData);
-    gl.bindVertexArray(pointVao);
-    gl.bindBuffer(gl.ARRAY_BUFFER, pointBuf);
-    gl.bufferSubData(gl.ARRAY_BUFFER, 0, pointData, 0, n * 8);
-    progs.points
-      .use()
-      .m4('uViewProj', viewProj)
-      .m4('uView', view)
-      .f('uViewH', H * SS)
-      .f('uFocus', cam.focus)
-      .f('uAperture', cam.aperture)
-      .f('uGain', weight);
-    gl.drawArrays(gl.POINTS, 0, n);
     gl.bindVertexArray(null);
-    gl.disable(gl.BLEND);
   }
 
-  function renderFrame(frame) {
-    const t = frame / FPS;
-    const L = look(t);
-    const { cam } = viewProjAt(t);
+  // --- Render targets and overlay ------------------------------------------------------------------
+  const scene = target(gl, W * SS, H * SS);
+  const hdr = target(gl, W, H);
+  const mips = [];
+  for (let k = 1, w = W / 2, h = H / 2; k <= 6; k++, w /= 2, h /= 2)
+    mips.push(target(gl, Math.max(2, Math.round(w)), Math.max(2, Math.round(h))));
 
-    // Backdrop, then motion-blurred particles accumulated over the shutter interval.
+  const ui = document.createElement('canvas');
+  ui.width = W * SS;
+  ui.height = H * SS;
+  const ctx = ui.getContext('2d');
+  const uiTex = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, uiTex);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+  async function renderFrame(index) {
+    const t = index / FPS;
+    const L = look(t);
+    const shot = direct(t, W, H, stageCam, RECTS);
+    for (const c of shot.cards) if (c.frame !== undefined) await useClipFrame(c.tex, c.frame);
+
+    // Backdrop.
     bindTarget(gl, scene);
+    const wc = camera(t, W, H);
     progs.nebula
       .use()
       .f('uAspect', W / H, 1)
-      .f('uPan', cam.azimuth * 0.12, cam.eye[1] * 0.012)
+      .f('uPan', wc.azimuth * 0.12 + t * 0.004, wc.eye[1] * 0.012)
       .f('uTime', t)
       .f('uIntensity', L.nebula);
     draw();
-    for (let k = 0; k < SUBFRAMES; k++) {
-      const dt = ((k + 0.5) / SUBFRAMES - 0.5) * (SHUTTER / FPS);
-      drawScene(t + dt, 1 / SUBFRAMES);
-    }
 
-    // Typography layer.
-    ctx.clearRect(0, 0, W, H);
-    overlay(ctx, t, W, H, viewProjAt(t).viewProj, particleState(t).spin);
+    // World particles, motion-blurred.
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.ONE, gl.ONE);
+    for (let k = 0; k < SUBFRAMES; k++)
+      drawWorld(t + ((k + 0.5) / SUBFRAMES - 0.5) * (SHUTTER / FPS), 1 / SUBFRAMES);
+
+    // Screenshot cards, back to front.
+    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+    for (const c of shot.cards) stage.drawCard(stageCam, c, tex, SS);
+
+    // Pixel morphs, motion-blurred.
+    gl.blendFunc(gl.ONE, gl.ONE);
+    if (shot.morphs.length) {
+      for (let k = 0; k < SUBFRAMES; k++) {
+        const ts = t + ((k + 0.5) / SUBFRAMES - 0.5) * (SHUTTER / FPS);
+        const sub = k === Math.floor(SUBFRAMES / 2) ? shot : direct(ts, W, H, stageCam, RECTS);
+        for (const m of sub.morphs) stage.drawMorph(stageCam, m, tex, ts, 1 / SUBFRAMES, SS);
+      }
+    }
+    gl.disable(gl.BLEND);
+
+    // Typography.
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, ui.width, ui.height);
+    ctx.setTransform(SS, 0, 0, SS, 0, 0);
+    for (const o of shot.overlays) o(ctx);
     gl.bindTexture(gl.TEXTURE_2D, uiTex);
+    // Upload straight (unpremultiplied) alpha; the composite shader premultiplies in linear light.
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, ui);
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
-    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
 
-    // Resolve the supersampled scene and lay the type over it.
     bindTarget(gl, hdr);
     progs.composite
       .use()
@@ -221,9 +273,9 @@ async function init() {
       .f('uExposure', L.exposure);
     draw();
 
-    // Bloom: threshold, downsample chain, additive upsample.
+    // Bloom.
     bindTarget(gl, mips[0]);
-    progs.prefilter.use().tex('uSrc', 0, hdr.tex).f('uThreshold', 0.9);
+    progs.prefilter.use().tex('uSrc', 0, hdr.tex).f('uThreshold', 1.0);
     draw();
     for (let k = 1; k < mips.length; k++) {
       bindTarget(gl, mips[k]);
@@ -251,8 +303,8 @@ async function init() {
       .use()
       .tex('uHdr', 0, hdr.tex)
       .tex('uBloom', 1, mips[0].tex)
-      .f('uBloomAmt', 0.55 * L.bloom)
-      .f('uFrame', frame % 97)
+      .f('uBloomAmt', 0.5 * L.bloom)
+      .f('uFrame', index % 97)
       .f('uFade', L.fade)
       .f('uAberration', 0.012 * L.aberration)
       .f('uRes', W, H);
@@ -270,7 +322,7 @@ async function init() {
 
 const engine = await init();
 window.engine = engine;
-status('ready');
+document.title = 'ready';
 
 // Driven by scripts/render.mjs: render a range (video) or a list of frames (stills) and POST
 // each frame's raw RGBA to the local render server.
@@ -284,12 +336,11 @@ if (mode) {
           (_, i) => i + Number(params.get('start')),
         );
   for (const f of frames) {
-    engine.renderFrame(f);
-    const px = engine.readFrame();
-    await fetch(`/frame?i=${f}`, { method: 'POST', body: px });
+    await engine.renderFrame(f);
+    await fetch(`/frame?i=${f}`, { method: 'POST', body: engine.readFrame() });
   }
   await fetch('/done', { method: 'POST' });
-  status('done');
+  document.title = 'done';
 } else {
-  engine.renderFrame(Math.round(Number(params.get('t') ?? 0) * FPS));
+  await engine.renderFrame(Math.round(Number(params.get('t') ?? 0) * FPS));
 }

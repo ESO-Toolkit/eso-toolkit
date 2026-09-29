@@ -107,23 +107,6 @@ void main() {
   vA = alpha * energy * uGain * (0.6 + 0.4 * aSeed.w);
 }`;
 
-export const POINTS_VS = `#version 300 es
-precision highp float;
-layout(location = 0) in vec3 aPos;
-layout(location = 1) in vec4 aCol;
-layout(location = 2) in float aSize;
-uniform float uGain;
-${DOF}
-out vec3 vCol;
-out float vA;
-void main() {
-  float energy;
-  float size = sprite(aPos, aSize, energy);
-  gl_PointSize = aCol.a < 0.002 ? 0.0 : size;
-  vCol = aCol.rgb;
-  vA = aCol.a * energy * uGain;
-}`;
-
 export const SPRITE_FS = `#version 300 es
 precision highp float;
 in vec3 vCol;
@@ -217,8 +200,8 @@ uniform float uExposure;
 void main() {
   vec3 scene = texture(uScene, vUv).rgb * uExposure;
   vec4 ui = texture(uUi, vUv);
-  vec3 uiLin = pow(max(ui.rgb, 0.0), vec3(2.2));
-  o = vec4(scene * (1.0 - ui.a) + uiLin * 1.12, 1.0);
+  vec3 uiLin = pow(max(ui.rgb, 0.0), vec3(2.2)) * ui.a;
+  o = vec4(scene * (1.0 - ui.a) + uiLin, 1.0);
 }`;
 
 export const PREFILTER_FS = `#version 300 es
@@ -291,9 +274,21 @@ uniform float uFade;
 uniform float uAberration;
 uniform vec2 uRes;
 
-vec3 aces(vec3 x) {
-  const float a = 2.51, b = 0.03, c = 2.43, d = 0.59, e = 0.14;
-  return clamp((x * (a * x + b)) / (x * (c * x + d) + e), 0.0, 1.0);
+// Khronos PBR Neutral: leaves colours below ~0.8 untouched (so screenshots and type keep their
+// real colours) and rolls highlights off smoothly.
+vec3 neutral(vec3 color) {
+  const float startCompression = 0.8 - 0.04;
+  const float desaturation = 0.15;
+  float x = min(color.r, min(color.g, color.b));
+  float offset = x < 0.08 ? x - 6.25 * x * x : 0.04;
+  color -= offset;
+  float peak = max(color.r, max(color.g, color.b));
+  if (peak < startCompression) return color;
+  const float d = 1.0 - startCompression;
+  float newPeak = 1.0 - d * d / (peak + d - startCompression);
+  color *= newPeak / peak;
+  float g = 1.0 - 1.0 / (desaturation * (peak - newPeak) + 1.0);
+  return mix(color, newPeak * vec3(1.0), g);
 }
 float hash(vec3 p) {
   p = fract(p * 0.1031);
@@ -309,7 +304,7 @@ void main() {
     texture(uHdr, vUv + off).b
   );
   vec3 col = hdr + texture(uBloom, vUv).rgb * uBloomAmt;
-  col = aces(col);
+  col = neutral(col);
   float vig = smoothstep(1.05, 0.25, length(c * vec2(uRes.x / uRes.y, 1.0) * 0.9));
   col *= mix(0.62, 1.0, vig);
   col = pow(col, vec3(1.0 / 2.2));

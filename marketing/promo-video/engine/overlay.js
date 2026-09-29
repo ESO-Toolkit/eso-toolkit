@@ -247,3 +247,208 @@ export function logo(ctx, cx, cy, size, alpha = 1, glow = 0) {
 }
 
 export const clampAlpha = (v) => clamp(v, 0, 1);
+
+// ------------------------------------------------------------------------------------------
+// Explainer furniture: captions, source labels, callouts and the link pill.
+
+/**
+ * Word-synced captions. `chunks` are arrays of { text, start, end } in seconds; the spoken word
+ * is lit, words already said stay white and words still to come are dim.
+ */
+export function captions(ctx, chunks, t, { x, y, size, maxWidth }) {
+  const i = chunks.findIndex(
+    (c, k) =>
+      t >= c.start - 0.12 && t < (chunks[k + 1]?.start ?? c.end + 0.5) - 0.02 && t < c.end + 0.5,
+  );
+  if (i < 0) return;
+  const c = chunks[i];
+  const fadeIn = ease.outCubic(range(t, c.start - 0.12, c.start + 0.08));
+  const fadeOut = 1 - range(t, c.end + 0.3, c.end + 0.5);
+  const a = fadeIn * fadeOut;
+  if (a <= 0) return;
+  ctx.save();
+  ctx.font = `600 ${size}px ${FONT.body}`;
+  ctx.textBaseline = 'alphabetic';
+  const words = c.words.filter((w) => w.text);
+  const space = ctx.measureText(' ').width;
+  const widths = words.map((w) => ctx.measureText(w.text).width);
+  const total = widths.reduce((s, w) => s + w, 0) + space * (words.length - 1);
+  const scale = Math.min(1, maxWidth / total);
+  ctx.translate(x, y + (1 - fadeIn) * 10);
+  ctx.scale(scale, scale);
+  let cx = -total / 2;
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.85)';
+  ctx.shadowBlur = 18;
+  words.forEach((w, k) => {
+    const said = t >= w.start;
+    const live = t >= w.start && t < w.end + 0.06;
+    ctx.globalAlpha = a * (said ? 1 : 0.42);
+    ctx.fillStyle = live ? INK.sky : INK.text;
+    ctx.fillText(w.text, cx, 0);
+    cx += widths[k] + space;
+  });
+  ctx.restore();
+}
+
+/** A headline whose words rise as they are spoken. */
+export function spokenHeadline(ctx, words, t, { x, y, size, end, maxWidth = 1e9 }) {
+  if (t < words[0].start - 0.2 || t > end + 0.6) return;
+  ctx.save();
+  ctx.font = `600 ${size}px ${FONT.display}`;
+  const space = ctx.measureText(' ').width;
+  const items = words
+    .filter((w) => w.text)
+    .map((w) => ({ ...w, width: ctx.measureText(w.text).width }));
+  const lines = [[]];
+  let lw = 0;
+  for (const it of items) {
+    if (lines.at(-1).length && lw + space + it.width > maxWidth) {
+      lines.push([]);
+      lw = 0;
+    }
+    lines.at(-1).push(it);
+    lw += (lines.at(-1).length > 1 ? space : 0) + it.width;
+  }
+  lines.forEach((ln, li) => {
+    const total = ln.reduce((s, w) => s + w.width, 0) + space * (ln.length - 1);
+    let cx = x - total / 2;
+    const ly = y + li * size * 1.1 - ((lines.length - 1) * size * 1.1) / 2;
+    for (const w of ln) {
+      const pi = ease.outExpo(range(t, w.start - 0.08, w.start + 0.55));
+      const po = ease.inCubic(range(t, end, end + 0.45));
+      if (pi > 0 && po < 1) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(cx - size * 0.1, ly - size * 1.02, w.width + size * 0.2, size * 1.34);
+        ctx.clip();
+        const blur = (1 - pi) * 10 + po * 8;
+        if (blur > 0.3) ctx.filter = `blur(${blur.toFixed(2)}px)`;
+        ctx.globalAlpha = Math.min(1, pi * 1.4) * (1 - po);
+        ctx.fillStyle = INK.text;
+        ctx.fillText(w.text, cx, ly + (1 - pi) * size * 1.05 - po * size * 1.05);
+        ctx.restore();
+      }
+      cx += w.width + space;
+    }
+  });
+  ctx.restore();
+}
+
+/** Source label that sits above a panel: which product the viewer is looking at. */
+export function sourceLabel(ctx, { x, y, text, product, alpha }) {
+  if (alpha <= 0.001) return;
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.font = `600 20px ${FONT.body}`;
+  const w = ctx.measureText(text).width + (product === 'esotk' ? 58 : 46);
+  const h = 38;
+  roundRect(ctx, x, y - h, w, h, h / 2);
+  ctx.fillStyle = product === 'esotk' ? 'rgba(10, 34, 56, 0.9)' : 'rgba(22, 24, 30, 0.9)';
+  ctx.fill();
+  ctx.lineWidth = 1.2;
+  ctx.strokeStyle = product === 'esotk' ? 'rgba(56, 189, 248, 0.75)' : 'rgba(200, 205, 215, 0.4)';
+  ctx.stroke();
+  if (product === 'esotk') {
+    logo(ctx, x + 23, y - h / 2, 24, alpha);
+  } else {
+    ctx.beginPath();
+    ctx.arc(x + 20, y - h / 2, 5, 0, Math.PI * 2);
+    ctx.fillStyle = '#c8cdd7';
+    ctx.fill();
+  }
+  ctx.globalAlpha = alpha;
+  ctx.fillStyle = product === 'esotk' ? '#e8f7ff' : '#dfe3ea';
+  ctx.fillText(text, x + (product === 'esotk' ? 42 : 34), y - h / 2 + 7);
+  ctx.restore();
+}
+
+/** Glowing outline around a screen rectangle. */
+export function callout(
+  ctx,
+  r,
+  { alpha, color = INK.sky, pad = 6, radius = 10, width = 2.5, fill = 0 },
+) {
+  if (alpha <= 0.001) return;
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  roundRect(ctx, r[0] - pad, r[1] - pad, r[2] + pad * 2, r[3] + pad * 2, radius);
+  if (fill) {
+    ctx.fillStyle = color;
+    ctx.globalAlpha = alpha * fill;
+    ctx.fill();
+    ctx.globalAlpha = alpha;
+  }
+  ctx.strokeStyle = color;
+  ctx.lineWidth = width;
+  ctx.shadowColor = color;
+  ctx.shadowBlur = 22;
+  ctx.stroke();
+  ctx.restore();
+}
+
+/** Darkens a screen rectangle (a row lifted out of its table). */
+export function dim(ctx, r, alpha) {
+  if (alpha <= 0.001) return;
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.fillStyle = 'rgb(4, 6, 12)';
+  ctx.fillRect(r[0], r[1], r[2], r[3]);
+  ctx.restore();
+}
+
+const GLYPHS = 'abcdefghijklmnopqrstuvwxyz0123456789./';
+
+/**
+ * A link pill whose domain scrambles from one site to the other while the report code stays put.
+ * `morph` runs 0..1.
+ */
+export function linkPill(ctx, { x, y, alpha, morph, from, to, code, size = 34, seed = 1 }) {
+  if (alpha <= 0.001) return;
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.font = `500 ${size}px ${FONT.body}`;
+  const n = Math.max(from.length, to.length);
+  let domain = '';
+  for (let i = 0; i < n; i++) {
+    const local = range(morph, i / n / 1.6, i / n / 1.6 + 0.38);
+    if (local <= 0) domain += from[i] ?? '';
+    else if (local >= 1) domain += to[i] ?? '';
+    else
+      domain +=
+        GLYPHS[
+          Math.floor(
+            (Math.sin((i + 1) * 91.7 + seed + Math.floor(local * 9) * 13.1) * 0.5 + 0.5) *
+              GLYPHS.length,
+          )
+        ];
+  }
+  const dw = ctx.measureText(domain).width;
+  const cw = ctx.measureText(code).width;
+  const w = dw + cw + size * 2.6;
+  const h = size * 2.1;
+  const left = x - w / 2;
+  roundRect(ctx, left, y - h / 2, w, h, h / 2);
+  ctx.fillStyle = 'rgba(12, 18, 32, 0.92)';
+  ctx.fill();
+  const done = ease.outCubic(range(morph, 0.85, 1));
+  ctx.strokeStyle =
+    done > 0 ? `rgba(56, 189, 248, ${0.35 + 0.5 * done})` : 'rgba(200, 205, 215, 0.35)';
+  ctx.lineWidth = 1.5;
+  ctx.shadowColor = INK.sky;
+  ctx.shadowBlur = 30 * done;
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+  // Link glyph.
+  ctx.strokeStyle = INK.muted;
+  ctx.lineWidth = 2.4;
+  const gx = left + size * 0.95;
+  ctx.beginPath();
+  ctx.roundRect(gx - size * 0.32, y - size * 0.1, size * 0.4, size * 0.2, size * 0.1);
+  ctx.roundRect(gx - size * 0.08, y - size * 0.1, size * 0.4, size * 0.2, size * 0.1);
+  ctx.stroke();
+  ctx.fillStyle = INK.text;
+  ctx.fillText(domain, left + size * 1.6, y + size * 0.36);
+  ctx.fillStyle = INK.sky;
+  ctx.fillText(code, left + size * 1.6 + dw, y + size * 0.36);
+  ctx.restore();
+}
