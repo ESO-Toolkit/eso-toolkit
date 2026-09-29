@@ -6,11 +6,17 @@
 
 The [live patch notes](https://www.elderscrollsonline.com/en-us/news/post/70379) and [official Update 51 preview](https://www.elderscrollsonline.com/en-us/news/post/70123) support the shipped hybridization, alchemy, Major/Minor buff, Warrior, Apprentice, and class-passive changes used by this PR. Update 51 also includes Scribing, combat, item-set, dungeon, and Nowhere Vault changes that require a live dump or report before updating exact IDs, descriptions, or parser behavior.
 
-The live notes establish game effects, but do not confirm the ESO Logs event IDs used for the new buff mapping. Keep historical IDs for older reports until live event data can validate the new mapping. The [ESO Logs ranking page](https://www.esologs.com/zone/rankings/6) exposes an Update 51 partition, but no individual Update 51 report or event payload was available to verify parser or lookup behavior.
+The live notes establish game effects, but do not confirm every ESO Logs event ID used for the new buff mapping. Keep historical IDs for older reports and current reports until live event data validates any replacement.
+
+## Live report verification (September 29)
+
+The [ESOTK latest reports page](https://esotk.com/latest-reports/) linked to [report RnHjLADybZ1Wcqwt](https://www.esologs.com/reports/RnHjLADybZ1Wcqwt), recorded September 29 at 17:24 UTC, after the PC release. Its [Lylanar and Turlassil fight 4 insights](https://esotk.com/report/RnHjLADybZ1Wcqwt/fight/4/insights) load a 12-player veteran hard-mode kill with damage, buff/debuff uptime, group abilities, and status effects. The report master-data response contained 1,573 abilities, and the public ESOTK GraphQL responses supplied fight metadata and buff events. This verifies that a real post-release report passes through the site's report and insights paths.
+
+For that fight, the inspected friendly buff-event windows still contain historical Major Savagery IDs `61667` and `228049`, and Major Brutality IDs `61665` and `76518`. Neither candidate ID `217672` nor `219246` appeared in those windows. Their absence in one fight does not establish whether the new IDs are correct or used elsewhere. A broader U51/U50 comparison and a fresh live tooltip dump remain necessary before changing mappings or claiming complete parser compatibility.
 
 ## Release-day checklist
 
-Complete the remaining steps when an installed PC live client and a representative Update 51 ESO Logs report are available. Record evidence and leave unknown values marked unknown until verified against the live client or live reports.
+Complete the remaining steps with an installed PC live client and additional representative Update 51 reports. Record evidence and leave unknown values marked unknown until verified against the live client or live reports.
 
 1. **Capture the release baseline.** Save/link the official live patch notes. Record the live client version and the tooltip addon's captured API value (`ESOTooltipDumpSV.apiVersion`, populated from `GetAPIVersion()`); compare it with `tools/eso-tooltip-dump/ESOTooltipDump.txt` metadata (now allowing both 101050 and PTS-verified 101051). Confirm the live value before removing compatibility with 101050.
 2. **Run the live tooltip dump.** Follow [`tools/eso-tooltip-dump/RUN-CHECKLIST.md`](../../tools/eso-tooltip-dump/RUN-CHECKLIST.md): verify the addon loads, run the API/description smoke test and sets-only dump, use the documented stable unequipped/no-CP reference state, then run the full `/dumptooltips` capture and `/reloadui`. Stop if descriptions contain `<<` template tokens, set text coverage is unexpectedly empty, or warning lines appear. Archive the raw SavedVariables dump and record its game/API version and character state.
@@ -26,7 +32,7 @@ Complete the remaining steps when an installed PC live client and a representati
 - Installed PC client's reported API version (the published live UI documentation says `101051`).
 - Fresh Update 51 tooltip dump, changed descriptions, set bonuses, and icon coverage. The available SavedVariables dump was captured September 1 with API `101050`; it is not Update 51 evidence.
 - Live-only ability/effect/set IDs and ESO Logs lookup availability.
-- Whether ESO Logs changes event/API fields; its Update 51 ranking partition is visible.
+- Whether ESO Logs changes event/API fields across other zones and event types; one U51 boss fight loads through ESOTK.
 - Whether any combat-log format or attribution changes affect this parser.
 
 The September 29 provenance check passed for the existing curated data: 4,611/4,611 checked rendered entries trace to the saved dump. This checks the existing data's origin, not its freshness for Update 51. Treat each remaining item as **unknown until observed**.
