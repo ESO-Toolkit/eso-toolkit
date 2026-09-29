@@ -152,12 +152,12 @@ const AFFIX_SCRIPT_PATTERNS: Record<string, AffixPattern> = {
  */
 const KNOWN_EFFECT_IDS = {
   // Major Buffs - expanded with more comprehensive ESO ability IDs
-  'major-savagery': [61667, 217672], // Major Savagery, including the hybrid crit buff
-  'major-prophecy': [61689, 217672], // Major Prophecy, including the hybrid crit buff
+  'major-savagery': [61687, 61693, 20301, 20302], // Major Savagery (Weapon Crit)
+  'major-prophecy': [61687, 61693, 20297, 20298], // Major Prophecy (Spell Crit)
   'major-expedition': [61693, 61694, 7938, 7959], // Major Expedition (Speed)
   'major-berserk': [61691, 61692, 155150], // Major Berserk (Damage)
-  'major-brutality': [61665, 219246], // Major Brutality, including the hybrid damage buff
-  'major-sorcery': [61687, 219246], // Major Sorcery, including the hybrid damage buff
+  'major-brutality': [61685, 61686, 20232, 20233], // Major Brutality (Weapon Damage)
+  'major-sorcery': [61685, 61686, 20229, 20230], // Major Sorcery (Spell Damage)
   'major-heroism': [61697, 61698, 40224], // Major Heroism (Ultimate Gen)
   'major-intellect': [20200, 20201], // Major Intellect (Magicka)
   'major-endurance': [20203, 20204], // Major Endurance (Stamina)
@@ -589,18 +589,6 @@ export class AffixScriptDetector {
         requiredBuffs: ['major-brutality', 'major-sorcery'],
         confidence: 0.9,
       },
-      'hybrid-savagery': {
-        name: 'Hybrid Savagery',
-        description: 'Provides Major Savagery, which grants both weapon and spell critical chance',
-        requiredBuffs: ['major-savagery'],
-        confidence: 0.95,
-      },
-      'hybrid-brutality': {
-        name: 'Hybrid Brutality',
-        description: 'Provides Major Brutality, which grants both weapon and spell damage',
-        requiredBuffs: ['major-brutality'],
-        confidence: 0.95,
-      },
       'intellect-and-endurance': {
         name: 'Intellect and Endurance',
         description: 'Provides Major Intellect and Major Endurance buffs',
@@ -643,19 +631,6 @@ export class AffixScriptDetector {
     const bestDetections = new Map<string, AffixScriptDetection>();
 
     for (const [affixKey, pattern] of Object.entries(effectPatterns)) {
-      // Separate historical buffs keep their paired classification. A single combined
-      // U51 aura matches both component IDs, but should be classified as a hybrid.
-      if (
-        (affixKey === 'hybrid-savagery' &&
-          buffEvents.some((event) => event.abilityGameID === 61667) &&
-          buffEvents.some((event) => event.abilityGameID === 61689)) ||
-        (affixKey === 'hybrid-brutality' &&
-          buffEvents.some((event) => event.abilityGameID === 61665) &&
-          buffEvents.some((event) => event.abilityGameID === 61687))
-      ) {
-        continue;
-      }
-
       const matchedEffects: AffixEffect[] = [];
       let hasAllRequired = true;
 

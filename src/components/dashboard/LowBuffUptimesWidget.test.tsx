@@ -106,11 +106,11 @@ describe('LowBuffUptimesWidget', () => {
     expect(screen.queryByText('125%')).not.toBeInTheDocument();
   });
 
-  it('does not report low uptime when the combined hybrid buff covers the fight', () => {
+  it('does not report low uptime when the live buff ID covers the fight', () => {
     mockUseBuffLookupTask.mockReturnValue({
       buffLookupData: {
         buffIntervals: {
-          219246: [{ start: 0, end: 1000, sourceID: 7, targetID: 7 }],
+          76518: [{ start: 0, end: 1000, sourceID: 7, targetID: 7 }],
         },
       },
       isBuffLookupLoading: false,

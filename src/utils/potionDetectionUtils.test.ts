@@ -145,12 +145,12 @@ describe('detectPotionType', () => {
   // ─── Stage 2: buff-combo detection ───────────────────────────────────────
 
   describe('Weapon Power Potion detection', () => {
-    it('classifies the U51 combined power and critical buffs as weapon-power', () => {
+    it('does not infer potion use from unverified combined buff IDs alone', () => {
       const auras = [
         { name: 'Major Brutality and Sorcery', id: 219246 },
         { name: 'Major Prophecy and Savagery', id: 217672 },
       ];
-      expect(detectPotionType(auras, 0)).toBe('weapon-power');
+      expect(detectPotionType(auras, 0)).toBe('none');
     });
 
     it('detects weapon-power when both Major Brutality and Major Savagery are present', () => {
@@ -565,13 +565,13 @@ describe('classifyPotionEventsFromBuffStream', () => {
     expect(result['1'].resourceRestored).toBe('magicka');
   });
 
-  it('classifies the U51 combined power and critical buff IDs as weapon-power', () => {
+  it('does not infer a power potion from unverified combined buff IDs', () => {
     const result = classifyPotionEventsFromBuffStream(
       [buffEv(1000, 1, 219246), buffEv(1000, 1, 217672)],
       [resEv(1000, 1, 45225, 1, 7500)],
-      {}, // Combined IDs classify directly without relying on localized names.
+      {},
     );
-    expect(result['1'].type).toBe('weapon-power');
+    expect(result['1'].type).toBe('stamina');
   });
 
   // ── subsequent use caching (no buff events on refresh) ───────────────────

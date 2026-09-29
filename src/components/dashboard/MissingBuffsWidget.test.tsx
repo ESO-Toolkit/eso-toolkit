@@ -73,14 +73,14 @@ describe('MissingBuffsWidget Update 51 hybrid buff', () => {
     mockUsePlayerData.mockReturnValue({ playerData, isPlayerDataLoading: false });
   });
 
-  it('does not report Major Brutality missing when the combined hybrid buff is active', () => {
+  it('does not report Major Brutality missing when the live buff ID is active', () => {
     mockUseMultiFightBuffLookup.mockReturnValue({
       fightBuffData: new Map([
         [
           1,
           {
             buffIntervals: {
-              219246: [{ start: 0, end: 1000, sourceID: 7, targetID: 7 }],
+              76518: [{ start: 0, end: 1000, sourceID: 7, targetID: 7 }],
               61744: [{ start: 0, end: 1000, sourceID: 7, targetID: 7 }],
             },
           },

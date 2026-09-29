@@ -195,7 +195,7 @@ export const dawnsWrath: SkillLineData = {
       type: 'passive',
       icon: 'ability_templar_012',
       description:
-        "Casting a Dawn's Wrath ability grants Minor Sorcery to you and your group for 20 seconds, increasing your Spell Damage by 10%.",
+        "Casting a Dawn's Wrath ability grants you and your group 2974 Armor for 20 seconds.",
       isPassive: true,
     },
     {

@@ -215,7 +215,7 @@ export const darkMagic: SkillLineData = {
       type: 'passive',
       icon: 'ability_sorcerer_039',
       description:
-        'When you cast a Dark Magic ability you grant Minor Prophecy to you and your group, increasing your Spell Critical rating by 1314 for 20 seconds.',
+        'When you cast a Dark Magic ability you grant you and your group 2974 Offensive Penetration for 20 seconds.',
       isPassive: true,
     },
   ],

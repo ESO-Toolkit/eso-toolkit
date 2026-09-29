@@ -21,7 +21,7 @@ interface LowBuffUptimesWidgetProps {
 
 const UPTIME_BUFFS = [
   {
-    ids: [219246, 61665, 61687, 183049],
+    ids: [219246, 61665, 61687, 183049, 76518],
     name: 'Major Brutality',
     minUptime: 95,
     roles: ['dps' as const],

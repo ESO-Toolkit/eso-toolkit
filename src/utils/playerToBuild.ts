@@ -55,7 +55,7 @@ import {
   kalpaRaceIdToBuildRace,
   type KalpaPlayerBuildEvidence,
 } from './kalpaBuildEvidence';
-import type { PotionType } from './potionDetectionUtils';
+import type { PotionType, ResourceRestored } from './potionDetectionUtils';
 import { isAnyTwoHandedWeapon } from './weaponClassificationUtils';
 
 /**
@@ -409,10 +409,21 @@ const POTION_TYPE_TO_ID: Record<string, number> = {
   stamina: 9024, // Essence of Stamina
 };
 
-function resolvePotions(potionType?: PotionType): BuildPotion[] {
+function resolvePotions(
+  potionType?: PotionType,
+  resourceRestored?: ResourceRestored,
+): BuildPotion[] {
   if (!potionType || potionType === 'none' || potionType === 'unknown') return [];
 
-  const potionId = POTION_TYPE_TO_ID[potionType];
+  // Update 51 shares the same damage buffs between spell and weapon power
+  // potions. The restored resource is the distinguishing evidence.
+  const isPowerPotion = potionType === 'weapon-power' || potionType === 'spell-power';
+  const potionId =
+    isPowerPotion && resourceRestored === 'magicka'
+      ? 9001
+      : isPowerPotion && resourceRestored === 'stamina'
+        ? 9011
+        : POTION_TYPE_TO_ID[potionType];
   if (potionId == null) return [];
 
   const potion = ESO_POTIONS.find((p) => p.id === potionId);
@@ -467,6 +478,8 @@ export interface PlayerBuildExtractionData {
   food?: { id?: number; name?: string };
   /** Classified potion type from the live event stream */
   potionType?: PotionType;
+  /** Resource restored by the detected potion, used to distinguish U51 power potions */
+  potionResourceRestored?: ResourceRestored;
 }
 
 function extractPassiveTalentIds(talents: PlayerTalent[]): number[] {
@@ -556,7 +569,7 @@ export function playerToBuild(data: PlayerBuildExtractionData): Build {
     skills,
     cp,
     consumables: {
-      potions: resolvePotions(data.potionType),
+      potions: resolvePotions(data.potionType, data.potionResourceRestored),
       food: resolveFood(food),
     },
     passives,
