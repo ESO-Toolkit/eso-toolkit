@@ -1,0 +1,36 @@
+{
+  "fps": 60,
+  "bpm": 120,
+  "durationInFrames": 3300,
+  "scenes": {
+    "hook": { "from": 0, "to": 300 },
+    "item": { "from": 300, "to": 720 },
+    "insights": { "from": 720, "to": 1200 },
+    "replay": { "from": 1200, "to": 1800 },
+    "builds": { "from": 1800, "to": 2400 },
+    "summary": { "from": 2400, "to": 2880 },
+    "cta": { "from": 2880, "to": 3300 }
+  },
+  "cues": {
+    "wipeHit": 76,
+    "hookLine2": 112,
+    "hookLine3": 202,
+    "itemToHud": 424,
+    "typeStart": 474,
+    "typeEnd": 578,
+    "click": 646,
+    "upgrade1": 720,
+    "insightsBeat2": 846,
+    "insightsBeat3": 1016,
+    "upgrade2": 1200,
+    "replayOut": 1740,
+    "upgrade3": 1800,
+    "buildsBeat2": 1956,
+    "buildsBeat3": 2136,
+    "buildsBeat4": 2266,
+    "summaryIn": 2400,
+    "compareIn": 2456,
+    "ctaIn": 2880,
+    "logoHit": 2904
+  }
+}
