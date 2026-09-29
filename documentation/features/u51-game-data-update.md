@@ -1,16 +1,16 @@
 # ESO Update 51 Game-Data Readiness (September 2026)
 
-**Status (September 27, 2026): prelaunch.** ZOS's official PTS Week 5 summary identifies September 28 as the Update 51 launch date. Use the live patch notes and the installed live client as the release authority. The PTS v12.1.x notes describe test content, not guaranteed final live data. [PTS Week 5 summary](https://forums.elderscrollsonline.com/en/discussion/comment/8532865/) · [official PTS v12.1.0 notes](https://forums.elderscrollsonline.com/en-gb/discussion/697154/pts-patch-notes-v12-1-0)
+**Status (September 29, 2026): PC live, partial game-data verification.** Update 51 shipped on September 28. The [official live patch notes](https://www.elderscrollsonline.com/en-us/news/post/70379) supersede the PTS notes. The [live ESO UI documentation](https://raw.githubusercontent.com/esoui/esoui/live/ESOUIDocumentation.txt) declares API `101051`, matching the addon manifests. The installed game client and a new in-game tooltip dump were unavailable during this review.
 
 ## Confirmed U51 scope relevant to this app
 
-Official PTS notes describe Update 51 as including hybridization/alchemy and Major/Minor buff changes, combat and item-set adjustments, Scribing changes, new solo dungeons, Nowhere Vault, and other player-experience features. Explicit examples include Brutality replacing Sorcery and granting both weapon/spell damage, Savagery replacing Prophecy and granting both weapon/spell critical chance, changes to stealth-breaking behavior, Tome-bearer's Inspiration triggering only from Arcanist skill damage, and Traveling Knife/Pull Focus target cap changes. The patch notes also adjust item-set behavior and descriptions. These are investigation targets, not proof that every PTS value or behavior shipped unchanged. [PTS v12.1.0 notes](https://forums.elderscrollsonline.com/en-gb/discussion/697154/pts-patch-notes-v12-1-0)
+The [live patch notes](https://www.elderscrollsonline.com/en-us/news/post/70379) and [official Update 51 preview](https://www.elderscrollsonline.com/en-us/news/post/70123) support the shipped hybridization, alchemy, Major/Minor buff, Warrior, Apprentice, and class-passive changes used by this PR. Update 51 also includes Scribing, combat, item-set, dungeon, and Nowhere Vault changes that require a live dump or report before updating exact IDs, descriptions, or parser behavior.
 
-The last PTS notes say the final PTS week focused on fixes and that ZOS would review combat feedback and make final adjustments before launch. Consequently, do not promote PTS-only IDs, coefficients, descriptions, set lists, or API versions as live facts. The PTS UI source identifies addon API 101051, which the companion manifest now supports alongside 101050; the installed live client's API still needs confirmation. The public PTS notes do not establish ESO Logs API/schema changes, new ability/set IDs, report partitions, or combat-log event-format changes. [PTS v12.1.4 notes](https://forums.elderscrollsonline.com/en/discussion/698829/pts-patch-notes-v12-1-4) · [ESO UI PTS documentation](https://raw.githubusercontent.com/esoui/esoui/pts/ESOUIDocumentation.txt)
+The live notes establish game effects, but do not confirm the ESO Logs event IDs used for the new buff mapping. Keep historical IDs for older reports until live event data can validate the new mapping. The [ESO Logs ranking page](https://www.esologs.com/zone/rankings/6) exposes an Update 51 partition, but no individual Update 51 report or event payload was available to verify parser or lookup behavior.
 
 ## Release-day checklist
 
-Run these steps after the PC live patch is available. Record evidence and leave unknown values marked unknown until verified against the live client or live reports.
+Complete the remaining steps when an installed PC live client and a representative Update 51 ESO Logs report are available. Record evidence and leave unknown values marked unknown until verified against the live client or live reports.
 
 1. **Capture the release baseline.** Save/link the official live patch notes. Record the live client version and the tooltip addon's captured API value (`ESOTooltipDumpSV.apiVersion`, populated from `GetAPIVersion()`); compare it with `tools/eso-tooltip-dump/ESOTooltipDump.txt` metadata (now allowing both 101050 and PTS-verified 101051). Confirm the live value before removing compatibility with 101050.
 2. **Run the live tooltip dump.** Follow [`tools/eso-tooltip-dump/RUN-CHECKLIST.md`](../../tools/eso-tooltip-dump/RUN-CHECKLIST.md): verify the addon loads, run the API/description smoke test and sets-only dump, use the documented stable unequipped/no-CP reference state, then run the full `/dumptooltips` capture and `/reloadui`. Stop if descriptions contain `<<` template tokens, set text coverage is unexpectedly empty, or warning lines appear. Archive the raw SavedVariables dump and record its game/API version and character state.
@@ -23,10 +23,10 @@ Run these steps after the PC live patch is available. Record evidence and leave 
 
 ## Release facts still to verify
 
-- Final live patch-note deltas from the last PTS build.
-- Installed PC API version and resulting addon manifest value.
+- Installed PC client's reported API version (the published live UI documentation says `101051`).
+- Fresh Update 51 tooltip dump, changed descriptions, set bonuses, and icon coverage. The available SavedVariables dump was captured September 1 with API `101050`; it is not Update 51 evidence.
 - Live-only ability/effect/set IDs and ESO Logs lookup availability.
-- Whether ESO Logs adds an Update 51 ranking partition or changes event/API fields.
+- Whether ESO Logs changes event/API fields; its Update 51 ranking partition is visible.
 - Whether any combat-log format or attribution changes affect this parser.
 
-Treat each as **unknown until observed**; absence from the cited PTS notes is not evidence that the live service cannot change.
+The September 29 provenance check passed for the existing curated data: 4,611/4,611 checked rendered entries trace to the saved dump. This checks the existing data's origin, not its freshness for Update 51. Treat each remaining item as **unknown until observed**.
