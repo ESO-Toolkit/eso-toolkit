@@ -188,10 +188,23 @@ for (let attempt = 0; ; attempt++) {
   });
   page.on('console', (m) => console.log(`[page] ${m.text()}`));
   page.on('pageerror', (e) => console.error(`[page error] ${e.message}`));
+  let lastProgress = Date.now();
+  let watchdog;
   const outcome = new Promise((resolve) => {
     settle = resolve;
     page.on('crash', () => resolve('lost'));
     page.on('close', () => resolve('lost'));
+    // A lost WebGL context stalls the page without crashing it.
+    let seen = next;
+    watchdog = setInterval(() => {
+      if (stills) return;
+      if (next !== seen) {
+        seen = next;
+        lastProgress = Date.now();
+      } else if (Date.now() - lastProgress > 90000) {
+        resolve('lost');
+      }
+    }, 5000);
   });
   const query = new URLSearchParams({
     w: W,
@@ -202,6 +215,7 @@ for (let attempt = 0; ; attempt++) {
   });
   await page.goto(`http://localhost:${port}/engine/index.html?${query}`);
   const result = await outcome;
+  clearInterval(watchdog);
   await page.close().catch(() => {});
   if (result === 'done' || stills) break;
   if (attempt >= 5) throw new Error(`Render failed repeatedly near frame ${next}`);
