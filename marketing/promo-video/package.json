@@ -2,41 +2,23 @@
   "name": "esotk-promo-video",
   "private": true,
   "version": "1.0.0",
-  "description": "Remotion source for the ESO Toolkit vs ESO Logs promo video",
+  "description": "Code-generated promo video for esotk.com (WebGL2 + Canvas2D, rendered in headless Chrome)",
   "type": "module",
   "scripts": {
-    "studio": "remotion studio src/index.ts",
-    "capture": "node scripts/capture.mjs",
     "soundtrack": "node scripts/soundtrack.mjs",
-    "render": "npm run render:landscape && npm run render:vertical",
-    "render:landscape": "remotion render src/index.ts Promo16x9 out/esotk-vs-esologs-16x9.mp4",
-    "render:vertical": "remotion render src/index.ts Promo9x16 out/esotk-vs-esologs-9x16.mp4",
-    "typecheck": "tsc --noEmit",
-    "format": "prettier --write README.md src scripts remotion.config.ts",
-    "format:check": "prettier --check README.md src scripts remotion.config.ts"
-  },
-  "dependencies": {
-    "@remotion/cli": "4.0.529",
-    "@remotion/effects": "4.0.529",
-    "@remotion/google-fonts": "4.0.529",
-    "@remotion/layout-utils": "4.0.529",
-    "@remotion/media": "4.0.529",
-    "@remotion/motion-blur": "4.0.529",
-    "@remotion/noise": "4.0.529",
-    "@remotion/paths": "4.0.529",
-    "@remotion/sfx": "4.0.529",
-    "@remotion/shapes": "4.0.529",
-    "@remotion/transitions": "4.0.529",
-    "react": "19.3.0",
-    "react-dom": "19.3.0",
-    "remotion": "4.0.529"
+    "render": "npm run soundtrack && npm run render:landscape && npm run render:vertical",
+    "render:landscape": "node scripts/render.mjs",
+    "render:vertical": "node scripts/render.mjs --portrait",
+    "stills": "node scripts/render.mjs --stills",
+    "format": "prettier --write README.md engine scripts timeline.json",
+    "format:check": "prettier --check README.md engine scripts timeline.json"
   },
   "devDependencies": {
-    "@types/react": "19.3.0",
-    "@types/react-dom": "19.3.0",
+    "@fontsource/inter": "5.3.0",
+    "@fontsource/space-grotesk": "5.3.0",
+    "ffmpeg-static": "5.3.0",
     "node-web-audio-api": "2.2.0",
     "playwright": "1.63.0",
-    "prettier": "3.9.9",
-    "typescript": "7.0.2"
+    "prettier": "3.9.9"
   }
 }
