@@ -426,7 +426,7 @@ async function init() {
     return pixels;
   };
 
-  return { renderFrame, readFrame };
+  return { renderFrame, readFrame, lost: () => gl.isContextLost() };
 }
 
 const engine = await init();
@@ -450,16 +450,23 @@ if (mode) {
   // runs; without the forced collection (render.mjs exposes gc) a 4K render fills Chrome's blob
   // storage within about a hundred frames.
   let upload = Promise.resolve();
+  let lost = false;
   for (const [n, f] of frames.entries()) {
     await engine.renderFrame(f);
+    // A lost WebGL context (the GPU was reset or ran short of memory) draws nothing and leaves
+    // the last frame in the read buffer; report it so the render reloads the page and resumes.
+    if (engine.lost()) {
+      lost = true;
+      break;
+    }
     const body = new Blob([engine.readFrame()]);
     await upload;
     upload = fetch(`/frame?i=${f}`, { method: 'POST', body });
     if (n % 8 === 7) globalThis.gc?.();
   }
   await upload;
-  await fetch('/done', { method: 'POST' });
-  document.title = 'done';
+  await fetch(lost ? '/lost' : '/done', { method: 'POST' });
+  document.title = lost ? 'lost' : 'done';
 } else {
   await engine.renderFrame(Math.round(Number(params.get('t') ?? 0) * FPS));
 }

@@ -71,9 +71,9 @@ const server = http.createServer(async (req, res) => {
     }
     return;
   }
-  if (req.method === 'POST' && url.pathname === '/done') {
+  if (req.method === 'POST' && (url.pathname === '/done' || url.pathname === '/lost')) {
     res.end('ok');
-    settle('done');
+    settle(url.pathname.slice(1));
     return;
   }
   const file = path.join(ROOT, decodeURIComponent(url.pathname));
@@ -102,6 +102,7 @@ const rawInput = [
 
 let encoder;
 let next = start;
+let previous;
 if (stills) {
   onFrame = (i, buf) =>
     new Promise((resolve, reject) => {
@@ -163,6 +164,14 @@ if (stills) {
   onFrame = (i, buf) =>
     new Promise((resolve) => {
       if (i !== next || buf.length !== W * H * 4) return resolve();
+      // Film grain changes every frame, so a frame identical to the previous one means the page
+      // stopped drawing (a lost WebGL context); drop it and reload from here.
+      if (previous?.equals(buf)) {
+        console.log(`frame ${i} repeats frame ${i - 1}; reloading the page`);
+        settle('lost');
+        return resolve();
+      }
+      previous = buf;
       next++;
       if ((i - start) % 120 === 0) {
         const fps = (i - start) / ((Date.now() - began) / 1000 || 1);
@@ -189,7 +198,13 @@ const browser = await chromium.launch({
 });
 // Renders run for over an hour; if the page crashes or drops a frame, reopen it and carry on
 // from the next frame the encoder is waiting for.
-for (let attempt = 0; ; attempt++) {
+// Give up only after five reloads in a row without progress (long 4K renders can lose the GPU
+// a few times, for example when a game is sharing it).
+for (let attempt = 0, lastNext = next; ; attempt++) {
+  if (next > lastNext) {
+    attempt = 0;
+    lastNext = next;
+  }
   const page = await browser.newPage({
     viewport: { width: Math.min(LW, 1920), height: Math.min(LH, 1080) },
   });
