@@ -84,7 +84,7 @@ describe('KalpaPage', () => {
     );
   });
 
-  it('shows authentic screenshots with accessible descriptions and full-size links', () => {
+  it('shows authentic screenshots with accessible enlargement controls', () => {
     renderPage();
     const images = screen.getAllByRole('img');
     expect(images).toHaveLength(3);
@@ -98,7 +98,9 @@ describe('KalpaPage', () => {
       expect(image).toHaveAttribute('width', '1600');
       expect(image).toHaveAttribute('height', '900');
       expect(image.getAttribute('alt')).toBeTruthy();
-      expect(image.closest('a')).toHaveAttribute('href', image.getAttribute('src'));
+      expect(image.closest('button')).toHaveAccessibleName(
+        `Enlarge screenshot: ${image.getAttribute('alt')}`,
+      );
     }
     expect(
       screen.getByText(/Preview the Minion import and review integrity checks/),
