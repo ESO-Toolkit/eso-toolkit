@@ -24,26 +24,20 @@ import {
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import type { Theme } from '@mui/material/styles';
+import type { SystemStyleObject } from '@mui/system';
 import React from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 
 import { ROUTE_META } from '@/constants/routeMeta';
 import { usePageTitle } from '@/hooks/useDocumentTitle';
 
+import { KalpaProductShot } from '../components/KalpaProductShot';
+import { KALPA_RELEASES_URL, KALPA_REPO_URL } from '../constants/kalpa';
 import { getBaseUrl } from '../utils/envUtils';
 
 /** Re-exported for tests; the single definition lives in the shared route map. */
 export const KALPA_PAGE_TITLE = ROUTE_META['/kalpa'].title;
 
-const KALPA_REPO_URL = 'https://github.com/ESO-Toolkit/kalpa';
-const KALPA_RELEASES_URL = 'https://github.com/ESO-Toolkit/kalpa/releases/latest';
-
-// ─── Scroll-driven CSS (same pattern as LandingPage.tsx) ─────────────────────
-// `animation-timeline: view()` is unsupported in some browsers — the fallback
-// is a 0s document-timeline animation that fills to its end state instantly,
-// so content is never left invisible. prefers-reduced-motion and the low perf
-// tier are handled globally (ReduxThemeProvider / index.css freeze animations),
-// which collapses these scroll-driven animations to their final, visible state.
 const kalpaPageGlobalStyles = (
   <GlobalStyles
     styles={`
@@ -68,16 +62,6 @@ const kalpaPageGlobalStyles = (
       0% { --divider-pos: 20%; --glow-opacity: 0.3; }
       50% { --divider-pos: 80%; --glow-opacity: 0.6; }
       100% { --divider-pos: 20%; --glow-opacity: 0.3; }
-    }
-
-    @keyframes panelParallax {
-      from { transform: translateY(24px) rotateY(var(--panel-ry, -4deg)) rotateX(var(--panel-rx, 2deg)); }
-      to { transform: translateY(-24px) rotateY(var(--panel-ry, -4deg)) rotateX(var(--panel-rx, 2deg)); }
-    }
-
-    @keyframes cardReveal {
-      from { opacity: 0; transform: translateY(14px); }
-      to { opacity: 1; transform: translateY(0); }
     }
 
     /* The hero and closing band break out of AppLayout's reading-width
@@ -157,122 +141,21 @@ const HeroSection = styled('section')(({ theme }) => ({
 }));
 
 const HeroContent = styled(Box)(({ theme }) => ({
-  maxWidth: '1100px',
+  maxWidth: '1240px',
   margin: '0 auto',
-  padding: '5rem 2rem 6rem',
+  padding: '2.5rem 1rem 3.5rem',
   display: 'grid',
   gridTemplateColumns: '1fr',
-  textAlign: 'center',
-  gap: '3rem',
-  alignItems: 'center',
+  gap: theme.spacing(4),
+  alignItems: 'start',
   position: 'relative',
   zIndex: 1,
-  perspective: '1200px',
-  [theme.breakpoints.down('md')]: {
-    gridTemplateColumns: '1fr',
-    gap: '3rem',
-    textAlign: 'center',
-    perspective: 'none',
-    padding: '3.5rem 1.5rem 4.5rem',
+  [theme.breakpoints.up('md')]: {
+    padding: '4.5rem 2rem 5.5rem',
+    gridTemplateColumns: 'minmax(0, 5fr) minmax(0, 7fr)',
+    gap: theme.spacing(6),
   },
-  [theme.breakpoints.down('sm')]: {
-    padding: '3rem 1rem 4rem',
-  },
-}));
-
-const FeatureGrid = styled(Box)(({ theme }) => ({
-  display: 'grid',
-  gridTemplateColumns: '1fr 1fr',
-  gap: '0.75rem',
-  marginTop: '2rem',
-  [theme.breakpoints.down('sm')]: {
-    gridTemplateColumns: '1fr',
-  },
-}));
-
-const FeatureCard = styled(Box)(({ theme }) => ({
-  display: 'flex',
-  flexDirection: 'column',
-  gap: '0.35rem',
-  padding: '1rem 1.1rem',
-  position: 'relative',
-  borderRadius: '12px',
-  background:
-    theme.palette.mode === 'dark' ? 'rgba(139, 92, 246, 0.03)' : 'rgba(139, 92, 246, 0.02)',
-  backdropFilter: 'blur(12px)',
-  WebkitBackdropFilter: 'blur(12px)',
-  border:
-    theme.palette.mode === 'dark'
-      ? '1px solid rgba(139, 92, 246, 0.08)'
-      : '1px solid rgba(139, 92, 246, 0.06)',
-  transition: 'all 0.4s var(--spring, cubic-bezier(0.4, 0, 0.2, 1))',
-  // Staggered reveal — each card appears as it enters the viewport.
-  animation: 'cardReveal linear both',
-  animationTimeline: 'view()',
-  animationRange: 'entry 0% cover 30%',
-  // Animated left accent bar.
-  '&::before': {
-    content: '""',
-    position: 'absolute',
-    left: 0,
-    top: '50%',
-    transform: 'translateY(-50%)',
-    width: '3px',
-    height: '0%',
-    borderRadius: '0 3px 3px 0',
-    background: 'linear-gradient(180deg, #a78bfa, #8b5cf6, #6366f1)',
-    transition: 'height 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
-    boxShadow: '0 0 8px rgba(139, 92, 246, 0.3)',
-  },
-  '&:hover': {
-    background:
-      theme.palette.mode === 'dark' ? 'rgba(139, 92, 246, 0.08)' : 'rgba(139, 92, 246, 0.05)',
-    borderColor:
-      theme.palette.mode === 'dark' ? 'rgba(139, 92, 246, 0.18)' : 'rgba(139, 92, 246, 0.12)',
-    transform: 'translateX(4px)',
-    boxShadow:
-      theme.palette.mode === 'dark'
-        ? '0 4px 24px rgba(139, 92, 246, 0.1), inset 0 1px 0 rgba(139, 92, 246, 0.08)'
-        : '0 4px 24px rgba(139, 92, 246, 0.06), inset 0 1px 0 rgba(139, 92, 246, 0.04)',
-    '&::before': {
-      height: '60%',
-    },
-    '& .feature-index': {
-      color: '#8b5cf6',
-      opacity: 1,
-      textShadow: '0 0 12px rgba(139, 92, 246, 0.4)',
-    },
-  },
-  '& .feature-index': {
-    fontFamily: '"JetBrains Mono", "Fira Code", "SF Mono", monospace',
-    fontSize: '0.68rem',
-    fontWeight: 500,
-    color: theme.palette.text.disabled,
-    opacity: 0.6,
-    letterSpacing: '0.02em',
-    transition: 'all 0.35s var(--spring, ease)',
-  },
-  '& .feature-title': {
-    fontSize: '0.95rem',
-    fontWeight: 600,
-    color: theme.palette.text.primary,
-  },
-  '& .feature-desc': {
-    fontSize: '0.82rem',
-    fontWeight: 300,
-    color: theme.palette.text.secondary,
-    lineHeight: 1.6,
-  },
-  '& .feature-link': {
-    fontSize: '0.78rem',
-    fontWeight: 600,
-    color: theme.palette.mode === 'dark' ? '#c4b5fd' : '#7c3aed',
-    textDecoration: 'none',
-    marginTop: '0.25rem',
-    '&:hover': {
-      textDecoration: 'underline',
-    },
-  },
+  [theme.breakpoints.up('lg')]: { gap: theme.spacing(8) },
 }));
 
 const FaqAccordion = styled(Accordion)(({ theme }) => ({
@@ -384,70 +267,97 @@ const sectionHeadingSx = {
 } as const;
 
 // ─── Content data ─────────────────────────────────────────────────────────────
-const FEATURES: { title: string; description: string; linkTo?: string; linkLabel?: string }[] = [
-  {
-    title: 'Discover and update addons',
-    description:
-      'Search ESOUI, browse popular addons and categories, or install by URL or ID. Update your library in bulk.',
-  },
-  {
-    title: 'Dependency resolution',
-    description:
-      'Review required and optional libraries, with transitive dependency and version checks before installation.',
-  },
-  {
-    title: 'ESO Logs uploads',
-    description:
-      'Sign in to ESO Logs, choose report visibility, and upload combat logs directly from Kalpa. Keep track of upload history.',
-  },
-  {
-    title: 'Live logging and fight selection',
-    description:
-      'Upload while you play, split logs into sessions, and select individual fights with difficulty and kill indicators.',
-  },
-  {
-    title: 'Pack Hub',
-    description:
-      'Discover, publish, and vote on addon, build, and roster packs. Share six-character codes or export .esopack files.',
-    linkTo: '/pack-hub',
-    linkLabel: 'Browse Pack Hub',
-  },
-  {
-    title: 'Settings editor',
-    description:
-      'Search labeled SavedVariables settings, copy character or account configurations, and clean up orphaned settings with backups before edits.',
-  },
-  {
-    title: 'Backups and restores',
-    description:
-      'Create full or per-character backups. Kalpa takes a safety snapshot before restoring your settings.',
-  },
-  {
-    title: 'Addon profiles',
-    description:
-      'Save enabled-addon setups for different characters or roles. Preview changes before switching, with library protection.',
-  },
-  {
-    title: 'Themes and accessibility',
-    description:
-      'Choose from 54 themes, including eight Elder Scrolls skins, or create your own. Use light and high-contrast options, UI scaling, and keyboard shortcuts.',
-  },
-  {
-    title: 'Protected edits',
-    description:
-      'Browse and edit addon files with backups. Review per-file conflict diffs for local changes and check warnings in the Safety Center.',
-  },
-  {
-    title: 'Minion migration and multiple installs',
-    description:
-      'Preview your Minion import, detect native and Steam installations across NA, EU, and PTS, and copy addons between installs.',
-  },
-  {
-    title: 'Everyday library tools',
-    description:
-      'Organize with tags and favorites, check compatibility, import or export addon lists as JSON, and receive signed Kalpa updates.',
-  },
-];
+const storyHeadingSx = {
+  ...sectionHeadingSx,
+  fontSize: { xs: '1.75rem', md: '2.25rem', lg: '2.5rem' },
+  lineHeight: 1.1,
+  maxWidth: '18ch',
+  mb: 2,
+} as const;
+
+const storyBodySx = {
+  color: 'text.secondary',
+  fontSize: '1.0625rem',
+  fontWeight: 400,
+  lineHeight: 1.7,
+} as const;
+
+const storyGridSx = {
+  display: 'grid',
+  gridTemplateColumns: { xs: '1fr', md: 'minmax(0, 5fr) minmax(0, 7fr)' },
+  gap: { xs: 4, md: 6 },
+  alignItems: 'center',
+} as const;
+
+const storyPanelSx = (theme: Theme): SystemStyleObject<Theme> => ({
+  p: { xs: 3, md: 5 },
+  borderRadius: '16px',
+  border: '1px solid',
+  borderColor: theme.palette.mode === 'dark' ? 'rgba(139,92,246,.14)' : 'rgba(139,92,246,.10)',
+  background: theme.palette.mode === 'dark' ? 'rgba(139,92,246,.05)' : 'rgba(139,92,246,.035)',
+});
+
+const StoryEyebrow: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <Typography
+    sx={(theme) => ({
+      fontFamily: '"JetBrains Mono", monospace',
+      fontSize: '.72rem',
+      textTransform: 'uppercase',
+      letterSpacing: '.14em',
+      mb: 2,
+      color: theme.palette.mode === 'dark' ? '#c4b5fd' : '#7c3aed',
+    })}
+  >
+    {children}
+  </Typography>
+);
+
+const StoryPoint: React.FC<{ title: string; children: React.ReactNode }> = ({
+  title,
+  children,
+}) => (
+  <Box sx={{ borderTop: '1px solid', borderColor: 'divider', pt: 2 }}>
+    <Typography component="h3" sx={{ fontSize: '.95rem', fontWeight: 700, mb: 1 }}>
+      {title}
+    </Typography>
+    <Typography
+      sx={{ color: 'text.secondary', fontSize: '.875rem', fontWeight: 400, lineHeight: 1.65 }}
+    >
+      {children}
+    </Typography>
+  </Box>
+);
+
+const pointGridSx = {
+  display: 'grid',
+  gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
+  gap: 3,
+  mt: 4,
+} as const;
+
+const SAFETY_POINTS = [
+  [
+    'Settings editor',
+    'Search labeled SavedVariables, copy character or account settings, and clean up orphaned entries.',
+  ],
+  [
+    'Backups and restores',
+    'Full or per-character backups, with a safety snapshot taken before any restore.',
+  ],
+  [
+    'Addon profiles',
+    'Save enabled-addon setups for different characters or roles and preview the switch, with libraries protected.',
+  ],
+  [
+    'Protected edits',
+    'Edit addon files with backups, per-file conflict diffs, and Safety Center warnings.',
+  ],
+  [
+    'Multiple installs',
+    'Detects native and Steam installs across NA, EU, and PTS, and copies addons between them.',
+  ],
+  ['Signed updates', 'Kalpa updates itself with signed releases.'],
+] as const;
 
 const FAQS: { question: string; answer: string; linkTo?: string; linkLabel?: string }[] = [
   {
@@ -541,74 +451,61 @@ export const KalpaPage: React.FC = () => {
       <FullBleed>
         <HeroSection aria-labelledby="kalpa-hero-heading">
           <HeroContent>
-            <Box sx={{ position: 'relative', zIndex: 1 }}>
+            <Box sx={{ minWidth: 0 }}>
               <Chip
-                label="Free / Public beta / Source available"
+                label="Public beta · Free · Source available"
                 size="small"
-                sx={(theme: Theme) => ({
+                sx={(theme) => ({
                   mb: 2,
-                  fontSize: '0.72rem',
+                  fontSize: '.72rem',
                   fontWeight: 600,
-                  letterSpacing: '0.08em',
+                  letterSpacing: '.08em',
                   textTransform: 'uppercase',
                   color: theme.palette.mode === 'dark' ? '#c4b5fd' : '#7c3aed',
                   background:
-                    theme.palette.mode === 'dark'
-                      ? 'rgba(139, 92, 246, 0.1)'
-                      : 'rgba(139, 92, 246, 0.06)',
-                  border:
-                    theme.palette.mode === 'dark'
-                      ? '1px solid rgba(139, 92, 246, 0.2)'
-                      : '1px solid rgba(139, 92, 246, 0.14)',
+                    theme.palette.mode === 'dark' ? 'rgba(139,92,246,.1)' : 'rgba(139,92,246,.06)',
+                  border: '1px solid',
+                  borderColor:
+                    theme.palette.mode === 'dark' ? 'rgba(139,92,246,.2)' : 'rgba(139,92,246,.14)',
                 })}
               />
               <Typography
-                variant="h1"
+                component="h1"
                 id="kalpa-hero-heading"
                 sx={{
                   fontWeight: 800,
-                  fontSize: { xs: '2.6rem', sm: '3.4rem', md: '3.8rem' },
+                  fontSize: { xs: '2.1rem', sm: '2.6rem', md: '2.75rem', lg: '3.25rem' },
                   lineHeight: 1.05,
-                  letterSpacing: '-0.03em',
-                  mb: 1,
-                }}
-              >
-                <Box component="span" sx={auroraGradientText}>
-                  Kalpa
-                </Box>
-              </Typography>
-              <Typography
-                sx={{
-                  fontSize: { xs: '1.05rem', sm: '1.2rem' },
-                  fontWeight: 600,
+                  letterSpacing: '-.03em',
                   color: 'text.primary',
                   mb: 2,
                 }}
               >
-                Your addons, combat logs, and shared setups. Together.
+                <Box
+                  component="span"
+                  sx={{ ...auroraGradientText, display: 'block', fontSize: '1.5rem', mb: 1 }}
+                >
+                  Kalpa
+                </Box>
+                <Box component="span">The ESO addon manager that also uploads your logs.</Box>
               </Typography>
               <Typography
                 sx={{
-                  color: 'text.secondary',
-                  fontSize: { xs: '0.95rem', sm: '1rem' },
-                  lineHeight: 1.7,
-                  fontWeight: 300,
+                  ...storyBodySx,
+                  fontSize: { xs: '1rem', sm: '1.0625rem' },
+                  maxWidth: '480px',
                   mb: 3,
-                  maxWidth: '680px',
-                  mx: 'auto',
                 }}
               >
-                Manage your Elder Scrolls Online addons, upload fights to ESO Logs, share packs, and
-                protect your settings in one free desktop app. Personalize your workspace and get
-                ready for your next session.
+                Install and update ESOUI addons with their libraries, send fights to ESO Logs while
+                you play, and share your setup through Pack Hub. One free desktop app.
               </Typography>
-
               <Box
                 sx={{
                   display: 'flex',
+                  flexDirection: { xs: 'column', sm: 'row' },
                   gap: 1.5,
                   flexWrap: 'wrap',
-                  justifyContent: 'center',
                 }}
               >
                 <Button
@@ -632,193 +529,194 @@ export const KalpaPage: React.FC = () => {
                   View on GitHub
                 </Button>
               </Box>
-
-              <Box
-                component="ul"
-                aria-label="Kalpa highlights"
-                sx={{
-                  display: 'flex',
-                  gap: 1,
-                  flexWrap: 'wrap',
-                  p: 0,
-                  mt: 3,
-                  listStyle: 'none',
-                  justifyContent: 'center',
-                }}
-              >
-                {['ESOUI addons', 'ESO Logs', 'Pack Hub', 'Minion import'].map((chip) => (
-                  <Chip
-                    key={chip}
-                    component="li"
-                    label={chip}
-                    size="small"
-                    variant="outlined"
-                    sx={(theme: Theme) => ({
-                      fontSize: '0.72rem',
-                      fontWeight: 600,
-                      color: 'text.secondary',
-                      borderColor:
-                        theme.palette.mode === 'dark'
-                          ? 'rgba(139, 92, 246, 0.22)'
-                          : 'rgba(139, 92, 246, 0.16)',
-                      background:
-                        theme.palette.mode === 'dark'
-                          ? 'rgba(139, 92, 246, 0.05)'
-                          : 'rgba(139, 92, 246, 0.03)',
-                    })}
-                  />
-                ))}
-              </Box>
-            </Box>
-
-            <Box component="figure" sx={{ m: 0, minWidth: 0 }}>
-              <Link
-                href={`${getBaseUrl()}images/kalpa/main-desktop.webp`}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Open Kalpa addon manager screenshot full size"
-              >
-                <Box
-                  component="img"
-                  src={`${getBaseUrl()}images/kalpa/main-desktop.webp`}
-                  alt="Kalpa desktop showing installed addons, dependency details, and update controls"
-                  width={1600}
-                  height={900}
-                  sx={{
-                    display: 'block',
-                    width: '100%',
-                    height: 'auto',
-                    borderRadius: 2,
-                    border: '1px solid',
-                    borderColor: 'divider',
-                    boxShadow: '0 24px 60px rgba(0,0,0,0.22)',
-                  }}
-                />
-              </Link>
               <Typography
-                component="figcaption"
-                sx={{ mt: 2, color: 'text.secondary', fontSize: '0.8rem' }}
+                sx={{ mt: 2, fontSize: '.8rem', color: 'text.secondary', lineHeight: 1.6 }}
               >
-                Inside Kalpa. Select the screenshot to view it full size.
+                Windows (best tested) · macOS and Linux builds on GitHub · Source available under
+                BSL 1.1
               </Typography>
             </Box>
+            <KalpaProductShot
+              src={`${getBaseUrl()}images/kalpa/main-desktop.webp`}
+              alt="Kalpa desktop showing installed addons, dependency details, and update controls"
+              caption="The addon library: pending updates, addon details, and required dependencies."
+              priority
+            />
           </HeroContent>
         </HeroSection>
       </FullBleed>
 
-      {/* ─── Feature grid ─── */}
-      <Box
-        component="section"
-        aria-labelledby="kalpa-features-heading"
-        sx={{ py: { xs: 6, md: 8 }, px: { xs: 2, sm: 0 } }}
-      >
-        <Typography component="h2" id="kalpa-features-heading" sx={sectionHeadingSx}>
-          Everything around your next session
-        </Typography>
-        <Typography
-          sx={{ color: 'text.secondary', fontWeight: 300, maxWidth: '560px', lineHeight: 1.7 }}
-        >
-          From installing your first addon to sharing your group setup and reviewing a raid, Kalpa
-          keeps the preparation together.
-        </Typography>
-        <FeatureGrid>
-          {FEATURES.map((feature, index) => (
-            <FeatureCard key={feature.title}>
-              <span className="feature-index">{String(index + 1).padStart(2, '0')}</span>
-              <span className="feature-title">{feature.title}</span>
-              <span className="feature-desc">{feature.description}</span>
-              {feature.linkTo && feature.linkLabel && (
-                <Link
-                  component={RouterLink}
-                  to={feature.linkTo}
-                  className="feature-link"
-                  underline="none"
-                >
-                  {feature.linkLabel} →
-                </Link>
-              )}
-            </FeatureCard>
-          ))}
-        </FeatureGrid>
-      </Box>
-
-      {/* ─── Comparison ─── */}
-      <Box
-        component="section"
-        aria-labelledby="kalpa-comparison-heading"
-        sx={{ pb: { xs: 6, md: 8 }, px: { xs: 2, sm: 0 } }}
-      >
-        <Typography component="h2" id="kalpa-comparison-heading" sx={sectionHeadingSx}>
-          Switching from Minion?
-        </Typography>
-        <Typography
-          sx={{ color: 'text.secondary', fontWeight: 300, maxWidth: '560px', lineHeight: 1.7 }}
-        >
-          Bring your existing addon library with you. Preview the Minion import and review integrity
-          checks before applying it; Kalpa creates a backup snapshot and keeps your original Minion
-          data.
-        </Typography>
-      </Box>
-
-      <Box
-        component="section"
-        aria-labelledby="kalpa-gallery-heading"
-        sx={{ pb: { xs: 6, md: 8 }, px: { xs: 2, sm: 0 } }}
-      >
-        <Typography component="h2" id="kalpa-gallery-heading" sx={sectionHeadingSx}>
-          A closer look at Kalpa
-        </Typography>
+      <FullBleed>
         <Box
-          sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3, mt: 3 }}
+          sx={{
+            maxWidth: '1200px',
+            mx: 'auto',
+            px: { xs: 2, sm: 3, md: 4 },
+            py: { xs: 7, md: 12 },
+            display: 'grid',
+            gap: { xs: 7, md: 12 },
+          }}
         >
-          {[
-            {
-              file: 'discover',
-              title: 'Find your next addon',
-              alt: 'Kalpa Discover browsing popular ESOUI addons and LoreBooks details',
-              text: 'Browse popular addons, explore categories, and review details before installing.',
-            },
-            {
-              file: 'themes',
-              title: 'Make it your workspace',
-              alt: 'Kalpa appearance settings showing Elder Scrolls theme choices',
-              text: 'Pick an Elder Scrolls skin or customize colors, contrast, and scale to suit you.',
-            },
-          ].map((shot) => (
-            <Box component="figure" key={shot.file} sx={{ m: 0, minWidth: 0 }}>
-              <Link
-                href={`${getBaseUrl()}images/kalpa/${shot.file}.webp`}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label={`Open ${shot.title} screenshot full size`}
-              >
-                <Box
-                  component="img"
-                  src={`${getBaseUrl()}images/kalpa/${shot.file}.webp`}
-                  alt={shot.alt}
-                  width={1600}
-                  height={900}
-                  loading="lazy"
-                  sx={{
-                    width: '100%',
-                    height: 'auto',
-                    display: 'block',
-                    borderRadius: 2,
-                    border: '1px solid',
-                    borderColor: 'divider',
-                  }}
-                />
-              </Link>
-              <Box component="figcaption" sx={{ mt: 2 }}>
-                <Typography component="h3" sx={{ fontWeight: 700 }}>
-                  {shot.title}
-                </Typography>
-                <Typography sx={{ color: 'text.secondary', mt: 0.5 }}>{shot.text}</Typography>
+          <Box component="section" aria-labelledby="kalpa-addons-heading" sx={storyGridSx}>
+            <Box>
+              <StoryEyebrow>01 · Addons</StoryEyebrow>
+              <Typography component="h2" id="kalpa-addons-heading" sx={storyHeadingSx}>
+                Find it, install it, keep it current.
+              </Typography>
+              <Typography sx={storyBodySx}>
+                Search ESOUI, browse popular addons and categories, or install straight from a URL
+                or ID. When updates land, update your whole library in one pass.
+              </Typography>
+              <Box sx={pointGridSx}>
+                <StoryPoint title="Dependencies checked first">
+                  Kalpa lists required and optional libraries and checks transitive dependencies and
+                  versions before it installs anything.
+                </StoryPoint>
+                <StoryPoint title="Organized your way">
+                  Tags, favorites, compatibility checks, and JSON import or export for your addon
+                  list.
+                </StoryPoint>
               </Box>
             </Box>
-          ))}
+            <KalpaProductShot
+              src={`${getBaseUrl()}images/kalpa/discover.webp`}
+              alt="Kalpa Discover browsing popular ESOUI addons and LoreBooks details"
+              caption="Discover: popular ESOUI addons with downloads, screenshots, and one-click install."
+            />
+          </Box>
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3 }}>
+            <Box component="section" aria-labelledby="kalpa-logs-heading" sx={storyPanelSx}>
+              <StoryEyebrow>02 · ESO Logs</StoryEyebrow>
+              <Typography
+                component="h2"
+                id="kalpa-logs-heading"
+                sx={{ ...storyHeadingSx, fontSize: { xs: '1.75rem', md: '1.9rem' } }}
+              >
+                Fights to ESO Logs, straight from the app.
+              </Typography>
+              <Typography sx={storyBodySx}>
+                Sign in with your ESO Logs account, choose who can see the report, and upload a
+                saved log or keep live logging running while you play.
+              </Typography>
+              <Box sx={pointGridSx}>
+                <StoryPoint title="Sessions and fights">
+                  Split a log into sessions and pick individual fights, with difficulty and kill
+                  markers.
+                </StoryPoint>
+                <StoryPoint title="Upload history">
+                  See what you&apos;ve already sent, or hand off to the official uploader when you
+                  prefer.
+                </StoryPoint>
+              </Box>
+            </Box>
+            <Box component="section" aria-labelledby="kalpa-packs-heading" sx={storyPanelSx}>
+              <StoryEyebrow>03 · Pack Hub</StoryEyebrow>
+              <Typography
+                component="h2"
+                id="kalpa-packs-heading"
+                sx={{ ...storyHeadingSx, fontSize: { xs: '1.75rem', md: '1.9rem' } }}
+              >
+                Share a whole setup in six characters.
+              </Typography>
+              <Typography sx={storyBodySx}>
+                Publish addon, build, and roster packs, vote on the ones that work, and pass them on
+                as a six-character code or an .esopack file.
+              </Typography>
+              <Box sx={pointGridSx}>
+                <StoryPoint title="Required or optional">
+                  Addon packs mark which addons are required and which are optional.
+                </StoryPoint>
+                <StoryPoint title="Scrubbed exports">
+                  Exported settings have account identifiers removed.
+                </StoryPoint>
+              </Box>
+              <Link
+                component={RouterLink}
+                to="/pack-hub"
+                sx={{ display: 'inline-block', mt: 3, fontWeight: 600 }}
+              >
+                Browse Pack Hub →
+              </Link>
+            </Box>
+          </Box>
+          <Box
+            component="section"
+            aria-labelledby="kalpa-appearance-heading"
+            sx={{
+              ...storyGridSx,
+              gridTemplateColumns: { xs: '1fr', md: 'minmax(0, 7fr) minmax(0, 5fr)' },
+            }}
+          >
+            <Box>
+              <StoryEyebrow>04 · Make it yours</StoryEyebrow>
+              <Typography component="h2" id="kalpa-appearance-heading" sx={storyHeadingSx}>
+                54 themes. Eight Elder Scrolls skins. Or your own.
+              </Typography>
+              <Typography sx={storyBodySx}>
+                Dress Kalpa in Dwemer Brass or Clockwork City, or build a theme from scratch.
+              </Typography>
+              <Box sx={{ mt: 4 }}>
+                <StoryPoint title="Comfortable to use">
+                  Light and high-contrast options, UI scaling, and keyboard shortcuts.
+                </StoryPoint>
+              </Box>
+            </Box>
+            <Box sx={{ minWidth: 0, order: { md: -1 } }}>
+              <KalpaProductShot
+                src={`${getBaseUrl()}images/kalpa/themes.webp`}
+                alt="Kalpa appearance settings showing Elder Scrolls theme choices"
+                caption="Appearance settings with Elder Scrolls–inspired themes."
+              />
+            </Box>
+          </Box>
+          <Box component="section" aria-labelledby="kalpa-safety-heading">
+            <StoryEyebrow>05 · Your settings, protected</StoryEyebrow>
+            <Typography component="h2" id="kalpa-safety-heading" sx={storyHeadingSx}>
+              Careful with the files you can&apos;t replace.
+            </Typography>
+            <Typography sx={{ ...storyBodySx, maxWidth: '700px' }}>
+              Backups before edits, a snapshot before every restore, and a preview before you switch
+              profiles or import from Minion.
+            </Typography>
+            <Box
+              sx={{
+                ...pointGridSx,
+                gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: 'repeat(3, 1fr)' },
+                gap: { xs: 3, md: 4 },
+              }}
+            >
+              {SAFETY_POINTS.map(([title, description]) => (
+                <StoryPoint key={title} title={title}>
+                  {description}
+                </StoryPoint>
+              ))}
+            </Box>
+            <Box
+              sx={(theme) => ({
+                ...storyPanelSx(theme),
+                mt: 4,
+                position: 'relative',
+                overflow: 'hidden',
+                '&::before': {
+                  content: '""',
+                  position: 'absolute',
+                  inset: '0 auto 0 0',
+                  width: '3px',
+                  background: 'linear-gradient(#a78bfa, #6366f1)',
+                },
+              })}
+            >
+              <Typography component="h3" sx={{ fontWeight: 700, mb: 1 }}>
+                Switching from Minion?
+              </Typography>
+              <Typography sx={storyBodySx}>
+                Preview the Minion import and review integrity checks before applying it; Kalpa
+                creates a backup snapshot and keeps your original Minion data.
+              </Typography>
+            </Box>
+          </Box>
         </Box>
-      </Box>
+      </FullBleed>
 
       {/* ─── FAQ ─── */}
       <Box
@@ -883,13 +781,13 @@ export const KalpaPage: React.FC = () => {
             <Typography
               sx={{
                 color: 'text.secondary',
-                fontWeight: 300,
+                fontWeight: 400,
                 lineHeight: 1.7,
                 mb: 3.5,
               }}
             >
-              Try the public beta for free. Windows is the best-tested platform; macOS and Linux
-              builds are also available on GitHub.
+              Kalpa is free and in public beta. Windows is the best-tested platform; macOS and Linux
+              builds are newer and available on GitHub.
             </Typography>
             <Box
               sx={{

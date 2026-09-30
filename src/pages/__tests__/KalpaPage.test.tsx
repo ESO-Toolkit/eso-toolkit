@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import React from 'react';
 import '@testing-library/jest-dom';
 import { MemoryRouter } from 'react-router-dom';
@@ -33,7 +33,7 @@ describe('KalpaPage', () => {
     expect(headings).toHaveLength(1);
     expect(headings[0]).toHaveTextContent('Kalpa');
     expect(
-      screen.getByText('Your addons, combat logs, and shared setups. Together.'),
+      screen.getByText('The ESO addon manager that also uploads your logs.'),
     ).toBeInTheDocument();
   });
 
@@ -57,42 +57,43 @@ describe('KalpaPage', () => {
     }
   });
 
-  it('renders all twelve numbered features and links Pack Hub internally', () => {
+  it('groups the verified capabilities into five pillars and links Pack Hub internally', () => {
     renderPage();
-
-    const featuresSection = screen
-      .getByRole('heading', { level: 2, name: 'Everything around your next session' })
-      .closest('section');
-    expect(featuresSection).not.toBeNull();
-
-    const expectedFeatures = [
-      'Discover and update addons',
-      'Dependency resolution',
-      'ESO Logs uploads',
-      'Live logging and fight selection',
-      'Pack Hub',
+    for (const name of [
+      'Find it, install it, keep it current.',
+      'Fights to ESO Logs, straight from the app.',
+      'Share a whole setup in six characters.',
+      '54 themes. Eight Elder Scrolls skins. Or your own.',
+      "Careful with the files you can't replace.",
+    ]) {
+      expect(screen.getByRole('heading', { level: 2, name })).toBeInTheDocument();
+    }
+    for (const name of [
       'Settings editor',
       'Backups and restores',
       'Addon profiles',
-      'Themes and accessibility',
       'Protected edits',
-      'Minion migration and multiple installs',
-      'Everyday library tools',
-    ];
-    for (const title of expectedFeatures) {
-      expect(within(featuresSection as HTMLElement).getByText(title)).toBeInTheDocument();
+      'Multiple installs',
+      'Signed updates',
+    ]) {
+      expect(screen.getByRole('heading', { level: 3, name })).toBeInTheDocument();
     }
-
-    const packHubLinks = within(featuresSection as HTMLElement).getAllByRole('link', {
-      name: /browse pack hub/i,
-    });
-    expect(packHubLinks[0]).toHaveAttribute('href', '/pack-hub');
+    expect(screen.getByRole('link', { name: /browse pack hub/i })).toHaveAttribute(
+      'href',
+      '/pack-hub',
+    );
   });
 
   it('shows authentic screenshots with accessible descriptions and full-size links', () => {
     renderPage();
     const images = screen.getAllByRole('img');
     expect(images).toHaveLength(3);
+    expect(images[0]).toHaveAttribute('loading', 'eager');
+    expect(images[0]).toHaveAttribute('fetchpriority', 'high');
+    for (const image of images.slice(1)) {
+      expect(image).toHaveAttribute('loading', 'lazy');
+      expect(image).not.toHaveAttribute('fetchpriority');
+    }
     for (const image of images) {
       expect(image).toHaveAttribute('width', '1600');
       expect(image).toHaveAttribute('height', '900');
