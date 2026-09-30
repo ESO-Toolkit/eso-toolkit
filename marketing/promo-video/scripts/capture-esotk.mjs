@@ -13,11 +13,14 @@ const FIGHT = `${SITE}/report/F4f2bMwWtgVKxjB9/fight/39`;
 const REPLAY = `${SITE}/report/WQ8L41tVhbFHCca2/fight/6/replay`;
 // A community roster from Roster Hub whose tanks and healers are fully specified.
 const ROSTER = `${SITE}/rv?id=3x2g1m5l284l`;
+// A veteran Tideborn Taleria kill from Latest Reports where several players died and were rezzed,
+// for the damage and healing tables' deaths and resurrects columns.
+const MESSY = `${SITE}/report/RGdrpvbgmXcVaCkJ/fight/25`;
 const ROSTER_TITLE = 'Aedra — Cloudrest #1';
 
 const only = process.argv[2];
 // Shots taller than the viewport are captured at 2x to keep their textures a manageable size.
-const TALL = ['rosterBuilder', 'outroPanels'];
+const TALL = ['rosterBuilder', 'outroPanels', 'chapter1'];
 
 const setup = () => {
   try {
@@ -474,6 +477,140 @@ const shots = {
         trial: [/^Spike.s Trial Necessities$/, 250, 400, 400],
       }),
     );
+  },
+  // Chapter 1: the Insights page as one tall still for the scroll, and the damage and healing
+  // tables (plus the death recap) from a messier kill of the same boss.
+  chapter1: async (page) => {
+    await page.setViewportSize({ width: 1920, height: 1080 });
+    await open(page, `${FIGHT}/insights`, 16000);
+    await page.setViewportSize({ width: 1920, height: 2300 });
+    await page.evaluate(() => scrollTo(0, 0));
+    await page.waitForTimeout(2500);
+    await page.mouse.move(5, 5);
+    await still(page, 'tk-insights-page');
+    await rects(
+      'tk-insights-page',
+      await measureView(page, {
+        header: [/^Tideborn Taleria$/, 800, 150, 900],
+        fight: [/^Fight Insights$/, 380, 300, 420],
+        abilities: [/^Key Group Abilities:?$/, 360, 200, 420],
+        colossus: [/^Colossus$/, 300, 40, 380],
+        barrier: [/^Barrier$/, 300, 40, 380],
+        horn: [/^Horn$/, 300, 40, 380],
+        champion: [/^Key Champion Points:?$/, 360, 100, 420],
+        status: [/^Status Effect Uptimes$/, 380, 300, 420],
+        buffs: [/^Buff Uptimes$/, 380, 300, 420],
+        debuffs: [/^Debuff Uptimes$/, 380, 300, 420],
+        breakdown: [/^Damage Breakdown$/, 380, 200, 420],
+        byType: [/^Damage by Type$/, 380, 200, 420],
+      }),
+    );
+
+    // The table columns and each player's deaths, resurrects and casts-per-minute cells.
+    const table = async (name, url) => {
+      await page.setViewportSize({ width: 1920, height: 1080 });
+      await open(page, url, 18000);
+      await page.setViewportSize({ width: 1920, height: 1600 });
+      await page.evaluate(() => scrollTo(0, 0));
+      await page.waitForTimeout(2500);
+      await page.mouse.move(5, 5);
+      await still(page, name);
+      await rects(
+        name,
+        await page.evaluate(() => {
+          const vis = (e) => {
+            const r = e.getBoundingClientRect();
+            return r.width > 0 && r.height > 0 && r.x < innerWidth && r.bottom > 0;
+          };
+          const box = (e) => {
+            const r = e.getBoundingClientRect();
+            return [r.x, r.y, r.width, r.height];
+          };
+          const nameHead = [...document.querySelectorAll('[aria-label="Sort by Name"]')].find(vis);
+          const headY = nameHead.getBoundingClientRect().y;
+          const columns = {};
+          for (const [key, label] of [
+            ['name', 'Sort by Name'],
+            ['dps', 'Sort by DPS'],
+            ['active', 'Sort by Active DPS'],
+            ['crit', 'Sort by Critical damage share'],
+            ['amount', 'Sort by Amount'],
+            ['hps', 'Sort by HPS'],
+            ['overheal', 'Sort by Overheal'],
+            ['rawHps', 'Sort by Raw HPS'],
+            ['deaths', 'Deaths'],
+            ['resurrects', 'Resurrects'],
+            ['cpm', 'Casts per minute'],
+          ]) {
+            // Header cells on the header row; the healing table marks deaths and resurrects with
+            // small icons, widened here to their column's width.
+            const e = [...document.querySelectorAll(`[aria-label="${label}"]`)]
+              .filter(vis)
+              .find((c) => Math.abs(c.getBoundingClientRect().y - headY) < 20);
+            if (!e) continue;
+            const r = box(e);
+            columns[key] = r[2] < 40 ? [r[0] + r[2] / 2 - 35, r[1], 70, r[3]] : r;
+          }
+          // Rows: the innermost full-width blocks below the header.
+          const blocks = [...document.querySelectorAll('div')].filter((e) => {
+            const r = e.getBoundingClientRect();
+            return (
+              vis(e) &&
+              r.width > 790 &&
+              r.width < 840 &&
+              r.height > 40 &&
+              r.height < 100 &&
+              r.y > headY + 10
+            );
+          });
+          const rows = blocks
+            .filter((b) => !blocks.some((o) => o !== b && b.contains(o)))
+            .map((row) => {
+              const cell = (re) => {
+                const e = [...row.querySelectorAll('*')].find(
+                  (c) => c.childElementCount <= 2 && re.test(c.textContent.trim()) && vis(c),
+                );
+                return e ? { text: e.textContent.trim(), rect: box(e) } : null;
+              };
+              const name = [...row.querySelectorAll('*')].find(
+                (c) =>
+                  c.childElementCount === 0 && /^(@\S+|Anonymous \d+)$/.test(c.textContent.trim()),
+              );
+              return {
+                name: name ? name.textContent.trim() : null,
+                rect: box(row),
+                deaths: cell(/^💀\s*\d+$/),
+                resurrects: cell(/^❤️\s*\d+$/),
+              };
+            })
+            .filter((r) => r.name);
+          const heads = Object.values(columns);
+          const top = Math.min(...heads.map((r) => r[1])) - 12;
+          const bottom = Math.max(...rows.map((r) => r.rect[1] + r.rect[3]));
+          const left = Math.min(...rows.map((r) => r.rect[0]));
+          const right = Math.max(...rows.map((r) => r.rect[0] + r.rect[2]));
+          const title = [...document.querySelectorAll('h1,h2,h3,h4,h5,h6,p,span,div')]
+            .filter(vis)
+            .find((e) => e.childElementCount <= 2 && /Done By Player$/.test(e.textContent.trim()));
+          return {
+            table: [left, top, right - left, bottom - top],
+            title: title ? box(title) : null,
+            columns,
+            rows,
+          };
+        }),
+      );
+    };
+    await table('tk-damage-table', `${MESSY}/damage-done`);
+    await table('tk-healing-table', `${MESSY}/healing-done`);
+
+    await page.setViewportSize({ width: 1920, height: 1080 });
+    await open(page, `${MESSY}/deaths`, 16000);
+    await page.setViewportSize({ width: 1920, height: 1400 });
+    await page.evaluate(() => scrollTo(0, 220));
+    await page.waitForTimeout(2000);
+    await page.mouse.move(5, 5);
+    await still(page, 'tk-deaths-messy');
   },
   // The outro's ESO Toolkit half: the death recap from an earlier wipe on the same boss, then the
   // synergy breakdown of the kill. Tall stills from the fight header down into each panel.

@@ -11,6 +11,8 @@ export const INK = {
   aqua: '#00e1ff',
   violet: '#a78bfa',
   gold: '#f2c94c',
+  red: '#f87171',
+  green: '#4ade80',
 };
 
 /** Reveal/hide progress for an element shown between `a` and `b` (seconds). */

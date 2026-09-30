@@ -161,9 +161,9 @@ const LOOP = ['Dm', 'Bb', 'F', 'C'];
 // decoded; the full groove on the 3D reveal, dropping out for each chapter title; back to pads
 // for the outro, resolving on the logo.
 const C = CUES;
-const padStart = TIMELINE.narration.logs - 0.2;
+const padStart = C.formPage - 0.3;
 const drop = C.reads + 0.9;
-const lift = C.groups - 0.25;
+const lift = C.lift;
 const full = C.full;
 const calm = C.o1 - 0.2;
 const ctaHit = C.free + 2.2;
@@ -608,14 +608,13 @@ function build(ctx, t0, t1) {
   bell(0.5, 74, 0.55, 2.4);
   bell(0.58, 81, 0.3, 2.0);
 
-  // Tabs lighting up on "every hit, every heal, every buff".
-  [C.hit, C.heal, C.buff].forEach((t, i) => tick(t, 0.9, 2200 + i * 300));
   // The link's domain scrambling from esologs.com to esotk.com.
   for (let k = 0; k < 12; k++) tick(C.paste + 0.1 + k * 0.065, 0.55, 2600 + (k % 4) * 250);
   // Rows landing on set chips, then skill-bar entries landing on icons.
   for (let i = 0; i < 13; i++) tick(C.groups + i * 0.055 + 0.95, 0.5, 1800 + i * 60);
   for (let i = 0; i < 12; i++) tick(C.lays + i * 0.05 + 0.85, 0.45, 2600 + i * 50);
-  // Scribing rows highlighting as they are named, and the later chapters' highlights.
+  // Highlights as things are named: Insights panels, table columns, scribing rows and the later
+  // chapters.
   [C.focus, C.signature, C.affix, ...C.clicks].forEach((t) => uiClick(t));
 
   // Transitions and reveals.

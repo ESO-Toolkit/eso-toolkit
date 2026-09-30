@@ -1,7 +1,7 @@
 {
   "voice": {
-    "id": "nPczCjzI2devNBz1zQrb",
-    "name": "Brian"
+    "id": "XfNU2rGpBa01ckF309OY",
+    "name": "Nichalia"
   },
   "model": "eleven_v4",
   "settings": {
@@ -19,48 +19,52 @@
   },
   "lines": [
     {
-      "id": "open",
-      "say": "Every pull you log is full of answers."
+      "id": "intro",
+      "say": "This is a vet hard mode Tideborn Taleria kill, uploaded to E-S-O Logs."
     },
     {
-      "id": "logs",
-      "say": "E-S-O Logs records all of it. Every hit, every heal, every buff."
+      "id": "paste",
+      "say": "Paste the same link into E-S-O Toolkit."
     },
     {
-      "id": "toolkit",
-      "say": "E-S-O Toolkit reads that same log, and shows you what it means. Just paste the link."
+      "id": "insights",
+      "say": "The insights page answers the usual post-pull questions: who ran Colossus, Barrier and Horn, which champion points were slotted, how long the key buffs and debuffs stayed up, and where the damage came from."
+    },
+    {
+      "id": "tables",
+      "say": "The damage and healing tables show who died, who got rezzed, and everyone's casts per minute."
     },
     {
       "id": "gear",
-      "say": "Here's one tank's gear in E-S-O Logs. Thirteen items, one per row. E-S-O Toolkit groups them into sets, lays out both skill bars the way they look in game, and checks the build for common mistakes."
+      "say": "E-S-O Logs lists a player's gear one item per row. E-S-O Toolkit groups it into sets, shows both bars the way they look in game, and flags low-quality gear and enchants."
     },
     {
       "id": "scribe",
-      "say": "That scribed skill? E-S-O Toolkit works out its focus, signature and affix scripts from the fight itself."
+      "say": "It also works out which scripts a scribed skill was running, from the combat events."
     },
     {
       "id": "replay",
-      "say": "E-S-O Logs replays a fight from above. E-S-O Toolkit rebuilds it in 3D. Orbit the arena, follow any player, and rewatch the moment that mattered."
+      "say": "E-S-O Logs replays the fight on a flat map. E-S-O Toolkit rebuilds it in 3D, so you can orbit the arena and follow any player."
     },
     {
       "id": "builds",
-      "say": "Found a build worth copying? Send it to the Build Editor. Or start from what top players run. The Build Leaderboard sorts top-ranked parses into the builds behind them, by class and by boss."
+      "say": "To copy a build, send it straight to the Build Editor. Or start from what top players run: the Build Leaderboard groups top-ranked parses by the build behind them, for each class and boss."
     },
     {
       "id": "calc",
-      "say": "Then check the math. Plan a scribed skill script by script, and work out your penetration and crit in the calculators."
+      "say": "The scribing planner builds a skill one script at a time, and the calculators check your penetration and crit."
     },
     {
       "id": "roster",
-      "say": "Leading a trial? The Roster Builder plans the whole group. Tanks, healers and damage dealers, their sets and ultimates, even builds for each fight. Share it as a link, publish it to Roster Hub, or post it to Discord, where the roster bot takes sign-ups."
+      "say": "For trials, the Roster Builder plans the whole group: tanks, healers and damage dealers, their sets and ultimates, and separate builds for each fight. Share it as a link, publish it to Roster Hub, or post it to Discord, where the roster bot takes sign-ups."
     },
     {
       "id": "kalpa",
-      "say": "And for your addons, there's Kalpa. A free addon manager that installs and updates them in one click, pulls in the libraries they need, and installs whole community packs from Pack Hub."
+      "say": "For addons there is Kalpa, a free addon manager. It installs and updates addons in one click, pulls in the libraries they depend on, and installs whole community packs from Pack Hub."
     },
     {
       "id": "outro",
-      "say": "E-S-O Logs records the fight. E-S-O Toolkit helps you understand it, and get ready for the next one. Free, at E-S-O-T-K dot com."
+      "say": "E-S-O Logs records the fight. E-S-O Toolkit shows you what happened, and what to fix next time. It's free, at E-S-O-T-K dot com."
     }
   ]
 }

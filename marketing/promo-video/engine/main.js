@@ -31,7 +31,6 @@ const CAPTURES = '../out/captures';
 const STILLS = [
   'el-damage',
   'el-player',
-  'tk-insights',
   'tk-players',
   'tk-scribing',
   'tk-build',
@@ -49,8 +48,11 @@ const STILLS = [
   'tk-kalpa',
   'tk-kalpa-features',
   'tk-pack-hub',
-  'tk-deaths',
   'tk-synergies',
+  'tk-insights-page',
+  'tk-damage-table',
+  'tk-healing-table',
+  'tk-deaths-messy',
 ];
 const CLIPS = {
   'el-replay': [1920, 1080],
@@ -75,6 +77,9 @@ const LAYOUTS = [
   'tk-kalpa',
   'tk-kalpa-features',
   'tk-pack-hub',
+  'tk-insights-page',
+  'tk-damage-table',
+  'tk-healing-table',
 ];
 
 async function bitmap(url) {
