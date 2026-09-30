@@ -149,7 +149,8 @@ if (stills) {
       'bt709',
       '-movflags',
       '+faststart',
-      ...(withAudio ? ['-c:a', 'aac', '-b:a', '320k', '-shortest'] : []),
+      // The 18 kHz cutoff stops the AAC encoder overshooting the mastered true peak.
+      ...(withAudio ? ['-c:a', 'aac', '-b:a', '320k', '-cutoff', '18000', '-shortest'] : []),
       output,
     ],
     { stdio: ['pipe', 'inherit', 'inherit'] },

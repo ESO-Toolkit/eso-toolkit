@@ -581,7 +581,8 @@ sfxDuck.gain.setValueCurveAtTime(
 );
 
 // ---------------------------------------------------------------------------------------------
-// Render, then loudness-normalize to -14 LUFS / -1.5 dBTP with ffmpeg (two-pass, linear).
+// Render, then loudness-normalize to -14 LUFS with ffmpeg (two-pass, linear). The -3 dBFS
+// limiter ceiling and the encoders' 18 kHz cutoff keep the AAC true peak under -1.5 dBTP.
 
 const rendered = await ctx.startRendering();
 const L = rendered.getChannelData(0);
@@ -647,7 +648,7 @@ execFileSync(ffmpegPath, [
   '-i',
   raw,
   '-af',
-  `volume=${gainDb.toFixed(2)}dB,alimiter=limit=0.83:attack=2:release=60:level=disabled`,
+  `volume=${gainDb.toFixed(2)}dB,alimiter=limit=0.71:attack=2:release=60:level=disabled`,
   '-ar',
   String(SR),
   '-c:a',
