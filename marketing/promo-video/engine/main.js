@@ -445,13 +445,17 @@ if (mode) {
           (_, i) => i + Number(params.get('start')),
         );
   // Each frame uploads while the next one renders (one upload in flight, so frames stay in order).
-  // A Blob body uploads about three times faster than a typed array of the same size.
+  // A Blob body uploads several times faster than a typed array (a 4K frame: ~0.3 s against
+  // ~2.5 s), but Blobs are only freed on garbage collection, which a page this light on JS rarely
+  // runs; without the forced collection (render.mjs exposes gc) a 4K render fills Chrome's blob
+  // storage within about a hundred frames.
   let upload = Promise.resolve();
-  for (const f of frames) {
+  for (const [n, f] of frames.entries()) {
     await engine.renderFrame(f);
     const body = new Blob([engine.readFrame()]);
     await upload;
     upload = fetch(`/frame?i=${f}`, { method: 'POST', body });
+    if (n % 8 === 7) globalThis.gc?.();
   }
   await upload;
   await fetch('/done', { method: 'POST' });

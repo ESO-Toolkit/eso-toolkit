@@ -183,6 +183,8 @@ const browser = await chromium.launch({
     '--ignore-gpu-blocklist',
     '--disable-gpu-vsync',
     '--disable-frame-rate-limit',
+    // The page forces garbage collection to free each uploaded frame (see engine/main.js).
+    '--js-flags=--expose-gc',
   ],
 });
 // Renders run for over an hour; if the page crashes or drops a frame, reopen it and carry on
