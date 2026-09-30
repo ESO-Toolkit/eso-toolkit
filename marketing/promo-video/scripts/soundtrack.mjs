@@ -652,39 +652,47 @@ if (STEM) {
 
 // Measure integrated loudness, then apply one static gain to -14 LUFS and catch the few
 // transients above the ceiling with a fast limiter (no dynamic loudness riding).
-const probe = spawnSync(
-  ffmpegPath,
-  [
+/** Integrated loudness (LUFS) of an audio file. */
+const loudness = (file) => {
+  const out = spawnSync(
+    ffmpegPath,
+    ['-hide_banner', '-nostats', '-i', file, '-af', 'ebur128', '-f', 'null', '-'],
+    { encoding: 'utf8' },
+  ).stderr;
+  return Number(
+    out
+      .match(/I:\s+(-?[\d.]+) LUFS/g)
+      .at(-1)
+      .match(/-?[\d.]+/)[0],
+  );
+};
+const finalWav = path.join(outDir, 'soundtrack.wav');
+const masterTo = (gainDb) =>
+  execFileSync(ffmpegPath, [
     '-hide_banner',
+    '-loglevel',
+    'error',
+    '-y',
     '-i',
     raw,
     '-af',
-    'loudnorm=I=-14:TP=-1.5:LRA=11:print_format=json',
-    '-f',
-    'null',
-    '-',
-  ],
-  {
-    encoding: 'utf8',
-  },
-).stderr;
-const stats = JSON.parse(probe.slice(probe.lastIndexOf('{')));
-const gainDb = -14 - Number(stats.input_i);
-execFileSync(ffmpegPath, [
-  '-hide_banner',
-  '-loglevel',
-  'error',
-  '-y',
-  '-i',
-  raw,
-  '-af',
-  `volume=${gainDb.toFixed(2)}dB,alimiter=limit=0.71:attack=2:release=60:level=disabled`,
-  '-ar',
-  String(SR),
-  '-c:a',
-  'pcm_s16le',
-  path.join(outDir, 'soundtrack.wav'),
-]);
+    `volume=${gainDb.toFixed(2)}dB,alimiter=limit=0.71:attack=2:release=60:level=disabled`,
+    '-ar',
+    String(SR),
+    '-c:a',
+    'pcm_s16le',
+    finalWav,
+  ]);
+// The limiter shaves some loudness off (more as the gain rises), so measure the result and
+// correct the gain until it lands within 0.15 dB of -14 LUFS.
+const mixLufs = loudness(raw);
+let gainDb = -14 - mixLufs;
+masterTo(gainDb);
+for (let pass = 0, lufs = loudness(finalWav); pass < 3 && Math.abs(-14 - lufs) > 0.15; pass++) {
+  gainDb += -14 - lufs;
+  masterTo(gainDb);
+  lufs = loudness(finalWav);
+}
 console.log(
-  `soundtrack.wav: ${DURATION.toFixed(2)}s, narration ${narrationLufs} LUFS levelled to -22, mix ${stats.input_i} LUFS + ${gainDb.toFixed(1)} dB -> -14 LUFS`,
+  `soundtrack.wav: ${DURATION.toFixed(2)}s, narration ${narrationLufs} LUFS levelled to -22, mix ${mixLufs} LUFS + ${gainDb.toFixed(1)} dB -> ${loudness(finalWav)} LUFS`,
 );
