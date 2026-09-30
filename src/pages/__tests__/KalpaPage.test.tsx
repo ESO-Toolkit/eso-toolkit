@@ -17,7 +17,7 @@ describe('KalpaPage', () => {
   it('sets the document title matching the prerendered static route title', () => {
     renderPage();
 
-    expect(document.title).toBe('Kalpa: ESO Addon Manager & Log Uploader | ESO Toolkit');
+    expect(document.title).toBe('Kalpa: ESO Addons, Graphics & Logs | ESO Toolkit');
     expect(document.title).toBe(KALPA_PAGE_TITLE);
     // The prerender script (scripts/generate-static-routes.cjs) stamps this very
     // entry into build/kalpa/index.html, so matching it here proves the
@@ -32,15 +32,13 @@ describe('KalpaPage', () => {
     const headings = screen.getAllByRole('heading', { level: 1 });
     expect(headings).toHaveLength(1);
     expect(headings[0]).toHaveTextContent('Kalpa');
-    expect(
-      screen.getByText('The ESO addon manager that also uploads your logs.'),
-    ).toBeInTheDocument();
+    expect(screen.getByText('Your ESO setup, in one place.')).toBeInTheDocument();
   });
 
   it('links the download CTA to the releases page and GitHub CTA to the repo, both external', () => {
     renderPage();
 
-    const downloadLinks = screen.getAllByRole('link', { name: /download for windows/i });
+    const downloadLinks = screen.getAllByRole('link', { name: /download kalpa/i });
     expect(downloadLinks.length).toBeGreaterThanOrEqual(1);
     for (const link of downloadLinks) {
       expect(link).toHaveAttribute('href', 'https://github.com/ESO-Toolkit/kalpa/releases/latest');
@@ -57,13 +55,14 @@ describe('KalpaPage', () => {
     }
   });
 
-  it('groups the verified capabilities into five pillars and links Pack Hub internally', () => {
+  it('groups the verified capabilities into six pillars and links Pack Hub internally', () => {
     renderPage();
     for (const name of [
       'Find it, install it, keep it current.',
+      "See what's running. Shape how ESO looks.",
       'Fights to ESO Logs, straight from the app.',
       'Share a whole setup in six characters.',
-      '54 themes. Eight Elder Scrolls skins. Or your own.',
+      '58 themes. 12 Elder Scrolls skins. Or your own.',
       "Careful with the files you can't replace.",
     ]) {
       expect(screen.getByRole('heading', { level: 2, name })).toBeInTheDocument();
@@ -87,7 +86,7 @@ describe('KalpaPage', () => {
   it('shows authentic screenshots with accessible enlargement controls', () => {
     renderPage();
     const images = screen.getAllByRole('img');
-    expect(images).toHaveLength(3);
+    expect(images).toHaveLength(5);
     expect(images[0]).toHaveAttribute('loading', 'eager');
     expect(images[0]).toHaveAttribute('fetchpriority', 'high');
     for (const image of images.slice(1)) {
@@ -107,7 +106,7 @@ describe('KalpaPage', () => {
     ).toBeInTheDocument();
   });
 
-  it('renders eight FAQ entries', () => {
+  it('renders nine FAQ entries', () => {
     renderPage();
 
     expect(
@@ -123,6 +122,7 @@ describe('KalpaPage', () => {
       'What is Pack Hub?',
       'Can I upload combat logs to ESO Logs?',
       'Does Kalpa run on Mac or Linux?',
+      'Does Graphics Stack install ReShade or NVIDIA runtimes?',
     ];
     for (const question of questions) {
       expect(screen.getByRole('button', { name: question })).toBeInTheDocument();
@@ -153,7 +153,7 @@ describe('KalpaPage', () => {
     const faq = byType.get('FAQPage') as {
       mainEntity: { name: string; acceptedAnswer: { text: string } }[];
     };
-    expect(faq.mainEntity).toHaveLength(8);
+    expect(faq.mainEntity).toHaveLength(9);
     expect(faq.mainEntity[0].name).toBe('Is Kalpa free?');
 
     // The structured data answers must appear verbatim in the rendered page.
@@ -172,6 +172,6 @@ describe('KalpaPage', () => {
     expect(closingHeading).toBeInTheDocument();
 
     const contributionLink = screen.getByRole('link', { name: /open an issue on github/i });
-    expect(contributionLink).toHaveAttribute('href', 'https://github.com/ESO-Toolkit/kalpa');
+    expect(contributionLink).toHaveAttribute('href', 'https://github.com/ESO-Toolkit/kalpa/issues');
   });
 });

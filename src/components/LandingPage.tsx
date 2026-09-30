@@ -2455,8 +2455,8 @@ export const LandingPage: React.FC = () => {
                     maxWidth: '560px',
                   }}
                 >
-                  A free desktop app for ESO that manages your addons, uploads your fights to ESO
-                  Logs, and shares your setups through Pack Hub. Now in public beta.
+                  A free desktop companion for your ESO setup: addons, Graphics Stack, ESO Logs, and
+                  shared setups through Pack Hub. Now in public beta.
                 </Typography>
               </Box>
               <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap', alignItems: 'center' }}>
@@ -2519,7 +2519,8 @@ export const LandingPage: React.FC = () => {
               sx={{
                 mt: { xs: 3, md: 4 },
                 display: 'grid',
-                gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' },
+                gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', lg: 'repeat(4, 1fr)' },
+                gap: { xs: 0, sm: 3, lg: 4 },
               }}
             >
               {[
@@ -2527,28 +2528,32 @@ export const LandingPage: React.FC = () => {
                   index: '01',
                   title: 'Addons',
                   description:
-                    'Discover, install, and bulk-update ESOUI addons, with dependencies resolved.',
+                    'Find addons with natural-language discovery, bulk-update them, and choose which dependencies to install.',
                 },
                 {
                   index: '02',
+                  title: 'Graphics Stack',
+                  description:
+                    'Inspect your existing ReShade and DLSS setup, and manage supported shader packs and presets.',
+                },
+                {
+                  index: '03',
                   title: 'ESO Logs',
                   description: 'Upload saved logs or log live, then pick the fights that matter.',
                 },
                 {
-                  index: '03',
+                  index: '04',
                   title: 'Pack Hub',
-                  description: 'Share addon, build, and roster setups as a six-character code.',
+                  description:
+                    'Share addon, build, and roster setups with temporary codes or export a reusable pack file.',
                 },
-              ].map((pillar, index) => (
+              ].map((pillar) => (
                 <Box
                   key={pillar.index}
                   sx={{
-                    borderTop: { xs: '1px solid', md: 'none' },
-                    borderLeft: { xs: 'none', md: index === 0 ? 'none' : '1px solid' },
+                    borderTop: '1px solid',
                     borderColor: 'divider',
-                    py: { xs: 2, md: 0 },
-                    px: { xs: 0, md: index === 0 ? 0 : '2rem' },
-                    pr: { md: '2rem' },
+                    py: 2,
                   }}
                 >
                   <Typography
@@ -2576,8 +2581,8 @@ export const LandingPage: React.FC = () => {
             <Typography
               sx={{ mt: 3, fontSize: '0.875rem', lineHeight: 1.7, color: 'text.secondary' }}
             >
-              Also inside: a SavedVariables editor with backups, addon profiles, Minion import, and
-              54 themes.
+              Also inside: a SavedVariables editor, character backups, addon profiles, guided Minion
+              import, 58 themes, and 12 skins.
             </Typography>
             <Link
               component={RouterLink}

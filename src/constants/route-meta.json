@@ -81,8 +81,8 @@
     "prerender": true
   },
   "/kalpa": {
-    "title": "Kalpa: ESO Addon Manager & Log Uploader | ESO Toolkit",
-    "description": "Manage ESO addons, upload to ESO Logs, share addon, build, and roster packs, edit settings, and protect your setup with backups. Try the free Kalpa public beta.",
+    "title": "Kalpa: ESO Addons, Graphics & Logs | ESO Toolkit",
+    "description": "Manage ESO addons and your graphics stack, upload combat logs, share packs, and protect your settings with backups. Try the free Kalpa desktop companion.",
     "prerender": true
   },
   "/kalpa/support": {
