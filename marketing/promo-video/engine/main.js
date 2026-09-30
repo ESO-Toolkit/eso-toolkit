@@ -13,9 +13,14 @@ import * as SH from './shaders.js';
 import { createStage, stageCamera } from './stage.js';
 
 const params = new URLSearchParams(location.search);
+// W x H is the layout (every position and size in the director is in these pixels). `scale`
+// renders it at a higher output resolution: 2 turns the 1920x1080 layout into a 3840x2160 master.
 const W = Number(params.get('w') ?? 1920);
 const H = Number(params.get('h') ?? 1080);
-const SS = 2; // supersampling
+const S = Number(params.get('scale') ?? 1);
+const PW = W * S;
+const PH = H * S;
+const SS = Math.max(2, S); // footage and type pixels per layout pixel (2x supersampled at 1080p)
 const SUBFRAMES = Number(params.get('subframes') ?? 4); // particle motion-blur samples
 const SHUTTER = 0.5;
 const FPS = TIMELINE.fps;
@@ -87,7 +92,7 @@ async function init() {
   await loadLogo();
 
   const canvas = document.getElementById('gl');
-  const gl = createContext(canvas, W, H);
+  const gl = createContext(canvas, PW, PH);
   const aniso = gl.getExtension('EXT_texture_filter_anisotropic');
   const draw = fullscreen(gl);
   const stage = createStage(gl);
@@ -245,14 +250,15 @@ async function init() {
   // --- Render targets and overlay ------------------------------------------------------------------
   const bg = target(gl, W * SS, H * SS);
   const fg = target(gl, W * SS, H * SS);
-  const hdr = target(gl, W, H);
+  const hdr = target(gl, PW, PH);
   // Frosted copy of the background for focus pulls and glass: quarter-res, blurred down and up.
   const blurDown = [W, W / 2, W / 4, W / 8].map((w, k) =>
     target(gl, Math.round(w), Math.round(H / 2 ** k)),
   );
   const blurUp = [W / 4, W / 2].map((w) => target(gl, Math.round(w), Math.round((H * w) / W)));
   const mips = [];
-  for (let k = 1, w = W / 2, h = H / 2; k <= 6; k++, w /= 2, h /= 2)
+  // Bloom mips: one more level per doubling of the output so the glow keeps its size.
+  for (let k = 1, w = PW / 2, h = PH / 2; k <= 6 + Math.log2(S); k++, w /= 2, h /= 2)
     mips.push(target(gl, Math.max(2, Math.round(w)), Math.max(2, Math.round(h))));
 
   const ui = document.createElement('canvas');
@@ -409,13 +415,14 @@ async function init() {
       .f('uFrame', index % 97)
       .f('uFade', L.fade)
       .f('uAberration', 0.012 * L.aberration)
+      .f('uGrain', 0.008 * S)
       .f('uRes', W, H);
     draw();
   }
 
-  const pixels = new Uint8Array(W * H * 4);
+  const pixels = new Uint8Array(PW * PH * 4);
   const readFrame = () => {
-    gl.readPixels(0, 0, W, H, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+    gl.readPixels(0, 0, PW, PH, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
     return pixels;
   };
 

@@ -378,6 +378,7 @@ uniform float uBloomAmt;
 uniform float uFrame;
 uniform float uFade;
 uniform float uAberration;
+uniform float uGrain;
 uniform vec2 uRes;
 
 // Khronos PBR Neutral: leaves colours below ~0.8 untouched (so screenshots and type keep their
@@ -415,7 +416,7 @@ void main() {
   col *= mix(0.62, 1.0, vig);
   col = pow(col, vec3(1.0 / 2.2));
   float grain = hash(vec3(gl_FragCoord.xy, uFrame)) - 0.5;
-  col += grain * 0.016;
+  col += grain * uGrain;
   col *= uFade;
   o = vec4(col, 1.0);
 }`;

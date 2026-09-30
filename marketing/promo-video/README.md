@@ -70,6 +70,8 @@ ELEVENLABS_API_KEY=... npm run narration
 npm run soundtrack
 npm run render:landscape
 npm run render:vertical
+# 4K master of the same layout (3840x2160).
+node scripts/render.mjs --scale 2
 
 # Review single frames: out/stills/
 npm run stills -- 1476,2718

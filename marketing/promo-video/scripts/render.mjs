@@ -4,6 +4,7 @@
 //   node scripts/render.mjs --portrait            # 1080x1920 video -> out/esotk-vs-esologs-9x16.mp4
 //   node scripts/render.mjs --stills 0,300,900    # JPEG stills -> out/stills/
 //   node scripts/render.mjs --range 480,720       # part of the timeline, for quick review
+//   node scripts/render.mjs --scale 2             # 3840x2160 -> out/esotk-vs-esologs-16x9-4k.mp4
 //
 // The page renders a frame, reads the pixels back and POSTs the raw RGBA to this script's
 // server, which streams it into ffmpeg. Nothing is sampled from wall-clock time, so every run
@@ -27,12 +28,15 @@ const value = (name) => {
 };
 
 const portrait = flag('portrait');
-const [W, H] = portrait ? [1080, 1920] : [1920, 1080];
+// The layout is always 1920x1080 (or 1080x1920); --scale renders it at a multiple of that.
+const scale = Number(value('scale') ?? 1);
+const [LW, LH] = portrait ? [1080, 1920] : [1920, 1080];
+const [W, H] = [LW * scale, LH * scale];
 const stills = value('stills')?.split(',').map(Number);
 const [start, end] = (value('range') ?? `0,${Math.round(timeline.duration * timeline.fps)}`)
   .split(',')
   .map(Number);
-const label = portrait ? '9x16' : '16x9';
+const label = `${portrait ? '9x16' : '16x9'}${scale === 2 ? '-4k' : scale > 1 ? `-x${scale}` : ''}`;
 const outDir = path.join(ROOT, 'out');
 const output =
   value('out') ??
@@ -185,7 +189,7 @@ const browser = await chromium.launch({
 // from the next frame the encoder is waiting for.
 for (let attempt = 0; ; attempt++) {
   const page = await browser.newPage({
-    viewport: { width: Math.min(W, 1920), height: Math.min(H, 1080) },
+    viewport: { width: Math.min(LW, 1920), height: Math.min(LH, 1080) },
   });
   page.on('console', (m) => console.log(`[page] ${m.text()}`));
   page.on('pageerror', (e) => console.error(`[page error] ${e.message}`));
@@ -208,8 +212,9 @@ for (let attempt = 0; ; attempt++) {
     }, 5000);
   });
   const query = new URLSearchParams({
-    w: W,
-    h: H,
+    w: LW,
+    h: LH,
+    scale,
     ...(stills
       ? { mode: 'stills', frames: stills.join(',') }
       : { mode: 'video', start: next, end }),

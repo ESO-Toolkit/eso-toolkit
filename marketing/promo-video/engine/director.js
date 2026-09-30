@@ -265,7 +265,7 @@ export function look(t) {
       (1 - ease.inCubic(range(t, TIMELINE.duration - 0.9, TIMELINE.duration))),
     bloom: 0.9 + pulse * 0.6,
     nebula: 0.75,
-    aberration: 0.25 + pulse * 0.5,
+    aberration: 0.1 + pulse * 0.5,
   };
 }
 
@@ -370,6 +370,8 @@ const bell = (t, a, peak, b) => smoothstep(a, peak, t) * (1 - smoothstep(peak, b
 const PAGE = {
   buildHeader: [226, 88, 494, 76],
 };
+
+const FOCUS_BLUR = 0.5;
 
 // Transition times.
 const T = {
@@ -569,9 +571,16 @@ export function frame(t, W, H, cam, R) {
     if (from.card) from.card.dissolve = { morph: spec, role: 'from' };
     if (to.card) to.card.dissolve = { morph: spec, role: 'to' };
   };
+  // Focus pulls mostly dim what is outside the focus and only half-blur it, so the rest of the
+  // page stays readable.
   const focus = (amount, rects, opts = {}) => {
     if (amount > 0.001)
-      out.fx.focus = { amount, rects, blur: opts.blur ?? 0.85, dim: opts.dim ?? 0.45 };
+      out.fx.focus = {
+        amount,
+        rects,
+        blur: (opts.blur ?? 0.85) * FOCUS_BLUR,
+        dim: Math.min(0.7, (opts.dim ?? 0.45) + 0.05),
+      };
   };
   const tagAt = P ? [56, 300] : [56, 104];
   const tag = (text, product, alpha) =>
