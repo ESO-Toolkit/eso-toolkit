@@ -111,7 +111,37 @@ const sfx = gainNode(0.9, sfxDuck);
 // ffmpeg's loudnorm handles the final true-peak ceiling.
 // STEM=music renders the bed without the narration (for checking the voice/music balance).
 const STEM = process.env.STEM;
-const voice = gainNode(STEM === 'music' ? 0 : 2.8, filter('highpass', 70, 0.7, ctx.destination));
+// Voices are recorded at different levels, so the narration is levelled to -22 LUFS (measured
+// across all lines) before the fixed voice gain that sets its balance against the music.
+const narrationLufs = (() => {
+  const ids = Object.keys(TIMELINE.narration);
+  const inputs = ids.flatMap((id) => ['-i', path.join(ROOT, 'assets', 'narration', `${id}.mp3`)]);
+  const out = spawnSync(
+    ffmpegPath,
+    [
+      '-hide_banner',
+      '-nostats',
+      ...inputs,
+      '-filter_complex',
+      `concat=n=${ids.length}:v=0:a=1,ebur128`,
+      '-f',
+      'null',
+      '-',
+    ],
+    { encoding: 'utf8' },
+  ).stderr;
+  return Number(
+    out
+      .match(/I:\s+(-?[\d.]+) LUFS/g)
+      .at(-1)
+      .match(/-?[\d.]+/)[0],
+  );
+})();
+const voiceLevel = 2.8 * 10 ** ((-22 - narrationLufs) / 20);
+const voice = gainNode(
+  STEM === 'music' ? 0 : voiceLevel,
+  filter('highpass', 70, 0.7, ctx.destination),
+);
 
 // Plate-ish reverb from decaying stereo noise.
 const reverb = ctx.createConvolver();
@@ -656,5 +686,5 @@ execFileSync(ffmpegPath, [
   path.join(outDir, 'soundtrack.wav'),
 ]);
 console.log(
-  `soundtrack.wav: ${DURATION.toFixed(2)}s, ${stats.input_i} LUFS + ${gainDb.toFixed(1)} dB -> -14 LUFS`,
+  `soundtrack.wav: ${DURATION.toFixed(2)}s, narration ${narrationLufs} LUFS levelled to -22, mix ${stats.input_i} LUFS + ${gainDb.toFixed(1)} dB -> -14 LUFS`,
 );
