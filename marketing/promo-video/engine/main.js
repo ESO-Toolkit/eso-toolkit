@@ -53,12 +53,14 @@ const STILLS = [
   'tk-damage-table',
   'tk-healing-table',
   'tk-deaths-messy',
+  'tk-gear-info',
 ];
 const CLIPS = {
   'el-replay': [1920, 1080],
   'tk-replay': [1920, 1080],
   'el-replay-tall': [1080, 1920],
   'tk-replay-tall': [1080, 1920],
+  'tk-replay-td': [1920, 1080],
 };
 const LAYOUTS = [
   'el-damage',
@@ -80,6 +82,7 @@ const LAYOUTS = [
   'tk-insights-page',
   'tk-damage-table',
   'tk-healing-table',
+  'tk-gear-info',
 ];
 
 async function bitmap(url) {

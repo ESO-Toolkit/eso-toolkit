@@ -1822,5 +1822,118 @@
         "text": ""
       }
     ]
+  },
+  "info": {
+    "duration": 6.56,
+    "words": [
+      {
+        "say": "If",
+        "start": 0,
+        "end": 0.16,
+        "text": "If"
+      },
+      {
+        "say": "you'd",
+        "start": 0.213,
+        "end": 0.32,
+        "text": "you'd"
+      },
+      {
+        "say": "rather",
+        "start": 0.48,
+        "end": 0.64,
+        "text": "rather"
+      },
+      {
+        "say": "see",
+        "start": 0.72,
+        "end": 0.8,
+        "text": "see"
+      },
+      {
+        "say": "it",
+        "start": 0.88,
+        "end": 1.04,
+        "text": "it"
+      },
+      {
+        "say": "item",
+        "start": 1.12,
+        "end": 1.36,
+        "text": "item"
+      },
+      {
+        "say": "by",
+        "start": 1.48,
+        "end": 1.6,
+        "text": "by"
+      },
+      {
+        "say": "item,",
+        "start": 1.68,
+        "end": 2.28,
+        "text": "item,"
+      },
+      {
+        "say": "the",
+        "start": 2.32,
+        "end": 2.48,
+        "text": "the"
+      },
+      {
+        "say": "Info",
+        "start": 2.56,
+        "end": 2.88,
+        "text": "Info"
+      },
+      {
+        "say": "button",
+        "start": 3.04,
+        "end": 3.2,
+        "text": "button"
+      },
+      {
+        "say": "lists",
+        "start": 3.28,
+        "end": 3.68,
+        "text": "lists"
+      },
+      {
+        "say": "every",
+        "start": 3.76,
+        "end": 4,
+        "text": "every"
+      },
+      {
+        "say": "piece,",
+        "start": 4.08,
+        "end": 4.693,
+        "text": "piece,"
+      },
+      {
+        "say": "just",
+        "start": 4.747,
+        "end": 4.8,
+        "text": "just"
+      },
+      {
+        "say": "like",
+        "start": 4.88,
+        "end": 5.04,
+        "text": "like"
+      },
+      {
+        "say": "E-S-O",
+        "start": 5.12,
+        "end": 5.52,
+        "text": "ESO"
+      },
+      {
+        "say": "Logs.",
+        "start": 6,
+        "end": 6.56,
+        "text": "Logs."
+      }
+    ]
   }
 }

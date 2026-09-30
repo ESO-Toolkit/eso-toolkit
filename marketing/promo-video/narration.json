@@ -39,6 +39,10 @@
       "say": "E-S-O Logs lists a player's gear one item per row. E-S-O Toolkit groups it into sets, shows both bars the way they look in game, and flags low-quality gear and enchants."
     },
     {
+      "id": "info",
+      "say": "If you'd rather see it item by item, the Info button lists every piece, just like E-S-O Logs."
+    },
+    {
       "id": "scribe",
       "say": "It also works out which scripts a scribed skill was running, from the combat events."
     },

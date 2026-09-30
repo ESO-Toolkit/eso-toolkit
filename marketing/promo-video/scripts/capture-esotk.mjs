@@ -145,7 +145,7 @@ const shots = {
   },
   players: async (page) => {
     await open(page, `${FIGHT}/players`, 15000);
-    await page.mouse.wheel(0, 520);
+    await page.mouse.wheel(0, 470);
     await page.waitForTimeout(2500);
     await still(page, 'tk-players');
     // The tank's card, its set chips, skill icons and build check, in 2x screenshot pixels.
@@ -195,7 +195,53 @@ const shots = {
           check: box(checkBox),
           cpLabel: cp ? box(cp) : null,
           extract: extract ? box(extract) : null,
+          info: (() => {
+            const e = inCard('*').find(
+              (x) => x.childElementCount === 0 && x.textContent.trim() === 'INFO',
+            );
+            let b = e;
+            while (b && b.tagName !== 'BUTTON' && b.getBoundingClientRect().width < 40)
+              b = b.parentElement;
+            return b ? box(b) : null;
+          })(),
         };
+      }),
+    );
+    // The same page with the card's Info panel open: its gear as a list, one item per row.
+    await page.getByText('INFO', { exact: true }).first().click();
+    await page.waitForTimeout(2500);
+    await page.mouse.move(5, 5);
+    await page.waitForTimeout(600);
+    await still(page, 'tk-gear-info');
+    await rects(
+      'tk-gear-info',
+      await page.evaluate(() => {
+        const box = (el) => {
+          const r = el.getBoundingClientRect();
+          return [r.x, r.y, r.width, r.height];
+        };
+        // The panel: the smallest block holding the item table and its title bar.
+        const blocks = [...document.querySelectorAll('body div')].filter((e) => {
+          const r = e.getBoundingClientRect();
+          return /CP\s*Type\s*Slot\s*Item/i.test(e.textContent) && r.height > 450 && r.width < 1200;
+        });
+        const panel = blocks.find((e) => !blocks.some((o) => o !== e && e.contains(o)));
+        const table = [...panel.querySelectorAll('div')].filter((e) => {
+          const r = e.getBoundingClientRect();
+          return /^CP\s*Type/i.test(e.textContent.trim()) && r.height > 400;
+        });
+        const tbl = table.at(-1) ?? panel;
+        const head = { getBoundingClientRect: () => tbl.getBoundingClientRect() };
+        // Item rows: the innermost full-width blocks 30-50 px tall containing a CP value.
+        const pw = panel.getBoundingClientRect().width;
+        const all = [...panel.querySelectorAll('*')].filter((e) => {
+          const r = e.getBoundingClientRect();
+          return (
+            r.width > pw * 0.9 && r.height >= 30 && r.height <= 50 && /160/.test(e.textContent)
+          );
+        });
+        const rows = all.filter((e) => !all.some((o) => o !== e && e.contains(o))).map(box);
+        return { panel: box(panel), table: box(head), rows };
       }),
     );
   },
@@ -679,6 +725,48 @@ const shots = {
   replay: (page) => replay(page, 'tk-replay', 1920, 1080),
   // Portrait viewport, for the 9:16 cut.
   replayTall: (page) => replay(page, 'tk-replay-tall', 1080, 1920),
+  // The 3D replay starting straight down, turned to match ESO Logs' map (same map image), holding
+  // until the game time the ESO Logs clip reaches at the cut (1:01), then tilting down into 3D and
+  // orbiting.
+  replayTopDown: async (page) => {
+    await open(page, REPLAY, 16000);
+    await page.getByRole('button', { name: 'Enter fullscreen', exact: true }).click();
+    await page.waitForTimeout(2000);
+    await page.evaluate(() =>
+      document.activeElement instanceof HTMLElement ? document.activeElement.blur() : undefined,
+    );
+    for (let i = 0; i < 5; i++) await page.keyboard.press('Shift+ArrowRight');
+    await page.waitForTimeout(1500);
+    const drag = async (dx, dy) => {
+      await page.mouse.move(960, 400);
+      await page.mouse.down();
+      for (let i = 1; i <= 30; i++) await page.mouse.move(960 + (dx * i) / 30, 400 + (dy * i) / 30);
+      await page.mouse.up();
+      await page.waitForTimeout(600);
+    };
+    // Straight down (OrbitControls clamps at its minimum polar angle), then a 135 degree turn.
+    await drag(0, 900);
+    await drag(405, 0);
+    await page.mouse.move(1919, 1079);
+    await page.waitForTimeout(3500);
+    const x0 = 960;
+    const y0 = 400;
+    await page.mouse.move(x0, y0);
+    await page.mouse.down();
+    let playing = false;
+    const smooth = (u) => u * u * (3 - 2 * u);
+    await clip(page, 'tk-replay-td', 14500, async (ms) => {
+      if (!playing) {
+        await page.keyboard.press('Space');
+        playing = true;
+      }
+      // Hold top-down for 5.6 s (game time 0:50 -> 1:01 at 2x), tilt over 3 s, then orbit.
+      const tilt = smooth(Math.min(1, Math.max(0, (ms - 5600) / 3000)));
+      const orbit = Math.max(0, (ms - 5600) / 8900);
+      await page.mouse.move(x0 + tilt * 50 + orbit * 170, y0 - tilt * 150 - orbit * 10);
+    });
+    await page.mouse.up();
+  },
 };
 
 const browser = await chromium.launch({

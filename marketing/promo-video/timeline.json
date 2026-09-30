@@ -1,18 +1,19 @@
 {
   "fps": 60,
-  "duration": 133,
+  "duration": 139.85,
   "narration": {
     "intro": 0.9,
-    "paste": 7.0,
+    "paste": 7,
     "insights": 11.2,
-    "tables": 26.0,
+    "tables": 26,
     "gear": 33.2,
-    "scribe": 46.7,
-    "replay": 53.0,
-    "builds": 64.3,
-    "calc": 77.4,
-    "roster": 86.2,
-    "kalpa": 104.6,
-    "outro": 118.2
+    "info": 46.44,
+    "scribe": 53.55,
+    "replay": 59.85,
+    "builds": 71.15,
+    "calc": 84.25,
+    "roster": 93.05,
+    "kalpa": 111.45,
+    "outro": 125.05
   }
 }
