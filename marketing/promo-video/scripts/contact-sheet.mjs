@@ -31,6 +31,9 @@ const page = await browser.newPage({ viewport: { width: 1936, height: 400 } });
 const htmlPath = path.join(os.tmpdir(), 'esotk-contact-sheet.html');
 writeFileSync(htmlPath, html);
 await page.goto(pathToFileURL(htmlPath).href, { waitUntil: 'load' });
-await page.screenshot({ path: out, fullPage: true });
+// The first capture of a large page occasionally fails; one retry is enough.
+await page
+  .screenshot({ path: out, fullPage: true })
+  .catch(() => page.waitForTimeout(500).then(() => page.screenshot({ path: out, fullPage: true })));
 await browser.close();
 console.log(`${files.length} images -> ${out}`);

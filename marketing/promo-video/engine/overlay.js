@@ -277,7 +277,7 @@ export function captions(ctx, chunks, t, { x, y, size, maxWidth, W, H }) {
     ctx.save();
     const g = ctx.createLinearGradient(0, H - 260, 0, H);
     g.addColorStop(0, 'rgba(0, 0, 0, 0)');
-    g.addColorStop(1, `rgba(0, 0, 0, ${0.6 * scrim})`);
+    g.addColorStop(1, `rgba(0, 0, 0, ${0.7 * scrim})`);
     ctx.fillStyle = g;
     ctx.fillRect(0, H - 260, W, 260);
     ctx.restore();

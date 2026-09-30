@@ -150,6 +150,12 @@ uniform int uHoleN;
 uniform float uHoleAmt;
 uniform float uHoleR;
 uniform vec4 uHoleFill;
+// Shadow pass: offset (card pixels, y down), blur and opacity.
+uniform vec2 uShadowOff;
+uniform float uShadowBlur;
+uniform float uShadowA;
+// A 1 px light along the top edge of lifted cards (opacity).
+uniform float uHair;
 // Bottom edge feather, in card pixels (0 = none).
 uniform float uFadeBottom;
 // Share of the card width each texture spans when scaled to the card height and anchored
@@ -165,7 +171,8 @@ void main() {
   vec2 px = vLocal * uSize;
   float d = box(px, uSize * 0.5, uRadius);
   if (uMode == 1) {
-    float a = (1.0 - smoothstep(-uRadius, 150.0, d)) * 0.6 * uAlpha;
+    float sd = box(px - uShadowOff, uSize * 0.5, uRadius);
+    float a = (1.0 - smoothstep(-uShadowBlur * 0.5, uShadowBlur * 0.5, sd)) * uShadowA * uAlpha;
     o = vec4(0.0, 0.0, 0.0, a);
     return;
   }
@@ -211,9 +218,11 @@ void main() {
   mask *= min(cov, 1.0);
   c = mix(c, c * uTint, uTintAmt);
   c = mix(c, uHoleFill.a > 0.5 ? uHoleFill.rgb : c * 0.18 + vec3(0.012, 0.016, 0.03), hole);
-  // A faint lit rim, like the edge of a glass panel.
-  float rim = smoothstep(-2.5, -0.5, d) * (1.0 - smoothstep(-0.5, 0.5, d));
-  c += vec3(0.16, 0.22, 0.3) * rim;
+  // Lifted cards catch a hairline of light along their top edge.
+  if (uHair > 0.0) {
+    float top = (1.0 - smoothstep(0.5, 1.5, uv.y * uSize.y)) * step(d, -0.5);
+    c = mix(c, vec3(1.0), uHair * top);
+  }
   float a2 = mask * uAlpha;
   o = vec4(c * uBright * a2, a2);
 }`;
@@ -401,16 +410,24 @@ export function createStage(gl) {
     p.i('uDissolve', d ? (d.role === 'from' ? 1 : 2) : 0);
     if (d) morphUniforms(p, d.morph);
     gl.bindVertexArray(quadVao);
-    if (c.shadow !== false) {
-      const pad = 90 / Math.max(1, Math.min(c.w, c.h));
-      p.i('uMode', 1).f(
-        'uPad',
-        (pad * 2 * Math.min(c.w, c.h)) / c.w,
-        (pad * 2 * Math.min(c.w, c.h)) / c.h,
-      );
-      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    // Shadows: a soft ambient layer and a tight contact layer, both offset downward.
+    if (c.shadow === true) {
+      for (const [off, blur, a] of [
+        [40, 80, 0.45],
+        [2, 6, 0.35],
+      ]) {
+        const padPx = blur + off + 4;
+        p.i('uMode', 1)
+          .f('uPad', (padPx * 2) / c.w, (padPx * 2) / c.h)
+          .f('uShadowOff', 0, off * ss)
+          .f('uShadowBlur', blur * ss)
+          .f('uShadowA', a);
+        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+      }
     }
-    p.i('uMode', 0).f('uPad', 0, 0);
+    p.i('uMode', 0)
+      .f('uPad', 0, 0)
+      .f('uHair', c.shadow === true ? 0.08 : 0);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     gl.bindVertexArray(null);
   }

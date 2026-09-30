@@ -43,6 +43,12 @@ the trial, Your addons); each new chapter opens with a title card that flies up 
   the blurred frame behind it. Shared-element flights carry gear rows and skill entries from one
   site's layout to the other's, and pixel-particle morphs carry each image's real colours from
   one page to the next. HDR bloom, a neutral tone map and grain follow.
+- **Emphasis:** one system throughout. A named element is lit in place with its own measured
+  corner radius (grown concentrically by its padding) while everything else drops to 50%
+  brightness and 60% saturation; inside lists and tables the other items drop further than the
+  surroundings; a component the camera acts on lifts as a card with an offset shadow over its
+  page, which becomes a soft, dark colour field. Nothing is outlined or made to glow. Subjects
+  centre on (960, 460), clear of the caption band and the label zone.
 - **Narration:** ElevenLabs Eleven v4, voice "Brian", one request per line with the
   neighbouring lines as context. The audio and word timings are committed in
   `assets/narration/`, so rendering does not need an API key.
@@ -86,20 +92,21 @@ cut, change the line start times in `timeline.json`; picture, captions and audio
 
 ## Structure
 
-| Path                          | Purpose                                                                                       |
-| ----------------------------- | --------------------------------------------------------------------------------------------- |
-| `narration.json`              | Voice, model, settings and the script, one entry per line.                                    |
-| `timeline.json`               | When each narration line starts, and the total length.                                        |
-| `engine/director.js`          | Every beat: camera views, flights, morphs, focus pulls and captions, cued from the narration. |
-| `engine/stage.js`             | Screenshot cards, shared-element flights and the pixel-particle morph.                        |
-| `engine/main.js`              | Frame renderer: layers, blur, focus pulls, glass, bloom and tone map.                         |
-| `engine/formations.js`        | Particle layouts for the open and the end card.                                               |
-| `engine/overlay.js`           | Glass captions and tags, callouts, the link pill and the end card type.                       |
-| `scripts/capture-esologs.mjs` | ESO Logs stills, layout data and the replay clip (manual human check).                        |
-| `scripts/capture-esotk.mjs`   | ESO Toolkit stills (reports, builds, rosters, Kalpa), layout data and the 3D replay clip.     |
-| `scripts/voiceover.mjs`       | ElevenLabs narration with word timestamps.                                                    |
-| `scripts/soundtrack.mjs`      | Music, sound design, narration mix and mastering.                                             |
-| `scripts/render.mjs`          | Frame-accurate capture in headless Chrome, encoded with ffmpeg.                               |
+| Path                          | Purpose                                                                                                        |
+| ----------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `narration.json`              | Voice, model, settings and the script, one entry per line.                                                     |
+| `timeline.json`               | When each narration line starts, and the total length.                                                         |
+| `engine/director.js`          | Every beat: camera views, flights, morphs, focus pulls and captions, cued from the narration.                  |
+| `engine/stage.js`             | Screenshot cards, shared-element flights and the pixel-particle morph.                                         |
+| `engine/main.js`              | Frame renderer: layers, blur, focus pulls, glass, bloom and tone map.                                          |
+| `engine/formations.js`        | Particle layouts for the open and the end card.                                                                |
+| `engine/overlay.js`           | Glass captions and tags, callouts, the link pill and the end card type.                                        |
+| `scripts/capture-esologs.mjs` | ESO Logs stills, layout data and the replay clip (manual human check).                                         |
+| `scripts/capture-esotk.mjs`   | ESO Toolkit stills (reports, builds, rosters, Kalpa), layout data and the 3D replay clip.                      |
+| `scripts/voiceover.mjs`       | ElevenLabs narration with word timestamps.                                                                     |
+| `scripts/soundtrack.mjs`      | Music, sound design, narration mix and mastering.                                                              |
+| `scripts/render.mjs`          | Frame-accurate capture in headless Chrome, encoded with ffmpeg.                                                |
+| `scripts/audit.mjs`           | Composition audit: where each moment's subject sits against the working frame (960, 460) and the safe margins. |
 
 ## Content rules
 

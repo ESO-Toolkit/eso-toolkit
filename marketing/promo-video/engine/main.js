@@ -361,13 +361,19 @@ async function init() {
       glassRects.set([g.x, g.y, g.w, g.h], i * 4);
       glassParams.set([g.r, g.alpha, 0, 0], i * 4);
     });
-    const focus = shot.fx.focus ?? { amount: 0, rects: [] };
-    const focusRects = new Float32Array(SH.MAX_FOCUS * 4);
-    const focusParams = new Float32Array(SH.MAX_FOCUS * 4);
-    focus.rects.slice(0, SH.MAX_FOCUS).forEach((f, i) => {
-      focusRects.set(f.rect, i * 4);
-      focusParams.set([f.radius ?? 16, f.feather ?? 90, 0, 0], i * 4);
-    });
+    const emph = shot.fx.emph ?? { amount: 0, lit: [], sib: [] };
+    const back = shot.fx.back ?? { amount: 0 };
+    const pack = (list, n) => {
+      const rects = new Float32Array(n * 4);
+      const params = new Float32Array(n * 4);
+      list.slice(0, n).forEach((f, i) => {
+        rects.set(f.rect, i * 4);
+        params.set([f.radius ?? 0, f.feather ?? 1.5, 0, 0], i * 4);
+      });
+      return [rects, params, Math.min(n, list.length)];
+    };
+    const [litRects, litParams, litN] = pack(emph.lit, SH.MAX_FOCUS);
+    const [sibRects, sibParams, sibN] = pack(emph.sib, SH.MAX_SIB);
 
     bindTarget(gl, hdr);
     progs.composite
@@ -380,12 +386,19 @@ async function init() {
       .f('uExposure', L.exposure)
       .f('uWhip', ...(shot.fx.whip ?? [0, 0]))
       .f('uZoom', ...(shot.fx.zoom ?? [0.5, 0.5, 0]))
-      .f('uFocusAmt', focus.amount)
-      .f('uFocusBlur', focus.blur ?? 0.85)
-      .f('uFocusDim', focus.dim ?? 0.45)
-      .i('uFocusN', Math.min(SH.MAX_FOCUS, focus.rects.length))
-      .v4('uFocus', focusRects)
-      .v4('uFocusP', focusParams)
+      .f('uBackAmt', back.amount)
+      .f('uBackLevel', back.level ?? 0.35)
+      .f('uBackSat', back.sat ?? 0.5)
+      .f('uEmphAmt', emph.amount)
+      .f('uEmphLevel', emph.level ?? 0.5)
+      .f('uEmphSat', emph.sat ?? 0.6)
+      .f('uSibLevel', emph.sibLevel ?? 0.4)
+      .i('uFocusN', litN)
+      .v4('uFocus', litRects)
+      .v4('uFocusP', litParams)
+      .i('uSibN', sibN)
+      .v4('uSib', sibRects)
+      .v4('uSibP', sibParams)
       .i('uGlassN', glass.length)
       .v4('uGlass', glassRects)
       .v4('uGlassP', glassParams);

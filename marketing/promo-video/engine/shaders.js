@@ -193,6 +193,7 @@ void main() {
 
 export const MAX_GLASS = 16;
 export const MAX_FOCUS = 4;
+export const MAX_SIB = 16;
 
 // Composites the frame: background layer (with camera blur and focus pulls), the sharp
 // foreground layer, Liquid Glass panels that refract the blurred background, then the type.
@@ -208,12 +209,22 @@ uniform vec2 uRes;
 uniform float uExposure;
 uniform vec2 uWhip;       // motion-blur vector in output pixels
 uniform vec3 uZoom;       // zoom-blur centre (uv) and strength
-uniform float uFocusAmt;  // 0 = no focus pull
-uniform float uFocusBlur;
-uniform float uFocusDim;
+// Backdrop under a lifted card: the background layer only goes soft, dark and desaturated.
+uniform float uBackAmt;
+uniform float uBackLevel;
+uniform float uBackSat;
+// Emphasis, over background and foreground alike: lit rects stay as they are; sibling rects drop
+// to uSibLevel; everything else to uEmphLevel. Dimmed areas also lose saturation (uEmphSat).
+uniform float uEmphAmt;
+uniform float uEmphLevel;
+uniform float uEmphSat;
+uniform float uSibLevel;
 uniform int uFocusN;
 uniform vec4 uFocus[${MAX_FOCUS}];   // x, y, w, h in output pixels (y down)
 uniform vec4 uFocusP[${MAX_FOCUS}];  // radius, feather
+uniform int uSibN;
+uniform vec4 uSib[${MAX_SIB}];
+uniform vec4 uSibP[${MAX_SIB}];
 uniform int uGlassN;
 uniform vec4 uGlass[${MAX_GLASS}];   // x, y, w, h in output pixels (y down)
 uniform vec4 uGlassP[${MAX_GLASS}];  // radius, alpha
@@ -252,22 +263,39 @@ void main() {
   vec3 col = background(uv);
   vec3 soft = texture(uBlur, uv).rgb;
 
-  // Focus pull: everything outside the focus rectangles goes soft and dark.
-  if (uFocusAmt > 0.001) {
-    float inside = 0.0;
-    for (int i = 0; i < ${MAX_FOCUS}; i++) {
-      if (i >= uFocusN) break;
-      vec4 r = uFocus[i];
-      float d = box(px - (r.xy + r.zw * 0.5), r.zw * 0.5, uFocusP[i].x);
-      inside = max(inside, 1.0 - smoothstep(0.0, uFocusP[i].y, d));
-    }
-    float outside = uFocusAmt * (1.0 - inside);
-    col = mix(col, soft, outside * uFocusBlur);
-    col *= 1.0 - outside * uFocusDim;
+  vec3 lumaW = vec3(0.2126, 0.7152, 0.0722);
+  if (uBackAmt > 0.001) {
+    col = mix(col, soft, uBackAmt);
+    col = mix(vec3(dot(col, lumaW)), col, mix(1.0, uBackSat, uBackAmt)) * mix(1.0, uBackLevel, uBackAmt);
   }
 
   vec4 fg = texture(uFg, uv);
   col = (col * (1.0 - fg.a) + fg.rgb) * uExposure;
+
+  // Emphasis. Mask edges are centred on the element's edge (feather ~1.5 px), with the element's
+  // own corner radius, so the lit area matches the element exactly.
+  if (uEmphAmt > 0.001) {
+    float lit = 0.0;
+    for (int i = 0; i < ${MAX_FOCUS}; i++) {
+      if (i >= uFocusN) break;
+      vec4 r = uFocus[i];
+      float f = max(uFocusP[i].y, 0.5);
+      float d = box(px - (r.xy + r.zw * 0.5), r.zw * 0.5, min(uFocusP[i].x, min(r.z, r.w) * 0.5));
+      lit = max(lit, 1.0 - smoothstep(-f * 0.5, f * 0.5, d));
+    }
+    float sib = 0.0;
+    for (int i = 0; i < ${MAX_SIB}; i++) {
+      if (i >= uSibN) break;
+      vec4 r = uSib[i];
+      float f = max(uSibP[i].y, 0.5);
+      float d = box(px - (r.xy + r.zw * 0.5), r.zw * 0.5, min(uSibP[i].x, min(r.z, r.w) * 0.5));
+      sib = max(sib, 1.0 - smoothstep(-f * 0.5, f * 0.5, d));
+    }
+    sib *= 1.0 - lit;
+    float level = mix(mix(uEmphLevel, uSibLevel, sib), 1.0, lit);
+    float sat = mix(uEmphSat, 1.0, lit);
+    col = mix(vec3(dot(col, lumaW)), col, mix(1.0, sat, uEmphAmt)) * mix(1.0, level, uEmphAmt);
+  }
 
   // Liquid Glass: refract and frost the background, light the rim, soft contact shadow.
   for (int i = 0; i < ${MAX_GLASS}; i++) {

@@ -8,7 +8,10 @@ export const OUT = path.resolve(import.meta.dirname, '..', 'out', 'captures');
 export const DPR = 3;
 
 /** Saves a viewport screenshot, or a page region (CSS pixels, may extend below the fold). */
+let lastPage = null;
+
 export async function still(page, name, clip) {
+  lastPage = page;
   await mkdir(OUT, { recursive: true });
   await page.screenshot({
     path: path.join(OUT, `${name}.png`),
@@ -122,6 +125,55 @@ export async function clip(page, name, durationMs, onTick) {
 /** Saves layout rectangles (in CSS pixels) next to a still, for shared-element moves. */
 export async function rects(name, data) {
   await mkdir(OUT, { recursive: true });
+  if (lastPage && !lastPage.isClosed()) data = await withRadii(lastPage, data);
   await writeFile(path.join(OUT, `${name}.json`), `${JSON.stringify(data, null, 2)}\n`);
   console.log(`  saved ${name}.json`);
+}
+
+/**
+ * Adds each measured rect's real corner radius (CSS px), so highlights can match the element's
+ * own corners: `key: rect` gains `keyR`, and `key: [rects]` gains `keyR: [radii]`. The radius is
+ * the largest top-left radius among elements whose box matches the rect within 2 px (the box, its
+ * wrappers and its background layer often differ in which one carries the radius); null when no
+ * element matches (a rect assembled from several elements).
+ */
+async function withRadii(page, data) {
+  return page.evaluate((data) => {
+    const boxes = [...document.querySelectorAll('body *')].map((el) => {
+      const r = el.getBoundingClientRect();
+      const cs = getComputedStyle(el);
+      const raw = cs.borderTopLeftRadius;
+      const px = raw.endsWith('%')
+        ? (parseFloat(raw) / 100) * Math.min(r.width, r.height)
+        : parseFloat(raw) || 0;
+      return [r.x, r.y, r.width, r.height, Math.min(px, r.height / 2, r.width / 2)];
+    });
+    const isRect = (v) =>
+      Array.isArray(v) && v.length === 4 && v.every((n) => typeof n === 'number');
+    const radius = (rect) => {
+      let best = null;
+      for (const b of boxes) {
+        if (
+          Math.abs(b[0] - rect[0]) <= 2 &&
+          Math.abs(b[1] - rect[1]) <= 2 &&
+          Math.abs(b[2] - rect[2]) <= 2 &&
+          Math.abs(b[3] - rect[3]) <= 2
+        )
+          best = Math.max(best ?? 0, b[4]);
+      }
+      return best;
+    };
+    const walk = (o) => {
+      if (Array.isArray(o)) return o.map(walk);
+      if (!o || typeof o !== 'object') return o;
+      const out = {};
+      for (const [k, v] of Object.entries(o)) {
+        out[k] = walk(v);
+        if (isRect(v)) out[`${k}R`] = radius(v);
+        else if (Array.isArray(v) && v.length && v.every(isRect)) out[`${k}R`] = v.map(radius);
+      }
+      return out;
+    };
+    return walk(data);
+  }, data);
 }
