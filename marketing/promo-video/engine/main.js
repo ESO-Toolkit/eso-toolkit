@@ -42,6 +42,8 @@ const STILLS = [
   'tk-kalpa',
   'tk-kalpa-features',
   'tk-pack-hub',
+  'tk-deaths',
+  'tk-synergies',
 ];
 const CLIPS = {
   'el-replay': [1920, 1080],

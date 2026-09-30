@@ -16,6 +16,8 @@ const ROSTER = `${SITE}/rv?id=3x2g1m5l284l`;
 const ROSTER_TITLE = 'Aedra — Cloudrest #1';
 
 const only = process.argv[2];
+// Shots taller than the viewport are captured at 2x to keep their textures a manageable size.
+const TALL = ['rosterBuilder', 'outroPanels'];
 
 const setup = () => {
   try {
@@ -473,6 +475,29 @@ const shots = {
       }),
     );
   },
+  // The outro's ESO Toolkit half: the death recap from an earlier wipe on the same boss, then the
+  // synergy breakdown of the kill. Tall stills from the fight header down into each panel.
+  outroPanels: async (page) => {
+    for (const [name, url] of [
+      ['tk-deaths', `${SITE}/report/F4f2bMwWtgVKxjB9/fight/11/deaths`],
+      ['tk-synergies', `${FIGHT}/synergies`],
+    ]) {
+      await page.setViewportSize({ width: 1920, height: 1080 });
+      await open(page, url, 16000);
+      await page.setViewportSize({ width: 1920, height: 1400 });
+      await page.evaluate(() => scrollTo(0, 220));
+      await page.waitForTimeout(2000);
+      await page.mouse.move(5, 5);
+      await still(page, name);
+      await rects(
+        name,
+        await measureView(page, {
+          header: [/^Tideborn Taleria$/, 800, 60, 900],
+          panel: [/^(Deaths|Synergies)$/, 800, 300, 900],
+        }),
+      );
+    }
+  },
   replay: (page) => replay(page, 'tk-replay', 1920, 1080),
   // Portrait viewport, for the 9:16 cut.
   replayTall: (page) => replay(page, 'tk-replay-tall', 1080, 1920),
@@ -488,8 +513,7 @@ for (const [name, run] of Object.entries(shots)) {
   console.log('capturing', name);
   const ctx = await browser.newContext({
     viewport: name === 'replayTall' ? { width: 1080, height: 1920 } : { width: 1920, height: 1080 },
-    // The tall Roster Builder still is 2x to keep its texture a manageable size.
-    deviceScaleFactor: name.startsWith('replay') ? 1 : name === 'rosterBuilder' ? 2 : DPR,
+    deviceScaleFactor: name.startsWith('replay') ? 1 : TALL.includes(name) ? 2 : DPR,
     colorScheme: 'dark',
   });
   await ctx.addInitScript(setup);

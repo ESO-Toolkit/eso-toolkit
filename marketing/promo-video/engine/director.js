@@ -101,6 +101,7 @@ C.community = cue('kalpa', 'community');
 C.o1 = cue('outro', 'e-s-o', 1);
 C.o2 = cue('outro', 'e-s-o', 2);
 C.free = cue('outro', 'free');
+C.ready = cue('outro', 'ready');
 C.url = cue('outro', 'e-s-o-t-k');
 export const CUES = C;
 
@@ -494,7 +495,10 @@ function views(P) {
         packEnd: { cx: 680, cy: 560, vw: 580 },
         outroElFull: { cx: 520, cy: 560, vw: 600 },
         outroEl: { cx: 720, cy: 600, vw: 1000 },
-        outroTk: { cx: 900, cy: 650, vw: 1000 },
+        outroDeaths: { cx: 960, cy: 400, vw: 880 },
+        outroDeathsEnd: { cx: 960, cy: 470, vw: 860 },
+        outroSynergies: { cx: 960, cy: 420, vw: 880 },
+        outroSynergiesEnd: { cx: 960, cy: 480, vw: 860 },
       }
     : {
         elDmg: { cx: 905, cy: 630, vw: 1500 },
@@ -531,7 +535,10 @@ function views(P) {
         packEnd: { cx: 820, cy: 580, vw: 1000 },
         outroElFull: { cx: 905, cy: 630, vw: 1500 },
         outroEl: { cx: 700, cy: 640, vw: 780 },
-        outroTk: { cx: 760, cy: 640, vw: 780 },
+        outroDeaths: { cx: 960, cy: 500, vw: 880 },
+        outroDeathsEnd: { cx: 960, cy: 600, vw: 860 },
+        outroSynergies: { cx: 960, cy: 520, vw: 880 },
+        outroSynergiesEnd: { cx: 960, cy: 600, vw: 860 },
       };
 }
 
@@ -1397,10 +1404,25 @@ export function frame(t, W, H, cam, R) {
       { ...elView, vw: elView.vw * mix(1.08, 1, inL) },
       { screen: elScreen, alpha: inL },
     );
+    // ESO Toolkit's half: the death recap from an earlier wipe on this boss ("helps you understand
+    // it"), then the kill's synergy breakdown ("and get ready for the next one").
     const rightFrom = P ? [0, H, W, H / 2] : [W, 0, W / 2, H];
-    const tk = shot('tk-insights', V.outroTk, { screen: lerpRect(rightFrom, right, split) });
+    const tkScreen = lerpRect(rightFrom, right, split);
+    const drift = range(t, C.o2, M5.t0);
+    const toSynergies = ease.inOutCubic(range(t, C.ready - 0.45, C.ready + 0.05));
+    const deaths = shot('tk-deaths', lerpView(V.outroDeaths, V.outroDeathsEnd, drift), {
+      screen: tkScreen,
+    });
+    const synergies = shot('tk-synergies', lerpView(V.outroSynergies, V.outroSynergiesEnd, drift), {
+      screen: tkScreen,
+      alpha: toSynergies,
+    });
+    const tk = toSynergies > 0.5 ? synergies : deaths;
     if (t <= M4.t1) add(el);
-    if (split > 0 && t <= M5.t1) add(tk);
+    if (split > 0 && t <= M5.t1) {
+      if (toSynergies < 1) add(deaths);
+      add(synergies);
+    }
     const point = worldToScreen(C.free + 1, W, H, [0, 0, 0]) ?? [W / 2, H / 2];
     addMorph(M4, { type: 'card', card: el }, { type: 'point', at: [point[0], point[1], 0] });
     addMorph(M5, { type: 'card', card: tk }, { type: 'point', at: [point[0], point[1], 0] });
