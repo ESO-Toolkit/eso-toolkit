@@ -51,6 +51,7 @@ const STILLS = [
   'tk-synergies',
   'tk-insights-page',
   'tk-damage-table',
+  'tk-damage-graph',
   'tk-healing-table',
   'tk-deaths-messy',
   'tk-gear-info',
@@ -61,6 +62,8 @@ const CLIPS = {
   'el-replay-tall': [1080, 1920],
   'tk-replay-tall': [1080, 1920],
   'tk-replay-td': [1920, 1080],
+  // The Damage Over Time panel, one frame per second of fight as the crosshair scrubs.
+  'tk-graph-scrub': [1632, 1212],
 };
 const LAYOUTS = [
   'el-damage',
@@ -81,6 +84,7 @@ const LAYOUTS = [
   'tk-pack-hub',
   'tk-insights-page',
   'tk-damage-table',
+  'tk-damage-graph',
   'tk-healing-table',
   'tk-gear-info',
 ];

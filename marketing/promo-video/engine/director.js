@@ -84,6 +84,11 @@ C.healing = cue('tables', 'healing');
 C.died = cue('tables', 'died');
 C.rezzed = cue('tables', 'rezzed');
 C.casts = cue('tables', 'casts');
+C.exactly = cue('graph', 'exactly');
+C.wrong = cue('graph', 'wrong');
+C.five = cue('graph', 'five');
+C.stayed = cue('graph', "group's");
+C.fifty = cue('graph', 'fifty');
 C.thirteen = cue('gear', 'one');
 C.one = C.thirteen;
 C.rowWord = cue('gear', 'row');
@@ -209,6 +214,7 @@ const CAPTIONED = [
   'paste',
   'insights',
   'tables',
+  'graph',
   'gear',
   'info',
   'scribe',
@@ -434,6 +440,15 @@ const FOCUS_BLUR = 0.15;
 // el = s * tk + (tx, ty), measured by edge registration of the two clips.
 const REPLAY_ALIGN = { s: 0.727, tx: 184.5, ty: 201 };
 
+// Site switches (see swap() in frame): duration, gap between the two screens and how far the
+// camera pulls back.
+const SWAP = 1.45;
+const SWAP_GAP = 96;
+const SWAP_DEPTH = 760;
+// Container transforms: the address bar into Insights, the damage card into its page.
+const OPEN_INS = 0.72;
+const OPEN_GRAPH = 0.62;
+
 // Transition times.
 const T = {
   headOut: C.introEnd - 0.25,
@@ -450,6 +465,7 @@ const T = {
   damage: C.where - 0.5,
   tables: N.tables - 0.3,
   split: C.healing - 0.1,
+  graphIn: N.graph - 0.55,
   gearIn: N.gear - 0.3,
   heroIn: C.groups - 0.15,
   settle: N.info - 0.5,
@@ -517,7 +533,8 @@ C.whooshes = [
   T.insIn + 0.1,
   T.tables + 0.1,
   T.split + 0.1,
-  T.gearIn + 0.1,
+  T.graphIn + 0.1,
+  T.gearIn + 0.35,
   T.heroIn + 0.25,
   C.lays + 0.2,
   T.settle + 0.2,
@@ -573,6 +590,7 @@ C.clicks = [
   C.died,
   C.rezzed,
   C.casts,
+  C.five,
   C.copying,
   C.script1,
   C.by,
@@ -594,7 +612,6 @@ function views(P) {
         insOverview: { cx: 960, cy: 462, vw: 1250 },
         insUptimes: { cx: 960, cy: 1370, vw: 1250 },
         insDamage: { cx: 960, cy: 1953, vw: 1250 },
-        dmgPage: { cx: 960, cy: 852, vw: 1800 },
         elGear: { cx: 867.5, cy: 500, vw: 1500 },
         tkCardPage: { cx: 751.5, cy: 366, vw: 1244 },
         tkInfo: { cx: 960, cy: 540, vw: 1150 },
@@ -643,7 +660,6 @@ function views(P) {
         insOverview: { cx: 960, cy: 462, vw: 1250 },
         insUptimes: { cx: 960, cy: 1370, vw: 1250 },
         insDamage: { cx: 960, cy: 1953, vw: 1250 },
-        dmgPage: { cx: 960, cy: 852, vw: 1800 },
         elGear: { cx: 867.5, cy: 500, vw: 1500 },
         tkCardPage: { cx: 751.5, cy: 366, vw: 1244 },
         tkInfo: { cx: 960, cy: 540, vw: 1150 },
@@ -870,17 +886,94 @@ export function frame(t, W, H, cam, R) {
   const backdrop = (amount) => {
     if (amount > 0.001) out.fx.back = { amount, level: 0.35, sat: 0.5 };
   };
-  /** A page push: the incoming page slides in over the outgoing one. dir 1 = from the right. */
-  const push = (at, dir = 1, dur = 0.62) => {
-    const k = EASE.page(range(t, at, at + dur));
-    const k2 = EASE.page(range(t + 1 / 60, at, at + dur));
-    out.fx.whip = [out.fx.whip[0] + dir * -(k2 - k) * W * 0.22, 0];
+  /**
+   * A shot seen through a rounded window (a screen rect): the card becomes the window and shows
+   * the part of the page under it, so its shadow and corners follow the window. For container
+   * transforms, where an element opens into the next view.
+   */
+  const windowed = (card, rect, radius) => {
+    const [sx, sy, sw, sh] = card.screen;
+    const ku = card.uv[2] / sw;
+    const kv = card.uv[3] / sh;
+    const kp = card.view.vw / sw;
+    const v = card.view;
     return {
-      k,
-      inOffset: [dir * (1 - k) * W, 0],
-      outOffset: [-dir * k * W * 0.3, 0],
-      outBright: mix(0.93, 0.45, k),
-      done: t >= at + dur,
+      ...card,
+      uv: [
+        card.uv[0] + (rect[0] - sx) * ku,
+        card.uv[1] + (rect[1] - sy) * kv,
+        rect[2] * ku,
+        rect[3] * kv,
+      ],
+      x: rect[0] + rect[2] / 2,
+      y: rect[1] + rect[3] / 2,
+      w: rect[2],
+      h: rect[3],
+      radius,
+      view: {
+        cx: v.cx - v.vw / 2 + (rect[0] + rect[2] / 2 - sx) * kp,
+        cy: v.cy - v.vh / 2 + (rect[1] + rect[3] / 2 - sy) * kp,
+        vw: rect[2] * kp,
+        vh: rect[3] * kp,
+      },
+      screen: rect,
+    };
+  };
+  /** A full-frame shot scaled by k about screen point o, for content settling into place. */
+  const shotAbout = (tex, v, k, o) =>
+    shot(tex, v, { screen: [o[0] * (1 - k), o[1] * (1 - k), W * k, H * k] });
+  const scaleAbout = (r, k, o) => [
+    o[0] + (r[0] - o[0]) * k,
+    o[1] + (r[1] - o[1]) * k,
+    r[2] * k,
+    r[3] * k,
+  ];
+  /** Motion blur for a camera move: half the page's travel on screen per frame (180° shutter). */
+  const cameraBlur = (viewAt) => {
+    const a = viewAt(t);
+    const b = viewAt(t + 1 / 60);
+    const k = W / a.vw;
+    out.fx.whip = [
+      out.fx.whip[0] + (b.cx - a.cx) * k * 0.5,
+      out.fx.whip[1] + (b.cy - a.cy) * k * 0.5,
+    ];
+  };
+  /**
+   * The two sites as neighbouring screens in one space: the camera pulls back from the outgoing
+   * page, travels across and pushes in on the incoming one. ESO Logs always sits to the left of
+   * ESO Toolkit, so side -1 (incoming on the left) means going to ESO Logs.
+   */
+  const swap = (at, side) => {
+    const state = (tt) => {
+      const u = range(tt, at, at + SWAP);
+      return {
+        back: EASE.move(range(u, 0, 0.45)) * (1 - EASE.move(range(u, 0.55, 1))),
+        s: EASE.cam(range(u, 0.1, 0.9)),
+      };
+    };
+    const now = state(t);
+    // On-screen travel, for motion blur at a 144° shutter (the stage camera sits D from the
+    // z = 0 plane, 32° fov).
+    const D = H / 2 / Math.tan(deg(16));
+    const travel = (st) => (st.s * (W + SWAP_GAP) * D) / (D + SWAP_DEPTH * st.back);
+    out.fx.whip = [
+      out.fx.whip[0] + (travel(state(t + 1 / 60)) - travel(now)) * -side * 0.4,
+      out.fx.whip[1],
+    ];
+    const place = (card, slot) => {
+      if (!card) return card;
+      card.x += slot * (W + SWAP_GAP);
+      card.z = -SWAP_DEPTH * now.back;
+      card.rotX = deg(4) * now.back;
+      card.radius = 22 * now.back;
+      card.bright = (card.bright ?? 0.93) * mix(1, 0.55, Math.min(1, Math.abs(slot)) * now.back);
+      return card;
+    };
+    return {
+      on: t >= at && t < at + SWAP,
+      done: t >= at + SWAP,
+      out: (card) => place(card, -side * now.s),
+      in: (card) => place(card, side * (1 - now.s)),
     };
   };
   const textWidth = (() => {
@@ -922,23 +1015,23 @@ export function frame(t, W, H, cam, R) {
       ctx.restore();
     });
   }
-  if (t >= T.pageIn && t < T.insIn + 0.7) {
+  if (t >= T.pageIn && t < T.insIn + OPEN_INS) {
     const arrive = EASE.page(range(t, T.pageIn, T.pageIn + 0.9));
     const hold = range(t, T.pageIn + 0.9, T.insIn);
     const v = { ...V.elDmg, vw: V.elDmg.vw * mix(1, 0.985, hold) };
-    const p = push(T.insIn, 1);
-    const s = mix(0.94, 1, arrive);
-    const page = shot('el-damage', v, { offset: p.outOffset });
+    // Once Enter is pressed the page falls back while Insights opens over it.
+    const recede = EASE.page(range(t, T.insIn, T.insIn + OPEN_INS));
+    const s = mix(0.94, 1, arrive) * mix(1, 0.94, recede);
+    const page = shot('el-damage', v);
     Object.assign(page, {
       w: W * s,
       h: H * s,
       alpha: ease.outCubic(range(t, T.pageIn, T.pageIn + 0.5)),
-      bright: p.outBright,
+      bright: mix(0.93, 0.6, recede),
     });
     add(page);
-    // The address bar sits over the page: the page recedes behind it.
-    const under = up(t, N.paste - 0.15, 0.35) * down(t, T.enter, 0.2);
-    emphasize(under, [], { level: 0.45 });
+    // The address bar sits over the page like a command bar: the page blurs back behind it.
+    backdrop(up(t, N.paste - 0.15, 0.35));
     tag('ESO Logs', 'esologs', up(t, T.pageIn + 0.6, 0.4) * down(t, N.paste - 0.2, 0.3));
   }
 
@@ -980,10 +1073,10 @@ export function frame(t, W, H, cam, R) {
     uptimes: frameOn(union(I.buffs, I.debuffs), 1.3),
     damage: frameOn(union(I.breakdown, I.byType), 1.3),
   };
-  if (t >= T.insIn && t < T.tables + 0.7) {
-    const p = push(T.insIn, 1);
-    const pOut = push(T.tables, 1);
-    const v = path(
+  // The camera over Insights; after "tables" it holds on the damage panels and drifts back while
+  // the tables sit over the page.
+  const insView = (tt) =>
+    path(
       [
         { t: T.insIn, v: V_ins.overview },
         { t: T.abilities, v: { ...V_ins.overview, vw: V_ins.overview.vw * 0.98 } },
@@ -995,23 +1088,49 @@ export function frame(t, W, H, cam, R) {
         { t: T.damage, v: V_ins.uptimes },
         { t: T.damage + 1.1, v: V_ins.damage, ease: EASE.cam },
         { t: T.tables, v: { ...V_ins.damage, vw: V_ins.damage.vw * 0.99 } },
+        { t: T.graphIn, v: { ...V_ins.damage, vw: V_ins.damage.vw * 1.03 }, ease: (u) => u },
       ],
-      t,
+      tt,
     );
-    const ins = shot('tk-insights-page', v, {
-      offset: [p.inOffset[0] + pOut.outOffset[0], 0],
-    });
-    ins.bright = pOut.outBright;
-    // Uptime and damage-type rows arrive one by one into empty slots.
+  if (t >= T.insIn && t < T.graphIn + OPEN_GRAPH) {
+    // Enter: the address bar opens into the page (a rounded window growing to the full frame,
+    // its content settling from 108%), over the ESO Logs page.
+    const open = EASE.page(range(t, T.insIn, T.insIn + OPEN_INS));
+    const bar = [W / 2 - 360, WORK_CY - 32, 720, 64];
+    const full = shotAbout('tk-insights-page', insView(t), mix(1.08, 1, open), [W / 2, WORK_CY]);
+    const ins =
+      open < 1
+        ? {
+            ...windowed(
+              full,
+              lerpRect(bar, FULL, open),
+              mix(10, 24, smoothstep(0, 0.3, open)) * (1 - smoothstep(0.8, 1, open)),
+            ),
+            shadow: true,
+            alpha: ease.outCubic(range(t, T.insIn, T.insIn + 0.12)),
+            layer: 'fg',
+          }
+        : full;
+    if (open >= 1) cameraBlur(insView);
+    // Uptime and damage-type rows arrive one by one into empty slots; after "tables" the damage
+    // breakdown panel lifts out of its slot, leaving a recess.
     const rows = [
       ...inPanel(I.buffRows, I.buffs).map((r, i) => [r, C.buffs + i * 0.08, 20]),
       ...inPanel(I.debuffRows, I.debuffs).map((r, i) => [r, C.buffs + 0.04 + i * 0.08, 20]),
       ...inPanel(I.typeRows, I.byType).map((r, i) => [r, C.where + 0.1 + i * 0.07, 12]),
     ];
     const pending = rows.filter(([, at]) => t < at + 0.46);
-    ins.holes = pending.map(([r]) => holeUv(ins, r));
-    ins.holeFill = [31, 41, 55];
-    ins.holeRadius = 20 * scaleOf(ins);
+    if (t < T.tables) {
+      ins.holes = pending.map(([r]) => holeUv(ins, r));
+      ins.holeFill = [31, 41, 55];
+      ins.holeRadius = 20 * scaleOf(ins);
+    } else {
+      const lifted = EASE.page(range(t, T.tables, T.tables + 0.75));
+      ins.holes = [holeUv(ins, I.breakdown)];
+      ins.holeAmt = range(lifted, 0, 0.4);
+      ins.holeRadius = (I.breakdownR ?? 14) * scaleOf(ins);
+      backdrop(lifted);
+    }
     add(ins);
     const { dpr } = pageSize(R, ins.tex);
     for (const [r, at, radius] of rows) {
@@ -1066,65 +1185,73 @@ export function frame(t, W, H, cam, R) {
     );
   }
 
-  // --- Tables: the Damage Done table lifts off its page beside the Healing Done table -----------
+  // --- Tables: the damage breakdown opens into the Damage Done table, beside Healing Done ------
   const CARD = { w: 818, h: 712, r: 25 };
   const wrapper = (tbl) => [tbl.table[0] - 1, tbl.table[1] - 2, CARD.w, CARD.h];
-  if (t >= T.tables && t < T.gearIn + 0.7) {
-    const p = push(T.tables, 1);
-    const pOut = push(T.gearIn, -1);
-    const lift = EASE.camera(range(t, T.split, T.split + 0.6));
+  const BIG = [
+    W / 2 - (CARD.w * 1.1) / 2,
+    WORK_CY - (CARD.h * 1.1) / 2,
+    CARD.w * 1.1,
+    CARD.h * 1.1,
+  ];
+  if (t >= T.tables && t < T.graphIn + 0.05) {
+    const open = EASE.page(range(t, T.tables, T.tables + 0.75));
     const healIn = EASE.page(range(t, T.split + 0.12, T.split + 0.6));
     const healOut = EASE.exit(range(t, C.casts - 0.3, C.casts + 0.06));
     const toBig = EASE.camera(range(t, C.casts - 0.1, C.casts + 0.5));
-    const page = shot(
-      'tk-damage-table',
-      { ...V.dmgPage, vw: V.dmgPage.vw / mix(1, 0.97, lift) },
-      { offset: [p.inOffset[0] + pOut.outOffset[0], 0] },
-    );
-    page.bright = pOut.outBright;
-    page.holes = lift > 0 ? [holeUv(page, wrapper(Dt))] : [];
-    page.holeAmt = range(lift, 0, 0.4);
-    page.holeRadius = CARD.r * scaleOf(page);
-    add(page);
-    backdrop(lift);
-    const start = pageToScreen(shot('tk-damage-table', V.dmgPage), wrapper(Dt));
+    const insNow = shot('tk-insights-page', insView(t));
+    const from = pageToScreen(insNow, I.breakdown);
     const slotL = [118, WORK_CY - CARD.h / 2, CARD.w, CARD.h];
     const slotR = [984, WORK_CY - CARD.h / 2, CARD.w, CARD.h];
-    const big = [
-      W / 2 - (CARD.w * 1.1) / 2,
-      WORK_CY - (CARD.h * 1.1) / 2,
-      CARD.w * 1.1,
-      CARD.h * 1.1,
-    ];
-    const off = pOut.outOffset[0];
-    let dRect = lerpRect(lerpRect(start, slotL, lift), big, toBig);
-    dRect = [dRect[0] + off, dRect[1], dRect[2], dRect[3]];
-    const hRect = [slotR[0] + (1 - healIn) * 120 + healOut * 160 + off, slotR[1], CARD.w, CARD.h];
-    const tableCard = (tex, tbl, rect, alpha) => {
-      const { dpr } = pageSize(R, tex);
+    const dRect = lerpRect(lerpRect(from, slotL, open), BIG, toBig);
+    const hRect = [slotR[0] + (1 - healIn) * 120 + healOut * 160, slotR[1], CARD.w, CARD.h];
+    // Both contents fill the card's width from its top edge: the panel's fades out as the
+    // table's fades in.
+    const fitTop = (r, rect) => [r[0], r[1], r[2], (rect[3] * r[2]) / rect[2]];
+    const into = smoothstep(0.12, 0.55, open);
+    const s = dRect[2] / CARD.w;
+    const dI = pageSize(R, 'tk-insights-page').dpr;
+    const dD = pageSize(R, 'tk-damage-table').dpr;
+    add({
+      tex: 'tk-insights-page',
+      uv: fitTop(I.breakdown, dRect).map((v) => v * dI),
+      texB: 'tk-damage-table',
+      uvB: fitTop(wrapper(Dt), dRect).map((v) => v * dD),
+      mixB: into,
+      x: dRect[0] + dRect[2] / 2,
+      y: dRect[1] + dRect[3] / 2,
+      w: dRect[2],
+      h: dRect[3],
+      radius: mix((I.breakdownR ?? 14) * scaleOf(insNow), CARD.r * s, open),
+      shadow: true,
+      fadeBottom: 56 * s * into,
+      alpha: 1,
+      bright: 0.93,
+      layer: 'fg',
+    });
+    const hAlpha = healIn * (1 - healOut);
+    if (hAlpha > 0.002) {
+      const { dpr } = pageSize(R, 'tk-healing-table');
       add({
-        tex,
-        uv: wrapper(tbl).map((v) => v * dpr),
-        x: rect[0] + rect[2] / 2,
-        y: rect[1] + rect[3] / 2,
-        w: rect[2],
-        h: rect[3],
-        radius: CARD.r * (rect[2] / CARD.w),
+        tex: 'tk-healing-table',
+        uv: wrapper(Ht).map((v) => v * dpr),
+        x: hRect[0] + hRect[2] / 2,
+        y: hRect[1] + hRect[3] / 2,
+        w: hRect[2],
+        h: hRect[3],
+        radius: CARD.r,
         shadow: true,
-        fadeBottom: 56 * (rect[2] / CARD.w),
-        alpha,
+        fadeBottom: 56,
+        alpha: hAlpha,
         bright: 0.93,
         layer: 'fg',
       });
-    };
-    const hAlpha = healIn * (1 - healOut);
-    if (lift > 0) tableCard('tk-damage-table', Dt, dRect, 1);
-    if (hAlpha > 0.002) tableCard('tk-healing-table', Ht, hRect, hAlpha);
+    }
     // Page rect -> screen for a table card in `rect`.
     const toCard = (tbl, rect, r) => {
-      const s = rect[2] / CARD.w;
+      const k = rect[2] / CARD.w;
       const w0 = wrapper(tbl);
-      return [rect[0] + (r[0] - w0[0]) * s, rect[1] + (r[1] - w0[1]) * s, r[2] * s, r[3] * s];
+      return [rect[0] + (r[0] - w0[0]) * k, rect[1] + (r[1] - w0[1]) * k, r[2] * k, r[3] * k];
     };
     const column = (tbl, key) => {
       const c = tbl.columns[key];
@@ -1148,7 +1275,7 @@ export function frame(t, W, H, cam, R) {
       [C.died - 0.15, mk(Ht, hRect, 'deaths')],
       [C.rezzed - 0.15, mk(Ht, hRect, 'resurrects')],
     ]);
-    const amount = up(t, C.died - 0.3, 0.3) * down(t, T.gearIn - 0.35, 0.25);
+    const amount = up(t, C.died - 0.3, 0.3) * down(t, T.graphIn - 0.3, 0.25);
     const lits = [litD, ...(colKey !== 'cpm' && hAlpha > 0.5 ? [litH] : [])];
     emphasize(amount, lits, {
       sib: [
@@ -1158,7 +1285,7 @@ export function frame(t, W, H, cam, R) {
       level: 0.65,
       sibLevel: 0.4,
     });
-    const labels = lift * (1 - healOut) * (1 - pOut.k);
+    const labels = smoothstep(0.6, 1, open) * (1 - healOut);
     if (labels > 0.002)
       out.overlays.push((ctx) => {
         UI.sourceLabel(ctx, {
@@ -1171,13 +1298,106 @@ export function frame(t, W, H, cam, R) {
           x: hRect[0] + 4,
           y: hRect[1] - 20,
           text: 'Healing Done',
-          alpha: labels,
+          alpha: labels * hAlpha,
         });
       });
     tag(
       'ESO Toolkit · Damage Done',
       'esotk',
       up(t, T.tables + 0.5, 0.4) * down(t, T.split - 0.2, 0.2),
+    );
+  }
+
+  // --- Graph: the table opens into its page and the camera travels down to Damage Over Time ----
+  const Gr = R['tk-damage-graph'];
+  // The plot spans 0-210 s; its 500k and zero gridlines sit 17.25 and 321.25 px below the
+  // canvas top (measured off the still).
+  const plot = [Gr.x0, Gr.canvas[1] + 17.25, 210 * Gr.pxPerSec, 304];
+  const secs = (a, b) => [Gr.x0 + a * Gr.pxPerSec, plot[1], (b - a) * Gr.pxPerSec, plot[3]];
+  // The panel down to its time-range slider; the moment (the crosshair and its tooltip).
+  V.graph = frameOn([Gr.panel[0], Gr.panel[1], Gr.panel[2], 530], 1.4);
+  V.moment = frameOn(union(secs(72.5, 75.5), Gr.tooltip), 1.65);
+  const graphView = (tt) =>
+    path(
+      [
+        // The page's framing that puts its table exactly where the big card is.
+        { t: T.graphIn + OPEN_GRAPH - 0.05, v: frameOn(wrapper(Dt), 1.1) },
+        { t: T.graphIn + OPEN_GRAPH + 1.1, v: V.graph, ease: EASE.cam },
+        { t: C.five - 0.45, v: V.graph },
+        { t: C.five + 0.55, v: V.moment, ease: EASE.cam },
+        { t: C.stayed - 0.35, v: { ...V.moment, vw: V.moment.vw * 0.985 }, ease: (u) => u },
+        { t: C.stayed + 0.75, v: V.graph, ease: EASE.cam },
+        { t: T.gearIn, v: { ...V.graph, vw: V.graph.vw * 0.985 }, ease: (u) => u },
+      ],
+      tt,
+    );
+  const toLogs = swap(T.gearIn, -1);
+  if (t >= T.graphIn && t < T.gearIn + SWAP) {
+    const open = EASE.page(range(t, T.graphIn, T.graphIn + OPEN_GRAPH));
+    const full = shot('tk-damage-graph', graphView(t));
+    const page =
+      open < 1
+        ? {
+            ...windowed(full, lerpRect(BIG, FULL, open), CARD.r * 1.1 * (1 - open)),
+            shadow: true,
+            fadeBottom: 56 * 1.1 * (1 - open),
+            layer: 'fg',
+          }
+        : full;
+    if (open >= 1 && !toLogs.on) cameraBlur(graphView);
+    if (toLogs.on) toLogs.out(page);
+    add(page);
+    // "...exactly when it went wrong": the crosshair scrubs from 40 s to 75 s, just after five
+    // players died (73.1-74.6 s), then gives way to the plain chart.
+    const scrubOn = up(t, C.exactly - 0.3, 0.2) * down(t, C.stayed - 0.2, 0.3);
+    if (scrubOn > 0.002 && open >= 1) {
+      const k = EASE.cam(range(t, C.exactly - 0.1, C.wrong - 0.05));
+      const [sw, sh] = R.size['tk-graph-scrub'];
+      const sr = pageToScreen(page, Gr.panel);
+      add({
+        tex: 'tk-graph-scrub',
+        frame: Math.round(k * (Gr.scrub.to - Gr.scrub.from)),
+        uv: [0, 0, sw, sh],
+        x: sr[0] + sr[2] / 2,
+        y: sr[1] + sr[3] / 2,
+        w: sr[2],
+        h: sr[3],
+        radius: 0,
+        shadow: false,
+        alpha: scrubOn,
+        bright: page.bright ?? 0.93,
+        layer: page.layer,
+      });
+    }
+    // Emphasis: the moment and its tooltip (lit on its own edge: a margin would show bright
+    // chart lines around it), then the fifty seconds the damage stayed down.
+    const band = maskOf(page, secs(74, 124), 3, 6);
+    const lit = [
+      morph([
+        [C.five - 0.15, maskOf(page, secs(72.5, 75.5), 3, 6)],
+        [C.stayed - 0.15, band],
+      ]),
+      morph([
+        [C.five - 0.15, maskOf(page, Gr.tooltip, Gr.tooltipR ?? 6, 0)],
+        [C.stayed - 0.15, band],
+      ]),
+    ];
+    emphasize(up(t, C.five - 0.3, 0.3) * down(t, T.gearIn - 0.4, 0.25), lit);
+    const spanK = EASE.enter(range(t, C.fifty - 0.4, C.fifty + 0.3));
+    const spanA = down(t, T.gearIn - 0.4, 0.25);
+    if (spanK > 0.002 && spanA > 0.002) {
+      const b = pageToScreen(page, secs(74, 124));
+      out.overlays.push((ctx) =>
+        measuredSpan(ctx, b[0], b[0] + b[2], b[1] + b[3] * 0.2, '≈ 50 s', spanK, spanA),
+      );
+    }
+    // The tag steps aside while the camera leans in (the legend then reaches the label zone).
+    tag(
+      'ESO Toolkit · Damage Done',
+      'esotk',
+      up(t, T.graphIn + OPEN_GRAPH + 0.6, 0.4) *
+        Math.max(down(t, C.five - 0.6, 0.25), up(t, C.stayed + 0.6, 0.4)) *
+        down(t, T.gearIn - 0.3, 0.25),
     );
   }
 
@@ -1229,41 +1449,40 @@ export function frame(t, W, H, cam, R) {
   const chipsBottom = Math.max(...K.chips.map((c) => pill(c)[1] + pill(c)[3]));
   const gearSection = [OUTER[0], K.info[1] - 14, OUTER[2], chipsBottom + 14 - (K.info[1] - 14)];
   V.infoBtn = frameOn(gearSection, heroK * 1.35);
-  V.infoPanel = frameOn(G.panel, 1.325);
+  V.infoPanel = frameOn(G.popover, 1.28);
 
   if (t >= T.gearIn && t < T.settle + 0.8) {
-    const p = push(T.gearIn, -1);
     const lifted = EASE.camera(range(t, T.heroIn, T.heroIn + 0.6));
-    const swap = ease.inOutCubic(range(t, T.settle - 0.35, T.settle));
+    const toTk = ease.inOutCubic(range(t, T.settle - 0.35, T.settle));
     const page = shot(
       'el-player',
       { ...elGearV, vw: elGearV.vw / mix(1, 0.97, lifted) },
-      {
-        offset: p.inOffset,
-        alpha: 1 - swap,
-      },
+      { alpha: 1 - toTk },
     );
+    if (toLogs.on) toLogs.in(page);
     add(page);
     backdrop(lifted * (1 - EASE.camera(range(t, T.settle, T.settle + 0.7))));
     // "...one item per row": the table, then its first row among the others, then the table.
-    if (t < T.heroIn + 0.3) {
+    const landed = T.gearIn + SWAP;
+    if (t >= landed && t < T.heroIn + 0.3) {
       const rowR = (r) => maskOf(page, r, 0, 8);
       const table = maskOf(page, L.gearTable, 0, 12);
       const lit = morph([
-        [T.gearIn + 0.8, table],
+        [landed, table],
         [C.one - 0.15, rowR(gearRows[0].rect)],
         [C.rowWord + 0.25, table],
       ]);
       const onRow = t >= C.one - 0.15 && t < C.rowWord + 0.25;
-      const amount = up(t, T.gearIn + 0.7, 0.3) * down(t, T.heroIn - 0.1, 0.3);
+      const amount = up(t, landed, 0.3) * down(t, T.heroIn - 0.1, 0.3);
       emphasize(amount, [lit], {
         sib: onRow ? gearRows.slice(1).map((g) => sibling(maskOf(page, g.rect, 0, 0))) : [],
         level: onRow ? 0.65 : 0.5,
       });
     }
+    tag('ESO Logs', 'esologs', up(t, landed - 0.2, 0.4) * down(t, T.heroIn, 0.3));
   }
 
-  if (t >= T.heroIn && t < T.hover + 0.4) {
+  if (t >= T.heroIn && t < T.hover + 0.55) {
     // ESO Toolkit's players page comes in under the lifted card (still a colour field), then
     // lights up as the card settles into its place.
     const bgV = path(
@@ -1271,8 +1490,8 @@ export function frame(t, W, H, cam, R) {
         { t: T.settle, v: tkCardV },
         { t: T.infoPush, v: tkCardV },
         { t: T.infoPush + 1.0, v: V.infoBtn, ease: EASE.cam },
-        { t: T.infoOpen, v: V.infoBtn },
-        { t: T.infoOpen + 1.0, v: V.infoPanel, ease: EASE.cam },
+        { t: T.infoOpen - 0.1, v: V.infoBtn },
+        { t: T.infoOpen + 0.75, v: V.infoPanel, ease: EASE.cam },
         { t: T.infoClose, v: V.infoPanel },
         { t: T.infoClose + 0.9, v: tkCardV, ease: EASE.cam },
       ],
@@ -1286,10 +1505,27 @@ export function frame(t, W, H, cam, R) {
       bg.holeAmt = 1 - lit;
       bg.holeRadius = OUTER_R * scaleOf(bg);
       add(bg);
-      const infoK =
-        ease.inOutCubic(range(t, T.infoOpen - 0.1, T.infoOpen + 0.2)) *
-        (1 - ease.inOutCubic(range(t, T.infoClose, T.infoClose + 0.3)));
-      if (infoK > 0) add(shot('tk-gear-info', bgV, { alpha: infoK }));
+      // "...the Info button lists every piece": the popover opens out of the button over the
+      // blurred page (its content settling from 90%), and later closes back into it.
+      const info =
+        EASE.page(range(t, T.infoOpen - 0.1, T.infoOpen + 0.5)) *
+        (1 - EASE.move(range(t, T.infoClose, T.infoClose + 0.45)));
+      if (info > 0.001) {
+        const btn = pageToScreen(bg, K.info);
+        const content = shotAbout('tk-gear-info', bgV, mix(0.9, 1, info), centreOf(btn));
+        const pop = pageToScreen(content, G.popover);
+        add({
+          ...windowed(
+            content,
+            lerpRect(btn, pop, info),
+            mix((K.infoR ?? 5) * scaleOf(bg), (G.popoverR ?? 24) * scaleOf(content), info),
+          ),
+          alpha: smoothstep(0, 0.25, info),
+          shadow: true,
+          layer: 'fg',
+        });
+        backdrop(info);
+      }
       // The Info button, then (after the panel) the scribed skill's icon.
       const onBtn = up(t, C.infoBtn - 0.3, 0.3) * down(t, T.infoOpen - 0.2, 0.25);
       emphasize(onBtn, [maskOf(bg, K.info, K.infoR ?? 5, 8)]);
@@ -1389,8 +1625,8 @@ export function frame(t, W, H, cam, R) {
   // --- Scribing: hovering the icon opens its tooltip ------------------------------------------------
   const panelOf = (tt) => [tt[0] + 2, tt[1] + 14, tt[2] - 4, tt[3] - 14];
   const tipPanel = panelOf(S.tooltip);
-  if (t >= T.hover && t < T.replayIn + 0.7) {
-    const p = push(T.replayIn, -1);
+  const toReplay = swap(T.replayIn, -1);
+  if (t >= T.hover && t < T.replayIn + SWAP) {
     // The same framing as the card, re-anchored on the icon, so the hover is a match cut.
     const iconP = [icon.rect[0] + icon.rect[2] / 2, icon.rect[1] + icon.rect[3] / 2];
     const iconS = [S.icon[0] + S.icon[2] / 2, S.icon[1] + S.icon[3] / 2];
@@ -1407,11 +1643,24 @@ export function frame(t, W, H, cam, R) {
       ],
       t,
     );
-    const tip = shot('tk-scribing', v, {
-      alpha: ease.inOutCubic(range(t, T.hover, T.hover + 0.25)),
-      offset: p.outOffset,
-    });
-    tip.bright = p.outBright;
+    // The tooltip grows out of the icon over the card's page (its content settling from 90%).
+    const grow = EASE.page(range(t, T.hover, T.hover + 0.5));
+    let tip = shot('tk-scribing', v);
+    if (grow < 1) {
+      const from = pageToScreen(tip, S.icon);
+      const content = shotAbout('tk-scribing', v, mix(0.9, 1, grow), centreOf(from));
+      tip = {
+        ...windowed(
+          content,
+          lerpRect(from, pageToScreen(content, tipPanel), grow),
+          mix((S.iconR ?? 8) * scaleOf(tip), 12 * scaleOf(content), grow),
+        ),
+        alpha: smoothstep(0, 0.25, grow),
+        shadow: true,
+        layer: 'fg',
+      };
+    }
+    if (toReplay.on) toReplay.out(tip);
     add(tip);
     const scripts = [
       S.focus[0] - 10,
@@ -1446,7 +1695,6 @@ export function frame(t, W, H, cam, R) {
 
   // --- Replay: ESO Logs' flat map; a match cut onto the same floor in 3D, which then tilts ---------
   if (t >= T.replayIn && t < T.intoCard + 0.05) {
-    const p = push(T.replayIn, -1);
     const xf = ease.inOutCubic(range(t, T.xfade, T.xfade + 0.5));
     const v = path(
       [
@@ -1455,9 +1703,10 @@ export function frame(t, W, H, cam, R) {
       ],
       t,
     );
-    const elR = shot('el-replay', v, { offset: p.inOffset });
+    const elR = shot('el-replay', v);
     elR.frame = Math.min(538, Math.max(0, Math.floor((t - T.elClip) * 60)));
     elR.alpha = 1 - xf;
+    if (toReplay.on) toReplay.in(elR);
     if (xf < 1) add(elR);
     const aligned = {
       cx: (V.elReplay.cx - REPLAY_ALIGN.tx) / REPLAY_ALIGN.s,
@@ -2137,6 +2386,35 @@ function checklist(ctx, x, baseline, pitch, t, at, alpha) {
     ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
     ctx.fillText(item, x + 30, y);
   });
+  ctx.restore();
+}
+
+/**
+ * A measured stretch of a chart: a hairline with end ticks, drawn out from its centre (k), and
+ * its length set above it.
+ */
+function measuredSpan(ctx, x0, x1, y, label, k, alpha) {
+  const cx = (x0 + x1) / 2;
+  const half = ((x1 - x0) / 2) * k;
+  ctx.save();
+  ctx.globalAlpha = alpha * Math.min(1, k * 3);
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
+  ctx.lineWidth = 1.5;
+  ctx.lineCap = 'butt';
+  ctx.beginPath();
+  ctx.moveTo(cx - half, y);
+  ctx.lineTo(cx + half, y);
+  for (const x of [cx - half, cx + half]) {
+    ctx.moveTo(x, y - 7);
+    ctx.lineTo(x, y + 7);
+  }
+  ctx.stroke();
+  ctx.globalAlpha = alpha * smoothstep(0.4, 1, k);
+  ctx.font = `600 22px ${UI.FONT.display}`;
+  ctx.letterSpacing = '-0.22px';
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#ffffff';
+  ctx.fillText(label, cx, y - 16 + (1 - k) * 6);
   ctx.restore();
 }
 

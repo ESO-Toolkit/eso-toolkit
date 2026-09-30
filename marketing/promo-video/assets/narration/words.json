@@ -1935,5 +1935,160 @@
         "text": "Logs."
       }
     ]
+  },
+  "graph": {
+    "duration": 9.76,
+    "words": [
+      {
+        "say": "The",
+        "start": 0,
+        "end": 0.08,
+        "text": "The"
+      },
+      {
+        "say": "damage",
+        "start": 0.16,
+        "end": 0.48,
+        "text": "damage"
+      },
+      {
+        "say": "graph",
+        "start": 0.56,
+        "end": 0.88,
+        "text": "graph"
+      },
+      {
+        "say": "shows",
+        "start": 1,
+        "end": 1.12,
+        "text": "shows"
+      },
+      {
+        "say": "exactly",
+        "start": 1.28,
+        "end": 1.84,
+        "text": "exactly"
+      },
+      {
+        "say": "when",
+        "start": 1.92,
+        "end": 2,
+        "text": "when"
+      },
+      {
+        "say": "it",
+        "start": 2.08,
+        "end": 2.16,
+        "text": "it"
+      },
+      {
+        "say": "went",
+        "start": 2.28,
+        "end": 2.4,
+        "text": "went"
+      },
+      {
+        "say": "wrong:",
+        "start": 2.6,
+        "end": 3.28,
+        "text": "wrong:"
+      },
+      {
+        "say": "five",
+        "start": 3.36,
+        "end": 3.6,
+        "text": "five"
+      },
+      {
+        "say": "players",
+        "start": 3.68,
+        "end": 4.08,
+        "text": "players"
+      },
+      {
+        "say": "died",
+        "start": 4.12,
+        "end": 4.4,
+        "text": "died"
+      },
+      {
+        "say": "within",
+        "start": 4.6,
+        "end": 4.8,
+        "text": "within"
+      },
+      {
+        "say": "two",
+        "start": 4.88,
+        "end": 5.12,
+        "text": "two"
+      },
+      {
+        "say": "seconds,",
+        "start": 5.2,
+        "end": 5.96,
+        "text": "seconds,"
+      },
+      {
+        "say": "and",
+        "start": 6,
+        "end": 6.08,
+        "text": "and"
+      },
+      {
+        "say": "the",
+        "start": 6.12,
+        "end": 6.16,
+        "text": "the"
+      },
+      {
+        "say": "group's",
+        "start": 6.28,
+        "end": 6.48,
+        "text": "group's"
+      },
+      {
+        "say": "damage",
+        "start": 6.56,
+        "end": 6.96,
+        "text": "damage"
+      },
+      {
+        "say": "stayed",
+        "start": 7.04,
+        "end": 7.28,
+        "text": "stayed"
+      },
+      {
+        "say": "down",
+        "start": 7.36,
+        "end": 7.68,
+        "text": "down"
+      },
+      {
+        "say": "for",
+        "start": 7.72,
+        "end": 7.76,
+        "text": "for"
+      },
+      {
+        "say": "about",
+        "start": 7.84,
+        "end": 8.16,
+        "text": "about"
+      },
+      {
+        "say": "fifty",
+        "start": 8.24,
+        "end": 8.56,
+        "text": "fifty"
+      },
+      {
+        "say": "seconds.",
+        "start": 9.12,
+        "end": 9.76,
+        "text": "seconds."
+      }
+    ]
   }
 }

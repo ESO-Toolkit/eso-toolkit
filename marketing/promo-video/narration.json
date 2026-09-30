@@ -35,6 +35,10 @@
       "say": "The damage and healing tables show who died, who got rezzed, and everyone's casts per minute."
     },
     {
+      "id": "graph",
+      "say": "The damage graph shows exactly when it went wrong: five players died within two seconds, and the group's damage stayed down for about fifty seconds."
+    },
+    {
       "id": "gear",
       "say": "E-S-O Logs lists a player's gear one item per row. E-S-O Toolkit groups it into sets, shows both bars the way they look in game, and flags low-quality gear and enchants."
     },

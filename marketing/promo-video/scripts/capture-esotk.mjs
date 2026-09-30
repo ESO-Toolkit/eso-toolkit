@@ -2,7 +2,7 @@
 //
 //   node scripts/capture-esotk.mjs            # every shot
 //   node scripts/capture-esotk.mjs replay     # shots whose name contains "replay"
-import { readFile } from 'node:fs/promises';
+import { mkdir, readFile, rm } from 'node:fs/promises';
 import path from 'node:path';
 import { chromium } from 'playwright';
 import { DPR, OUT, clip, measure, rects, still } from './capture-lib.mjs';
@@ -241,7 +241,14 @@ const shots = {
           );
         });
         const rows = all.filter((e) => !all.some((o) => o !== e && e.contains(o))).map(box);
-        return { panel: box(panel), table: box(head), rows };
+        // The whole popover: the table's nearest ancestor that also holds the player bar above it.
+        let pop = panel;
+        while (
+          pop &&
+          pop.getBoundingClientRect().height < panel.getBoundingClientRect().height + 30
+        )
+          pop = pop.parentElement;
+        return { panel: box(panel), table: box(head), rows, popover: box(pop) };
       }),
     );
   },
@@ -597,7 +604,8 @@ const shots = {
     const table = async (name, url) => {
       await page.setViewportSize({ width: 1920, height: 1080 });
       await open(page, url, 18000);
-      await page.setViewportSize({ width: 1920, height: 1600 });
+      // Tall enough for the Damage Over Time graph below the table.
+      await page.setViewportSize({ width: 1920, height: 2300 });
       await page.evaluate(() => scrollTo(0, 0));
       await page.waitForTimeout(2500);
       await page.mouse.move(5, 5);
@@ -689,6 +697,72 @@ const shots = {
       );
     };
     await table('tk-damage-table', `${MESSY}/damage-done`);
+    // The Damage Over Time graph: its panel, the plot area and its time scale (calibrated by
+    // reading the crosshair tooltip's time at two points). The panel rises a few pixels while
+    // hovered, so both stills are taken hovered: over its title (no crosshair), then over the
+    // plot at 75 s, just above the zero line so the crosshair's level line sits on the axis.
+    const measureGraph = () =>
+      page.evaluate(() => {
+        const w = document.querySelector('[role="img"][aria-label^="Damage timeline chart"]');
+        const c = w.querySelector('canvas').getBoundingClientRect();
+        let p = w;
+        while (p && !/^Damage Over Time/.test(p.textContent.trim())) p = p.parentElement;
+        const r = p.getBoundingClientRect();
+        return { canvas: [c.x, c.y, c.width, c.height], panel: [r.x, r.y, r.width, r.height] };
+      });
+    let graph = await measureGraph();
+    const tipTime = async (x) => {
+      await page.mouse.move(x, graph.canvas[1] + graph.canvas[3] * 0.45);
+      await page.waitForTimeout(500);
+      return page.evaluate(() => {
+        const d = [...document.querySelectorAll('body > div')].find((e) =>
+          /^Time: /.test(e.textContent.trim()),
+        );
+        return d ? Number(d.textContent.match(/Time: ([\d.]+)s/)[1]) : null;
+      });
+    };
+    const xa = graph.canvas[0] + graph.canvas[2] * 0.1;
+    const xb = graph.canvas[0] + graph.canvas[2] * 0.9;
+    const [ta, tb] = [await tipTime(xa), await tipTime(xb)];
+    const pxPerSec = (xb - xa) / (tb - ta);
+    const x0 = xa - ta * pxPerSec;
+    await page.mouse.move(graph.panel[0] + graph.panel[2] * 0.5, graph.panel[1] + 24);
+    await page.waitForTimeout(900);
+    graph = await measureGraph();
+    await still(page, 'tk-damage-graph');
+    // The crosshair scrubbing from 40 s to 75 s, one frame of the panel per second of fight.
+    // It runs along the empty top of the plot: over a line, ECharts fades every other series.
+    const scrub = { from: 40, to: 75, y: graph.canvas[1] + 34 };
+    const scrubDir = path.join(OUT, 'tk-graph-scrub');
+    await rm(scrubDir, { recursive: true, force: true });
+    await mkdir(scrubDir, { recursive: true });
+    await page.addStyleTag({ content: 'body > div { transition: none !important; }' });
+    let tip = null;
+    for (let s = scrub.from; s <= scrub.to; s++) {
+      await page.mouse.move(x0 + s * pxPerSec, scrub.y);
+      await page.waitForTimeout(300);
+      await page.screenshot({
+        path: path.join(scrubDir, `f${String(s - scrub.from).padStart(4, '0')}.jpg`),
+        clip: {
+          x: graph.panel[0],
+          y: graph.panel[1],
+          width: graph.panel[2],
+          height: graph.panel[3],
+        },
+        quality: 92,
+        animations: 'disabled',
+      });
+      tip = await page.evaluate(() => {
+        const d = [...document.querySelectorAll('body > div')].find((e) =>
+          /^Time: /.test(e.textContent.trim()),
+        );
+        const r = d.getBoundingClientRect();
+        return [r.x, r.y, r.width, r.height];
+      });
+    }
+    console.log(`  saved tk-graph-scrub (${scrub.to - scrub.from + 1} frames)`);
+    await rects('tk-damage-graph', { ...graph, x0, pxPerSec, scrub, tooltip: tip });
+    await page.mouse.move(5, 5);
     await table('tk-healing-table', `${MESSY}/healing-done`);
 
     await page.setViewportSize({ width: 1920, height: 1080 });

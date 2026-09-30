@@ -273,13 +273,23 @@ export function captions(ctx, chunks, t, { x, y, size, maxWidth, W, H }) {
   let scrim = 0;
   for (const c of chunks)
     scrim = Math.max(scrim, up(t, c.start - 0.35, 0.3) * down(t, c.end + 0.45, 0.4));
+  // It eases in over 300 px (a smoothstep, in stops) and holds the page at 25% brightness
+  // through the caption's own band, so type stays legible over busy pages. The compositor
+  // blends in linear light, so each perceived darkening d becomes alpha 1 - (1 - d)^2.2.
   if (scrim > 0.002) {
     ctx.save();
-    const g = ctx.createLinearGradient(0, H - 260, 0, H);
-    g.addColorStop(0, 'rgba(0, 0, 0, 0)');
-    g.addColorStop(1, `rgba(0, 0, 0, ${0.7 * scrim})`);
+    const g = ctx.createLinearGradient(0, H - 300, 0, H);
+    for (const [u, k] of [
+      [0, 0],
+      [0.15, 0.15],
+      [0.3, 0.48],
+      [0.45, 0.85],
+      [0.62, 1],
+      [1, 1],
+    ])
+      g.addColorStop(u, `rgba(0, 0, 0, ${1 - (1 - 0.75 * k * scrim) ** 2.2})`);
     ctx.fillStyle = g;
-    ctx.fillRect(0, H - 260, W, 260);
+    ctx.fillRect(0, H - 300, W, 300);
     ctx.restore();
   }
   const i = chunks.findIndex(
