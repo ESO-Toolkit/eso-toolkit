@@ -41,6 +41,15 @@ import {
   buildStaticModelInstancingPlan,
   composeStaticModelInstanceColor,
 } from '../utils/staticModelInstancing';
+import {
+  BREATH_AMPLITUDE,
+  BREATH_WIDTH_SHARE,
+  DEATH_FALL_TILT,
+  MOTION_MAX_LEAN,
+  MOTION_MAX_SWAY,
+  createStaticModelMotionSample,
+  sampleStaticModelMotion,
+} from '../utils/staticModelMotion';
 
 import { BatchedActorNames3D } from './BatchedActorNames3D';
 
@@ -256,20 +265,19 @@ const GAIT_WALK_EXIT_SPEED = 0.1; // units/SECOND to drop back to idle (must be 
 // Distinct assets in one fight simply get one mesh each.
 
 // Dead-model look (Taleria dies at fight end; observable). Death is conveyed by lowering opacity,
-// darkening the albedo, and squashing Y (feet stay grounded since the offset puts min.y at 0).
+// darkening the albedo, and tipping the model onto its back (see `staticModelMotion`).
 //
 // All three are now PER INSTANCE, because one material is shared by every actor of an asset and a
-// dead raider must not drag its living sibling down with it: the squash rides the instance matrix,
+// dead raider must not drag its living sibling down with it: the fall rides the instance matrix,
 // the darken multiplies into `instanceColor` (alongside the registry tint), and the opacity goes
 // through the same `instanceOpacity` attribute the capsule layers already use. The material itself
 // is touched exactly once, at load, where `transparent` is set — flipping material state per frame
 // recompiles the shader, and that stays true no matter how many instances share it. THESE ARE THE
 // USER'S LOOK CALL — lowered opacity on a 19.8k-tri swirling mesh can show depth-sort artifacts; if
-// it looks bad, the fallback is darken-only (DEAD_OPACITY back to 1, lean on DEAD_DARKEN +
-// DEAD_SQUASH_Y).
+// it looks bad, the fallback is darken-only (DEAD_OPACITY back to 1, lean on DEAD_DARKEN and the
+// fall).
 const DEAD_OPACITY = 0.45;
 const DEAD_DARKEN = 0.45; // multiply material color toward black (1 = unchanged, 0 = black)
-const DEAD_SQUASH_Y = 0.55; // Y scale factor when dead (compresses toward the grounded feet)
 
 /**
  * Parse one reconstruction into the form the renderer drives.
@@ -520,7 +528,7 @@ function staticModelTuneSignature(
     perAsset.join('|') || 'none',
     DEAD_OPACITY,
     DEAD_DARKEN,
-    DEAD_SQUASH_Y,
+    DEATH_FALL_TILT,
     performanceMode ? 1 : 0,
     detailedFigures ? 1 : 0,
     richMaterials ? 1 : 0,
@@ -730,6 +738,11 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
     scale: new THREE.Matrix4(),
     yaw: new THREE.Matrix4(),
     world: new THREE.Matrix4(),
+    // Whole-model motion (breathing, lean, sway, death fall). See `staticModelMotion`.
+    motion: createStaticModelMotionSample(),
+    axis: new THREE.Vector3(),
+    tilt: new THREE.Matrix4(),
+    pivot: new THREE.Matrix4(),
   });
 
   // Per-instance opacity attribute arrays (filled in once meshes mount, in the layout effect).
@@ -1285,6 +1298,11 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
         // grounded/recentered offset is re-derived here from the RAW (orient-independent) bbox under
         // the current ORIENT, so an HMR edit of any transform constant takes effect immediately
         // (they are folded into staticModelSignature, which forces a recompose).
+        //
+        // Whole-model motion is folded in around that: a breathing scale on S, and tilts applied
+        // between T_world and R_yaw so they pivot on the grounded feet (lean + sway) or on the back
+        // edge of the footprint (death fall). All of it is a pure function of replay time, so pause
+        // and seek stay deterministic.
         const t = modelTemp.current;
         const {
           orientEuler,
@@ -1292,14 +1310,52 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
           yOffset,
           yawOffset,
         } = modelAssignment.asset.transform;
+        const motion = sampleStaticModelMotion(
+          lookup,
+          actorId,
+          currentTime,
+          actor.position,
+          dead,
+          t.motion,
+        );
         t.orient.makeRotationFromEuler(t.euler.set(orientEuler[0], orientEuler[1], orientEuler[2]));
         // Oriented bbox: re-AABB the raw box under ORIENT (8-corner transform).
         t.box.copy(modelData.rawBox).applyMatrix4(t.orient);
         t.box.getCenter(t.center);
         t.offset.makeTranslation(-t.center.x, -t.box.min.y, -t.center.z);
-        t.scale.makeScale(modelScale, modelScale * (dead ? DEAD_SQUASH_Y : 1), modelScale);
+        const breathY = BREATH_AMPLITUDE * motion.breath;
+        const breathXZ = 1 - breathY * BREATH_WIDTH_SHARE;
+        t.scale.makeScale(modelScale * breathXZ, modelScale * (1 + breathY), modelScale * breathXZ);
         t.yaw.makeRotationY(actor.rotation + yawOffset);
         t.world.makeTranslation(x, y + GROUND_LEVEL + yOffset, z);
+        // Facing in world space: actor.rotation maps +Z the same way it does for the humanoid.
+        const faceX = Math.sin(actor.rotation);
+        const faceZ = Math.cos(actor.rotation);
+        if (motion.fall > 0) {
+          // Tip backwards about the heel: pivot on the footprint's back edge so the model rolls
+          // onto its back instead of sinking half its base through the floor. Rotating about
+          // up × d tilts +Y toward d, so d = -facing gives axis (-faceZ, 0, faceX).
+          const halfDepth =
+            (Math.abs(Math.sin(yawOffset)) * (t.box.max.x - t.box.min.x) +
+              Math.abs(Math.cos(yawOffset)) * (t.box.max.z - t.box.min.z)) *
+            0.5 *
+            modelScale;
+          const px = -faceX * halfDepth;
+          const pz = -faceZ * halfDepth;
+          t.world.multiply(t.pivot.makeTranslation(px, 0, pz));
+          t.axis.set(-faceZ, 0, faceX);
+          t.world.multiply(t.tilt.makeRotationAxis(t.axis, DEATH_FALL_TILT * motion.fall));
+          t.world.multiply(t.pivot.makeTranslation(-px, 0, -pz));
+        } else if (motion.moveStrength > 0) {
+          // Lean into the direction of travel (not the facing: bosses strafe), then roll about the
+          // facing axis for a heavy side-to-side gait.
+          t.axis.set(motion.moveDirZ, 0, -motion.moveDirX);
+          t.world.multiply(t.tilt.makeRotationAxis(t.axis, MOTION_MAX_LEAN * motion.moveStrength));
+          t.axis.set(faceX, 0, faceZ);
+          t.world.multiply(
+            t.tilt.makeRotationAxis(t.axis, MOTION_MAX_SWAY * motion.moveStrength * motion.sway),
+          );
+        }
         t.world.multiply(t.yaw).multiply(t.scale).multiply(t.offset).multiply(t.orient);
         modelMesh.setMatrixAt(modelAssignment.slot, t.world);
       } else {

@@ -78,7 +78,8 @@ are documented in [Yandir replay asset](fight-replay-yandir-asset.md).
 
 The registry now supports exact normalized boss-name matching for a static Yandir prototype. The
 runtime also supplies allocation-light, whole-model overview motion from replay time: subtle idle
-breathing, movement weight, and a grounded death fall. This works on an unrigged one-draw-call boss,
+breathing, movement weight, and a grounded death fall
+(`src/features/fight_replay/utils/staticModelMotion.ts`). This works on an unrigged one-draw-call boss,
 stays deterministic through pause and seek, and is the default first animation stage for reconstructed
 bosses.
 
