@@ -73,6 +73,10 @@ npm run render:vertical
 # 4K master of the same layout (3840x2160).
 node scripts/render.mjs --scale 2
 
+# Quick look: 960x540 with a fast encode (a few minutes for the whole cut); add --range
+# start,end (frames) for one section, which gets the matching slice of the soundtrack.
+node scripts/render.mjs --preview
+
 # Review single frames: out/stills/
 npm run stills -- 1476,2718
 node scripts/render.mjs --portrait --stills 1476

@@ -20,7 +20,9 @@ const H = Number(params.get('h') ?? 1080);
 const S = Number(params.get('scale') ?? 1);
 const PW = W * S;
 const PH = H * S;
-const SS = Math.max(2, S); // footage and type pixels per layout pixel (2x supersampled at 1080p)
+// Footage and type pixels per layout pixel: 2x supersampled at 1080p, 1:1 at 4K, and for quick
+// previews below 1080p still twice the output resolution.
+const SS = S >= 1 ? Math.max(2, S) : 2 * S;
 const SUBFRAMES = Number(params.get('subframes') ?? 4); // particle motion-blur samples
 const SHUTTER = 0.5;
 const FPS = TIMELINE.fps;
