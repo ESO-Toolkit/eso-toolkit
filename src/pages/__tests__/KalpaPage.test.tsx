@@ -17,7 +17,7 @@ describe('KalpaPage', () => {
   it('sets the document title matching the prerendered static route title', () => {
     renderPage();
 
-    expect(document.title).toBe('Kalpa: Free ESO Addon Manager | ESO Toolkit');
+    expect(document.title).toBe('Kalpa: ESO Addon Manager & Log Uploader | ESO Toolkit');
     expect(document.title).toBe(KALPA_PAGE_TITLE);
     // The prerender script (scripts/generate-static-routes.cjs) stamps this very
     // entry into build/kalpa/index.html, so matching it here proves the
@@ -33,7 +33,7 @@ describe('KalpaPage', () => {
     expect(headings).toHaveLength(1);
     expect(headings[0]).toHaveTextContent('Kalpa');
     expect(
-      screen.getByText('The modern addon manager for The Elder Scrolls Online'),
+      screen.getByText('Your addons, combat logs, and shared setups. Together.'),
     ).toBeInTheDocument();
   });
 
@@ -57,23 +57,27 @@ describe('KalpaPage', () => {
     }
   });
 
-  it('renders all eight numbered features and links Pack Hub internally', () => {
+  it('renders all twelve numbered features and links Pack Hub internally', () => {
     renderPage();
 
     const featuresSection = screen
-      .getByRole('heading', { level: 2, name: 'Everything your addons need' })
+      .getByRole('heading', { level: 2, name: 'Everything around your next session' })
       .closest('section');
     expect(featuresSection).not.toBeNull();
 
     const expectedFeatures = [
-      'One-click installs',
+      'Discover and update addons',
       'Dependency resolution',
-      'Addon profiles',
+      'ESO Logs uploads',
+      'Live logging and fight selection',
       'Pack Hub',
-      'SavedVariables backup',
-      'Minion migration',
+      'Settings editor',
+      'Backups and restores',
+      'Addon profiles',
+      'Themes and accessibility',
       'Protected edits',
-      'Multi-instance support',
+      'Minion migration and multiple installs',
+      'Everyday library tools',
     ];
     for (const title of expectedFeatures) {
       expect(within(featuresSection as HTMLElement).getByText(title)).toBeInTheDocument();
@@ -85,26 +89,22 @@ describe('KalpaPage', () => {
     expect(packHubLinks[0]).toHaveAttribute('href', '/pack-hub');
   });
 
-  it('renders the Minion comparison as a table with accessible yes/no text', () => {
+  it('shows authentic screenshots with accessible descriptions and full-size links', () => {
     renderPage();
-
-    const table = screen.getByRole('table', {
-      name: /feature comparison between kalpa and minion/i,
-    });
-    expect(table).toBeInTheDocument();
-
-    expect(within(table).getByRole('columnheader', { name: 'Kalpa' })).toBeInTheDocument();
-    expect(within(table).getByRole('columnheader', { name: 'Minion' })).toBeInTheDocument();
-
-    const migrationRow = screen.getByRole('rowheader', { name: 'Migration' }).closest('tr');
-    expect(migrationRow).toHaveTextContent('Import your Minion library in one click');
-
-    // Checks/dashes are never color-only: every icon row carries visible text.
-    expect(within(table).getAllByText('Yes').length).toBeGreaterThanOrEqual(4);
-    expect(within(table).getAllByText('No').length).toBeGreaterThanOrEqual(4);
+    const images = screen.getAllByRole('img');
+    expect(images).toHaveLength(3);
+    for (const image of images) {
+      expect(image).toHaveAttribute('width', '1600');
+      expect(image).toHaveAttribute('height', '900');
+      expect(image.getAttribute('alt')).toBeTruthy();
+      expect(image.closest('a')).toHaveAttribute('href', image.getAttribute('src'));
+    }
+    expect(
+      screen.getByText(/Preview the Minion import and review integrity checks/),
+    ).toBeInTheDocument();
   });
 
-  it('renders seven FAQ entries', () => {
+  it('renders eight FAQ entries', () => {
     renderPage();
 
     expect(
@@ -118,6 +118,7 @@ describe('KalpaPage', () => {
       'Does Kalpa work with the Steam version of ESO?',
       'What are addon profiles?',
       'What is Pack Hub?',
+      'Can I upload combat logs to ESO Logs?',
       'Does Kalpa run on Mac or Linux?',
     ];
     for (const question of questions) {
@@ -140,7 +141,7 @@ describe('KalpaPage', () => {
     const app = byType.get('SoftwareApplication') as Record<string, unknown>;
     expect(app.name).toBe('Kalpa');
     expect(app.applicationCategory).toBe('UtilitiesApplication');
-    expect(app.operatingSystem).toBe('Windows');
+    expect(app.operatingSystem).toBe('Windows, macOS, Linux');
     expect(app.downloadUrl).toBe('https://github.com/ESO-Toolkit/kalpa/releases/latest');
     expect(app.codeRepository).toBe('https://github.com/ESO-Toolkit/kalpa');
     expect((app.offers as { price: number; priceCurrency: string }).price).toBe(0);
@@ -149,7 +150,7 @@ describe('KalpaPage', () => {
     const faq = byType.get('FAQPage') as {
       mainEntity: { name: string; acceptedAnswer: { text: string } }[];
     };
-    expect(faq.mainEntity).toHaveLength(7);
+    expect(faq.mainEntity).toHaveLength(8);
     expect(faq.mainEntity[0].name).toBe('Is Kalpa free?');
 
     // The structured data answers must appear verbatim in the rendered page.
@@ -163,7 +164,7 @@ describe('KalpaPage', () => {
 
     const closingHeading = screen.getByRole('heading', {
       level: 2,
-      name: 'Ready to leave Minion behind?',
+      name: 'Ready for your next session?',
     });
     expect(closingHeading).toBeInTheDocument();
 

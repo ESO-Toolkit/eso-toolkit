@@ -70,6 +70,7 @@ import { useAuth } from '../features/auth/AuthContext';
 import { usePerfTier } from '../hooks/usePerfTier';
 import { usePrefersReducedMotion } from '../hooks/usePrefersReducedMotion';
 import { useViewTransitionNavigate } from '../hooks/useViewTransitionNavigate';
+import { getBaseUrl } from '../utils/envUtils';
 import { shouldShowLandingFx } from '../utils/landingFx';
 
 import { AuthenticatedLandingSection } from './AuthenticatedLandingSection';
@@ -1568,17 +1569,15 @@ const KalpaContent = styled(Box)(({ theme }) => ({
   maxWidth: '1100px',
   margin: '0 auto',
   display: 'grid',
-  gridTemplateColumns: '1.1fr 0.9fr',
+  gridTemplateColumns: 'minmax(0, 0.85fr) minmax(0, 1.15fr)',
   gap: '3rem',
   alignItems: 'center',
   position: 'relative',
   zIndex: 1,
-  perspective: '1200px',
   [theme.breakpoints.down('md')]: {
     gridTemplateColumns: '1fr',
     gap: '3rem',
     textAlign: 'center',
-    perspective: 'none',
   },
 }));
 
@@ -1592,9 +1591,12 @@ const KalpaFeatureList = styled(Box)({
 const KalpaFeatureRow = styled(Box)<{ delay?: number }>(
   ({ theme, delay: _delay = 0 }) =>
     ({
-      display: 'flex',
+      display: 'grid',
+      gridTemplateColumns: '1.5rem minmax(0, 1fr)',
       alignItems: 'center',
-      gap: '1rem',
+      columnGap: '0.75rem',
+      rowGap: '0.2rem',
+      textAlign: 'left',
       padding: '0.75rem 1rem',
       position: 'relative',
       borderRadius: '10px',
@@ -1668,103 +1670,27 @@ const KalpaFeatureRow = styled(Box)<{ delay?: number }>(
       },
       '& .feature-desc': {
         fontSize: '0.78rem',
-        fontWeight: 300,
-        color: theme.palette.text.disabled,
-        marginLeft: 'auto',
-        textAlign: 'right',
-        opacity: 0.7,
-        [theme.breakpoints.down('sm')]: {
-          display: 'none',
-        },
+        fontWeight: 400,
+        color: theme.palette.text.secondary,
+        gridColumn: 2,
+        lineHeight: 1.6,
       },
     }) as Record<string, unknown>,
 );
 
-// Mock desktop app window with 3D depth + scroll-driven parallax
-const KalpaAppWindow = styled(Box)(
-  ({ theme }) =>
-    ({
-      '--panel-ry': '-2deg',
-      '--panel-rx': '1deg',
-      background:
-        theme.palette.mode === 'dark' ? 'rgba(15, 15, 25, 0.95)' : 'rgba(250, 250, 252, 0.98)',
-      borderRadius: '14px',
-      overflow: 'hidden',
-      position: 'relative',
-      zIndex: 1,
-      transform: 'rotateY(-2deg) rotateX(1deg)',
-      transformStyle: 'preserve-3d',
-      // Scroll-driven parallax — drifts vertically as section scrolls
-      animation: 'panelParallax linear both',
-      animationTimeline: 'view()',
-      animationRange: 'cover 0% cover 100%',
-      boxShadow:
-        theme.palette.mode === 'dark'
-          ? '0 25px 80px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(139, 92, 246, 0.1), 0 0 60px rgba(139, 92, 246, 0.06)'
-          : '0 25px 80px rgba(15, 23, 42, 0.12), 0 0 0 1px rgba(139, 92, 246, 0.08), 0 0 60px rgba(139, 92, 246, 0.03)',
-      // Spring easing on hover
-      transition: 'box-shadow 0.5s ease',
-      // Floating glow orb behind — large and visible
-      '&::after': {
-        content: '""',
-        position: 'absolute',
-        top: '10%',
-        left: '-25%',
-        width: '80%',
-        height: '80%',
-        borderRadius: '50%',
-        background:
-          theme.palette.mode === 'dark'
-            ? 'radial-gradient(circle, rgba(139, 92, 246, 0.2) 0%, rgba(99, 102, 241, 0.08) 40%, transparent 65%)'
-            : 'radial-gradient(circle, rgba(139, 92, 246, 0.12) 0%, rgba(99, 102, 241, 0.04) 40%, transparent 65%)',
-        filter: 'blur(50px)',
-        zIndex: -1,
-        pointerEvents: 'none',
-        transition: 'opacity 0.5s ease',
-      },
-      '&:hover': {
-        boxShadow:
-          theme.palette.mode === 'dark'
-            ? '0 40px 100px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(139, 92, 246, 0.2), 0 0 100px rgba(139, 92, 246, 0.12)'
-            : '0 40px 100px rgba(15, 23, 42, 0.18), 0 0 0 1px rgba(139, 92, 246, 0.15), 0 0 100px rgba(139, 92, 246, 0.06)',
-      },
-      [theme.breakpoints.down('md')]: {
-        maxWidth: '420px',
-        margin: '0 auto',
-        animation: 'none',
-        transform: 'none',
-      },
-    }) as Record<string, unknown>,
-);
-
-const KalpaWindowTitleBar = styled(Box)(({ theme }) => ({
-  display: 'flex',
-  alignItems: 'center',
-  gap: '0.5rem',
-  padding: '0.75rem 1rem',
-  background: theme.palette.mode === 'dark' ? 'rgba(30, 30, 45, 0.9)' : 'rgba(240, 240, 244, 0.95)',
-  borderBottom:
-    theme.palette.mode === 'dark'
-      ? '1px solid rgba(255, 255, 255, 0.06)'
-      : '1px solid rgba(0, 0, 0, 0.06)',
-}));
-
-const KalpaAddonRow = styled(Box)(({ theme }) => ({
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  padding: '0.7rem 1rem',
-  borderBottom:
-    theme.palette.mode === 'dark'
-      ? '1px solid rgba(255, 255, 255, 0.04)'
-      : '1px solid rgba(0, 0, 0, 0.04)',
-  transition: 'background 0.15s ease',
-  '&:hover': {
-    background:
-      theme.palette.mode === 'dark' ? 'rgba(139, 92, 246, 0.06)' : 'rgba(139, 92, 246, 0.03)',
-  },
-  '&:last-child': {
-    borderBottom: 'none',
+const KalpaScreenshot = styled('figure')(({ theme }) => ({
+  margin: 0,
+  minWidth: 0,
+  '& img': {
+    display: 'block',
+    width: '100%',
+    height: 'auto',
+    borderRadius: '14px',
+    border: `1px solid ${theme.palette.divider}`,
+    boxShadow:
+      theme.palette.mode === 'dark'
+        ? '0 25px 80px rgba(0, 0, 0, 0.4)'
+        : '0 25px 80px rgba(15, 23, 42, 0.12)',
   },
 }));
 
@@ -2593,7 +2519,7 @@ export const LandingPage: React.FC = () => {
                     color: '#8b5cf6',
                   }}
                 >
-                  Desktop App
+                  Desktop companion - Public beta
                 </Typography>
                 <Box
                   sx={{
@@ -2642,40 +2568,76 @@ export const LandingPage: React.FC = () => {
                   maxWidth: '460px',
                 }}
               >
-                A fast, free addon manager for ESO. Built with Rust and Tauri for native
-                performance. Just 15 MB, no Java runtime required.
+                Your free desktop companion for ESO. Manage addons, upload combat logs, share packs,
+                and look after your settings in one native app. Available in public beta.
               </Typography>
 
               <KalpaFeatureList>
                 <KalpaFeatureRow delay={1}>
-                  <span className="feature-index">01</span>
-                  <span className="feature-title">One-click installs</span>
-                  <span className="feature-desc">Install and update addons instantly</span>
+                  <Typography component="span" className="feature-index">
+                    01
+                  </Typography>
+                  <Typography component="span" className="feature-title">
+                    Addons &amp; dependencies
+                  </Typography>
+                  <Typography component="span" className="feature-desc">
+                    Discover, install, and update addons with their required libraries
+                  </Typography>
                 </KalpaFeatureRow>
                 <KalpaFeatureRow delay={2}>
-                  <span className="feature-index">02</span>
-                  <span className="feature-title">Dependency resolution</span>
-                  <span className="feature-desc">Automatically handles required libraries</span>
+                  <Typography component="span" className="feature-index">
+                    02
+                  </Typography>
+                  <Typography component="span" className="feature-title">
+                    ESO Logs uploads
+                  </Typography>
+                  <Typography component="span" className="feature-desc">
+                    Upload combat logs or follow a session with live logging
+                  </Typography>
                 </KalpaFeatureRow>
                 <KalpaFeatureRow delay={3}>
-                  <span className="feature-index">03</span>
-                  <span className="feature-title">Addon profiles</span>
-                  <span className="feature-desc">Switch loadouts per character or role</span>
+                  <Typography component="span" className="feature-index">
+                    03
+                  </Typography>
+                  <Typography component="span" className="feature-title">
+                    Pack Hub
+                  </Typography>
+                  <Typography component="span" className="feature-desc">
+                    Discover and share addon, build, and roster packs
+                  </Typography>
                 </KalpaFeatureRow>
                 <KalpaFeatureRow delay={4}>
-                  <span className="feature-index">04</span>
-                  <span className="feature-title">Pack Hub</span>
-                  <span className="feature-desc">Share and discover addon collections</span>
+                  <Typography component="span" className="feature-index">
+                    04
+                  </Typography>
+                  <Typography component="span" className="feature-title">
+                    Settings &amp; backups
+                  </Typography>
+                  <Typography component="span" className="feature-desc">
+                    Edit addon settings and back up SavedVariables
+                  </Typography>
                 </KalpaFeatureRow>
                 <KalpaFeatureRow delay={5}>
-                  <span className="feature-index">05</span>
-                  <span className="feature-title">SavedVariables backup</span>
-                  <span className="feature-desc">Never lose your addon settings again</span>
+                  <Typography component="span" className="feature-index">
+                    05
+                  </Typography>
+                  <Typography component="span" className="feature-title">
+                    Profiles &amp; migration
+                  </Typography>
+                  <Typography component="span" className="feature-desc">
+                    Switch addon profiles and import your Minion library
+                  </Typography>
                 </KalpaFeatureRow>
                 <KalpaFeatureRow delay={6}>
-                  <span className="feature-index">06</span>
-                  <span className="feature-title">Minion migration</span>
-                  <span className="feature-desc">One-click import from your old manager</span>
+                  <Typography component="span" className="feature-index">
+                    06
+                  </Typography>
+                  <Typography component="span" className="feature-title">
+                    Make it yours
+                  </Typography>
+                  <Typography component="span" className="feature-desc">
+                    Choose themes and accessibility options that suit you
+                  </Typography>
                 </KalpaFeatureRow>
               </KalpaFeatureList>
 
@@ -2729,180 +2691,31 @@ export const LandingPage: React.FC = () => {
               </Box>
             </Box>
 
-            {/* Mock desktop app window */}
-            <KalpaAppWindow>
-              <KalpaWindowTitleBar>
-                <Box sx={{ display: 'flex', gap: '6px', mr: 1 }}>
-                  <Box sx={{ width: 10, height: 10, borderRadius: '50%', background: '#ff5f57' }} />
-                  <Box sx={{ width: 10, height: 10, borderRadius: '50%', background: '#febc2e' }} />
-                  <Box sx={{ width: 10, height: 10, borderRadius: '50%', background: '#28c840' }} />
-                </Box>
-                <Typography
-                  sx={(theme: Theme) => ({
-                    fontSize: '0.7rem',
-                    fontWeight: 500,
-                    color:
-                      theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)',
-                    letterSpacing: '0.02em',
-                    flex: 1,
-                    textAlign: 'center',
-                    mr: '36px',
-                  })}
-                >
-                  Kalpa — Addon Manager
-                </Typography>
-              </KalpaWindowTitleBar>
-
-              {/* Search bar */}
-              <Box
-                sx={(theme: Theme) => ({
-                  mx: '0.75rem',
-                  mt: '0.6rem',
-                  mb: '0.4rem',
-                  px: 1,
-                  py: 0.5,
-                  borderRadius: '6px',
-                  background:
-                    theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
-                  border:
-                    theme.palette.mode === 'dark'
-                      ? '1px solid rgba(255,255,255,0.06)'
-                      : '1px solid rgba(0,0,0,0.06)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 0.5,
-                })}
+            <KalpaScreenshot>
+              <Link
+                href={`${getBaseUrl()}images/kalpa/main-desktop.webp`}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="View the Kalpa desktop screenshot at full size (opens in a new tab)"
+                sx={{ display: 'block', borderRadius: '14px' }}
               >
-                <Typography sx={{ fontSize: '0.7rem', opacity: 0.3 }}>🔍</Typography>
-                <Typography
-                  sx={(theme: Theme) => ({
-                    fontSize: '0.72rem',
-                    color:
-                      theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.25)',
-                    fontWeight: 400,
-                  })}
-                >
-                  Search addons...
-                </Typography>
-              </Box>
-
-              {/* Mock addon list */}
-              <Box sx={{ py: 0.25 }}>
-                {[
-                  { name: 'Dressing Room Reborn', version: 'v3.8.1', status: 'Updated' },
-                  { name: 'Combat Metrics', version: 'v2.5.0', status: 'Update' },
-                  { name: 'Azurah - Interface Enhanced', version: 'v4.1.2', status: 'Updated' },
-                  { name: 'Inventory Insight', version: 'v1.9.4', status: 'Updated' },
-                  { name: 'RaidNotifier', version: 'v3.2.1', status: 'Update' },
-                  { name: 'Srendarr - Aura Tracker', version: 'v2.7.3', status: 'Updated' },
-                  { name: 'Beam Me Up', version: 'v1.4.0', status: 'Updated' },
-                  { name: 'Harvest Map', version: 'v5.1.6', status: 'Update' },
-                ].map((addon) => (
-                  <KalpaAddonRow key={addon.name}>
-                    <Box
-                      sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1, minWidth: 0 }}
-                    >
-                      <Box
-                        sx={{
-                          width: 24,
-                          height: 24,
-                          borderRadius: '5px',
-                          background:
-                            'linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(99, 102, 241, 0.1))',
-                          border: '1px solid rgba(139, 92, 246, 0.15)',
-                          flexShrink: 0,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                        }}
-                      >
-                        <Typography sx={{ fontSize: '0.6rem', opacity: 0.6 }}>📦</Typography>
-                      </Box>
-                      <Box sx={{ minWidth: 0 }}>
-                        <Typography
-                          sx={{
-                            fontSize: '0.75rem',
-                            fontWeight: 600,
-                            color: 'text.primary',
-                            whiteSpace: 'nowrap',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                          }}
-                        >
-                          {addon.name}
-                        </Typography>
-                        <Typography
-                          sx={{
-                            fontSize: '0.62rem',
-                            color: 'text.secondary',
-                            opacity: 0.6,
-                          }}
-                        >
-                          {addon.version}
-                        </Typography>
-                      </Box>
-                    </Box>
-                    <Box
-                      sx={{
-                        px: 0.8,
-                        py: 0.25,
-                        borderRadius: '4px',
-                        fontSize: '0.62rem',
-                        fontWeight: 600,
-                        flexShrink: 0,
-                        ...(addon.status === 'Update'
-                          ? {
-                              background:
-                                'linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(99, 102, 241, 0.1))',
-                              color: '#a78bfa',
-                              border: '1px solid rgba(139, 92, 246, 0.2)',
-                            }
-                          : {
-                              background: 'rgba(34, 197, 94, 0.08)',
-                              color: 'rgba(34, 197, 94, 0.7)',
-                              border: '1px solid rgba(34, 197, 94, 0.12)',
-                            }),
-                      }}
-                    >
-                      {addon.status}
-                    </Box>
-                  </KalpaAddonRow>
-                ))}
-              </Box>
-
-              {/* Status bar */}
-              <Box
-                sx={(theme: Theme) => ({
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  px: '1rem',
-                  py: '0.45rem',
-                  borderTop:
-                    theme.palette.mode === 'dark'
-                      ? '1px solid rgba(255,255,255,0.04)'
-                      : '1px solid rgba(0,0,0,0.04)',
-                })}
+                <Box
+                  component="img"
+                  src={`${getBaseUrl()}images/kalpa/main-desktop.webp`}
+                  alt="Kalpa desktop app showing its addon library and companion navigation"
+                  width={1600}
+                  height={900}
+                  loading="lazy"
+                  decoding="async"
+                />
+              </Link>
+              <Typography
+                component="figcaption"
+                sx={{ mt: 2, color: 'text.secondary', fontSize: '0.8rem', textAlign: 'center' }}
               >
-                <Typography sx={{ fontSize: '0.6rem', color: 'text.secondary', opacity: 0.5 }}>
-                  8 addons installed
-                </Typography>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                  <Box
-                    sx={{
-                      width: 5,
-                      height: 5,
-                      borderRadius: '50%',
-                      background: '#22c55e',
-                      boxShadow: '0 0 4px rgba(34, 197, 94, 0.4)',
-                    }}
-                  />
-                  <Typography sx={{ fontSize: '0.6rem', color: 'text.secondary', opacity: 0.5 }}>
-                    All synced
-                  </Typography>
-                </Box>
-              </Box>
-            </KalpaAppWindow>
+                Inside Kalpa. Select the screenshot to view it at full size.
+              </Typography>
+            </KalpaScreenshot>
           </KalpaContent>
         </KalpaSection>
 
