@@ -1,5 +1,8 @@
 {
-  "voice": { "id": "nPczCjzI2devNBz1zQrb", "name": "Brian" },
+  "voice": {
+    "id": "nPczCjzI2devNBz1zQrb",
+    "name": "Brian"
+  },
   "model": "eleven_v4",
   "settings": {
     "stability": 0.55,
@@ -8,10 +11,21 @@
     "use_speaker_boost": true,
     "speed": 0.96
   },
-  "captions": { "E-S-O": "ESO", "E-S-O-T-K": "esotk.com.", "dot": "", "com.": "" },
+  "captions": {
+    "E-S-O": "ESO",
+    "E-S-O-T-K": "esotk.com.",
+    "dot": "",
+    "com.": ""
+  },
   "lines": [
-    { "id": "open", "say": "Every pull you log is full of answers." },
-    { "id": "logs", "say": "E-S-O Logs records all of it. Every hit, every heal, every buff." },
+    {
+      "id": "open",
+      "say": "Every pull you log is full of answers."
+    },
+    {
+      "id": "logs",
+      "say": "E-S-O Logs records all of it. Every hit, every heal, every buff."
+    },
     {
       "id": "toolkit",
       "say": "E-S-O Toolkit reads that same log, and shows you what it means. Just paste the link."
@@ -29,12 +43,24 @@
       "say": "E-S-O Logs replays a fight from above. E-S-O Toolkit rebuilds it in 3D. Orbit the arena, follow any player, and rewatch the moment that mattered."
     },
     {
-      "id": "tools",
-      "say": "Then send any build to the editor, and check the math with the built-in calculators."
+      "id": "builds",
+      "say": "Found a build worth copying? Send it to the Build Editor. Or start from what top players run. The Build Leaderboard sorts top-ranked parses into the builds behind them, by class and by boss."
+    },
+    {
+      "id": "calc",
+      "say": "Then check the math. Plan a scribed skill script by script, and work out your penetration and crit in the calculators."
+    },
+    {
+      "id": "roster",
+      "say": "Leading a trial? The Roster Builder plans the whole group. Tanks, healers and damage dealers, their sets and ultimates, even builds for each fight. Share it as a link, publish it to Roster Hub, or post it to Discord, where the roster bot takes sign-ups."
+    },
+    {
+      "id": "kalpa",
+      "say": "And for your addons, there's Kalpa. A free addon manager that installs and updates them in one click, pulls in the libraries they need, and installs whole community packs from Pack Hub."
     },
     {
       "id": "outro",
-      "say": "E-S-O Logs records the fight. E-S-O Toolkit helps you understand it. Free, at E-S-O-T-K dot com."
+      "say": "E-S-O Logs records the fight. E-S-O Toolkit helps you understand it, and get ready for the next one. Free, at E-S-O-T-K dot com."
     }
   ]
 }

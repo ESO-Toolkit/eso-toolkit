@@ -3,7 +3,7 @@
 //   node scripts/capture-esotk.mjs            # every shot
 //   node scripts/capture-esotk.mjs replay     # shots whose name contains "replay"
 import { chromium } from 'playwright';
-import { DPR, clip, rects, still } from './capture-lib.mjs';
+import { DPR, clip, measure, rects, still } from './capture-lib.mjs';
 
 const SITE = 'https://esotk.com';
 // Tideborn Taleria veteran hard mode kill: the same fight as the ESO Logs captures.
@@ -11,6 +11,9 @@ const FIGHT = `${SITE}/report/F4f2bMwWtgVKxjB9/fight/39`;
 // Saint Olms the Just: the same fight as the ESO Logs replay clip. Its boss model is a
 // screenshot-based reconstruction (see replayActorModelRegistry.ts provenance notes).
 const REPLAY = `${SITE}/report/WQ8L41tVhbFHCca2/fight/6/replay`;
+// A community roster from Roster Hub whose tanks and healers are fully specified.
+const ROSTER = `${SITE}/rv?id=3x2g1m5l284l`;
+const ROSTER_TITLE = 'Aedra — Cloudrest #1';
 
 const only = process.argv[2];
 
@@ -58,6 +61,44 @@ async function open(page, url, wait) {
   const kalpa = page.getByRole('button', { name: 'Dismiss banner' });
   if (await kalpa.isVisible().catch(() => false)) await kalpa.click();
   await page.mouse.move(5, 5);
+}
+
+/** Page blocks relative to the viewport, for viewport stills. */
+const measureView = async (page, spec) => measure(page, spec, await page.evaluate(() => scrollY));
+
+/** Scrolls so an element sits `offset` CSS pixels below the top of the viewport. */
+async function scrollToText(page, re, offset) {
+  await page.evaluate(
+    ({ src, offset }) => {
+      const re = new RegExp(src);
+      const el = [...document.querySelectorAll('body *')].find(
+        (e) => e.childElementCount === 0 && re.test(e.textContent.trim()),
+      );
+      if (el) scrollTo(0, el.getBoundingClientRect().y + scrollY - offset);
+    },
+    { src: re.source, offset },
+  );
+  await page.waitForTimeout(1800);
+}
+
+/** Opens the community roster in the Roster Builder (Full mode). */
+async function openRosterBuilder(page) {
+  await open(page, ROSTER, 7000);
+  const [editor] = await Promise.all([
+    page
+      .context()
+      .waitForEvent('page', { timeout: 10000 })
+      .catch(() => null),
+    page.getByText('Edit Roster').first().click(),
+  ]);
+  const b = editor ?? page;
+  await b.waitForLoadState('domcontentloaded');
+  await b.addStyleTag({ content: hideChrome }).catch(() => {});
+  await b.waitForTimeout(8000);
+  await b.getByText('Full', { exact: true }).first().click();
+  await b.waitForTimeout(2500);
+  await b.mouse.move(5, 5);
+  return b;
 }
 
 async function replay(page, name, width, height) {
@@ -139,12 +180,14 @@ const shots = {
         const cp = inCard('*').find(
           (e) => e.childElementCount === 0 && e.textContent.trim() === 'Champion Points',
         );
+        const extract = card.querySelector('[aria-label="Extract build to editor"]');
         return {
           card: box(card),
           chips,
           icons,
           check: box(checkBox),
           cpLabel: cp ? box(cp) : null,
+          extract: extract ? box(extract) : null,
         };
       }),
     );
@@ -237,6 +280,199 @@ const shots = {
       }),
     );
   },
+  buildLeaderboard: async (page) => {
+    // The same boss as the report in the log chapter.
+    await open(page, `${SITE}/build-leaderboard/boss/tideborn-taleria`, 14000);
+    await still(page, 'tk-build-leaderboard');
+    await rects(
+      'tk-build-leaderboard',
+      await measureView(page, {
+        patterns: [/^Build patterns$/, 380, 300],
+        top: [/^Recommended$/, 330, 60],
+        card: [/^Recommended starting point$/, 700, 300],
+        typical: [/^Typical damage$/, 300, 90],
+        observed: [/^Observed in sample$/, 300, 90],
+        setup: [/^Defining setup$/, 700, 100],
+        byClass: [/^Builds by class$/, 300, 60],
+        byBoss: [/^Parses by trial boss$/, 800, 60],
+      }),
+    );
+  },
+  scribePlanner: async (page) => {
+    // Rebuilds the log chapter's Leashing Soul: Wield Soul with Pull, Druid's Resurgence and Maim.
+    await open(page, `${SITE}/calculator#scribing`, 9000);
+    await page.getByText('Wield Soul', { exact: true }).first().click();
+    await page.waitForTimeout(1200);
+    const home = async () => {
+      await page.evaluate(() => scrollTo(0, 0));
+      await page.mouse.move(5, 5);
+      await page.waitForTimeout(1200);
+    };
+    await home();
+    await still(page, 'tk-scribe-0');
+    const picks = ['Pull', "Druid's Resurgence", 'Maim'];
+    for (const [i, pick] of picks.entries()) {
+      await page.getByText(pick, { exact: true }).first().click();
+      await home();
+      await still(page, `tk-scribe-${i + 1}`);
+    }
+    await rects(
+      'tk-scribe',
+      await measureView(page, {
+        grimoire: [/^Wield Soul$/, 180, 50],
+        grimoires: [/^Choose a grimoire$/, 400, 400],
+        tooltip: [/^Your scribed skill$/, 360, 520],
+        focus: [/^Focus$/i, 300, 50, 400, 990],
+        signature: [/^Signature$/i, 300, 50, 400, 990],
+        affix: [/^Affix$/i, 300, 50, 400, 990],
+      }),
+    );
+  },
+  rosterBuilder: async (page) => {
+    const b = await openRosterBuilder(page);
+    // One tall still from Roster Setup down through both tank cards.
+    const top = await b.evaluate(() => {
+      const el = [...document.querySelectorAll('body *')].find(
+        (e) => e.childElementCount === 0 && e.textContent.trim() === 'Roster Setup',
+      );
+      return Math.round(el.getBoundingClientRect().y + scrollY - 60);
+    });
+    // A taller viewport (not a full-page capture, which drags in the off-screen mobile menu).
+    await b.setViewportSize({ width: 1920, height: 1500 });
+    await b.evaluate((y) => scrollTo(0, y), top);
+    await b.waitForTimeout(1500);
+    await b.mouse.move(5, 5);
+    await still(b, 'tk-roster-builder');
+    await rects(
+      'tk-roster-builder',
+      await measureView(b, {
+        setup: [/^Roster Setup$/, 700, 150, 900],
+        tanks: [/^Tanks$/, 60, 20, 300],
+        healers: [/^Healers$/, 60, 20, 300],
+        dps: [/^DPS$/, 40, 20, 300],
+        tank1: [/^Tank 1$/i, 700, 250, 900],
+        tank2: [/^Tank 2$/i, 700, 250, 900],
+        warning: [/should only be paired/, 700, 30, 900],
+      }),
+    );
+    await b.setViewportSize({ width: 1920, height: 1080 });
+    // Per-Fight Builds is a collapsed section: open it, pick Cloudrest, then its final boss.
+    const clickText = (text, re = false) =>
+      b.evaluate(
+        ({ text, re }) => {
+          const match = (s) => (re ? new RegExp(text).test(s) : s === text);
+          const el = [...document.querySelectorAll('body *')].find(
+            (e) => e.childElementCount === 0 && match(e.textContent.trim()),
+          );
+          el.scrollIntoView({ block: 'center' });
+          el.click();
+        },
+        { text, re },
+      );
+    await clickText('Per-Fight Builds', true);
+    await b.waitForTimeout(1500);
+    await clickText('Cloudrest');
+    await b.waitForTimeout(1500);
+    await clickText("Z'Maja");
+    await b.waitForTimeout(1500);
+    await scrollToText(b, /Per-Fight Builds/, 140);
+    await b.mouse.move(5, 5);
+    await still(b, 'tk-roster-perfight');
+    await rects(
+      'tk-roster-perfight',
+      await measureView(b, {
+        trials: [/^Sanctum Ophidia$/, 200, 300, 260],
+        timeline: [/Select an encounter/i, 500, 90, 600],
+        encounter: [/^Z'Maja$/, 50, 50, 100, 1200],
+        fight: [/^Final boss/, 500, 200, 560],
+        tanks: [/^Siltha Sil$/, 500, 50, 520, 800],
+      }),
+    );
+  },
+  rosterView: async (page) => {
+    await open(page, ROSTER, 7000);
+    await still(page, 'tk-roster-view');
+    await rects(
+      'tk-roster-view',
+      await measureView(page, {
+        title: [/Cloudrest #1$/, 600, 30],
+        copyLink: [/^Copy Link$/, 80, 25, 200],
+        edit: [/^Edit Roster$/, 80, 25, 200],
+        tanks: [/^Tanks$/, 800, 150, 900],
+        healers: [/^Healers$/, 800, 150, 900],
+        tank1: [/^T1$/, 380, 150],
+      }),
+    );
+  },
+  rosterHub: async (page) => {
+    await open(page, `${SITE}/roster-hub`, 9000);
+    await page.evaluate((title) => {
+      document.querySelector(`[aria-label="View ${title}"]`)?.scrollIntoView({ block: 'center' });
+    }, ROSTER_TITLE);
+    await page.waitForTimeout(2000);
+    await page.mouse.move(5, 5);
+    await still(page, 'tk-roster-hub');
+    await rects(
+      'tk-roster-hub',
+      await page.evaluate((title) => {
+        let el = document.querySelector(`[aria-label="View ${title}"]`);
+        while (el && el.getBoundingClientRect().height < 150) el = el.parentElement;
+        const r = el.getBoundingClientRect();
+        return { card: [r.x, r.y, r.width, r.height] };
+      }, ROSTER_TITLE),
+    );
+  },
+  discordBot: async (page) => {
+    await open(page, `${SITE}/docs/discord-roster-bot`, 7000);
+    await still(page, 'tk-discord-bot');
+    await rects(
+      'tk-discord-bot',
+      await measureView(page, {
+        hero: [/^Discord Roster Bot$/, 700, 120],
+        publish: [/^Publish rosters$/, 200, 140],
+        signups: [/^Take sign-ups$/, 200, 140],
+        sync: [/^Stay in sync$/, 200, 140],
+      }),
+    );
+  },
+  kalpa: async (page) => {
+    await open(page, `${SITE}/kalpa`, 7000);
+    await still(page, 'tk-kalpa');
+    await rects(
+      'tk-kalpa',
+      await measureView(page, {
+        title: [/^The modern addon manager/, 500, 150],
+        free: [/Free Forever/i, 100, 20],
+        app: [/^Kalpa Addon Manager$/, 400, 400],
+        download: [/^Download for Windows$/, 150, 40],
+      }),
+    );
+    await scrollToText(page, /^Everything your addons need$/, 120);
+    await page.mouse.move(5, 5);
+    await page.waitForTimeout(1500);
+    await still(page, 'tk-kalpa-features');
+    await rects(
+      'tk-kalpa-features',
+      await measureView(page, {
+        heading: [/^Everything your addons need$/, 400, 30],
+        installs: [/^One-click installs$/, 250, 100],
+        deps: [/^Dependency resolution$/, 250, 100],
+        profiles: [/^Addon profiles$/, 250, 100],
+        packs: [/^Pack Hub$/, 250, 100, 500, 500],
+      }),
+    );
+  },
+  packHub: async (page) => {
+    await open(page, `${SITE}/pack-hub`, 9000);
+    await still(page, 'tk-pack-hub');
+    await rects(
+      'tk-pack-hub',
+      await measureView(page, {
+        utilities: [/^Spike.s Ut/, 250, 400, 400],
+        trial: [/^Spike.s Trial Necessities$/, 250, 400, 400],
+      }),
+    );
+  },
   replay: (page) => replay(page, 'tk-replay', 1920, 1080),
   // Portrait viewport, for the 9:16 cut.
   replayTall: (page) => replay(page, 'tk-replay-tall', 1080, 1920),
@@ -252,7 +488,8 @@ for (const [name, run] of Object.entries(shots)) {
   console.log('capturing', name);
   const ctx = await browser.newContext({
     viewport: name === 'replayTall' ? { width: 1080, height: 1920 } : { width: 1920, height: 1080 },
-    deviceScaleFactor: name.startsWith('replay') ? 1 : DPR,
+    // The tall Roster Builder still is 2x to keep its texture a manageable size.
+    deviceScaleFactor: name.startsWith('replay') ? 1 : name === 'rosterBuilder' ? 2 : DPR,
     colorScheme: 'dark',
   });
   await ctx.addInitScript(setup);

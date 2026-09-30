@@ -713,8 +713,360 @@
       }
     ]
   },
-  "tools": {
-    "duration": 4.88,
+  "outro": {
+    "duration": 9.6,
+    "words": [
+      {
+        "say": "E-S-O",
+        "start": 0,
+        "end": 0.48,
+        "text": "ESO"
+      },
+      {
+        "say": "Logs",
+        "start": 0.56,
+        "end": 0.88,
+        "text": "Logs"
+      },
+      {
+        "say": "records",
+        "start": 1.12,
+        "end": 1.36,
+        "text": "records"
+      },
+      {
+        "say": "the",
+        "start": 1.44,
+        "end": 1.52,
+        "text": "the"
+      },
+      {
+        "say": "fight.",
+        "start": 1.88,
+        "end": 2.32,
+        "text": "fight."
+      },
+      {
+        "say": "E-S-O",
+        "start": 2.4,
+        "end": 2.8,
+        "text": "ESO"
+      },
+      {
+        "say": "Toolkit",
+        "start": 2.88,
+        "end": 3.36,
+        "text": "Toolkit"
+      },
+      {
+        "say": "helps",
+        "start": 3.44,
+        "end": 3.68,
+        "text": "helps"
+      },
+      {
+        "say": "you",
+        "start": 3.72,
+        "end": 3.76,
+        "text": "you"
+      },
+      {
+        "say": "understand",
+        "start": 3.84,
+        "end": 4.32,
+        "text": "understand"
+      },
+      {
+        "say": "it,",
+        "start": 4.4,
+        "end": 4.773,
+        "text": "it,"
+      },
+      {
+        "say": "and",
+        "start": 4.827,
+        "end": 4.88,
+        "text": "and"
+      },
+      {
+        "say": "get",
+        "start": 5,
+        "end": 5.12,
+        "text": "get"
+      },
+      {
+        "say": "ready",
+        "start": 5.24,
+        "end": 5.36,
+        "text": "ready"
+      },
+      {
+        "say": "for",
+        "start": 5.4,
+        "end": 5.44,
+        "text": "for"
+      },
+      {
+        "say": "the",
+        "start": 5.52,
+        "end": 5.6,
+        "text": "the"
+      },
+      {
+        "say": "next",
+        "start": 5.68,
+        "end": 5.84,
+        "text": "next"
+      },
+      {
+        "say": "one.",
+        "start": 5.92,
+        "end": 6.6,
+        "text": "one."
+      },
+      {
+        "say": "Free,",
+        "start": 6.64,
+        "end": 7.24,
+        "text": "Free,"
+      },
+      {
+        "say": "at",
+        "start": 7.28,
+        "end": 7.44,
+        "text": "at"
+      },
+      {
+        "say": "E-S-O-T-K",
+        "start": 7.52,
+        "end": 8.64,
+        "text": "esotk.com."
+      },
+      {
+        "say": "dot",
+        "start": 8.76,
+        "end": 8.88,
+        "text": ""
+      },
+      {
+        "say": "com.",
+        "start": 8.96,
+        "end": 9.6,
+        "text": ""
+      }
+    ]
+  },
+  "builds": {
+    "duration": 12.4,
+    "words": [
+      {
+        "say": "Found",
+        "start": 0,
+        "end": 0.24,
+        "text": "Found"
+      },
+      {
+        "say": "a",
+        "start": 0.32,
+        "end": 0.4,
+        "text": "a"
+      },
+      {
+        "say": "build",
+        "start": 0.52,
+        "end": 0.64,
+        "text": "build"
+      },
+      {
+        "say": "worth",
+        "start": 0.76,
+        "end": 0.88,
+        "text": "worth"
+      },
+      {
+        "say": "copying?",
+        "start": 1.04,
+        "end": 1.84,
+        "text": "copying?"
+      },
+      {
+        "say": "Send",
+        "start": 1.92,
+        "end": 2.08,
+        "text": "Send"
+      },
+      {
+        "say": "it",
+        "start": 2.12,
+        "end": 2.16,
+        "text": "it"
+      },
+      {
+        "say": "to",
+        "start": 2.24,
+        "end": 2.32,
+        "text": "to"
+      },
+      {
+        "say": "the",
+        "start": 2.4,
+        "end": 2.48,
+        "text": "the"
+      },
+      {
+        "say": "Build",
+        "start": 2.6,
+        "end": 2.72,
+        "text": "Build"
+      },
+      {
+        "say": "Editor.",
+        "start": 3.12,
+        "end": 3.56,
+        "text": "Editor."
+      },
+      {
+        "say": "Or",
+        "start": 3.6,
+        "end": 4,
+        "text": "Or"
+      },
+      {
+        "say": "start",
+        "start": 4.08,
+        "end": 4.32,
+        "text": "start"
+      },
+      {
+        "say": "from",
+        "start": 4.4,
+        "end": 4.48,
+        "text": "from"
+      },
+      {
+        "say": "what",
+        "start": 4.56,
+        "end": 4.64,
+        "text": "what"
+      },
+      {
+        "say": "top",
+        "start": 4.72,
+        "end": 4.88,
+        "text": "top"
+      },
+      {
+        "say": "players",
+        "start": 4.96,
+        "end": 5.28,
+        "text": "players"
+      },
+      {
+        "say": "run.",
+        "start": 5.64,
+        "end": 6.04,
+        "text": "run."
+      },
+      {
+        "say": "The",
+        "start": 6.08,
+        "end": 6.24,
+        "text": "The"
+      },
+      {
+        "say": "Build",
+        "start": 6.36,
+        "end": 6.48,
+        "text": "Build"
+      },
+      {
+        "say": "Leaderboard",
+        "start": 6.56,
+        "end": 7.12,
+        "text": "Leaderboard"
+      },
+      {
+        "say": "sorts",
+        "start": 7.2,
+        "end": 7.52,
+        "text": "sorts"
+      },
+      {
+        "say": "top-ranked",
+        "start": 7.6,
+        "end": 8.16,
+        "text": "top-ranked"
+      },
+      {
+        "say": "parses",
+        "start": 8.32,
+        "end": 8.72,
+        "text": "parses"
+      },
+      {
+        "say": "into",
+        "start": 8.8,
+        "end": 8.96,
+        "text": "into"
+      },
+      {
+        "say": "the",
+        "start": 9.04,
+        "end": 9.12,
+        "text": "the"
+      },
+      {
+        "say": "builds",
+        "start": 9.24,
+        "end": 9.4,
+        "text": "builds"
+      },
+      {
+        "say": "behind",
+        "start": 9.44,
+        "end": 9.76,
+        "text": "behind"
+      },
+      {
+        "say": "them,",
+        "start": 10.04,
+        "end": 10.373,
+        "text": "them,"
+      },
+      {
+        "say": "by",
+        "start": 10.427,
+        "end": 10.48,
+        "text": "by"
+      },
+      {
+        "say": "class",
+        "start": 10.56,
+        "end": 11.04,
+        "text": "class"
+      },
+      {
+        "say": "and",
+        "start": 11.12,
+        "end": 11.28,
+        "text": "and"
+      },
+      {
+        "say": "by",
+        "start": 11.36,
+        "end": 11.44,
+        "text": "by"
+      },
+      {
+        "say": "boss.",
+        "start": 11.88,
+        "end": 12.4,
+        "text": "boss."
+      }
+    ]
+  },
+  "calc": {
+    "duration": 7.76,
     "words": [
       {
         "say": "Then",
@@ -723,189 +1075,596 @@
         "text": "Then"
       },
       {
-        "say": "send",
-        "start": 0.32,
-        "end": 0.64,
-        "text": "send"
-      },
-      {
-        "say": "any",
-        "start": 0.72,
-        "end": 0.88,
-        "text": "any"
-      },
-      {
-        "say": "build",
-        "start": 0.96,
-        "end": 1.2,
-        "text": "build"
-      },
-      {
-        "say": "to",
-        "start": 1.24,
-        "end": 1.28,
-        "text": "to"
-      },
-      {
-        "say": "the",
-        "start": 1.36,
-        "end": 1.44,
-        "text": "the"
-      },
-      {
-        "say": "editor,",
-        "start": 1.52,
-        "end": 2.04,
-        "text": "editor,"
-      },
-      {
-        "say": "and",
-        "start": 2.08,
-        "end": 2.24,
-        "text": "and"
-      },
-      {
         "say": "check",
-        "start": 2.36,
-        "end": 2.48,
+        "start": 0.32,
+        "end": 0.56,
         "text": "check"
       },
       {
         "say": "the",
-        "start": 2.56,
-        "end": 2.64,
+        "start": 0.6,
+        "end": 0.64,
         "text": "the"
       },
       {
-        "say": "math",
-        "start": 2.8,
-        "end": 2.96,
-        "text": "math"
+        "say": "math.",
+        "start": 0.72,
+        "end": 1.68,
+        "text": "math."
       },
       {
-        "say": "with",
+        "say": "Plan",
+        "start": 1.8,
+        "end": 1.92,
+        "text": "Plan"
+      },
+      {
+        "say": "a",
+        "start": 1.96,
+        "end": 2,
+        "text": "a"
+      },
+      {
+        "say": "scribed",
+        "start": 2.08,
+        "end": 2.48,
+        "text": "scribed"
+      },
+      {
+        "say": "skill",
+        "start": 2.56,
+        "end": 2.88,
+        "text": "skill"
+      },
+      {
+        "say": "script",
         "start": 3.04,
-        "end": 3.12,
-        "text": "with"
+        "end": 3.36,
+        "text": "script"
+      },
+      {
+        "say": "by",
+        "start": 3.4,
+        "end": 3.44,
+        "text": "by"
+      },
+      {
+        "say": "script,",
+        "start": 3.6,
+        "end": 4.32,
+        "text": "script,"
+      },
+      {
+        "say": "and",
+        "start": 4.4,
+        "end": 4.48,
+        "text": "and"
+      },
+      {
+        "say": "work",
+        "start": 4.6,
+        "end": 4.72,
+        "text": "work"
+      },
+      {
+        "say": "out",
+        "start": 4.8,
+        "end": 4.88,
+        "text": "out"
+      },
+      {
+        "say": "your",
+        "start": 4.96,
+        "end": 5.04,
+        "text": "your"
+      },
+      {
+        "say": "penetration",
+        "start": 5.12,
+        "end": 5.76,
+        "text": "penetration"
+      },
+      {
+        "say": "and",
+        "start": 5.84,
+        "end": 5.92,
+        "text": "and"
+      },
+      {
+        "say": "crit",
+        "start": 6,
+        "end": 6.32,
+        "text": "crit"
+      },
+      {
+        "say": "in",
+        "start": 6.36,
+        "end": 6.4,
+        "text": "in"
       },
       {
         "say": "the",
-        "start": 3.2,
-        "end": 3.28,
+        "start": 6.48,
+        "end": 6.56,
         "text": "the"
       },
       {
-        "say": "built-in",
-        "start": 3.36,
-        "end": 3.68,
-        "text": "built-in"
-      },
-      {
         "say": "calculators.",
-        "start": 3.88,
-        "end": 4.88,
+        "start": 6.76,
+        "end": 7.76,
         "text": "calculators."
       }
     ]
   },
-  "outro": {
-    "duration": 8.56,
+  "roster": {
+    "duration": 16.8,
     "words": [
       {
-        "say": "E-S-O",
+        "say": "Leading",
         "start": 0,
-        "end": 0.64,
-        "text": "ESO"
+        "end": 0.24,
+        "text": "Leading"
       },
       {
-        "say": "Logs",
-        "start": 0.88,
-        "end": 1.12,
-        "text": "Logs"
+        "say": "a",
+        "start": 0.32,
+        "end": 0.36,
+        "text": "a"
       },
       {
-        "say": "records",
+        "say": "trial?",
+        "start": 0.4,
+        "end": 1.28,
+        "text": "trial?"
+      },
+      {
+        "say": "The",
         "start": 1.36,
-        "end": 1.6,
-        "text": "records"
+        "end": 1.44,
+        "text": "The"
+      },
+      {
+        "say": "Roster",
+        "start": 1.48,
+        "end": 1.84,
+        "text": "Roster"
+      },
+      {
+        "say": "Builder",
+        "start": 1.92,
+        "end": 2.16,
+        "text": "Builder"
+      },
+      {
+        "say": "plans",
+        "start": 2.24,
+        "end": 2.56,
+        "text": "plans"
       },
       {
         "say": "the",
-        "start": 1.68,
-        "end": 1.76,
+        "start": 2.64,
+        "end": 2.72,
         "text": "the"
       },
       {
+        "say": "whole",
+        "start": 2.8,
+        "end": 3.04,
+        "text": "whole"
+      },
+      {
+        "say": "group.",
+        "start": 3.4,
+        "end": 3.84,
+        "text": "group."
+      },
+      {
+        "say": "Tanks,",
+        "start": 3.92,
+        "end": 4.44,
+        "text": "Tanks,"
+      },
+      {
+        "say": "healers",
+        "start": 4.48,
+        "end": 4.96,
+        "text": "healers"
+      },
+      {
+        "say": "and",
+        "start": 5.04,
+        "end": 5.2,
+        "text": "and"
+      },
+      {
+        "say": "damage",
+        "start": 5.36,
+        "end": 5.52,
+        "text": "damage"
+      },
+      {
+        "say": "dealers,",
+        "start": 5.6,
+        "end": 6.36,
+        "text": "dealers,"
+      },
+      {
+        "say": "their",
+        "start": 6.4,
+        "end": 6.64,
+        "text": "their"
+      },
+      {
+        "say": "sets",
+        "start": 6.84,
+        "end": 7.04,
+        "text": "sets"
+      },
+      {
+        "say": "and",
+        "start": 7.12,
+        "end": 7.28,
+        "text": "and"
+      },
+      {
+        "say": "ultimates,",
+        "start": 7.36,
+        "end": 8.2,
+        "text": "ultimates,"
+      },
+      {
+        "say": "even",
+        "start": 8.24,
+        "end": 8.56,
+        "text": "even"
+      },
+      {
+        "say": "builds",
+        "start": 8.68,
+        "end": 8.84,
+        "text": "builds"
+      },
+      {
+        "say": "for",
+        "start": 8.88,
+        "end": 8.96,
+        "text": "for"
+      },
+      {
+        "say": "each",
+        "start": 9.04,
+        "end": 9.2,
+        "text": "each"
+      },
+      {
         "say": "fight.",
-        "start": 1.84,
-        "end": 2.64,
+        "start": 9.28,
+        "end": 10.2,
         "text": "fight."
       },
       {
-        "say": "E-S-O",
-        "start": 2.68,
-        "end": 3.2,
-        "text": "ESO"
+        "say": "Share",
+        "start": 10.24,
+        "end": 10.4,
+        "text": "Share"
       },
       {
-        "say": "Toolkit",
-        "start": 3.48,
-        "end": 3.76,
-        "text": "Toolkit"
+        "say": "it",
+        "start": 10.44,
+        "end": 10.48,
+        "text": "it"
       },
       {
-        "say": "helps",
-        "start": 3.84,
+        "say": "as",
+        "start": 10.56,
+        "end": 10.64,
+        "text": "as"
+      },
+      {
+        "say": "a",
+        "start": 10.72,
+        "end": 10.8,
+        "text": "a"
+      },
+      {
+        "say": "link,",
+        "start": 11.08,
+        "end": 11.4,
+        "text": "link,"
+      },
+      {
+        "say": "publish",
+        "start": 11.44,
+        "end": 11.76,
+        "text": "publish"
+      },
+      {
+        "say": "it",
+        "start": 11.8,
+        "end": 11.84,
+        "text": "it"
+      },
+      {
+        "say": "to",
+        "start": 11.92,
+        "end": 12,
+        "text": "to"
+      },
+      {
+        "say": "Roster",
+        "start": 12.08,
+        "end": 12.4,
+        "text": "Roster"
+      },
+      {
+        "say": "Hub,",
+        "start": 12.68,
+        "end": 13,
+        "text": "Hub,"
+      },
+      {
+        "say": "or",
+        "start": 13.04,
+        "end": 13.2,
+        "text": "or"
+      },
+      {
+        "say": "post",
+        "start": 13.32,
+        "end": 13.44,
+        "text": "post"
+      },
+      {
+        "say": "it",
+        "start": 13.48,
+        "end": 13.52,
+        "text": "it"
+      },
+      {
+        "say": "to",
+        "start": 13.6,
+        "end": 13.68,
+        "text": "to"
+      },
+      {
+        "say": "Discord,",
+        "start": 13.84,
+        "end": 14.44,
+        "text": "Discord,"
+      },
+      {
+        "say": "where",
+        "start": 14.48,
+        "end": 14.56,
+        "text": "where"
+      },
+      {
+        "say": "the",
+        "start": 14.64,
+        "end": 14.72,
+        "text": "the"
+      },
+      {
+        "say": "roster",
+        "start": 14.8,
+        "end": 15.12,
+        "text": "roster"
+      },
+      {
+        "say": "bot",
+        "start": 15.24,
+        "end": 15.36,
+        "text": "bot"
+      },
+      {
+        "say": "takes",
+        "start": 15.44,
+        "end": 15.6,
+        "text": "takes"
+      },
+      {
+        "say": "sign-ups.",
+        "start": 15.68,
+        "end": 16.8,
+        "text": "sign-ups."
+      }
+    ]
+  },
+  "kalpa": {
+    "duration": 11.28,
+    "words": [
+      {
+        "say": "And",
+        "start": 0,
+        "end": 0.16,
+        "text": "And"
+      },
+      {
+        "say": "for",
+        "start": 0.24,
+        "end": 0.32,
+        "text": "for"
+      },
+      {
+        "say": "your",
+        "start": 0.44,
+        "end": 0.56,
+        "text": "your"
+      },
+      {
+        "say": "addons,",
+        "start": 0.64,
+        "end": 1.36,
+        "text": "addons,"
+      },
+      {
+        "say": "there's",
+        "start": 1.44,
+        "end": 1.6,
+        "text": "there's"
+      },
+      {
+        "say": "Kalpa.",
+        "start": 1.72,
+        "end": 2.48,
+        "text": "Kalpa."
+      },
+      {
+        "say": "A",
+        "start": 2.56,
+        "end": 2.64,
+        "text": "A"
+      },
+      {
+        "say": "free",
+        "start": 2.72,
+        "end": 2.96,
+        "text": "free"
+      },
+      {
+        "say": "addon",
+        "start": 3.04,
+        "end": 3.36,
+        "text": "addon"
+      },
+      {
+        "say": "manager",
+        "start": 3.44,
+        "end": 3.92,
+        "text": "manager"
+      },
+      {
+        "say": "that",
+        "start": 4,
         "end": 4.08,
-        "text": "helps"
+        "text": "that"
       },
       {
-        "say": "you",
-        "start": 4.12,
-        "end": 4.16,
-        "text": "you"
-      },
-      {
-        "say": "understand",
+        "say": "installs",
         "start": 4.24,
-        "end": 4.72,
-        "text": "understand"
+        "end": 4.64,
+        "text": "installs"
       },
       {
-        "say": "it.",
-        "start": 5,
+        "say": "and",
+        "start": 4.76,
+        "end": 4.88,
+        "text": "and"
+      },
+      {
+        "say": "updates",
+        "start": 5.08,
+        "end": 5.28,
+        "text": "updates"
+      },
+      {
+        "say": "them",
+        "start": 5.36,
         "end": 5.44,
-        "text": "it."
+        "text": "them"
       },
       {
-        "say": "Free,",
-        "start": 5.72,
-        "end": 6.04,
-        "text": "Free,"
+        "say": "in",
+        "start": 5.52,
+        "end": 5.68,
+        "text": "in"
       },
       {
-        "say": "at",
-        "start": 6.08,
-        "end": 6.24,
-        "text": "at"
+        "say": "one",
+        "start": 5.76,
+        "end": 5.92,
+        "text": "one"
       },
       {
-        "say": "E-S-O-T-K",
-        "start": 6.32,
-        "end": 7.52,
-        "text": "esotk.com."
+        "say": "click,",
+        "start": 6,
+        "end": 6.64,
+        "text": "click,"
       },
       {
-        "say": "dot",
-        "start": 7.6,
+        "say": "pulls",
+        "start": 6.72,
+        "end": 6.96,
+        "text": "pulls"
+      },
+      {
+        "say": "in",
+        "start": 7.04,
+        "end": 7.08,
+        "text": "in"
+      },
+      {
+        "say": "the",
+        "start": 7.12,
+        "end": 7.2,
+        "text": "the"
+      },
+      {
+        "say": "libraries",
+        "start": 7.44,
+        "end": 7.68,
+        "text": "libraries"
+      },
+      {
+        "say": "they",
+        "start": 7.76,
         "end": 7.84,
-        "text": ""
+        "text": "they"
       },
       {
-        "say": "com.",
-        "start": 8,
+        "say": "need,",
+        "start": 8.12,
+        "end": 8.44,
+        "text": "need,"
+      },
+      {
+        "say": "and",
+        "start": 8.48,
         "end": 8.56,
-        "text": ""
+        "text": "and"
+      },
+      {
+        "say": "installs",
+        "start": 8.72,
+        "end": 9.12,
+        "text": "installs"
+      },
+      {
+        "say": "whole",
+        "start": 9.28,
+        "end": 9.44,
+        "text": "whole"
+      },
+      {
+        "say": "community",
+        "start": 9.68,
+        "end": 9.92,
+        "text": "community"
+      },
+      {
+        "say": "packs",
+        "start": 10.04,
+        "end": 10.24,
+        "text": "packs"
+      },
+      {
+        "say": "from",
+        "start": 10.32,
+        "end": 10.4,
+        "text": "from"
+      },
+      {
+        "say": "Pack",
+        "start": 10.52,
+        "end": 10.64,
+        "text": "Pack"
+      },
+      {
+        "say": "Hub.",
+        "start": 10.76,
+        "end": 11.28,
+        "text": "Hub."
       }
     ]
   }

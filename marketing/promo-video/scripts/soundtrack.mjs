@@ -152,16 +152,22 @@ const CHORDS = {
 };
 const LOOP = ['Dm', 'Bb', 'F', 'C'];
 // Pads under ESO Logs; a pulse when ESO Toolkit takes over; light drums while the build is
-// decoded; the full groove on the 3D reveal; back to pads for the outro, resolving on the logo.
+// decoded; the full groove on the 3D reveal, dropping out for each chapter title; back to pads
+// for the outro, resolving on the logo.
 const C = CUES;
 const padStart = TIMELINE.narration.logs - 0.2;
 const drop = C.reads + 0.9;
 const lift = C.groups - 0.25;
-const full = C.hits[4].t;
+const full = C.full;
 const calm = C.o1 - 0.2;
 const ctaHit = C.free + 2.2;
 
 const chordAtBar = (bar) => LOOP[(bar + 400) % 4];
+// After the 3D reveal the groove settles a little for the tool chapters, so the narration sits
+// clear of it.
+const settle = (t) => (t >= C.chapters[0] ? 0.72 : 1);
+// The drums rest while a chapter title card is on screen.
+const inBreak = (t) => C.chapters.some((c) => t >= c - 0.05 && t < c + 1.35);
 
 const pad = (t, dur, notes, level) => {
   const out = gainNode(0, music);
@@ -281,7 +287,7 @@ for (let bar = 0; barStart(bar) < ctaHit - 0.05; bar++) {
     const t = t0 + i * (BEAT / 4);
     if (t < lift - 0.01 || t >= calm - 0.01) continue;
     const n = tones[[0, 2, 1, 3, 4, 3, 1, 2][i % 8]];
-    pluck(t, n, t >= full ? 0.05 : 0.04);
+    pluck(t, n, (t >= full ? 0.05 : 0.04) * settle(t));
   }
 }
 
@@ -341,11 +347,11 @@ const clap = (t, level = 1) => {
 // Drums sit on the pad's bar grid, from the build section until the outro.
 for (let beatIndex = 0; padStart + beatIndex * BEAT < calm - 0.01; beatIndex++) {
   const t = padStart + beatIndex * BEAT;
-  if (t < lift - 0.01) continue;
+  if (t < lift - 0.01 || inBreak(t)) continue;
   const big = t >= full;
-  kick(t, big ? 0.9 : 0.55);
-  hat(t + BEAT / 2, big ? 0.9 : 0.6, big && beatIndex % 4 === 3);
-  if (big && beatIndex % 2 === 1) clap(t, 0.8);
+  kick(t, (big ? 0.9 : 0.55) * settle(t));
+  hat(t + BEAT / 2, (big ? 0.9 : 0.6) * settle(t), big && beatIndex % 4 === 3);
+  if (big && beatIndex % 2 === 1) clap(t, 0.8 * settle(t));
   if (big) {
     hat(t + BEAT / 4, 0.4);
     hat(t + (BEAT * 3) / 4, 0.4);
@@ -477,8 +483,8 @@ for (let k = 0; k < 12; k++) tick(C.paste + 0.1 + k * 0.065, 0.55, 2600 + (k % 4
 // Rows landing on set chips, then skill-bar entries landing on icons.
 for (let i = 0; i < 13; i++) tick(C.groups + i * 0.055 + 0.95, 0.5, 1800 + i * 60);
 for (let i = 0; i < 12; i++) tick(C.lays + i * 0.05 + 0.85, 0.45, 2600 + i * 50);
-// Scribing rows highlighting as they are named.
-[C.focus, C.signature, C.affix].forEach((t) => uiClick(t));
+// Scribing rows highlighting as they are named, and the later chapters' highlights.
+[C.focus, C.signature, C.affix, ...C.clicks].forEach((t) => uiClick(t));
 
 // Transitions and reveals.
 C.whooshes.forEach((t) => whoosh(t, 0.5, 0.8));
@@ -497,7 +503,15 @@ C.hits.forEach(({ t, size }, i) => {
     impact(t, size * 0.85);
     crash(t, 0.8);
   }
-  CHIMES[i].forEach((n, j) => bell(t + 0.02 + j * 0.07, n, big ? 0.9 : 0.5, big ? 2.4 : 1.4));
+  CHIMES[i % CHIMES.length].forEach((n, j) =>
+    bell(t + 0.02 + j * 0.07, n, big ? 0.9 : 0.5, big ? 2.4 : 1.4),
+  );
+});
+// Chapter titles: a swell into the card, a chord as it lands in the rail.
+C.chapters.forEach((t, i) => {
+  riser(t - 0.9, t + 0.1, 0.45);
+  whoosh(t + 1.15, 0.45, 0.6);
+  CHIMES[(i + 2) % CHIMES.length].forEach((n, j) => bell(t + 1.35 + j * 0.06, n, 0.55, 1.6));
 });
 
 // ---------------------------------------------------------------------------------------------

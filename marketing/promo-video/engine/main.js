@@ -29,6 +29,19 @@ const STILLS = [
   'tk-scribing',
   'tk-build',
   'tk-calculator',
+  'tk-build-leaderboard',
+  'tk-scribe-0',
+  'tk-scribe-1',
+  'tk-scribe-2',
+  'tk-scribe-3',
+  'tk-roster-builder',
+  'tk-roster-perfight',
+  'tk-roster-view',
+  'tk-roster-hub',
+  'tk-discord-bot',
+  'tk-kalpa',
+  'tk-kalpa-features',
+  'tk-pack-hub',
 ];
 const CLIPS = {
   'el-replay': [1920, 1080],
@@ -43,6 +56,16 @@ const LAYOUTS = [
   'tk-scribing',
   'tk-build',
   'tk-calculator',
+  'tk-build-leaderboard',
+  'tk-scribe',
+  'tk-roster-builder',
+  'tk-roster-perfight',
+  'tk-roster-view',
+  'tk-roster-hub',
+  'tk-discord-bot',
+  'tk-kalpa',
+  'tk-kalpa-features',
+  'tk-pack-hub',
 ];
 
 async function bitmap(url) {

@@ -7,10 +7,62 @@ export const OUT = path.resolve(import.meta.dirname, '..', 'out', 'captures');
 /** Device scale for stills: 3x keeps full-screen close-ups sharp at 1080p. */
 export const DPR = 3;
 
+/** Saves a viewport screenshot, or a page region (CSS pixels, may extend below the fold). */
 export async function still(page, name, clip) {
   await mkdir(OUT, { recursive: true });
-  await page.screenshot({ path: path.join(OUT, `${name}.png`), clip, animations: 'disabled' });
+  await page.screenshot({
+    path: path.join(OUT, `${name}.png`),
+    clip,
+    fullPage: Boolean(clip),
+    animations: 'disabled',
+  });
   console.log(`  saved ${name}.png`);
+}
+
+/**
+ * Measures page blocks for the camera. Each spec entry is
+ * [text pattern, min width, min height, max width = Infinity, min x = 0]: the first visible
+ * element whose own text matches (and that starts at or right of min x) is widened to its
+ * nearest ancestor of at least that size. Rectangles are CSS pixels relative to `top`.
+ */
+export function measure(page, spec, top = 0) {
+  const plain = Object.fromEntries(
+    Object.entries(spec).map(([key, [re, w, h, maxW = 1e9, minX = 0]]) => [
+      key,
+      [re.source, re.flags, w, h, maxW, minX],
+    ]),
+  );
+  return page.evaluate(
+    ({ plain, top }) => {
+      const own = (e) =>
+        [...e.childNodes]
+          .filter((n) => n.nodeType === 3)
+          .map((n) => n.textContent)
+          .join('')
+          .trim();
+      const out = {};
+      for (const [key, [src, flags, minW, minH, maxW, minX]] of Object.entries(plain)) {
+        const re = new RegExp(src, flags);
+        const fits = (el) => {
+          const r = el.getBoundingClientRect();
+          return r.width >= minW && r.height >= minH;
+        };
+        let el = [...document.querySelectorAll('body *')].find((e) => {
+          const text = e.childElementCount === 0 ? e.textContent.trim() : own(e);
+          if (!text || !re.test(text)) return false;
+          const r = e.getBoundingClientRect();
+          return (
+            r.width > 0 && r.x >= minX && r.x < innerWidth && r.bottom > 0 && r.y < innerHeight
+          );
+        });
+        while (el && !fits(el)) el = el.parentElement;
+        const r = el?.getBoundingClientRect();
+        out[key] = r && r.width <= maxW ? [r.x, r.y + scrollY - top, r.width, r.height] : null;
+      }
+      return out;
+    },
+    { plain, top },
+  );
 }
 
 /**

@@ -1,6 +1,6 @@
 {
   "fps": 60,
-  "duration": 71,
+  "duration": 121.5,
   "narration": {
     "open": 1.0,
     "logs": 4.3,
@@ -8,7 +8,10 @@
     "gear": 17.6,
     "scribe": 31.7,
     "replay": 39.9,
-    "tools": 52.0,
-    "outro": 57.8
+    "builds": 52.8,
+    "calc": 66.3,
+    "roster": 75.8,
+    "kalpa": 94.4,
+    "outro": 107.0
   }
 }

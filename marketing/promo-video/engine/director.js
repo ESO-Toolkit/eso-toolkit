@@ -63,8 +63,41 @@ C.signature = cue('scribe', 'signature');
 C.affix = cue('scribe', 'affix');
 C.tilt = cue('replay', 'e-s-o', 2) - 0.25;
 C.rebuild = cue('replay', 'rebuilds') - 0.05;
-C.send = cue('tools', 'send');
-C.calc = cue('tools', 'calculators');
+C.copying = cue('builds', 'copying');
+C.send = cue('builds', 'send');
+C.start = cue('builds', 'start');
+C.board = cue('builds', 'leaderboard');
+C.parses = cue('builds', 'parses');
+C.builds = cue('builds', 'builds');
+C.behind = cue('builds', 'behind');
+C.byClass = cue('builds', 'class');
+C.byBoss = cue('builds', 'boss');
+C.plan = cue('calc', 'plan');
+C.script1 = cue('calc', 'script', 1);
+C.by = cue('calc', 'by');
+C.script2 = cue('calc', 'script', 2);
+C.pen = cue('calc', 'penetration');
+C.plans = cue('roster', 'plans');
+C.tanks = cue('roster', 'tanks');
+C.healers = cue('roster', 'healers');
+C.dealers = cue('roster', 'damage');
+C.sets = cue('roster', 'sets');
+C.ults = cue('roster', 'ultimates');
+C.even = cue('roster', 'even');
+C.each = cue('roster', 'each');
+C.fight = cue('roster', 'fight');
+C.share = cue('roster', 'share');
+C.link = cue('roster', 'link');
+C.publish = cue('roster', 'publish');
+C.post = cue('roster', 'post');
+C.discord = cue('roster', 'discord');
+C.signups = cue('roster', 'sign-ups');
+C.kalpa = cue('kalpa', 'kalpa');
+C.kfree = cue('kalpa', 'free');
+C.installs = cue('kalpa', 'installs');
+C.pulls = cue('kalpa', 'pulls');
+C.whole = cue('kalpa', 'whole');
+C.community = cue('kalpa', 'community');
 C.o1 = cue('outro', 'e-s-o', 1);
 C.o2 = cue('outro', 'e-s-o', 2);
 C.free = cue('outro', 'free');
@@ -121,7 +154,17 @@ function chunks(words, max) {
   return out.map((ws) => ({ words: ws, start: ws[0].start, end: ws.at(-1).end }));
 }
 
-const CAPTIONED = ['logs', 'toolkit', 'gear', 'scribe', 'replay', 'tools'];
+const CAPTIONED = [
+  'logs',
+  'toolkit',
+  'gear',
+  'scribe',
+  'replay',
+  'builds',
+  'calc',
+  'roster',
+  'kalpa',
+];
 const CAPTIONS = {
   wide: CAPTIONED.flatMap((id) => chunks(LINES[id], 7)),
   tall: CAPTIONED.flatMap((id) => chunks(LINES[id], 4)),
@@ -334,9 +377,33 @@ const T = {
   zoomCut: N.gear - 0.15,
   dive: C.sTk + 0.45,
   whipReplay: N.replay - 0.5,
+  ch2: N.builds - 1.4,
+  intoCard: N.builds - 0.15,
   whipBuild: C.send - 0.25,
-  whipCalc: C.calc - 0.4,
+  whipBoard: C.start - 0.3,
+  whipScribe: N.calc - 0.2,
+  whipCalc: C.pen - 0.35,
+  ch3: N.roster - 1.5,
+  intoRoster: N.roster - 0.15,
+  cutFight: C.even - 0.1,
+  whipView: C.share - 0.25,
+  whipDiscord: C.post - 0.25,
+  ch4: N.kalpa - 1.5,
+  intoKalpa: N.kalpa - 0.15,
+  cutFeatures: C.pulls - 0.3,
+  whipPacks: C.whole - 0.3,
 };
+
+// The four chapters, shown as a rail across the top. Chapters 2-4 open with a title card that
+// flies up into its slot on the rail.
+const CHAPTERS = [
+  { title: 'Read the log', t0: M1.t1 - 0.3 },
+  { title: 'Plan your build', t0: T.ch2 },
+  { title: 'Run the trial', t0: T.ch3 },
+  { title: 'Your addons', t0: T.ch4 },
+];
+const RAIL_END = C.o1 - 0.3;
+const CARD_FLY = [0.95, 1.4];
 
 // Sound design reads these.
 C.whooshes = [
@@ -348,8 +415,19 @@ C.whooshes = [
   T.dive,
   T.whipReplay,
   M3.t0 + 0.5,
+  T.intoCard,
   T.whipBuild,
+  T.whipBoard,
+  T.whipScribe,
   T.whipCalc,
+  T.intoRoster,
+  T.cutFight,
+  T.whipView,
+  C.publish,
+  T.whipDiscord,
+  T.intoKalpa,
+  T.cutFeatures,
+  T.whipPacks,
   C.o1 - 0.1,
   C.o2 - 0.1,
   M4.t0 + 0.6,
@@ -361,6 +439,22 @@ C.hits = [
   { t: T.dive + 0.6, size: 0.7 },
   { t: M3.t1 - 0.2, size: 1.1 },
   { t: C.free + 2.2, size: 1.3 },
+];
+// When the full groove comes in (the 3D replay reveal), the chapter title cards, and UI clicks.
+C.full = M3.t1 - 0.2;
+C.chapters = [T.ch2, T.ch3, T.ch4];
+C.clicks = [
+  C.copying,
+  C.script1,
+  C.by,
+  C.script2,
+  C.tanks,
+  C.healers,
+  C.dealers,
+  C.each,
+  C.link,
+  C.signups - 0.3,
+  C.kfree,
 ];
 
 function views(P) {
@@ -379,8 +473,25 @@ function views(P) {
         tkReplay: { cx: 506, cy: 900, vw: 1012 },
         build: { cx: 520, cy: 500, vw: 600 },
         buildEnd: { cx: 470, cy: 360, vw: 520 },
+        board: { cx: 560, cy: 540, vw: 600 },
+        board2: { cx: 1170, cy: 540, vw: 600 },
+        board3: { cx: 980, cy: 540, vw: 600 },
+        planner: { cx: 1100, cy: 540, vw: 600 },
+        plannerEnd: { cx: 1110, cy: 540, vw: 580 },
         calc: { cx: 880, cy: 700, vw: 600 },
         calcEnd: { cx: 820, cy: 760, vw: 560 },
+        rbTop: { cx: 960, cy: 750, vw: 840 },
+        rbTank2: { cx: 960, cy: 750, vw: 800 },
+        perfight: { cx: 1070, cy: 540, vw: 600 },
+        perfight2: { cx: 1070, cy: 560, vw: 580 },
+        rview: { cx: 800, cy: 540, vw: 600 },
+        hub: { cx: 1100, cy: 540, vw: 600 },
+        discord: { cx: 960, cy: 540, vw: 600 },
+        kalpa: { cx: 713, cy: 540, vw: 600 },
+        kalpaApp: { cx: 1260, cy: 540, vw: 600 },
+        features: { cx: 1180, cy: 540, vw: 600 },
+        pack: { cx: 690, cy: 540, vw: 600 },
+        packEnd: { cx: 680, cy: 560, vw: 580 },
         outroElFull: { cx: 520, cy: 560, vw: 600 },
         outroEl: { cx: 720, cy: 600, vw: 1000 },
         outroTk: { cx: 900, cy: 650, vw: 1000 },
@@ -399,8 +510,25 @@ function views(P) {
         tkReplay: { cx: 960, cy: 482, vw: 1700 },
         build: { cx: 980, cy: 520, vw: 1560 },
         buildEnd: { cx: 720, cy: 360, vw: 1150 },
+        board: { cx: 960, cy: 500, vw: 1500 },
+        board2: { cx: 1100, cy: 480, vw: 1150 },
+        board3: { cx: 960, cy: 680, vw: 1400 },
+        planner: { cx: 1000, cy: 700, vw: 1150 },
+        plannerEnd: { cx: 1040, cy: 720, vw: 1000 },
         calc: { cx: 960, cy: 700, vw: 1300 },
         calcEnd: { cx: 960, cy: 771, vw: 1100 },
+        rbTop: { cx: 960, cy: 380, vw: 1250 },
+        rbTank2: { cx: 960, cy: 930, vw: 1250 },
+        perfight: { cx: 1000, cy: 530, vw: 1250 },
+        perfight2: { cx: 1070, cy: 560, vw: 1000 },
+        rview: { cx: 960, cy: 480, vw: 1300 },
+        hub: { cx: 960, cy: 540, vw: 1700 },
+        discord: { cx: 960, cy: 470, vw: 1250 },
+        kalpa: { cx: 965, cy: 462, vw: 1400 },
+        kalpaApp: { cx: 1260, cy: 432, vw: 850 },
+        features: { cx: 960, cy: 330, vw: 1100 },
+        pack: { cx: 830, cy: 560, vw: 1100 },
+        packEnd: { cx: 820, cy: 580, vw: 1000 },
         outroElFull: { cx: 905, cy: 630, vw: 1500 },
         outroEl: { cx: 700, cy: 640, vw: 780 },
         outroTk: { cx: 760, cy: 640, vw: 780 },
@@ -438,7 +566,7 @@ export function frame(t, W, H, cam, R) {
     if (amount > 0.001)
       out.fx.focus = { amount, rects, blur: opts.blur ?? 0.85, dim: opts.dim ?? 0.45 };
   };
-  const tagAt = P ? [56, 250] : [56, 104];
+  const tagAt = P ? [56, 300] : [56, 104];
   const tag = (text, product, alpha) =>
     out.overlays.push((ctx) =>
       UI.sourceLabel(ctx, { x: tagAt[0], y: tagAt[1], text, product, alpha, size: P ? 28 : 22 }),
@@ -450,6 +578,19 @@ export function frame(t, W, H, cam, R) {
     offset: [-dir * (1 - ease.outCubic(range(t, cut, cut + 0.45))) * W * 0.7, 0],
   });
   const whipBlur = (cut) => bell(t, cut - 0.3, cut, cut + 0.45) * W * 0.28;
+  const grow = (r, p) => [r[0] - p, r[1] - p, r[2] + p * 2, r[3] + p * 2];
+  /** Focus rectangle stepping through [time, page rect] keys (the first key is the start). */
+  const steps = (keys, map, dur = 0.3) => {
+    let r = map(keys[0][1]);
+    for (const [at, rr] of keys.slice(1)) {
+      r = lerpRect(r, map(rr), ease.inOutCubic(range(t, at, at + dur)));
+    }
+    return r;
+  };
+  /** Blurs the current shot behind a chapter title card. Call last in the section. */
+  const chapterBlur = (at) => {
+    if (t >= at) focus(up(t, at, 0.35), [], { blur: 1, dim: 0.62 });
+  };
 
   // --- Open --------------------------------------------------------------------------------
   out.overlays.push((ctx) =>
@@ -781,81 +922,465 @@ export function frame(t, W, H, cam, R) {
   }
 
   // --- Replay: from above, then rebuilt in 3D ------------------------------------------------------
-  if (t >= T.whipReplay && t < T.whipBuild + 0.05) {
+  if (t >= T.whipReplay && t < T.intoCard + 0.05) {
     const kt = ease.inOutCubic(range(t, C.tilt, C.tilt + 1.0));
     const el = shot(replayTex.el, V.elReplay, whipIn(T.whipReplay));
     el.frame = Math.min(538, Math.max(0, Math.floor((t - (T.whipReplay - 0.2)) * 60)));
     Object.assign(el, { rotX: kt * deg(58), y: el.y + kt * H * 0.08, z: -kt * 120 });
-    const pushK = range(t, M3.t1, T.whipBuild);
+    const pushK = range(t, M3.t1, T.intoCard);
     const tk = shot(
       replayTex.tk,
       { ...V.tkReplay, vw: V.tkReplay.vw * mix(1, 0.93, pushK) },
-      whipOut(T.whipBuild),
+      whipOut(T.intoCard),
     );
     tk.frame = Math.min(598, Math.max(0, Math.floor((t - M3.t0) * 60)));
     if (t <= M3.t1) add(el);
     if (t >= M3.t0) add(tk);
     addMorph(M3, { type: 'card', card: el }, { type: 'card', card: tk });
-    out.fx.whip = [-whipBlur(T.whipReplay) - whipBlur(T.whipBuild), 0];
+    out.fx.whip = [-whipBlur(T.whipReplay) - whipBlur(T.intoCard), 0];
     tag('ESO Logs replay', 'esologs', up(t, T.whipReplay + 0.3, 0.4) * down(t, C.tilt, 0.3));
-    tag(
-      'ESO Toolkit 3D replay',
-      'esotk',
-      up(t, M3.t1 - 0.2, 0.4) * down(t, T.whipBuild - 0.3, 0.2),
-    );
+    tag('ESO Toolkit 3D replay', 'esotk', up(t, M3.t1 - 0.2, 0.4) * down(t, T.ch2, 0.3));
+    chapterBlur(T.ch2);
   }
 
-  // --- Tools: whip to the Build Editor, then to the Calculators -------------------------------------
-  if (t >= T.whipBuild && t < T.whipCalc + 0.05) {
+  // --- Chapter 2, "Plan your build": the player card, the Build Editor, the Build Leaderboard -----
+  if (t >= T.intoCard && t < T.whipBuild + 0.05) {
+    const v = path(
+      [
+        { t: T.intoCard, v: V.tkCard },
+        { t: T.whipBuild, v: { ...V.tkCard, vw: V.tkCard.vw * 0.94 } },
+      ],
+      t,
+    );
+    const card = add(
+      shot('tk-players', v, {
+        ...whipIn(T.intoCard),
+        ...(t > T.whipBuild - 0.3 ? whipOut(T.whipBuild) : {}),
+      }),
+    );
+    const exRect = grow(pageToScreen(card, K.extract), 8);
+    const toEx = ease.inOutCubic(range(t, C.copying - 0.1, C.copying + 0.25));
+    const leave = down(t, T.whipBuild - 0.3, 0.2);
+    focus(
+      up(t, T.intoCard + 0.2, 0.3) * leave,
+      [{ rect: lerpRect(pageToScreen(card, K.card), exRect, toEx), radius: 14, feather: 80 }],
+      { blur: 0.8, dim: 0.5 },
+    );
+    if (toEx > 0)
+      out.overlays.push((ctx) =>
+        UI.callout(ctx, exRect, { alpha: toEx * leave, pad: 0, radius: 10, width: 2 }),
+      );
+    out.fx.whip = [-whipBlur(T.intoCard) - whipBlur(T.whipBuild), 0];
+    tag('Extract build to editor', 'esotk', up(t, T.intoCard + 0.3, 0.4) * leave);
+  }
+
+  if (t >= T.whipBuild && t < T.whipBoard + 0.05) {
     const v = path(
       [
         { t: T.whipBuild, v: V.build },
-        { t: T.whipCalc, v: V.buildEnd },
+        { t: T.whipBoard, v: V.buildEnd },
       ],
       t,
     );
     const build = add(
       shot('tk-build', v, {
         ...whipIn(T.whipBuild),
-        ...(t > T.whipCalc - 0.3 ? whipOut(T.whipCalc) : {}),
+        ...(t > T.whipBoard - 0.3 ? whipOut(T.whipBoard) : {}),
       }),
     );
-    const r = pageToScreen(build, PAGE.buildHeader);
+    const leave = down(t, T.whipBoard - 0.3, 0.2);
     focus(
-      up(t, C.send + 0.5, 0.4) * down(t, T.whipCalc - 0.3, 0.2),
-      [{ rect: r, radius: 14, feather: 90 }],
-      {
-        blur: 0.7,
-        dim: 0.5,
-      },
+      up(t, C.send + 0.4, 0.4) * leave,
+      [{ rect: pageToScreen(build, PAGE.buildHeader), radius: 14, feather: 90 }],
+      { blur: 0.7, dim: 0.5 },
     );
-    out.fx.whip = [-whipBlur(T.whipBuild) - whipBlur(T.whipCalc), 0];
-    tag('Build Editor', 'esotk', up(t, T.whipBuild + 0.3, 0.4) * down(t, T.whipCalc - 0.3, 0.2));
+    out.fx.whip = [-whipBlur(T.whipBuild) - whipBlur(T.whipBoard), 0];
+    tag('Build Editor', 'esotk', up(t, T.whipBuild + 0.3, 0.4) * leave);
   }
-  if (t >= T.whipCalc && t < C.o1 + 0.35) {
+
+  if (t >= T.whipBoard && t < T.whipScribe + 0.05) {
+    const B = R['tk-build-leaderboard'];
+    const v = path(
+      [
+        { t: T.whipBoard, v: V.board },
+        { t: C.parses - 0.2, v: V.board },
+        { t: C.builds + 0.3, v: V.board2 },
+        { t: C.byClass - 0.4, v: V.board2 },
+        { t: C.byClass + 0.3, v: V.board3 },
+        { t: T.whipScribe, v: { ...V.board3, vw: V.board3.vw * 0.96 } },
+      ],
+      t,
+    );
+    const board = add(
+      shot('tk-build-leaderboard', v, {
+        ...whipIn(T.whipBoard),
+        ...(t > T.whipScribe - 0.3 ? whipOut(T.whipScribe) : {}),
+      }),
+    );
+    const at = (r) => grow(pageToScreen(board, r), 6);
+    const rect = steps(
+      [
+        [C.board - 0.1, B.patterns],
+        [C.parses - 0.1, B.top],
+        [C.builds - 0.1, B.card],
+        [C.behind + 0.1, B.setup],
+        [C.byClass - 0.1, B.byClass],
+        [C.byBoss - 0.1, B.byBoss],
+      ],
+      at,
+    );
+    const leave = down(t, T.whipScribe - 0.3, 0.2);
+    focus(up(t, C.board - 0.2, 0.3) * leave, [{ rect, radius: 14, feather: 80 }], {
+      blur: 0.7,
+      dim: 0.5,
+    });
+    out.fx.whip = [-whipBlur(T.whipBoard) - whipBlur(T.whipScribe), 0];
+    tag('Build Leaderboard', 'esotk', up(t, T.whipBoard + 0.3, 0.4) * leave);
+  }
+
+  // "Plan a scribed skill script by script": the planner rebuilds the log chapter's Leashing Soul.
+  if (t >= T.whipScribe && t < T.whipCalc + 0.05) {
+    const Sc = R['tk-scribe'];
+    const v = path(
+      [
+        { t: T.whipScribe, v: V.planner },
+        { t: T.whipCalc, v: V.plannerEnd },
+      ],
+      t,
+    );
+    const move = { ...whipIn(T.whipScribe), ...(t > T.whipCalc - 0.3 ? whipOut(T.whipCalc) : {}) };
+    const base = add(shot('tk-scribe-0', v, move));
+    const picks = [
+      [C.script1, Sc.focus],
+      [C.by, Sc.signature],
+      [C.script2, Sc.affix],
+    ];
+    picks.forEach(([a], i) =>
+      add(shot(`tk-scribe-${i + 1}`, v, { ...move, alpha: up(t, a - 0.05, 0.22) })),
+    );
+    const at = (r) => grow(pageToScreen(base, r), 4);
+    const rect = steps(
+      [
+        [C.plan - 0.1, Sc.tooltip],
+        [C.script1 - 0.08, Sc.focus],
+        [C.by - 0.08, Sc.signature],
+        [C.script2 - 0.08, Sc.affix],
+        [C.script2 + 0.7, Sc.tooltip],
+      ],
+      at,
+      0.25,
+    );
+    const leave = down(t, T.whipCalc - 0.3, 0.2);
+    focus(up(t, C.plan - 0.2, 0.3) * leave, [{ rect, radius: 14, feather: 80 }], {
+      blur: 0.75,
+      dim: 0.5,
+    });
+    for (const [a, r] of picks) {
+      const glow = t >= a ? Math.exp(-(t - a) * 2.2) * leave : 0;
+      if (glow > 0.01)
+        out.overlays.push((ctx) =>
+          UI.callout(ctx, at(r), { alpha: glow, color: UI.INK.gold, pad: 0, radius: 10, width: 2 }),
+        );
+    }
+    out.fx.whip = [-whipBlur(T.whipScribe) - whipBlur(T.whipCalc), 0];
+    tag('Scribing planner', 'esotk', up(t, T.whipScribe + 0.3, 0.4) * leave);
+  }
+
+  if (t >= T.whipCalc && t < T.intoRoster + 0.05) {
     const v = path(
       [
         { t: T.whipCalc, v: V.calc },
-        { t: N.outro, v: V.calcEnd },
+        { t: T.intoRoster, v: V.calcEnd },
+      ],
+      t,
+    );
+    const calc = add(shot('tk-calculator', v, whipIn(T.whipCalc)));
+    focus(
+      up(t, C.pen + 0.1, 0.4),
+      [{ rect: pageToScreen(calc, R['tk-calculator'].total), radius: 16, feather: 90 }],
+      { blur: 0.7, dim: 0.5 },
+    );
+    out.fx.whip = [-whipBlur(T.whipCalc), 0];
+    tag('Calculators', 'esotk', up(t, T.whipCalc + 0.3, 0.4) * down(t, T.ch3, 0.3));
+    chapterBlur(T.ch3);
+  }
+
+  // --- Chapter 3, "Run the trial": Roster Builder, per-fight builds, sharing, Discord --------------
+  if (t >= T.intoRoster && t < T.cutFight + 0.05) {
+    const Rb = R['tk-roster-builder'];
+    const v = path(
+      [
+        { t: T.intoRoster, v: V.rbTop },
+        { t: C.sets - 0.5, v: V.rbTop },
+        { t: C.sets + 0.3, v: V.rbTank2 },
+        { t: T.cutFight, v: { ...V.rbTank2, vw: V.rbTank2.vw * 0.95 } },
+      ],
+      t,
+    );
+    const arrive = ease.outCubic(range(t, T.intoRoster, T.intoRoster + 0.55));
+    const exit = ease.inCubic(range(t, T.cutFight - 0.4, T.cutFight));
+    const rb = add(
+      shot('tk-roster-builder', { ...v, vw: v.vw * mix(0.8, 1, arrive) * mix(1, 0.55, exit) }),
+    );
+    const at = (r) => grow(pageToScreen(rb, r), 6);
+    const rect = steps(
+      [
+        [C.plans - 0.1, Rb.setup],
+        [C.tanks - 0.08, Rb.tanks],
+        [C.healers - 0.08, Rb.healers],
+        [C.dealers - 0.08, Rb.dps],
+        [C.sets - 0.45, Rb.tank2],
+      ],
+      at,
+    );
+    focus(up(t, C.plans - 0.2, 0.3) * (1 - exit), [{ rect, radius: 14, feather: 80 }], {
+      blur: 0.7,
+      dim: 0.5,
+    });
+    // The builder flags a monster set that does not suit the chosen ultimate.
+    const warn = up(t, C.ults - 0.15, 0.3) * (1 - exit);
+    if (warn > 0)
+      out.overlays.push((ctx) =>
+        UI.callout(ctx, at(Rb.warning), {
+          alpha: warn,
+          color: UI.INK.gold,
+          pad: 0,
+          radius: 10,
+          width: 2,
+        }),
+      );
+    out.fx.zoom = [
+      0.5,
+      0.5,
+      0.2 *
+        Math.max(
+          1 - smoothstep(T.intoRoster, T.intoRoster + 0.5, t),
+          smoothstep(T.cutFight - 0.4, T.cutFight, t),
+        ),
+    ];
+    tag('Roster Builder', 'esotk', up(t, T.intoRoster + 0.3, 0.4) * (1 - exit));
+  }
+
+  if (t >= T.cutFight && t < T.whipView + 0.05) {
+    const Pf = R['tk-roster-perfight'];
+    const v = path(
+      [
+        { t: T.cutFight, v: V.perfight },
+        { t: C.fight - 0.2, v: V.perfight },
+        { t: C.fight + 0.5, v: V.perfight2 },
+        { t: T.whipView, v: { ...V.perfight2, vw: V.perfight2.vw * 0.97 } },
+      ],
+      t,
+    );
+    const arrive = ease.outCubic(range(t, T.cutFight, T.cutFight + 0.5));
+    const pf = add(
+      shot(
+        'tk-roster-perfight',
+        { ...v, vw: v.vw * mix(1.3, 1, arrive) },
+        t > T.whipView - 0.3 ? whipOut(T.whipView) : {},
+      ),
+    );
+    const at = (r) => grow(pageToScreen(pf, r), 6);
+    const rect = steps(
+      [
+        [T.cutFight + 0.2, Pf.timeline],
+        [C.each - 0.1, Pf.encounter],
+        [C.fight + 0.15, Pf.fight],
+      ],
+      at,
+    );
+    const leave = down(t, T.whipView - 0.3, 0.2);
+    focus(up(t, T.cutFight + 0.15, 0.3) * leave, [{ rect, radius: 14, feather: 80 }], {
+      blur: 0.7,
+      dim: 0.5,
+    });
+    out.fx.zoom = [0.5, 0.5, 0.2 * (1 - smoothstep(T.cutFight, T.cutFight + 0.45, t))];
+    out.fx.whip = [-whipBlur(T.whipView), 0];
+    tag('Per-fight builds', 'esotk', up(t, T.cutFight + 0.3, 0.4) * leave);
+  }
+
+  // "Share it as a link, publish it to Roster Hub": the shared roster flies into its Hub card.
+  if (t >= T.whipView && t < T.whipDiscord + 0.05) {
+    const Rv = R['tk-roster-view'];
+    const Hb = R['tk-roster-hub'];
+    const hub = shot('tk-roster-hub', V.hub, t > T.whipDiscord - 0.3 ? whipOut(T.whipDiscord) : {});
+    const cardScreen = pageToScreen(hub, Hb.card);
+    const send = ease.inOutCubic(range(t, C.publish - 0.1, C.publish + 0.7));
+    const view = shot('tk-roster-view', V.rview, whipIn(T.whipView));
+    if (send <= 0) {
+      add(view);
+      const r = grow(pageToScreen(view, Rv.copyLink), 6);
+      const onLink = up(t, C.link - 0.35, 0.3);
+      focus(
+        up(t, T.whipView + 0.3, 0.3),
+        [
+          {
+            rect: lerpRect(grow(pageToScreen(view, Rv.tanks), 6), r, onLink),
+            radius: 12,
+            feather: 80,
+          },
+        ],
+        { blur: 0.6, dim: 0.45 },
+      );
+      if (onLink > 0)
+        out.overlays.push((ctx) =>
+          UI.callout(ctx, r, { alpha: onLink, pad: 0, radius: 10, width: 2 }),
+        );
+      tag('Shared roster', 'esotk', up(t, T.whipView + 0.3, 0.4));
+    } else {
+      add(hub);
+      const [cx, cy] = centreOf(cardScreen);
+      const tw = cardScreen[2] * 1.15;
+      const target = [cx - tw / 2, cy - (tw * H) / W / 2, tw, (tw * H) / W];
+      add({
+        ...shotCard(R, 'tk-roster-view', V.rview, lerpRect(FULL, target, send)),
+        radius: mix(0, 14, send),
+        shadow: send > 0.02 && send < 0.97,
+        alpha: 1 - smoothstep(0.8, 1, send),
+        layer: 'fg',
+      });
+      const land = up(t, C.publish + 0.55, 0.3) * down(t, T.whipDiscord - 0.3, 0.2);
+      focus(land, [{ rect: grow(cardScreen, 6), radius: 18, feather: 90 }], {
+        blur: 0.6,
+        dim: 0.45,
+      });
+      const glow = t > C.publish + 0.6 ? Math.exp(-(t - C.publish - 0.6) * 2.5) : 0;
+      if (glow > 0.01)
+        out.overlays.push((ctx) =>
+          UI.callout(ctx, cardScreen, { alpha: glow, pad: 3, radius: 16, width: 2 }),
+        );
+      tag('Roster Hub', 'esotk', land);
+    }
+    out.fx.whip = [-whipBlur(T.whipView) - whipBlur(T.whipDiscord), 0];
+  }
+
+  if (t >= T.whipDiscord && t < T.intoKalpa + 0.05) {
+    const Db = R['tk-discord-bot'];
+    const v = path(
+      [
+        { t: T.whipDiscord, v: V.discord },
+        { t: T.intoKalpa, v: { ...V.discord, vw: V.discord.vw * 0.94 } },
+      ],
+      t,
+    );
+    const bot = add(shot('tk-discord-bot', v, whipIn(T.whipDiscord)));
+    const at = (r) => grow(pageToScreen(bot, r), 6);
+    const rect = steps(
+      [
+        [C.discord - 0.1, Db.hero],
+        [C.signups - 0.35, Db.signups],
+      ],
+      at,
+    );
+    focus(up(t, C.discord - 0.2, 0.3), [{ rect, radius: 14, feather: 80 }], {
+      blur: 0.7,
+      dim: 0.5,
+    });
+    out.fx.whip = [-whipBlur(T.whipDiscord), 0];
+    tag('Discord roster bot', 'esotk', up(t, T.whipDiscord + 0.3, 0.4) * down(t, T.ch4, 0.3));
+    chapterBlur(T.ch4);
+  }
+
+  // --- Chapter 4, "Your addons": Kalpa and Pack Hub ------------------------------------------------
+  if (t >= T.intoKalpa && t < T.cutFeatures + 0.05) {
+    const Ka = R['tk-kalpa'];
+    const v = path(
+      [
+        { t: T.intoKalpa, v: V.kalpa },
+        { t: C.installs - 0.35, v: V.kalpa },
+        { t: C.installs + 0.45, v: V.kalpaApp },
+        { t: T.cutFeatures, v: { ...V.kalpaApp, vw: V.kalpaApp.vw * 0.96 } },
+      ],
+      t,
+    );
+    const arrive = ease.outCubic(range(t, T.intoKalpa, T.intoKalpa + 0.55));
+    const exit = ease.inCubic(range(t, T.cutFeatures - 0.4, T.cutFeatures));
+    const k = add(shot('tk-kalpa', { ...v, vw: v.vw * mix(0.8, 1, arrive) * mix(1, 0.6, exit) }));
+    const at = (r) => grow(pageToScreen(k, r), 8);
+    const rect = steps(
+      [
+        [C.kalpa - 0.1, Ka.title],
+        [C.installs - 0.1, Ka.app],
+      ],
+      at,
+    );
+    focus(up(t, C.kalpa - 0.2, 0.3) * (1 - exit), [{ rect, radius: 14, feather: 80 }], {
+      blur: 0.7,
+      dim: 0.5,
+    });
+    // "A free addon manager": the page's "Free forever" badge.
+    const free = up(t, C.kfree - 0.1, 0.25) * down(t, C.installs - 0.2, 0.3);
+    if (free > 0)
+      out.overlays.push((ctx) =>
+        UI.callout(ctx, grow(pageToScreen(k, Ka.free), 4), {
+          alpha: free,
+          pad: 0,
+          radius: 12,
+          width: 2,
+        }),
+      );
+    out.fx.zoom = [
+      0.5,
+      0.5,
+      0.2 *
+        Math.max(
+          1 - smoothstep(T.intoKalpa, T.intoKalpa + 0.5, t),
+          smoothstep(T.cutFeatures - 0.4, T.cutFeatures, t),
+        ),
+    ];
+    tag('Kalpa', 'esotk', up(t, T.intoKalpa + 0.3, 0.4) * (1 - exit));
+  }
+
+  if (t >= T.cutFeatures && t < T.whipPacks + 0.05) {
+    const Kf = R['tk-kalpa-features'];
+    const arrive = ease.outCubic(range(t, T.cutFeatures, T.cutFeatures + 0.5));
+    const f = add(
+      shot(
+        'tk-kalpa-features',
+        { ...V.features, vw: V.features.vw * mix(1.3, 1, arrive) },
+        t > T.whipPacks - 0.3 ? whipOut(T.whipPacks) : {},
+      ),
+    );
+    const leave = down(t, T.whipPacks - 0.3, 0.2);
+    focus(
+      up(t, T.cutFeatures + 0.15, 0.3) * leave,
+      [{ rect: grow(pageToScreen(f, Kf.deps), 6), radius: 14, feather: 80 }],
+      { blur: 0.7, dim: 0.5 },
+    );
+    out.fx.zoom = [0.5, 0.5, 0.2 * (1 - smoothstep(T.cutFeatures, T.cutFeatures + 0.45, t))];
+    out.fx.whip = [-whipBlur(T.whipPacks), 0];
+    tag('Kalpa', 'esotk', up(t, T.cutFeatures + 0.2, 0.3) * leave);
+  }
+
+  if (t >= T.whipPacks && t < C.o1 + 0.35) {
+    const Ph = R['tk-pack-hub'];
+    const v = path(
+      [
+        { t: T.whipPacks, v: V.pack },
+        { t: N.outro, v: V.packEnd },
       ],
       t,
     );
     const leave = ease.inOutCubic(range(t, C.o1 - 0.35, C.o1 + 0.3));
-    const calc = add(
+    const packs = add(
       shot(
-        'tk-calculator',
+        'tk-pack-hub',
         { ...v, vw: v.vw * mix(1, 1.15, leave) },
-        { ...whipIn(T.whipCalc), alpha: 1 - leave * 0.9 },
+        { ...whipIn(T.whipPacks), alpha: 1 - leave * 0.9 },
       ),
     );
-    const r = pageToScreen(calc, R['tk-calculator'].total);
-    focus(up(t, C.calc + 0.2, 0.4) * (1 - leave), [{ rect: r, radius: 16, feather: 90 }], {
-      blur: 0.7,
-      dim: 0.5,
-    });
-    out.fx.whip = [-whipBlur(T.whipCalc), 0];
-    tag('Calculators', 'esotk', up(t, T.whipCalc + 0.3, 0.4) * down(t, C.o1 - 0.4, 0.3));
+    focus(
+      up(t, C.community - 0.2, 0.3) * (1 - leave),
+      [{ rect: grow(pageToScreen(packs, Ph.utilities), 6), radius: 18, feather: 90 }],
+      { blur: 0.7, dim: 0.5 },
+    );
+    out.fx.whip = [-whipBlur(T.whipPacks), 0];
+    tag('Pack Hub', 'esotk', up(t, T.whipPacks + 0.3, 0.4) * down(t, C.o1 - 0.4, 0.3));
   }
+
+  // --- Chapter rail and chapter titles ---------------------------------------------------------------
+  if (t > CHAPTERS[0].t0 && t < RAIL_END + 0.5)
+    out.overlays.push((ctx) => chapterRail(ctx, t, W, H, P));
 
   // --- Outro: side by side, then everything collapses into the mark -------------------------------
   if (t >= C.o1 - 0.35 && t <= M5.t1) {
@@ -984,6 +1509,93 @@ function dividerLineH(ctx, y, W, alpha) {
   ctx.shadowColor = '#38bdf8';
   ctx.shadowBlur = 28;
   ctx.fillRect(0, y - 1.5, W, 3);
+  ctx.restore();
+}
+
+/**
+ * The chapter rail: a glass strip across the top naming the four chapters. The current chapter is
+ * bright with a progress line under it. A new chapter opens with a large title card in the middle
+ * of the frame that flies up into its slot.
+ */
+function chapterRail(ctx, t, W, H, P) {
+  const alpha = up(t, CHAPTERS[0].t0, 0.5) * down(t, RAIL_END, 0.4);
+  if (alpha <= 0.002) return;
+  const size = P ? 24 : 16;
+  const gap = P ? 36 : 28;
+  const padX = P ? 30 : 22;
+  const h = P ? 60 : 40;
+  const top = P ? 140 : 26;
+  const active = CHAPTERS.findLastIndex((c) => t >= c.t0);
+  const card = CHAPTERS[active];
+  const sinceCard = t - card.t0;
+  const flying = active > 0 && sinceCard < CARD_FLY[1];
+
+  ctx.save();
+  ctx.font = `600 ${size}px ${UI.FONT.display}`;
+  const widths = CHAPTERS.map((c) => ctx.measureText(c.title).width);
+  const total = widths.reduce((a, b) => a + b, 0) + gap * (CHAPTERS.length - 1) + padX * 2;
+  const x0 = W / 2 - total / 2;
+  UI.glass(ctx, x0, top, total, h, h / 2, alpha);
+  const slots = [];
+  let x = x0 + padX;
+  CHAPTERS.forEach((c, i) => {
+    slots.push({ x, w: widths[i] });
+    x += widths[i] + gap;
+  });
+  const baseline = top + h / 2 + size * 0.36;
+  CHAPTERS.forEach((c, i) => {
+    const { x: lx, w } = slots[i];
+    let a = i < active ? 0.62 : i === active ? 1 : 0.36;
+    if (i === active && flying) a *= smoothstep(CARD_FLY[1] - 0.12, CARD_FLY[1], sinceCard);
+    ctx.globalAlpha = alpha * a;
+    ctx.fillStyle = i === active ? '#ffffff' : UI.INK.text;
+    ctx.fillText(c.title, lx, baseline);
+    if (i < CHAPTERS.length - 1) {
+      ctx.globalAlpha = alpha * 0.35;
+      ctx.beginPath();
+      ctx.arc(lx + w + gap / 2, top + h / 2, P ? 3 : 2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    if (i === active) {
+      const next = CHAPTERS[i + 1]?.t0 ?? RAIL_END;
+      const progress = range(t, c.t0, next);
+      ctx.globalAlpha = alpha * a;
+      const g = ctx.createLinearGradient(lx, 0, lx + w, 0);
+      g.addColorStop(0, UI.INK.sky);
+      g.addColorStop(1, UI.INK.aqua);
+      ctx.fillStyle = g;
+      ctx.fillRect(lx, top + h - (P ? 12 : 8), w * progress, P ? 3 : 2);
+    }
+  });
+  ctx.restore();
+
+  // Title card for the chapter that just started.
+  if (!flying) return;
+  const appear = ease.outCubic(range(sinceCard, 0, 0.35));
+  const fly = ease.inOutCubic(range(sinceCard, CARD_FLY[0], CARD_FLY[1]));
+  const big = P ? 70 : 76;
+  const s = mix(big, size, fly);
+  const slot = slots[active];
+  const cx = mix(W / 2, slot.x + slot.w / 2, fly);
+  const cy = mix(H * 0.46, top + h / 2, fly);
+  ctx.save();
+  ctx.font = `600 ${s}px ${UI.FONT.display}`;
+  const tw = ctx.measureText(card.title).width;
+  const pw = tw + s * 1.5;
+  const ph = s * 2.3;
+  UI.glass(ctx, cx - pw / 2, cy - ph / 2, pw, ph, ph / 2, appear * (1 - fly));
+  ctx.globalAlpha = appear;
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#ffffff';
+  ctx.fillText(card.title, cx, cy + s * 0.36 + (1 - appear) * 16);
+  // Chapter number above the title while it is large.
+  const eyebrow = appear * (1 - smoothstep(0, 0.4, fly));
+  if (eyebrow > 0.01) {
+    ctx.globalAlpha = eyebrow;
+    ctx.font = `600 ${P ? 26 : 24}px ${UI.FONT.body}`;
+    ctx.fillStyle = UI.INK.sky;
+    ctx.fillText(`Chapter ${active + 1}`, cx, cy - ph / 2 - (P ? 26 : 22));
+  }
   ctx.restore();
 }
 
