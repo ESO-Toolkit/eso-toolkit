@@ -1,6 +1,9 @@
 // Canvas2D layer for everything that must be crisp: headlines, labels, cards and the logo lockup.
 
-import { clamp, ease, range } from './math.js';
+import { clamp, ease, range, smoothstep } from './math.js';
+
+const up = (t, a, d = 0.35) => smoothstep(a, a + d, t);
+const down = (t, a, d = 0.35) => 1 - smoothstep(a, a + d, t);
 
 export const FONT = { display: '"Space Grotesk"', body: '"Inter"' };
 export const INK = {
@@ -262,44 +265,44 @@ export const clampAlpha = (v) => clamp(v, 0, 1);
 // Explainer furniture: captions, source labels, callouts and the link pill.
 
 /**
- * Word-synced captions. `chunks` are arrays of { text, start, end } in seconds; the spoken word
- * is lit, words already said stay white and words still to come are dim.
+ * Clause captions: one line of plain type (no per-word colour) over a soft gradient at the bottom
+ * of the frame. `chunks` are { text, start, end } clauses in seconds.
  */
-export function captions(ctx, chunks, t, { x, y, size, maxWidth }) {
+export function captions(ctx, chunks, t, { x, y, size, maxWidth, W, H }) {
+  // The scrim eases in with the first clause of a line and out after its last.
+  let scrim = 0;
+  for (const c of chunks)
+    scrim = Math.max(scrim, up(t, c.start - 0.35, 0.3) * down(t, c.end + 0.45, 0.4));
+  if (scrim > 0.002) {
+    ctx.save();
+    const g = ctx.createLinearGradient(0, H - 260, 0, H);
+    g.addColorStop(0, 'rgba(0, 0, 0, 0)');
+    g.addColorStop(1, `rgba(0, 0, 0, ${0.6 * scrim})`);
+    ctx.fillStyle = g;
+    ctx.fillRect(0, H - 260, W, 260);
+    ctx.restore();
+  }
   const i = chunks.findIndex(
-    (c, k) =>
-      t >= c.start - 0.12 && t < (chunks[k + 1]?.start ?? c.end + 0.5) - 0.02 && t < c.end + 0.5,
+    (c, k) => t >= c.start - 0.12 && t < Math.min(chunks[k + 1]?.start ?? 1e9, c.end + 0.55),
   );
   if (i < 0) return;
   const c = chunks[i];
-  const fadeIn = ease.outCubic(range(t, c.start - 0.12, c.start + 0.08));
-  const fadeOut = 1 - range(t, c.end + 0.3, c.end + 0.5);
-  const a = fadeIn * fadeOut;
-  if (a <= 0) return;
+  const until = Math.min(chunks[i + 1]?.start ?? 1e9, c.end + 0.55);
+  const a =
+    ease.outCubic(range(t, c.start - 0.12, c.start + 0.06)) * (1 - range(t, until - 0.14, until));
+  if (a <= 0.002) return;
   ctx.save();
-  ctx.font = `600 ${size}px ${FONT.body}`;
-  ctx.textBaseline = 'alphabetic';
-  const words = c.words.filter((w) => w.text);
-  const space = ctx.measureText(' ').width;
-  const widths = words.map((w) => ctx.measureText(w.text).width);
-  const total = widths.reduce((s, w) => s + w, 0) + space * (words.length - 1);
-  const scale = Math.min(1, maxWidth / total);
-  const padX = size * 0.9;
-  const padY = size * 0.55;
-  const pw = total * scale + padX * 2;
-  const ph = size * scale * 1.2 + padY * 2;
-  glass(ctx, x - pw / 2, y - ph / 2, pw, ph, ph / 2, a);
-  ctx.translate(x, y + size * scale * 0.36 + (1 - fadeIn) * 8);
+  ctx.font = `500 ${size}px ${FONT.body}`;
+  ctx.textAlign = 'center';
+  const w = ctx.measureText(c.text).width;
+  const scale = Math.min(1, maxWidth / w);
+  ctx.translate(x, y);
   ctx.scale(scale, scale);
-  let cx = -total / 2;
-  words.forEach((w, k) => {
-    const said = t >= w.start;
-    const live = t >= w.start && t < w.end + 0.06;
-    ctx.globalAlpha = a * (said ? 1 : 0.5);
-    ctx.fillStyle = live ? '#7dd3fc' : INK.text;
-    ctx.fillText(w.text, cx, 0);
-    cx += widths[k] + space;
-  });
+  ctx.globalAlpha = a * 0.92;
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.55)';
+  ctx.shadowBlur = 12;
+  ctx.fillStyle = '#ffffff';
+  ctx.fillText(c.text, 0, 0);
   ctx.restore();
 }
 
@@ -347,69 +350,46 @@ export function spokenHeadline(ctx, words, t, { x, y, size, end, maxWidth = 1e9 
   ctx.restore();
 }
 
-/** A glass tag naming what is on screen (which product, which view). */
-export function sourceLabel(ctx, { x, y, text, product, alpha, size = 22 }) {
+/** A small uppercase label naming what is on screen; `y` is the text baseline. */
+export function sourceLabel(ctx, { x, y, text, alpha, size = 22 }) {
   if (alpha <= 0.001) return;
   ctx.save();
-  ctx.font = `600 ${size}px ${FONT.body}`;
-  const h = size * 2;
-  const w = ctx.measureText(text).width + h + size * 0.9;
-  glass(ctx, x, y - h, w, h, h / 2, alpha);
-  ctx.globalAlpha = alpha;
-  if (product === 'esotk') {
-    logo(ctx, x + h / 2 + 2, y - h / 2, size * 1.25, alpha);
-  } else {
-    ctx.beginPath();
-    ctx.arc(x + h / 2 + 2, y - h / 2, size * 0.26, 0, Math.PI * 2);
-    ctx.fillStyle = '#d7dce5';
-    ctx.fill();
-  }
-  ctx.globalAlpha = alpha;
-  ctx.fillStyle = '#f4f7fb';
-  ctx.fillText(text, x + h, y - h / 2 + size * 0.36);
+  ctx.globalAlpha = alpha * 0.7;
+  ctx.font = `600 ${size}px ${FONT.display}`;
+  ctx.letterSpacing = `${(size * 0.08).toFixed(2)}px`;
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
+  ctx.shadowBlur = 10;
+  ctx.fillStyle = '#ffffff';
+  ctx.fillText(text.toUpperCase(), x, y);
   ctx.restore();
 }
 
-/** A centred glass pill with a line of text. */
+/** A centred line of display type; `y` is its vertical centre. */
 export function glassText(
   ctx,
   text,
-  { x, y, size, alpha, weight = 600, color = INK.text, rise = 0 },
+  { x, y, size, alpha, weight = 600, color = '#ffffff', rise = 0 },
 ) {
   if (alpha <= 0.001) return;
   ctx.save();
   ctx.font = `${weight} ${size}px ${FONT.display}`;
-  const w = ctx.measureText(text).width + size * 1.6;
-  const h = size * 2.1;
-  glass(ctx, x - w / 2, y - h / 2 + rise, w, h, h / 2, alpha);
-  ctx.globalAlpha = alpha;
+  ctx.globalAlpha = alpha * 0.92;
   ctx.textAlign = 'center';
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.55)';
+  ctx.shadowBlur = 14;
   ctx.fillStyle = color;
   ctx.fillText(text, x, y + size * 0.36 + rise);
   ctx.restore();
 }
 
-/** Glowing outline around a screen rectangle. */
-export function callout(
-  ctx,
-  r,
-  { alpha, color = INK.sky, pad = 6, radius = 10, width = 2.5, fill = 0 },
-) {
+/** A highlight: a flat, faint white band over a screen rectangle (no stroke, no glow). */
+export function callout(ctx, r, { alpha, pad = 6, radius = 10, fill = 0.07 }) {
   if (alpha <= 0.001) return;
   ctx.save();
   ctx.globalAlpha = alpha;
   roundRect(ctx, r[0] - pad, r[1] - pad, r[2] + pad * 2, r[3] + pad * 2, radius);
-  if (fill) {
-    ctx.fillStyle = color;
-    ctx.globalAlpha = alpha * fill;
-    ctx.fill();
-    ctx.globalAlpha = alpha;
-  }
-  ctx.strokeStyle = color;
-  ctx.lineWidth = width;
-  ctx.shadowColor = color;
-  ctx.shadowBlur = 22;
-  ctx.stroke();
+  ctx.fillStyle = `rgba(255, 255, 255, ${fill})`;
+  ctx.fill();
   ctx.restore();
 }
 
@@ -477,5 +457,54 @@ export function linkPill(ctx, { x, y, alpha, morph, from, to, code, size = 34, s
   ctx.fillText(domain, left + size * 1.6, y + size * 0.36);
   ctx.fillStyle = INK.sky;
   ctx.fillText(code, left + size * 1.6 + dw, y + size * 0.36);
+  ctx.restore();
+}
+
+/**
+ * A browser address field: the one glass element in the film. `text` is drawn in full; the part
+ * from `sel[0]` to `sel[1]` gets a selection highlight (selAmt 0..1), and a caret sits after
+ * `caret` characters when caretOn. `flash` briefly brightens the border.
+ */
+export function omnibox(
+  ctx,
+  { x, y, w, h, alpha, text, sel = [0, 0], selAmt = 0, caret = -1, caretOn = false, flash = 0 },
+) {
+  if (alpha <= 0.001) return;
+  ctx.save();
+  glass(ctx, x, y, w, h, 10, alpha);
+  ctx.globalAlpha = alpha;
+  roundRect(ctx, x, y, w, h, 10);
+  ctx.fillStyle = 'rgba(8, 12, 24, 0.85)';
+  ctx.fill();
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = `rgba(255, 255, 255, ${0.18 + 0.42 * flash})`;
+  ctx.stroke();
+  const size = Math.round(h * 0.47);
+  ctx.font = `400 ${size}px ${FONT.body}`;
+  const tx = x + h * 0.9;
+  const ty = y + h / 2 + size * 0.36;
+  // Padlock.
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.45)';
+  ctx.lineWidth = 1.6;
+  const lx = x + h * 0.42;
+  const ly = y + h / 2;
+  roundRect(ctx, lx - size * 0.28, ly - size * 0.08, size * 0.56, size * 0.42, 2);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(lx, ly - size * 0.08, size * 0.17, Math.PI, 0);
+  ctx.stroke();
+  const before = ctx.measureText(text.slice(0, sel[0])).width;
+  const selW = ctx.measureText(text.slice(sel[0], sel[1])).width;
+  if (selAmt > 0 && sel[1] > sel[0]) {
+    ctx.fillStyle = `rgba(56, 189, 248, ${0.35 * selAmt})`;
+    ctx.fillRect(tx + before - 2, y + h * 0.2, selW + 4, h * 0.6);
+  }
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.92)';
+  ctx.fillText(text, tx, ty);
+  if (caretOn && caret >= 0) {
+    const cx = tx + ctx.measureText(text.slice(0, caret)).width + 1;
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(cx, y + h * 0.24, 2, h * 0.52);
+  }
   ctx.restore();
 }

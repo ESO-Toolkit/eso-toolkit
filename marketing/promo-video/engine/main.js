@@ -390,7 +390,7 @@ async function init() {
 
     // Bloom.
     bindTarget(gl, mips[0]);
-    progs.prefilter.use().tex('uSrc', 0, hdr.tex).f('uThreshold', 1.0);
+    progs.prefilter.use().tex('uSrc', 0, hdr.tex).f('uThreshold', 0.85);
     draw();
     for (let k = 1; k < mips.length; k++) {
       bindTarget(gl, mips[k]);
@@ -422,7 +422,7 @@ async function init() {
       .f('uFrame', index % 97)
       .f('uFade', L.fade)
       .f('uAberration', 0.012 * L.aberration)
-      .f('uGrain', 0.008 * S)
+      .f('uGrain', 0.018)
       .f('uRes', W, H);
     draw();
   }

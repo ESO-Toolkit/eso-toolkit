@@ -181,7 +181,8 @@ void main() {
   vec3 violet = vec3(0.07, 0.025, 0.16) * pow(smoothstep(0.5, 0.95, n1), 2.4);
   vec3 cyan = vec3(0.0, 0.05, 0.085) * pow(smoothstep(0.55, 0.95, n2), 2.4);
   vec3 dust = vec3(0.02, 0.016, 0.04) * smoothstep(0.55, 0.9, n3);
-  vec3 c = base + (violet + cyan + dust) * uIntensity;
+  // At zero intensity the backdrop is near black (the open).
+  vec3 c = base * min(1.0, 0.2 + uIntensity * 1.4) + (violet + cyan + dust) * uIntensity;
   // Sparse distant stars.
   vec2 g = floor(p * 90.0);
   float s = hash(g);
@@ -413,7 +414,7 @@ void main() {
   vec3 col = hdr + texture(uBloom, vUv).rgb * uBloomAmt;
   col = neutral(col);
   float vig = smoothstep(1.05, 0.25, length(c * vec2(uRes.x / uRes.y, 1.0) * 0.9));
-  col *= mix(0.62, 1.0, vig);
+  col *= mix(0.88, 1.0, vig);
   col = pow(col, vec3(1.0 / 2.2));
   float grain = hash(vec3(gl_FragCoord.xy, uFrame)) - 0.5;
   col += grain * uGrain;

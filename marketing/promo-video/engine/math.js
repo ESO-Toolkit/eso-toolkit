@@ -19,6 +19,55 @@ export const ease = {
   inOutQuint: (t) => (t < 0.5 ? 16 * t ** 5 : 1 - (-2 * t + 2) ** 5 / 2),
 };
 
+/** CSS-style cubic-bezier(x1, y1, x2, y2) easing, solved by Newton iteration with a bisection
+ * fallback. */
+export function bezier(x1, y1, x2, y2) {
+  const cx = 3 * x1;
+  const bx = 3 * (x2 - x1) - cx;
+  const ax = 1 - cx - bx;
+  const cy = 3 * y1;
+  const by = 3 * (y2 - y1) - cy;
+  const ay = 1 - cy - by;
+  const sx = (u) => ((ax * u + bx) * u + cx) * u;
+  const sy = (u) => ((ay * u + by) * u + cy) * u;
+  const dx = (u) => (3 * ax * u + 2 * bx) * u + cx;
+  return (t) => {
+    if (t <= 0) return 0;
+    if (t >= 1) return 1;
+    let u = t;
+    for (let i = 0; i < 8; i++) {
+      const e = sx(u) - t;
+      const d = dx(u);
+      if (Math.abs(e) < 1e-6) return sy(u);
+      if (Math.abs(d) < 1e-6) break;
+      u -= e / d;
+    }
+    let lo = 0;
+    let hi = 1;
+    u = t;
+    for (let i = 0; i < 30; i++) {
+      if (sx(u) < t) lo = u;
+      else hi = u;
+      u = (lo + hi) / 2;
+    }
+    return sy(u);
+  };
+}
+
+/** Damped spring settling from 0 to 1 over t in [0, 1] (t is normalised time). `bounce` 0 is
+ * critically damped; 0.2 overshoots slightly, like a SwiftUI spring. */
+export function spring(bounce = 0) {
+  const zeta = 1 - bounce;
+  const w = 10;
+  return (t) => {
+    if (t <= 0) return 0;
+    if (t >= 1) return 1;
+    if (zeta >= 1) return 1 - (1 + w * t) * Math.exp(-w * t);
+    const wd = w * Math.sqrt(1 - zeta * zeta);
+    return 1 - Math.exp(-zeta * w * t) * (Math.cos(wd * t) + ((zeta * w) / wd) * Math.sin(wd * t));
+  };
+}
+
 /** Progress of `t` through [a, b], shaped by an easing curve. */
 export const tween = (t, a, b, curve = ease.inOutCubic) => curve(range(t, a, b));
 

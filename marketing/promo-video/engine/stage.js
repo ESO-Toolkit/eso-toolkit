@@ -141,6 +141,17 @@ uniform vec3 uTint;
 uniform float uTintAmt;
 // Visible part of the card in local uv (x0, y0, x1, y1), for split screens and wipes.
 uniform vec4 uClip;
+// Regions emptied out of the card (local uv x0, y0, x1, y1), with rounded edges of uHoleR card
+// pixels: either filled with the surrounding background colour (uHoleFill.a = 1, so an element
+// can fly in or grow into its place) or darkened into a recessed slot (uHoleFill.a = 0, where a
+// card was lifted out of the page).
+uniform vec4 uHoles[16];
+uniform int uHoleN;
+uniform float uHoleAmt;
+uniform float uHoleR;
+uniform vec4 uHoleFill;
+// Bottom edge feather, in card pixels (0 = none).
+uniform float uFadeBottom;
 // Share of the card width each texture spans when scaled to the card height and anchored
 // left (0 = stretch to fill). Keeps shared-element flights from distorting their content.
 uniform vec2 uFit;
@@ -162,6 +173,19 @@ void main() {
   if (mask <= 0.0) discard;
   vec2 uv = vLocal + 0.5;
   if (uv.x < uClip.x || uv.y < uClip.y || uv.x > uClip.z || uv.y > uClip.w) discard;
+  float hole = 0.0;
+  if (uHoleAmt > 0.0) {
+    for (int i = 0; i < 16; i++) {
+      if (i >= uHoleN) break;
+      vec4 hr = uHoles[i];
+      vec2 hc = (hr.xy + hr.zw) * 0.5;
+      vec2 hb = (hr.zw - hr.xy) * 0.5 * uSize;
+      float hd = box((uv - hc) * uSize, hb, uHoleR);
+      hole = max(hole, 1.0 - smoothstep(-1.5, 1.5, hd));
+    }
+    hole *= uHoleAmt;
+  }
+  if (uFadeBottom > 0.0) mask *= smoothstep(0.0, uFadeBottom, (1.0 - uv.y) * uSize.y);
   if (uDissolve != 0) {
     float k = flight(uv, uGrid, uSweep, uP, uSpread);
     mask *= uDissolve == 1 ? 1.0 - smoothstep(0.0, HANDOFF, k) : smoothstep(1.0, 1.0 + HANDOFF, k);
@@ -186,6 +210,7 @@ void main() {
   vec3 c = (a * wa + b * wb) / cov;
   mask *= min(cov, 1.0);
   c = mix(c, c * uTint, uTintAmt);
+  c = mix(c, uHoleFill.a > 0.5 ? uHoleFill.rgb : c * 0.18 + vec3(0.012, 0.016, 0.03), hole);
   // A faint lit rim, like the edge of a glass panel.
   float rim = smoothstep(-2.5, -0.5, d) * (1.0 - smoothstep(-0.5, 0.5, d));
   c += vec3(0.16, 0.22, 0.3) * rim;
@@ -353,7 +378,18 @@ export function createStage(gl) {
       .f('uBright', c.bright ?? 0.93)
       .f('uTint', ...(c.tint ?? [1, 1, 1]))
       .f('uTintAmt', c.tintAmt ?? 0)
-      .f('uClip', ...(c.clip ?? [-1, -1, 2, 2]));
+      .f('uClip', ...(c.clip ?? [-1, -1, 2, 2]))
+      .f('uHoleAmt', c.holes?.length ? (c.holeAmt ?? 1) : 0)
+      .f('uHoleR', (c.holeRadius ?? 16) * ss)
+      .f('uFadeBottom', (c.fadeBottom ?? 0) * ss);
+    {
+      const holes = new Float32Array(64);
+      (c.holes ?? []).slice(0, 16).forEach((h, i) => holes.set(h, i * 4));
+      p.i('uHoleN', Math.min(16, c.holes?.length ?? 0)).v4('uHoles', holes);
+      // Fill colours are given in sRGB 0-255 and shaded in linear light like the texture.
+      const f = c.holeFill;
+      p.f('uHoleFill', ...(f ? [...f.map((v) => (v / 255) ** 2.2), 1] : [0, 0, 0, 0]));
+    }
     if (c.fit === 'height') {
       const aspect = c.w / c.h;
       const uvB = c.uvB ?? c.uv;

@@ -608,11 +608,10 @@ function build(ctx, t0, t1) {
   bell(0.5, 74, 0.55, 2.4);
   bell(0.58, 81, 0.3, 2.0);
 
-  // The link's domain scrambling from esologs.com to esotk.com.
-  for (let k = 0; k < 12; k++) tick(C.paste + 0.1 + k * 0.065, 0.55, 2600 + (k % 4) * 250);
-  // Rows landing on set chips, then skill-bar entries landing on icons.
-  for (let i = 0; i < 13; i++) tick(C.groups + i * 0.055 + 0.95, 0.5, 1800 + i * 60);
-  for (let i = 0; i < 12; i++) tick(C.lays + i * 0.05 + 0.85, 0.45, 2600 + i * 50);
+  // Keystrokes in the address bar.
+  C.keys.forEach((t, k) => tick(t, 0.5, 3000 + (k % 5) * 180));
+  // Gear names landing on set chips, then skill-bar entries landing on icons.
+  C.landings.forEach((t, i) => tick(t, 0.45, 1900 + (i % 13) * 60));
   // Highlights as things are named: Insights panels, table columns, scribing rows and the later
   // chapters.
   [C.focus, C.signature, C.affix, ...C.clicks].forEach((t) => uiClick(t));

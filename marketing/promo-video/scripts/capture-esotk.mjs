@@ -2,8 +2,10 @@
 //
 //   node scripts/capture-esotk.mjs            # every shot
 //   node scripts/capture-esotk.mjs replay     # shots whose name contains "replay"
+import { readFile } from 'node:fs/promises';
+import path from 'node:path';
 import { chromium } from 'playwright';
-import { DPR, clip, measure, rects, still } from './capture-lib.mjs';
+import { DPR, OUT, clip, measure, rects, still } from './capture-lib.mjs';
 
 const SITE = 'https://esotk.com';
 // Tideborn Taleria veteran hard mode kill: the same fight as the ESO Logs captures.
@@ -483,7 +485,7 @@ const shots = {
   chapter1: async (page) => {
     await page.setViewportSize({ width: 1920, height: 1080 });
     await open(page, `${FIGHT}/insights`, 16000);
-    await page.setViewportSize({ width: 1920, height: 2300 });
+    await page.setViewportSize({ width: 1920, height: 2700 });
     await page.evaluate(() => scrollTo(0, 0));
     await page.waitForTimeout(2500);
     await page.mouse.move(5, 5);
@@ -505,6 +507,45 @@ const shots = {
         byType: [/^Damage by Type$/, 380, 200, 420],
       }),
     );
+    // Row rects inside the panels, for per-row wipes and bars growing in.
+    const panelRows = await page.evaluate(() => {
+      const box = (e) => {
+        const r = e.getBoundingClientRect();
+        return [r.x, r.y + scrollY, r.width, r.height];
+      };
+      const panel = (title) => {
+        let e = [...document.querySelectorAll('body *')].find(
+          (x) => x.childElementCount === 0 && x.textContent.trim() === title,
+        );
+        while (
+          e &&
+          (e.getBoundingClientRect().width < 380 || e.getBoundingClientRect().height < 200)
+        )
+          e = e.parentElement;
+        return e;
+      };
+      // Innermost blocks at least 70% of the panel's width and 28-80 px tall whose text matches.
+      const rows = (title, re) => {
+        const p = panel(title);
+        const pw = p.getBoundingClientRect().width;
+        const all = [...p.querySelectorAll('*')].filter((e) => {
+          const r = e.getBoundingClientRect();
+          return r.width >= pw * 0.7 && r.height >= 28 && r.height <= 80 && re.test(e.textContent);
+        });
+        return all.filter((e) => !all.some((o) => o !== e && e.contains(o))).map(box);
+      };
+      return {
+        statusRows: rows('Status Effect Uptimes', /%/),
+        buffRows: rows('Buff Uptimes', /%/),
+        debuffRows: rows('Debuff Uptimes', /%/),
+        typeRows: rows('Damage by Type', /%/),
+        breakdownRows: rows('Damage Breakdown', /damage/),
+        cpRows: rows('Fight Insights', /^(Enlivening Overflow|From the Brink)/),
+      };
+    });
+    const insightsFile = path.join(OUT, 'tk-insights-page.json');
+    const insights = JSON.parse(await readFile(insightsFile, 'utf8'));
+    await rects('tk-insights-page', { ...insights, ...panelRows });
 
     // The table columns and each player's deaths, resurrects and casts-per-minute cells.
     const table = async (name, url) => {
