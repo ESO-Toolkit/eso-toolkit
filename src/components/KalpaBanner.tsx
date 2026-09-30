@@ -62,7 +62,7 @@ const Banner = styled(Box)(({ theme }) => ({
   },
 }));
 
-const NewBadge = styled(Box)(({ theme }) => ({
+const BetaBadge = styled(Box)(({ theme }) => ({
   background: 'linear-gradient(135deg, #8b5cf6, #6366f1)',
   color: '#fff',
   padding: '0.15rem 0.6rem',
@@ -130,7 +130,7 @@ export const KalpaBanner: React.FC = () => {
     <Banner>
       {isMobile ? (
         <MobilePromoLink to="/kalpa">
-          <NewBadge>New</NewBadge>
+          <BetaBadge>Beta</BetaBadge>
           <Typography
             component="span"
             sx={{
@@ -148,10 +148,7 @@ export const KalpaBanner: React.FC = () => {
             <Box component="strong" sx={{ color: accentColor, fontWeight: 700 }}>
               Kalpa
             </Box>
-            {': ESO addon manager '}
-            <Box component="span" sx={{ opacity: 0.65, fontStyle: 'italic' }}>
-              (beta)
-            </Box>
+            {': Addons, logs & packs'}
           </Typography>
           <span className="kalpa-arrow" aria-hidden="true">
             →
@@ -159,7 +156,7 @@ export const KalpaBanner: React.FC = () => {
         </MobilePromoLink>
       ) : (
         <>
-          <NewBadge>New</NewBadge>
+          <BetaBadge>Beta</BetaBadge>
           <Typography
             sx={{
               fontSize: '0.85rem',
@@ -167,10 +164,7 @@ export const KalpaBanner: React.FC = () => {
               fontWeight: 400,
             }}
           >
-            Introducing <strong>Kalpa</strong>, a fast, free addon manager for ESO.{' '}
-            <Box component="span" sx={{ opacity: 0.7, fontStyle: 'italic' }}>
-              Currently in beta.
-            </Box>
+            <strong>Kalpa</strong>: manage ESO addons, upload combat logs, and share packs.
           </Typography>
           <BannerLink to="/kalpa">Learn more →</BannerLink>
         </>

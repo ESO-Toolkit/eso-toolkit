@@ -81,8 +81,8 @@
     "prerender": true
   },
   "/kalpa": {
-    "title": "Kalpa: Free ESO Addon Manager | ESO Toolkit",
-    "description": "Kalpa is a fast, free addon manager for The Elder Scrolls Online. One-click installs, automatic dependencies, addon profiles, and one-click Minion import. Just 15 MB, no Java.",
+    "title": "Kalpa: ESO Addon Manager & Log Uploader | ESO Toolkit",
+    "description": "Manage ESO addons, upload to ESO Logs, share addon, build, and roster packs, edit settings, and protect your setup with backups. Try the free Kalpa public beta.",
     "prerender": true
   },
   "/kalpa/support": {
