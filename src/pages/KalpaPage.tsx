@@ -487,7 +487,9 @@ export const KalpaPage: React.FC = () => {
                 >
                   Kalpa
                 </Box>
-                <Box component="span">The ESO addon manager that also uploads your logs.</Box>
+                <Box component="span" sx={{ display: 'block', textWrap: 'balance' }}>
+                  The ESO addon manager that also uploads your logs.
+                </Box>
               </Typography>
               <Typography
                 sx={{
