@@ -2517,6 +2517,38 @@ export const LandingPage: React.FC = () => {
             </Box>
             <Box
               sx={{
+                my: 4,
+                py: 3,
+                borderTop: '1px solid',
+                borderBottom: '1px solid',
+                borderColor: 'divider',
+              }}
+            >
+              <Typography
+                component="h3"
+                sx={{
+                  fontSize: { xs: '1.5rem', md: '1.875rem' },
+                  fontWeight: 700,
+                  textWrap: 'balance',
+                  mb: 1,
+                }}
+              >
+                Your addons. Your edits.
+              </Typography>
+              <Typography sx={{ color: 'text.secondary', lineHeight: 1.7, maxWidth: '70ch' }}>
+                Customize addon Lua, XML, and text files inside Kalpa, with backups before edits.
+                When updates conflict with your changes, compare files and choose what stays.
+              </Typography>
+              <Link
+                component={RouterLink}
+                to="/kalpa"
+                sx={{ display: 'inline-block', mt: 2, fontWeight: 600 }}
+              >
+                Explore custom addon edits &rarr;
+              </Link>
+            </Box>
+            <Box
+              sx={{
                 mt: { xs: 3, md: 4 },
                 display: 'grid',
                 gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', lg: 'repeat(4, 1fr)' },

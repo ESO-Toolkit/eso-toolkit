@@ -596,9 +596,42 @@ export const KalpaPage: React.FC = () => {
               caption="Discover: popular ESOUI addons with downloads, screenshots, and one-click install."
             />
           </Box>
+          <Box component="section" aria-labelledby="kalpa-custom-edits-heading" sx={storyGridSx}>
+            <Box>
+              <StoryEyebrow>02 · Custom addon edits</StoryEyebrow>
+              <Typography component="h2" id="kalpa-custom-edits-heading" sx={storyHeadingSx}>
+                Make your addons your own.
+              </Typography>
+              <Typography sx={storyBodySx}>
+                Tweak an addon beyond its settings menu. Browse and edit its Lua, XML, and text
+                files inside Kalpa, with backups before edits and a clear choice when an update
+                conflicts with your changes.
+              </Typography>
+              <Typography sx={{ ...storyBodySx, fontSize: '.875rem', mt: 2 }}>
+                Saved edits change your installed addon files. Review your changes before saving.
+              </Typography>
+            </Box>
+            <Box sx={storyPanelSx}>
+              <StoryPoint title="Edit with a way back">
+                Open an addon file, make your changes, and save when ready. Kalpa backs up files
+                before edits, so you have a previous version to return to.
+              </StoryPoint>
+              <Box sx={{ mt: 3 }}>
+                <StoryPoint title="See what an update changes">
+                  When an update would overwrite a local edit, review the differences file by file.
+                </StoryPoint>
+              </Box>
+              <Box sx={{ mt: 3 }}>
+                <StoryPoint title="Choose what stays">
+                  Keep your version or take the incoming update for each conflicting file. You
+                  decide which changes belong in your setup.
+                </StoryPoint>
+              </Box>
+            </Box>
+          </Box>
           <Box component="section" aria-labelledby="kalpa-graphics-heading" sx={storyGridSx}>
             <Box>
-              <StoryEyebrow>02 · Graphics Stack</StoryEyebrow>
+              <StoryEyebrow>03 · Graphics Stack</StoryEyebrow>
               <Typography component="h2" id="kalpa-graphics-heading" sx={storyHeadingSx}>
                 See what&apos;s running. Shape how ESO looks.
               </Typography>
@@ -632,7 +665,7 @@ export const KalpaPage: React.FC = () => {
           </Box>
           <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3 }}>
             <Box component="section" aria-labelledby="kalpa-logs-heading" sx={storyPanelSx}>
-              <StoryEyebrow>03 · ESO Logs</StoryEyebrow>
+              <StoryEyebrow>04 · ESO Logs</StoryEyebrow>
               <Typography
                 component="h2"
                 id="kalpa-logs-heading"
@@ -663,7 +696,7 @@ export const KalpaPage: React.FC = () => {
               </Box>
             </Box>
             <Box component="section" aria-labelledby="kalpa-packs-heading" sx={storyPanelSx}>
-              <StoryEyebrow>04 · Pack Hub</StoryEyebrow>
+              <StoryEyebrow>05 · Pack Hub</StoryEyebrow>
               <Typography
                 component="h2"
                 id="kalpa-packs-heading"
@@ -700,7 +733,7 @@ export const KalpaPage: React.FC = () => {
             </Box>
           </Box>
           <Box component="section" aria-labelledby="kalpa-safety-heading">
-            <StoryEyebrow>05 · Your settings, protected</StoryEyebrow>
+            <StoryEyebrow>06 · Your settings, protected</StoryEyebrow>
             <Typography component="h2" id="kalpa-safety-heading" sx={storyHeadingSx}>
               Careful with the files you can&apos;t replace.
             </Typography>
@@ -754,7 +787,7 @@ export const KalpaPage: React.FC = () => {
             }}
           >
             <Box>
-              <StoryEyebrow>06 · Make it yours</StoryEyebrow>
+              <StoryEyebrow>07 · Make it yours</StoryEyebrow>
               <Typography component="h2" id="kalpa-appearance-heading" sx={storyHeadingSx}>
                 58 themes. 12 Elder Scrolls skins. Or your own.
               </Typography>

@@ -55,10 +55,11 @@ describe('KalpaPage', () => {
     }
   });
 
-  it('groups the verified capabilities into six pillars and links Pack Hub internally', () => {
+  it('groups the verified capabilities into seven pillars and links Pack Hub internally', () => {
     renderPage();
     for (const name of [
       'Find it, install it, keep it current.',
+      'Make your addons your own.',
       "See what's running. Shape how ESO looks.",
       'Fights to ESO Logs, straight from the app.',
       'Share a whole setup in six characters.',
