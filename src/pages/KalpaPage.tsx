@@ -32,7 +32,7 @@ import { ROUTE_META } from '@/constants/routeMeta';
 import { usePageTitle } from '@/hooks/useDocumentTitle';
 
 import { KalpaProductShot } from '../components/KalpaProductShot';
-import { KALPA_RELEASES_URL, KALPA_REPO_URL } from '../constants/kalpa';
+import { KALPA_ISSUES_URL, KALPA_RELEASES_URL, KALPA_REPO_URL } from '../constants/kalpa';
 import { getBaseUrl } from '../utils/envUtils';
 
 /** Re-exported for tests; the single definition lives in the shared route map. */
@@ -272,6 +272,7 @@ const storyHeadingSx = {
   fontSize: { xs: '1.75rem', md: '2.25rem', lg: '2.5rem' },
   lineHeight: 1.1,
   maxWidth: '18ch',
+  textWrap: 'balance',
   mb: 2,
 } as const;
 
@@ -342,11 +343,11 @@ const SAFETY_POINTS = [
   ],
   [
     'Backups and restores',
-    'Full or per-character backups, with a safety snapshot taken before any restore.',
+    'Browse characters by server. Restore one character without replacing other characters or account-wide settings, with a safety snapshot first.',
   ],
   [
     'Addon profiles',
-    'Save enabled-addon setups for different characters or roles and preview the switch, with libraries protected.',
+    'Save enabled-addon sets per install and switch them manually, with a preview and libraries protected.',
   ],
   [
     'Protected edits',
@@ -356,7 +357,10 @@ const SAFETY_POINTS = [
     'Multiple installs',
     'Detects native and Steam installs across NA, EU, and PTS, and copies addons between them.',
   ],
-  ['Signed updates', 'Kalpa updates itself with signed releases.'],
+  [
+    'Signed updates',
+    'Signed in-app updates on Windows, macOS, and Linux AppImage. Linux deb and rpm packages update manually.',
+  ],
 ] as const;
 
 const FAQS: { question: string; answer: string; linkTo?: string; linkLabel?: string }[] = [
@@ -373,7 +377,7 @@ const FAQS: { question: string; answer: string; linkTo?: string; linkLabel?: str
   {
     question: 'Can I import my addons from Minion?',
     answer:
-      'Yes. Kalpa includes one-click Minion migration with a dry-run preview and integrity checks, and it takes a backup snapshot before changing anything. Your original Minion data is never deleted.',
+      'Yes. Kalpa includes guided Minion migration with a dry-run preview and integrity checks, and it takes a backup snapshot before changing anything. Your original Minion data is never deleted.',
   },
   {
     question: 'Does Kalpa work with the Steam version of ESO?',
@@ -383,12 +387,12 @@ const FAQS: { question: string; answer: string; linkTo?: string; linkLabel?: str
   {
     question: 'What are addon profiles?',
     answer:
-      'An addon profile is a saved snapshot of which addons are enabled. You can keep different loadouts per character or role, such as a healing setup and a DPS setup, and Kalpa previews exactly which addons will be enabled or disabled before you switch.',
+      'An addon profile saves which addons are enabled for an install. Create sets for healing, DPS, or other activities and switch them manually. Kalpa previews which addons will be enabled or disabled; profiles do not automatically switch when you log into a character.',
   },
   {
     question: 'What is Pack Hub?',
     answer:
-      "Pack Hub is Kalpa's community hub for addon, build, and roster packs. Publish and discover shared setups, vote on packs, and share six-character codes or .esopack files. Addon packs distinguish required and optional addons; exported settings scrub account identifiers.",
+      "Pack Hub is Kalpa's community hub for addon, build, and roster packs. Publish and discover shared setups and vote on packs. Six-character share codes expire; export an .esopack file for a lasting copy. Addon packs distinguish required and optional addons; exported settings scrub account identifiers.",
     linkTo: '/pack-hub',
     linkLabel: 'Open Pack Hub',
   },
@@ -396,6 +400,11 @@ const FAQS: { question: string; answer: string; linkTo?: string; linkLabel?: str
     question: 'Can I upload combat logs to ESO Logs?',
     answer:
       'Yes. Sign in with your ESO Logs account to upload saved logs or use live logging during a session. Choose report visibility, split sessions, and select fights to upload. Kalpa also supports handing off to the official uploader.',
+  },
+  {
+    question: 'Does Graphics Stack install ReShade or NVIDIA runtimes?',
+    answer:
+      'No. Install compatible ReShade and NVIDIA runtimes separately. Graphics Stack inspects your existing setup, installs supported shader packs, manages presets, and offers verified settings and reversible controls. Windows is supported; Linux Steam/Proton discovery is best effort, and native macOS is outside Graphics Stack support. Close ESO before changes; they take effect on the next launch.',
   },
   {
     question: 'Does Kalpa run on Mac or Linux?',
@@ -417,7 +426,7 @@ const softwareApplicationLd = {
     priceCurrency: 'USD',
   },
   downloadUrl: KALPA_RELEASES_URL,
-  softwareHelp: KALPA_REPO_URL,
+  softwareHelp: KALPA_ISSUES_URL,
   codeRepository: KALPA_REPO_URL,
   publisher: {
     '@type': 'Organization',
@@ -488,7 +497,7 @@ export const KalpaPage: React.FC = () => {
                   Kalpa
                 </Box>
                 <Box component="span" sx={{ display: 'block', textWrap: 'balance' }}>
-                  The ESO addon manager that also uploads your logs.
+                  Your ESO setup, in one place.
                 </Box>
               </Typography>
               <Typography
@@ -499,8 +508,8 @@ export const KalpaPage: React.FC = () => {
                   mb: 3,
                 }}
               >
-                Install and update ESOUI addons with their libraries, send fights to ESO Logs while
-                you play, and share your setup through Pack Hub. One free desktop app.
+                Manage your addons and graphics setup, send fights to ESO Logs, and share packs with
+                your group. One free desktop app.
               </Typography>
               <Box
                 sx={{
@@ -518,7 +527,7 @@ export const KalpaPage: React.FC = () => {
                   startIcon={<DownloadIcon />}
                   sx={primaryCtaSx}
                 >
-                  Download for Windows
+                  Download Kalpa
                 </Button>
                 <Button
                   variant="outlined"
@@ -566,13 +575,14 @@ export const KalpaPage: React.FC = () => {
                 Find it, install it, keep it current.
               </Typography>
               <Typography sx={storyBodySx}>
-                Search ESOUI, browse popular addons and categories, or install straight from a URL
-                or ID. When updates land, update your whole library in one pass.
+                Search ESOUI, ask for addons in your own words, or install straight from a URL or
+                ID. Discovery explains its recommendations. When updates land, update your whole
+                library in one pass.
               </Typography>
               <Box sx={pointGridSx}>
-                <StoryPoint title="Dependencies checked first">
-                  Kalpa lists required and optional libraries and checks transitive dependencies and
-                  versions before it installs anything.
+                <StoryPoint title="Choose your dependencies">
+                  Find required and optional libraries, review the dependency list, and choose which
+                  to install.
                 </StoryPoint>
                 <StoryPoint title="Organized your way">
                   Tags, favorites, compatibility checks, and JSON import or export for your addon
@@ -586,9 +596,76 @@ export const KalpaPage: React.FC = () => {
               caption="Discover: popular ESOUI addons with downloads, screenshots, and one-click install."
             />
           </Box>
+          <Box component="section" aria-labelledby="kalpa-custom-edits-heading" sx={storyGridSx}>
+            <Box>
+              <StoryEyebrow>02 · Custom addon edits</StoryEyebrow>
+              <Typography component="h2" id="kalpa-custom-edits-heading" sx={storyHeadingSx}>
+                Make your addons your own.
+              </Typography>
+              <Typography sx={storyBodySx}>
+                Tweak an addon beyond its settings menu. Browse and edit its Lua, XML, and text
+                files inside Kalpa, with backups before edits and a clear choice when an update
+                conflicts with your changes.
+              </Typography>
+              <Typography sx={{ ...storyBodySx, fontSize: '.875rem', mt: 2 }}>
+                Saved edits change your installed addon files. Review your changes before saving.
+              </Typography>
+            </Box>
+            <Box sx={storyPanelSx}>
+              <StoryPoint title="Edit with a way back">
+                Open an addon file, make your changes, and save when ready. Kalpa backs up files
+                before edits, so you have a previous version to return to.
+              </StoryPoint>
+              <Box sx={{ mt: 3 }}>
+                <StoryPoint title="See what an update changes">
+                  When an update would overwrite a local edit, review the differences file by file.
+                </StoryPoint>
+              </Box>
+              <Box sx={{ mt: 3 }}>
+                <StoryPoint title="Choose what stays">
+                  Keep your version or take the incoming update for each conflicting file. You
+                  decide which changes belong in your setup.
+                </StoryPoint>
+              </Box>
+            </Box>
+          </Box>
+          <Box component="section" aria-labelledby="kalpa-graphics-heading" sx={storyGridSx}>
+            <Box>
+              <StoryEyebrow>03 · Graphics Stack</StoryEyebrow>
+              <Typography component="h2" id="kalpa-graphics-heading" sx={storyHeadingSx}>
+                See what&apos;s running. Shape how ESO looks.
+              </Typography>
+              <Typography sx={storyBodySx}>
+                Inspect your existing ReShade and DLSS setup, manage supported shader packs and
+                presets, and review diagnostics in one place.
+              </Typography>
+              <Typography sx={{ ...storyBodySx, fontSize: '.875rem', mt: 2 }}>
+                Compatible ReShade and NVIDIA runtimes are installed separately. Graphics Stack
+                support varies by platform.
+              </Typography>
+            </Box>
+            <Box sx={storyPanelSx}>
+              <StoryPoint title="Shaders and presets">
+                Install LumeniteFX, VORT, and dh_uber_motion from their authors. Discover presets
+                and repair effect ordering, including motion-provider dependencies.
+              </StoryPoint>
+              <Box sx={{ mt: 3 }}>
+                <StoryPoint title="Tune with confidence">
+                  Edit verified settings and inspect diagnostics. Unverified settings stay
+                  read-only; close ESO before applying changes for your next launch.
+                </StoryPoint>
+              </Box>
+              <Box sx={{ mt: 3 }}>
+                <StoryPoint title="Keep a way back">
+                  Adopt a manual setup, turn managed components off and back on, or remove them with
+                  backups. Opt into retaining local runtime copies to restore after an ESO patch.
+                </StoryPoint>
+              </Box>
+            </Box>
+          </Box>
           <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3 }}>
             <Box component="section" aria-labelledby="kalpa-logs-heading" sx={storyPanelSx}>
-              <StoryEyebrow>02 · ESO Logs</StoryEyebrow>
+              <StoryEyebrow>04 · ESO Logs</StoryEyebrow>
               <Typography
                 component="h2"
                 id="kalpa-logs-heading"
@@ -610,9 +687,16 @@ export const KalpaPage: React.FC = () => {
                   prefer.
                 </StoryPoint>
               </Box>
+              <Box sx={{ mt: 4 }}>
+                <KalpaProductShot
+                  src={`${getBaseUrl()}images/kalpa/log-uploader.webp`}
+                  alt="Kalpa ESO Logs uploader with saved sessions and upload controls"
+                  caption="Saved logs and live logging, inside Kalpa."
+                />
+              </Box>
             </Box>
             <Box component="section" aria-labelledby="kalpa-packs-heading" sx={storyPanelSx}>
-              <StoryEyebrow>03 · Pack Hub</StoryEyebrow>
+              <StoryEyebrow>05 · Pack Hub</StoryEyebrow>
               <Typography
                 component="h2"
                 id="kalpa-packs-heading"
@@ -621,8 +705,8 @@ export const KalpaPage: React.FC = () => {
                 Share a whole setup in six characters.
               </Typography>
               <Typography sx={storyBodySx}>
-                Publish addon, build, and roster packs, vote on the ones that work, and pass them on
-                as a six-character code or an .esopack file.
+                Publish addon, build, and roster packs and vote on the ones that work. Share a
+                temporary six-character code, or export an .esopack file to keep.
               </Typography>
               <Box sx={pointGridSx}>
                 <StoryPoint title="Required or optional">
@@ -639,40 +723,17 @@ export const KalpaPage: React.FC = () => {
               >
                 Browse Pack Hub →
               </Link>
-            </Box>
-          </Box>
-          <Box
-            component="section"
-            aria-labelledby="kalpa-appearance-heading"
-            sx={{
-              ...storyGridSx,
-              gridTemplateColumns: { xs: '1fr', md: 'minmax(0, 7fr) minmax(0, 5fr)' },
-            }}
-          >
-            <Box>
-              <StoryEyebrow>04 · Make it yours</StoryEyebrow>
-              <Typography component="h2" id="kalpa-appearance-heading" sx={storyHeadingSx}>
-                54 themes. Eight Elder Scrolls skins. Or your own.
-              </Typography>
-              <Typography sx={storyBodySx}>
-                Dress Kalpa in Dwemer Brass or Clockwork City, or build a theme from scratch.
-              </Typography>
               <Box sx={{ mt: 4 }}>
-                <StoryPoint title="Comfortable to use">
-                  Light and high-contrast options, UI scaling, and keyboard shortcuts.
-                </StoryPoint>
+                <KalpaProductShot
+                  src={`${getBaseUrl()}images/kalpa/pack-hub.webp`}
+                  alt="Kalpa Pack Hub showing community packs and sharing tools"
+                  caption="Browse community packs or share your own setup."
+                />
               </Box>
-            </Box>
-            <Box sx={{ minWidth: 0, order: { md: -1 } }}>
-              <KalpaProductShot
-                src={`${getBaseUrl()}images/kalpa/themes.webp`}
-                alt="Kalpa appearance settings showing Elder Scrolls theme choices"
-                caption="Appearance settings with Elder Scrolls–inspired themes."
-              />
             </Box>
           </Box>
           <Box component="section" aria-labelledby="kalpa-safety-heading">
-            <StoryEyebrow>05 · Your settings, protected</StoryEyebrow>
+            <StoryEyebrow>06 · Your settings, protected</StoryEyebrow>
             <Typography component="h2" id="kalpa-safety-heading" sx={storyHeadingSx}>
               Careful with the files you can&apos;t replace.
             </Typography>
@@ -715,6 +776,43 @@ export const KalpaPage: React.FC = () => {
                 Preview the Minion import and review integrity checks before applying it; Kalpa
                 creates a backup snapshot and keeps your original Minion data.
               </Typography>
+            </Box>
+          </Box>
+          <Box
+            component="section"
+            aria-labelledby="kalpa-appearance-heading"
+            sx={{
+              ...storyGridSx,
+              gridTemplateColumns: { xs: '1fr', md: 'minmax(0, 7fr) minmax(0, 5fr)' },
+            }}
+          >
+            <Box>
+              <StoryEyebrow>07 · Make it yours</StoryEyebrow>
+              <Typography component="h2" id="kalpa-appearance-heading" sx={storyHeadingSx}>
+                58 themes. 12 Elder Scrolls skins. Or your own.
+              </Typography>
+              <Typography sx={storyBodySx}>
+                Dress Kalpa in Dwemer Brass or Clockwork City, or build and share a theme with live
+                contrast checks. Pin the tools you use most to the toolbar.
+              </Typography>
+              <Box sx={{ mt: 4 }}>
+                <StoryPoint title="Comfortable to use">
+                  Light and high-contrast options, UI scaling, and keyboard shortcuts.
+                </StoryPoint>
+                <Box sx={{ mt: 3 }}>
+                  <StoryPoint title="A lighter desktop companion">
+                    Minimize to the tray to reduce idle resource use. Windows users can also try the
+                    optional native UI beta in Settings and switch back after a relaunch.
+                  </StoryPoint>
+                </Box>
+              </Box>
+            </Box>
+            <Box sx={{ minWidth: 0, order: { md: -1 } }}>
+              <KalpaProductShot
+                src={`${getBaseUrl()}images/kalpa/themes.webp`}
+                alt="Kalpa appearance settings showing Elder Scrolls theme choices"
+                caption="Appearance settings with Elder Scrolls–inspired themes."
+              />
             </Box>
           </Box>
         </Box>
@@ -808,7 +906,7 @@ export const KalpaPage: React.FC = () => {
                 startIcon={<DownloadIcon />}
                 sx={primaryCtaSx}
               >
-                Download for Windows
+                Download Kalpa
               </Button>
               <Button
                 variant="outlined"
@@ -824,7 +922,7 @@ export const KalpaPage: React.FC = () => {
             <Typography sx={{ fontSize: '0.84rem', color: 'text.secondary' }}>
               Found a bug or want to contribute?{' '}
               <Link
-                href={KALPA_REPO_URL}
+                href={KALPA_ISSUES_URL}
                 target="_blank"
                 rel="noopener noreferrer"
                 underline="hover"
