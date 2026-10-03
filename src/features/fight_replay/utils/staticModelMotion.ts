@@ -164,6 +164,11 @@ export function sampleStaticModelMotion(
     out.moveDirZ = 0;
     out.sway = 0;
     out.castPulse = 0;
+    // Playback stops at fight end, so late deaths must finish in a resting pose there.
+    if (timeMs >= lookup.fightDuration) {
+      out.fall = 1;
+      return out;
+    }
     const onset = findDeathOnsetMs(lookup, actorId, timeMs);
     const t = onset === null ? 1 : Math.min(1, Math.max(0, (timeMs - onset) / DEATH_FALL_MS));
     out.fall = easeInQuad(t);

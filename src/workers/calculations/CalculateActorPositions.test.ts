@@ -19,6 +19,7 @@ import {
   TimestampPositionLookup,
   getActorPositionAtClosestTimestamp,
   getAllActorPositionsAtTimestamp,
+  getClosestTimestamp,
   resolveSampleInterval,
   isMemoryConstrainedDevice,
 } from './CalculateActorPositions';
@@ -401,6 +402,43 @@ describe('calculateActorPositions', () => {
   });
 
   describe('death handling', () => {
+    it('returns the final appended sample and an exact-end NPC death', () => {
+      const fight = createEnhancedMockFight({ startTime: 1000, endTime: 1010 });
+      const events = createMockEvents();
+      events.damage = [
+        createMockPositionalDamageEvent(
+          1001,
+          101,
+          202,
+          createEnhancedMockResources(5235, 5410, 100),
+          createEnhancedMockResources(5235, 5410, 100),
+        ),
+      ];
+      events.death = [
+        createMockDeathEvent({ timestamp: 1010, targetID: 202, targetIsFriendly: false }),
+      ];
+      const lookup = calculateActorPositions({
+        fight,
+        events,
+        playersById: createMockPlayersById(),
+        actorsById: createMockActorsById(),
+      });
+      expect(lookup.hasRegularIntervals).toBe(true);
+      expect(lookup.sortedTimestamps).toEqual([0, 4.7, 9.4, 10]);
+      expect(getClosestTimestamp(lookup, 4)).toBe(4.7);
+      expect(getClosestTimestamp(lookup, 9)).toBe(9.4);
+      expect(getClosestTimestamp(lookup, 10)).toBe(10);
+      expect(getClosestTimestamp(lookup, 20)).toBe(10);
+      expect(getActorPositionAtClosestTimestamp(lookup, 202, 9)).toMatchObject({ isDead: false });
+      expect(getActorPositionAtClosestTimestamp(lookup, 202, 10)).toMatchObject({
+        isDead: true,
+        deathTimeMs: 10,
+      });
+      expect(getAllActorPositionsAtTimestamp(lookup, 10)).toEqual(
+        expect.arrayContaining([expect.objectContaining({ id: 202, isDead: true })]),
+      );
+    });
+
     it('should handle death events properly', () => {
       const fight = createEnhancedMockFight({ startTime: 1000, endTime: 3000 });
       const events = createMockEvents();
