@@ -83,6 +83,10 @@ export function getClosestTimestamp(
 ): number | null {
   if (lookup.sortedTimestamps.length === 0) return null;
 
+  // The final sample is appended at fight end and may fall between regular grid points.
+  const lastTimestamp = lookup.sortedTimestamps[lookup.sortedTimestamps.length - 1];
+  if (targetTimestamp >= lastTimestamp) return lastTimestamp;
+
   // Use O(1) mathematical calculation for regular intervals
   if (lookup.hasRegularIntervals && lookup.sampleInterval > 0) {
     const intervalMs = lookup.sampleInterval;

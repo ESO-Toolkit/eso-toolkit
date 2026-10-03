@@ -23,13 +23,18 @@ const INTERVAL = 10;
  */
 function buildLookup(
   durationMs: number,
-  at: (t: number) => { x: number; z: number; dead: boolean } | null,
+  at: (t: number) => { x: number; z: number; dead: boolean; deathTimeMs?: number } | null,
   interval = INTERVAL,
 ): TimestampPositionLookup {
   const sortedTimestamps: number[] = [];
   const positionsByTimestamp: Record<number, Record<number, ActorPosition>> = {};
   for (let t = 0; t <= durationMs; t += interval) {
     sortedTimestamps.push(t);
+  }
+  if (sortedTimestamps[sortedTimestamps.length - 1] !== durationMs) {
+    sortedTimestamps.push(durationMs);
+  }
+  for (const t of sortedTimestamps) {
     const s = at(t);
     positionsByTimestamp[t] = s
       ? {
@@ -40,6 +45,7 @@ function buildLookup(
             position: [s.x, 0, s.z],
             rotation: 0,
             isDead: s.dead,
+            deathTimeMs: s.deathTimeMs,
           },
         }
       : {};
@@ -179,6 +185,43 @@ describe('staticModelMotion', () => {
     expect(m.fall).toBe(1);
     expect(m.breath).toBe(0);
     expect(m.moveStrength).toBe(0);
+  });
+
+  it('animates a death recorded at time zero before fight end', () => {
+    const lookup = buildLookup(1000, () => ({ x: 0, z: 0, dead: true, deathTimeMs: 0 }));
+    expect(findDeathOnsetMs(lookup, ACTOR, 350)).toBe(0);
+    expect(sampleAt(lookup, 350).fall).toBeCloseTo(0.25);
+  });
+
+  it.each([900, 1000])('settles a death at %i ms when the fight ends at 1000 ms', (deathTimeMs) => {
+    const lookup = buildLookup(
+      1000,
+      (t) => ({ x: 0, z: 0, dead: t >= deathTimeMs, deathTimeMs }),
+      4.7,
+    );
+    const beforeEnd = sampleAt(lookup, 950);
+    expect(beforeEnd.fall).toBeCloseTo(deathTimeMs === 900 ? (50 / DEATH_FALL_MS) ** 2 : 0);
+    const direct = sampleAt(lookup, 1000);
+    expect(direct.fall).toBe(1);
+    expect(direct.breath).toBe(0);
+    expect(direct.moveStrength).toBe(0);
+    expect(sampleAt(lookup, 1100)).toEqual(direct);
+
+    // Reuse the renderer's output object through playback, backward seeking, and returning to end.
+    const out = createStaticModelMotionSample();
+    for (const timeMs of [950, 1000, 950, 1000]) {
+      const actor = getActorPositionAtClosestTimestamp(lookup, ACTOR, timeMs)!;
+      sampleStaticModelMotion(lookup, ACTOR, timeMs, actor.position, actor.isDead, out);
+      expect(out).toEqual(timeMs === 1000 ? direct : beforeEnd);
+    }
+  });
+
+  it('keeps a living actor upright and moving at fight end', () => {
+    const lookup = buildLookup(1000, (t) => ({ x: t / 1000, z: 0, dead: false }), 4.7);
+    const motion = sampleAt(lookup, 1000);
+    expect(motion.fall).toBe(0);
+    expect(motion.moveStrength).toBe(1);
+    expect(motion.breath).not.toBe(0);
   });
 
   it('does not lean on the frame an actor first appears', () => {
