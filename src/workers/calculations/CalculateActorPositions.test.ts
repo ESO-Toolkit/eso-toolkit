@@ -1,4 +1,5 @@
 import {
+  createMockCastEvent,
   createMockDeathEvent,
   createMockResourceChangeEvent,
 } from '../../test/utils/combatLogMockFactories';
@@ -885,11 +886,57 @@ describe('calculateActorPositions', () => {
 
       const copyA = ENEMY_ID;
       const copyB = ENEMY_ID + 2 * INSTANCE_STRIDE;
-      // After copy B's death, it has stopped emitting positions (enemy NPCs vanish on death)...
+      const before = getActorPositionAtClosestTimestamp(result, copyB, 4400);
+      const falling = getActorPositionAtClosestTimestamp(result, copyB, 4850);
+      expect(before?.isDead).toBe(false);
+      expect(falling?.isDead).toBe(true);
+      expect(falling?.deathTimeMs).toBe(4500);
+      expect(falling?.position).toEqual(
+        getActorPositionAtClosestTimestamp(result, copyB, 4000)?.position,
+      );
+      expect(getActorPositionAtClosestTimestamp(result, copyA, 4850)?.isDead).toBe(false);
+
+      // Keep the dead copy long enough to fall, then remove it without affecting its sibling.
+      expect(getActorPositionAtClosestTimestamp(result, copyB, 5600)).toBeNull();
       const after = getAllActorPositionsAtTimestamp(result, 7000);
       expect(after.find((act) => act.id === copyB)).toBeUndefined();
       // ...while copy A is still present.
       expect(after.find((act) => act.id === copyA)).toBeDefined();
+    });
+
+    it('keeps sorted completed cast times independent for each NPC copy', () => {
+      const events = createMockEvents();
+      events.damage = [...enemyHits(1, POS_A, dense), ...enemyHits(2, POS_B, dense)];
+      const cast = (relTime: number, sourceInstance: number, fake = false) =>
+        createMockCastEvent({
+          timestamp: 1_000_000 + relTime,
+          sourceID: ENEMY_ID,
+          sourceInstance,
+          sourceIsFriendly: false,
+          fake,
+        });
+      events.cast = [
+        cast(4000, 2),
+        cast(2000, 1),
+        cast(3000, 2),
+        cast(3000, 2),
+        cast(2500, 1, true),
+        cast(-100, 1),
+        cast(61_000, 2),
+        createMockCastEvent({ timestamp: 1_003_000, sourceID: 0 }),
+      ];
+
+      const result = calculateActorPositions({
+        fight: baseFight(),
+        events,
+        playersById: createMockPlayersById(),
+        actorsById: createMockActorsById(),
+      });
+
+      expect(result.castTimesByActorId).toEqual({
+        [ENEMY_ID]: [2000],
+        [ENEMY_ID + 2 * INSTANCE_STRIDE]: [3000, 4000],
+      });
     });
 
     it('produces deterministic synthetic ids across recomputation (deep-link safe)', () => {

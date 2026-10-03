@@ -78,12 +78,17 @@ are documented in [Yandir replay asset](fight-replay-yandir-asset.md).
 
 The registry now supports exact normalized boss-name matching for a static Yandir prototype. The
 runtime also supplies allocation-light, whole-model overview motion from replay time: subtle idle
-breathing, movement weight, and a grounded death fall. This works on an unrigged one-draw-call boss,
+breathing, movement weight, completed-cast reactions, and a grounded death fall
+(`src/features/fight_replay/utils/staticModelMotion.ts`). This works on an unrigged one-draw-call boss,
 stays deterministic through pause and seek, and is the default first animation stage for reconstructed
-bosses.
+bosses. The position worker exposes sorted, fight-relative completed-cast times per rendered actor,
+including independent NPC copies. Cast reactions use a small facing-directed pitch, with overlapping
+casts taking the strongest reaction. Adaptive position sampling uses the actual span between samples
+for movement speed. Dead enemies remain visible for one second, and bosses for two seconds, with the
+exact death-event time anchoring the fall.
 
 Do not synthesize stagger from incoming damage: frequent damage would make bosses continuously flinch.
-Attack, cast, interrupt, and stagger clips belong to a second stage after the position worker exposes
-explicit timestamped animation cues. Skeletal clips are a third, opt-in stage for bosses whose weapons
+Attack, interrupt, and stagger clips can extend the timestamped animation cues in a second stage.
+Skeletal clips are a third, opt-in stage for bosses whose weapons
 or silhouette make the additional rigging and runtime cost visible at replay scale. Lesser enemies
 should normally share an instanced pose flipbook instead of owning animation mixers.

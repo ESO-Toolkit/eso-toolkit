@@ -3,7 +3,7 @@ import { digestEventStream, digestIdSet, digestTuples, fnv1aHex } from '../../wo
 import { createWorkerTaskSlice } from './workerTaskSliceFactory';
 
 /** Key version — bump when the calculation's inputs/outputs change shape. */
-const KEY_VERSION = 'v2';
+const KEY_VERSION = 'v3';
 
 /**
  * Content-addressed input hash. The old length-only hash served one fight's results to any
