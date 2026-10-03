@@ -49,6 +49,7 @@ import {
   MOTION_MAX_SWAY,
   createStaticModelMotionSample,
   sampleStaticModelMotion,
+  CAST_REACTION_TILT,
 } from '../utils/staticModelMotion';
 
 import { BatchedActorNames3D } from './BatchedActorNames3D';
@@ -1355,6 +1356,10 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
           t.world.multiply(
             t.tilt.makeRotationAxis(t.axis, MOTION_MAX_SWAY * motion.moveStrength * motion.sway),
           );
+        }
+        if (!dead && motion.castPulse > 0) {
+          t.axis.set(faceZ, 0, -faceX);
+          t.world.multiply(t.tilt.makeRotationAxis(t.axis, CAST_REACTION_TILT * motion.castPulse));
         }
         t.world.multiply(t.yaw).multiply(t.scale).multiply(t.offset).multiply(t.orient);
         modelMesh.setMatrixAt(modelAssignment.slot, t.world);

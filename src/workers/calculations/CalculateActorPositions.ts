@@ -31,6 +31,8 @@ export interface ActorPosition {
   position: [number, number, number];
   rotation: number;
   isDead: boolean;
+  /** Fight-relative death time, independent of the position sampling interval. */
+  deathTimeMs?: number;
   isTaunted?: boolean;
   health?: {
     current: number;
@@ -55,6 +57,8 @@ export interface TimestampPositionLookup {
   sortedTimestamps: number[];
   /** Sorted actor IDs present in this lookup, avoiding render-time scans across all timestamps */
   actorIds?: number[];
+  /** Completed, non-fake casts in fight-relative time, sorted and keyed by render ID. */
+  castTimesByActorId?: Record<number, number[]>;
   /** Fight duration for bounds checking */
   fightDuration: number;
   /** Fight start time for calculations */
@@ -73,7 +77,7 @@ export interface FightEvents {
   cast: CastEvent[];
 }
 
-function getClosestTimestamp(
+export function getClosestTimestamp(
   lookup: TimestampPositionLookup,
   targetTimestamp: number,
 ): number | null {
@@ -173,6 +177,8 @@ const GAP_THRESHOLD_MS = 5000;
 const INTERPOLATION_TOLERANCE_MS = 1;
 const MIN_VISIBILITY_MS = 1000;
 const BOSS_DEATH_VISIBILITY_WINDOW_MS = 2000;
+// Leave enough time for the static enemy model's fall before removing its instance.
+const ENEMY_DEATH_VISIBILITY_WINDOW_MS = 1000;
 const SAMPLE_INTERVAL_MS = 4.7; // 240Hz sampling rate (better performance vs quality balance)
 const MAX_TIMESTAMPS = 72000; // ≈5.6 minutes of 240Hz data; longer fights downsample, never truncate
 const ESTIMATED_BYTES_PER_CELL = 200; // Rough estimate (matches the legacy memory heuristic)
@@ -662,6 +668,8 @@ export function calculateActorPositions(
     });
   }
 
+  const castTimesByActorId: Record<number, number[]> = {};
+
   // Collect position data from events
   for (const event of allEvents) {
     const withInstances = event as EventWithInstances;
@@ -687,6 +695,12 @@ export function calculateActorPositions(
     // its primary copy).
     if (event.type === 'cast') {
       const castEvent = event as CastEvent;
+      const castTime = castEvent.timestamp - fightStartTime;
+      if (!castEvent.fake && castEvent.sourceID > 0 && castTime >= 0 && castTime <= fightDuration) {
+        const sourceRenderId = resolveRenderId(castEvent.sourceID, castEvent.sourceInstance);
+        const times = (castTimesByActorId[sourceRenderId] ??= []);
+        if (times[times.length - 1] !== castTime) times.push(castTime);
+      }
       if (castEvent.abilityGameID === KnownAbilities.RESURRECT && castEvent.targetID) {
         const resRenderId = resolveRenderId(castEvent.targetID, castEvent.targetInstance);
         if (!actorDeathEvents.has(resRenderId)) {
@@ -1025,19 +1039,21 @@ export function calculateActorPositions(
 
         // If actor is dead, handle based on actor type
         if (isDead) {
-          // For NPCs (enemies, pets, friendly NPCs), stop giving positions after death
-          if (isNPC) {
+          // Pets/friendly NPCs disappear immediately; enemies remain briefly for their death fall.
+          if (isNPC && type !== 'enemy') {
             continue;
           }
 
-          // For players and bosses, continue giving positions at their last known location.
+          // Continue giving positions at the last known location.
           // The most recent death at or before now comes from the monotonic cursor above (was an
           // allocation-free reverse walk per frame).
           const currentDeathTimestamp = lastDeathTs;
 
-          if (type === 'boss' && currentDeathTimestamp) {
+          if ((type === 'boss' || type === 'enemy') && currentDeathTimestamp !== undefined) {
             const timeSinceDeath = currentTimestamp - currentDeathTimestamp;
-            if (timeSinceDeath > BOSS_DEATH_VISIBILITY_WINDOW_MS) {
+            const visibilityWindow =
+              type === 'boss' ? BOSS_DEATH_VISIBILITY_WINDOW_MS : ENEMY_DEATH_VISIBILITY_WINDOW_MS;
+            if (timeSinceDeath > visibilityWindow) {
               continue;
             }
           }
@@ -1108,6 +1124,10 @@ export function calculateActorPositions(
               position,
               rotation,
               isDead: true,
+              deathTimeMs:
+                currentDeathTimestamp === undefined
+                  ? undefined
+                  : currentDeathTimestamp - fightStartTime,
               isTaunted,
               health,
               baseActorId,
@@ -1272,6 +1292,7 @@ export function calculateActorPositions(
     positionsByTimestamp,
     sortedTimestamps: [...timestamps].sort((a, b) => a - b),
     actorIds: allActorIds,
+    castTimesByActorId,
     fightDuration,
     fightStartTime,
     sampleInterval: adjustedInterval,

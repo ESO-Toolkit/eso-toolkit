@@ -1,6 +1,7 @@
 import {
   type TimestampPositionLookup,
   getActorPositionAtClosestTimestamp,
+  getClosestTimestamp,
 } from '../../../workers/calculations/CalculateActorPositions';
 
 /**
@@ -9,7 +10,8 @@ import {
  * The shipped NPC models are one static mesh each (no skeleton, no clips), and every actor of an
  * asset shares one InstancedMesh, so per-actor animation mixers are off the table. What remains is
  * motion expressed through the instance matrix alone: a slow breathing scale, a lean into the
- * direction of travel with a light side-to-side sway, and a fall onto the model's back on death.
+ * direction of travel with a light side-to-side sway, a completed-cast reaction, and a fall onto
+ * the model's back on death.
  *
  * Every term is a pure function of (lookup, actor, replay time). Nothing is accumulated across
  * frames, so pausing freezes the pose, seeking lands on the exact pose that playback would have
@@ -42,6 +44,11 @@ export const MOTION_MAX_SWAY = 0.035;
 /** Milliseconds per full left-right sway cycle (two footfalls). */
 export const MOTION_SWAY_PERIOD_MS = 900;
 
+// ---- Completed cast reaction ----
+export const CAST_REACTION_MS = 600;
+/** Small forward pitch around the feet; shared geometry remains unmodified. */
+export const CAST_REACTION_TILT = 0.09;
+
 // ---- Death ----
 /** Milliseconds from the death sample to lying at rest. */
 export const DEATH_FALL_MS = 700;
@@ -63,10 +70,12 @@ export interface StaticModelMotionSample {
   sway: number;
   /** Death fall progress in [0, 1], eased. 0 while alive, 1 once at rest. */
   fall: number;
+  /** Completed cast reaction in [0, 1]. Suppressed while dead. */
+  castPulse: number;
 }
 
 export function createStaticModelMotionSample(): StaticModelMotionSample {
-  return { breath: 0, moveStrength: 0, moveDirX: 0, moveDirZ: 0, sway: 0, fall: 0 };
+  return { breath: 0, moveStrength: 0, moveDirX: 0, moveDirZ: 0, sway: 0, fall: 0, castPulse: 0 };
 }
 
 /**
@@ -79,15 +88,17 @@ export function actorMotionPhase(actorId: number): number {
 }
 
 /**
- * Time (ms) at which the actor's lookup samples first report it dead, searched inside
- * `[timeMs - DEATH_FALL_MS, timeMs]`. Returns `null` when the actor was already dead (or absent)
- * at the start of the window, meaning the fall has finished.
+ * Exact fight-relative death time when available. Older lookups fall back to searching inside
+ * `[timeMs - DEATH_FALL_MS, timeMs]`. Returns `null` when the fallback finds the actor already
+ * dead (or absent) at the start of the window, meaning the fall has finished.
  */
 export function findDeathOnsetMs(
   lookup: TimestampPositionLookup,
   actorId: number,
   timeMs: number,
 ): number | null {
+  const current = getActorPositionAtClosestTimestamp(lookup, actorId, timeMs);
+  if (current?.isDead && current.deathTimeMs !== undefined) return current.deathTimeMs;
   let alive = timeMs - DEATH_FALL_MS;
   const before = getActorPositionAtClosestTimestamp(lookup, actorId, alive);
   if (!before || before.isDead) return null;
@@ -106,11 +117,35 @@ function easeInQuad(t: number): number {
   return t * t;
 }
 
+function lastIndexAtOrBefore(times: readonly number[], timeMs: number): number {
+  let left = 0;
+  let right = times.length - 1;
+  while (left <= right) {
+    const mid = (left + right) >>> 1;
+    if (times[mid] <= timeMs) left = mid + 1;
+    else right = mid - 1;
+  }
+  return right;
+}
+
+/** Overlapping casts keep the strongest reaction, avoiding a snap back when another cast starts. */
+function sampleCastPulse(times: readonly number[] | undefined, timeMs: number): number {
+  if (!times?.length) return 0;
+  let strongest = 0;
+  for (let i = lastIndexAtOrBefore(times, timeMs); i >= 0; i--) {
+    const elapsed = timeMs - times[i];
+    if (elapsed >= CAST_REACTION_MS) break;
+    const pulse = Math.sin((Math.PI * elapsed) / CAST_REACTION_MS);
+    strongest = Math.max(strongest, pulse * pulse);
+  }
+  return strongest;
+}
+
 /**
  * Fill `out` with the motion terms for one actor at `timeMs` (fight-relative milliseconds, the
  * same clock as the lookup). `position` and `isDead` are the actor's sample at `timeMs`, which the
- * caller already has, so only the earlier velocity sample (and, during a fall, the onset search)
- * touch the lookup.
+ * caller already has. Movement uses the actual span between lookup samples, while cast and death
+ * reactions use event times so their phases remain stable with adaptive sampling.
  */
 export function sampleStaticModelMotion(
   lookup: TimestampPositionLookup,
@@ -128,6 +163,7 @@ export function sampleStaticModelMotion(
     out.moveDirX = 0;
     out.moveDirZ = 0;
     out.sway = 0;
+    out.castPulse = 0;
     const onset = findDeathOnsetMs(lookup, actorId, timeMs);
     const t = onset === null ? 1 : Math.min(1, Math.max(0, (timeMs - onset) / DEATH_FALL_MS));
     out.fall = easeInQuad(t);
@@ -135,22 +171,35 @@ export function sampleStaticModelMotion(
   }
 
   out.fall = 0;
+  out.castPulse = sampleCastPulse(lookup.castTimesByActorId?.[actorId], timeMs);
   out.breath = Math.sin(2 * Math.PI * (timeMs / BREATH_PERIOD_MS + phase));
   out.sway = Math.sin(2 * Math.PI * (timeMs / MOTION_SWAY_PERIOD_MS + phase));
 
-  const earlier = getActorPositionAtClosestTimestamp(
-    lookup,
-    actorId,
-    timeMs - MOTION_VELOCITY_WINDOW_MS,
-  );
+  // Measure over distinct samples, using their actual time span. Adaptive lookups may have
+  // intervals longer than the nominal window; a fixed divisor makes those models jerk.
+  const currentTimestamp = getClosestTimestamp(lookup, timeMs);
+  const windowMs = Math.max(MOTION_VELOCITY_WINDOW_MS, lookup.sampleInterval);
+  const earlierIndex =
+    currentTimestamp === null
+      ? -1
+      : lastIndexAtOrBefore(lookup.sortedTimestamps, currentTimestamp - windowMs);
+  const earlierTimestamp = earlierIndex < 0 ? null : lookup.sortedTimestamps[earlierIndex];
+  const earlier =
+    earlierTimestamp === null ? null : lookup.positionsByTimestamp[earlierTimestamp]?.[actorId];
   out.moveStrength = 0;
   out.moveDirX = 0;
   out.moveDirZ = 0;
-  if (earlier && !earlier.isDead) {
+  if (
+    earlier &&
+    !earlier.isDead &&
+    currentTimestamp !== null &&
+    earlierTimestamp !== null &&
+    currentTimestamp > earlierTimestamp
+  ) {
     const dx = position[0] - earlier.position[0];
     const dz = position[2] - earlier.position[2];
     const dist = Math.sqrt(dx * dx + dz * dz);
-    const speed = dist / (MOTION_VELOCITY_WINDOW_MS / 1000);
+    const speed = dist / ((currentTimestamp - earlierTimestamp) / 1000);
     if (speed >= MOTION_SPEED_MIN && dist > 0) {
       out.moveStrength = Math.min(
         1,
