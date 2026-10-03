@@ -1,0 +1,181 @@
+<!-- @dsCard group="Boundaries" -->
+<meta charset="utf-8">
+<title>Accent Glows (B10) &amp; Inset Highlight Scale (B11)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; box-sizing:border-box; }
+  body { font-family:Inter,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif; background:#0b1220; padding:20px; }
+  h1,h2,h3 { font-family:'Space Grotesk',Inter,system-ui,sans-serif; font-weight:600; }
+
+  [data-color-scheme="dark"] {
+    --bg:#0b1220; --panel:#0f172a; --panel-2:#0d1430; --text:#e5e7eb; --muted:#94a3b8;
+    --accent:#38bdf8; --accent-2:#00e1ff; --ok:#22c55e; --warn:#ff9800; --danger:#ef4444;
+    --border:#1f2937;
+  }
+  [data-color-scheme="light"] {
+    --bg:#f8fafc; --panel:#ffffff; --panel-2:#f8fafc; --text:#1e293b; --muted:#64748b;
+    --accent:#0f172a; --accent-2:#1e293b; --ok:#059669; --warn:#f97316; --danger:#dc2626;
+    --border:#bcd9ff;
+  }
+
+  .ds-card { max-width:1100px; margin:0 auto; color:#e5e7eb; }
+  .ds-title { font-size:1.4rem; color:#e5e7eb; margin-bottom:4px; }
+  .ds-sub { font-size:.8rem; color:#94a3b8; margin-bottom:16px; }
+  .ds-modes { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  @media (max-width:760px){ .ds-modes { grid-template-columns:1fr; } }
+  .ds-mode { border-radius:16px; padding:18px; background:var(--bg); color:var(--text); border:1px solid var(--border); position:relative; overflow:hidden; }
+  .ds-mode > h2 { font-size:.72rem; text-transform:uppercase; letter-spacing:.12em; color:var(--muted); margin-bottom:14px; position:relative; z-index:1; }
+  .ds-src { font-size:.68rem; color:var(--muted); font-family:'JetBrains Mono',Consolas,monospace; margin-top:6px; }
+
+  .ds-z { position:relative; z-index:1; }
+  .demo-block { margin-bottom:16px; }
+  .demo-label { font-size:.7rem; font-weight:600; color:var(--text); margin-bottom:6px; }
+
+  /* ── B10: accent outer-glow signature — glow appended AFTER the depth shadow ── */
+  /* glassCardSurface hover — glassCardSurface.ts:63-68 */
+  .glow-card { border-radius:20px; padding:12px 14px; font-size:.78rem; }
+  [data-color-scheme="dark"] .glow-card {
+    border:1px solid rgba(56, 189, 248, 0.42);
+    background:linear-gradient(160deg, rgba(20, 32, 54, 0.82) 0%, rgba(7, 12, 26, 0.8) 100%);
+    box-shadow:0 14px 48px rgba(0, 0, 0, 0.5), 0 0 28px rgba(56, 189, 248, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.08); }
+  [data-color-scheme="light"] .glow-card {
+    border:1px solid rgba(56, 189, 248, 0.34);
+    background:linear-gradient(160deg, rgba(255, 255, 255, 0.9) 0%, rgba(244, 248, 255, 0.85) 100%);
+    box-shadow:0 10px 36px rgba(15, 23, 42, 0.16), 0 0 24px rgba(56, 189, 248, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.9); }
+
+  /* stat tile hover glow — summaryStyles.ts:71-77 (damage accent) */
+  .glow-tile { border-radius:8px; padding:10px 12px; font-size:.78rem; transform:translateY(-2px); }
+  [data-color-scheme="dark"] .glow-tile {
+    border:1px solid rgba(251, 191, 36, 0.48);
+    background:linear-gradient(180deg, rgba(251, 191, 36, 0.14) 0%, rgba(251, 191, 36, 0.03) 100%);
+    box-shadow:inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 10px 26px rgba(0, 0, 0, 0.4), 0 0 20px rgba(251, 191, 36, 0.2); }
+  [data-color-scheme="light"] .glow-tile {
+    border:1px solid rgba(251, 191, 36, 0.4);
+    background:linear-gradient(180deg, rgba(251, 191, 36, 0.1) 0%, rgba(251, 191, 36, 0.02) 100%);
+    box-shadow:0 8px 20px rgba(15, 23, 42, 0.1), 0 0 16px rgba(251, 191, 36, 0.14); }
+
+  /* icon badge + pill — summaryStyles.ts:103-118, 134-147 (info accent) */
+  .badge-row { display:flex; align-items:center; gap:10px; }
+  .icon-badge { display:inline-flex; align-items:center; justify-content:center;
+    width:38px; height:38px; border-radius:8px; flex-shrink:0;
+    color:rgb(56, 189, 248); background:rgba(56, 189, 248, 0.13);
+    border:1px solid rgba(56, 189, 248, 0.3);
+    box-shadow:0 0 18px rgba(56, 189, 248, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.08); }
+  .icon-badge svg { filter:drop-shadow(0 0 5px rgba(56, 189, 248, 0.45)); }
+  .metric-pill { display:inline-block; padding:4px 12px; border-radius:999px; font-weight:700;
+    font-family:'Space Grotesk',Inter,system-ui,sans-serif; letter-spacing:0.01em; font-size:.76rem;
+    color:rgb(56, 189, 248); }
+  [data-color-scheme="dark"] .metric-pill {
+    border:1px solid rgba(56, 189, 248, 0.4);
+    background:linear-gradient(135deg, rgba(56, 189, 248, 0.22) 0%, rgba(56, 189, 248, 0.08) 100%);
+    box-shadow:0 0 14px rgba(56, 189, 248, 0.15); }
+  [data-color-scheme="light"] .metric-pill {
+    border:1px solid rgba(56, 189, 248, 0.34);
+    background:linear-gradient(135deg, rgba(56, 189, 248, 0.16) 0%, rgba(56, 189, 248, 0.05) 100%);
+    box-shadow:none; }
+
+  /* global Card hover — ReduxThemeProvider.tsx:264-270 */
+  .global-card { border-radius:12px; padding:12px 14px; font-size:.78rem; background:var(--panel);
+    transform:translateY(-3px); }
+  [data-color-scheme="dark"] .global-card {
+    border:1px solid rgba(56, 189, 248, 0.3);
+    box-shadow:0 10px 40px rgba(0, 0, 0, 0.3), 0 0 60px rgba(56, 189, 248, 0.08); }
+  [data-color-scheme="light"] .global-card {
+    border:1px solid rgba(15, 23, 42, 0.15);
+    box-shadow:0 6px 20px rgba(15, 23, 42, 0.08), 0 2px 8px rgba(15, 23, 42, 0.04); }
+
+  /* KalpaAppWindow 0-blur spread ring — LandingPage.tsx:1701-1704 */
+  .kalpa-window { border-radius:14px; padding:12px 14px; font-size:.78rem; }
+  [data-color-scheme="dark"] .kalpa-window { background:rgba(15, 15, 25, 0.95);
+    box-shadow:0 25px 80px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(139, 92, 246, 0.1), 0 0 60px rgba(139, 92, 246, 0.06); }
+  [data-color-scheme="light"] .kalpa-window { background:rgba(250, 250, 252, 0.98);
+    box-shadow:0 25px 80px rgba(15, 23, 42, 0.12), 0 0 0 1px rgba(139, 92, 246, 0.08), 0 0 60px rgba(139, 92, 246, 0.03); }
+
+  /* ── B11: inset top-highlight alpha tiers ── */
+  .tier-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .tier { border-radius:10px; padding:10px 12px; font-size:.7rem; background:var(--panel-2);
+    border:1px solid var(--border); }
+  .tier b { display:block; font-size:.72rem; margin-bottom:2px; }
+  .tier .val { font-family:'JetBrains Mono',Consolas,monospace; font-size:.62rem; color:var(--muted); }
+  .tier.t-panel  { box-shadow:inset 0 1px 0 rgba(255, 255, 255, 0.06); }
+  .tier.t-menu   { box-shadow:inset 0 1px 0 rgba(255, 255, 255, 0.12); }
+  .tier.t-glossy { box-shadow:inset 0 1px 0 rgba(255, 255, 255, 0.2), inset 0 -1px 0 rgba(0, 0, 0, 0.2); }
+  .tier.t-light  { box-shadow:inset 0 1px 0 rgba(255, 255, 255, 0.9); background:#ffffff; color:#1e293b; }
+  .tier.t-light .val { color:#64748b; }
+  .tier.t-input  { box-shadow:inset 0 2px 4px rgba(0,0,0,0.4); }
+  [data-color-scheme="light"] .tier.t-input { box-shadow:inset 0 2px 4px rgba(0,0,0,0.06); }
+
+  .rule-note { font-size:.74rem; color:#94a3b8; line-height:1.55; margin-top:14px;
+    border:1px solid #1f2937; border-radius:10px; padding:10px 14px; background:#0f172a; }
+  .rule-note b { color:#e5e7eb; }
+  .rule-note code { font-size:.68rem; }
+</style>
+<div class="ds-card">
+  <h1 class="ds-title">Accent Glows (B10) &amp; Inset Highlight Scale (B11)</h1>
+  <p class="ds-sub">The signature: 0 0 &lt;R&gt;px rgba(accent, 0.12–0.35) appended AFTER the depth shadow. Sources: glassCardSurface.ts:66, summaryStyles.ts:75/:115/:144, ReduxThemeProvider.tsx:267, LandingPage.tsx:1701-1704, playerCardStyleUtils.ts:41, TextEditor.tsx:281-284</p>
+  <div class="ds-modes">
+    <section class="ds-mode" data-color-scheme="dark">
+      <h2>Dark</h2>
+      <div class="ds-z">
+        <div class="demo-block">
+          <div class="demo-label">B10 — glow signature (hover states forced)</div>
+          <div class="glow-card" style="margin-bottom:8px">Glass card hover — … , <b>0 0 28px rgba(A, 0.14)</b>, inset …</div>
+          <div class="glow-tile" style="margin-bottom:8px">Stat tile hover — … , <b>0 0 20px rgba(A, 0.2)</b></div>
+          <div class="badge-row" style="margin-bottom:8px">
+            <span class="icon-badge"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/></svg></span>
+            <span class="metric-pill">98.2% uptime</span>
+          </div>
+          <div class="global-card" style="margin-bottom:8px">Global MuiCard hover — 0 10px 40px rgba(0,0,0,0.3), <b>0 0 60px rgba(56,189,248,0.08)</b></div>
+          <div class="kalpa-window">Kalpa app window — <b>0 0 0 1px rgba(139,92,246,0.1)</b> zero-blur spread ring as a second border + 0 0 60px bloom</div>
+          <div class="ds-src">glassCardSurface.ts:66 · summaryStyles.ts:75 (tile), :115 (badge 0 0 18px + drop-shadow 0 0 5px), :144 (pill 0 0 14px) · ReduxThemeProvider.tsx:267 · LandingPage.tsx:1701-1704</div>
+        </div>
+        <div class="demo-block">
+          <div class="demo-label">B11 — inset 0 1px 0 rgba(255,255,255,α) tiers</div>
+          <div class="tier-grid">
+            <div class="tier t-panel"><b>Panels α 0.05–0.06</b><span class="val">glassCardSurface.ts:48 (.06) · buildEditorTokens.ts:15 (.05) · replayDesign.ts:133 (.05)</span></div>
+            <div class="tier t-menu"><b>Menus α 0.08–0.12</b><span class="val">dropdownMenu.ts:135 (.12) · glassCardSurface hover (.08)</span></div>
+            <div class="tier t-glossy"><b>Glossy α 0.2–0.3 + bottom shade</b><span class="val">playerCardStyleUtils.ts:41 — only recipe with inset 0 -1px 0 rgba(0,0,0,0.2)</span></div>
+            <div class="tier t-light"><b>Light mode α 0.6–0.9</b><span class="val">glassCardSurface.ts:49 (.9) · buildEditorTokens.ts:16 (.80)</span></div>
+            <div class="tier t-input" style="grid-column:1 / -1"><b>Recessed input — inversion</b><span class="val">inset 0 2px 4px rgba(0,0,0,0.4) — TextEditor.tsx:283 ("sunken input")</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section class="ds-mode" data-color-scheme="light">
+      <h2>Light</h2>
+      <div class="ds-z">
+        <div class="demo-block">
+          <div class="demo-label">B10 — glow signature (hover states forced)</div>
+          <div class="glow-card" style="margin-bottom:8px">Glass card hover — … , <b>0 0 24px rgba(A, 0.12)</b>, inset …</div>
+          <div class="glow-tile" style="margin-bottom:8px">Stat tile hover — … , <b>0 0 16px rgba(A, 0.14)</b></div>
+          <div class="badge-row" style="margin-bottom:8px">
+            <span class="icon-badge"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/></svg></span>
+            <span class="metric-pill">98.2% uptime</span>
+          </div>
+          <div class="global-card" style="margin-bottom:8px">Global MuiCard hover — light drops the accent glow entirely (depth only)</div>
+          <div class="kalpa-window">Kalpa app window — <b>0 0 0 1px rgba(139,92,246,0.08)</b> spread ring + 0 0 60px rgba(139,92,246,0.03)</div>
+          <div class="ds-src">light: glassCardSurface.ts:67 · summaryStyles.ts:76 · pill glow 'none' :144 · ReduxThemeProvider.tsx:268 · LandingPage.tsx:1704</div>
+        </div>
+        <div class="demo-block">
+          <div class="demo-label">B11 — tiers (light keeps its own 0.6–0.9 highlight; recessed inverts at 0.06)</div>
+          <div class="tier-grid">
+            <div class="tier t-light"><b>Light glass α 0.9</b><span class="val">inset 0 1px 0 rgba(255,255,255,0.9) — glassCardSurface.ts:49</span></div>
+            <div class="tier t-light" style="box-shadow:inset 0 1px 0 rgba(255, 255, 255, 0.80)"><b>Light BE panel α 0.80</b><span class="val">buildEditorTokens.ts:16</span></div>
+            <div class="tier t-glossy" style="background:#ffffff; color:#1e293b; box-shadow:inset 0 1px 0 rgba(255,255,255,0.2), inset 0 -1px 0 rgba(0,0,0,0.1)"><b>Glossy light: bottom shade 0.1</b><span class="val" style="color:#64748b">playerCardStyleUtils.ts:42</span></div>
+            <div class="tier t-input"><b>Recessed input α 0.06</b><span class="val">inset 0 2px 4px rgba(0,0,0,0.06) — TextEditor.tsx:284</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+  <div class="rule-note">
+    <b>Rule (B10):</b> accent glow is always <code>0 0 &lt;R&gt;px rgba(accent, 0.12–0.35)</code> appended <b>after</b> the black depth
+    shadow, never alone — R grows with surface size (14px pills → 18–28px cards → 60px page-level hover). Light mode either
+    shrinks alpha or drops the glow.<br>
+    <b>Rule (B11):</b> the top inner highlight <code>inset 0 1px 0 rgba(255,255,255,α)</code> follows a strict alpha scale —
+    <b>0.05–0.06</b> panels/cards · <b>0.08–0.12</b> menus/hover · <b>0.2–0.3</b> glossy chips (the only tier that also adds
+    bottom shading <code>inset 0 -1px 0 rgba(0,0,0,0.1–0.2)</code>) · <b>0.6–0.9</b> light mode. Recessed inputs invert the
+    scheme entirely: <code>inset 0 2px 4px rgba(0,0,0,0.4)</code> dark / <code>0.06</code> light.
+  </div>
+</div>

@@ -1,0 +1,15 @@
+<!-- @dsCard group="Type" -->
+<meta charset="utf-8"><title>Mono / Numeric</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>html,body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif;padding:20px;box-sizing:border-box}
+.mono{font-family:source-code-pro,Menlo,Monaco,Consolas,'Courier New',monospace;font-size:14px;color:var(--muted);background:rgba(255,255,255,.04);padding:6px 10px;border-radius:6px;border:1px solid var(--border);font-variant-numeric:tabular-nums}
+.time{font-family:'JetBrains Mono','Fira Code','SF Mono',monospace;font-size:13px;color:#38bdf8}
+.row{display:flex;gap:24px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.meta{font-family:Consolas,Menlo,monospace;font-size:10px;color:var(--muted);line-height:1.6}
+</style>
+<div class="row"><span class="mono">Ability ID: 191078</span><span class="time">03:42 · 01:07 duration</span></div>
+<div class="row"><span class="mono">@bigknifeboi · EU / PC</span><span class="mono">/report/a1b2c3d4e5</span></div>
+<div class="meta">No bundled mono webfont — index.html loads only Inter + Space Grotesk. Mono always resolves to system fallbacks.<br>
+code stack: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace — src/index.css:79.<br>
+stat tickers declare "JetBrains Mono", "Fira Code", "SF Mono", monospace — LandingPage.tsx:1652 (falls back to system).<br>
+Stat columns pair mono with font-variant-numeric: tabular-nums (.u-tabular, ReduxThemeProvider.tsx:910-912).</div>
