@@ -1,0 +1,27 @@
+{
+  "name": "esotk-promo-video",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Narrated ESO Toolkit vs ESO Logs explainer, rendered from code (WebGL2 + Canvas2D in headless Chrome)",
+  "type": "module",
+  "scripts": {
+    "capture:esologs": "node scripts/capture-esologs.mjs",
+    "capture:esotk": "node scripts/capture-esotk.mjs",
+    "narration": "node scripts/voiceover.mjs",
+    "soundtrack": "node scripts/soundtrack.mjs",
+    "render": "npm run soundtrack && npm run render:landscape && npm run render:vertical",
+    "render:landscape": "node scripts/render.mjs",
+    "render:vertical": "node scripts/render.mjs --portrait",
+    "stills": "node scripts/render.mjs --stills",
+    "format": "prettier --write README.md engine scripts timeline.json narration.json",
+    "format:check": "prettier --check README.md engine scripts timeline.json narration.json"
+  },
+  "devDependencies": {
+    "@fontsource/inter": "5.3.0",
+    "@fontsource/space-grotesk": "5.3.0",
+    "ffmpeg-static": "5.3.0",
+    "node-web-audio-api": "2.2.0",
+    "playwright": "1.63.0",
+    "prettier": "3.9.9"
+  }
+}
