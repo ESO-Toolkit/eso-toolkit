@@ -24,6 +24,7 @@ import {
   ActorPosition,
   TimestampPositionLookup,
   getActorPositionsByIdAtClosestTimestamp,
+  getActorLifecycleAtTimestamp,
 } from '../../../workers/calculations/CalculateActorPositions';
 import { REPLAY_Z, overlayPanelSurface } from '../constants/replayDesign';
 
@@ -170,15 +171,16 @@ export const BossHealthPanel: React.FC<BossHealthPanelProps> = ({
           continue;
         }
         if (!boss.health) continue;
+        const dead = getActorLifecycleAtTimestamp(lookup, boss.id, currentTime, boss).isDead;
         const pct = boss.health.percentage;
-        const width = boss.isDead ? '0%' : `${Math.max(0, Math.min(100, pct))}%`;
+        const width = dead ? '0%' : `${Math.max(0, Math.min(100, pct))}%`;
         const color = healthColor(theme, pct);
         // Mobile keeps it to the percentage only — the exact HP numbers are noise on a phone and
         // make the bar read as cluttered. Desktop shows "pct · cur / max", abbreviating once the
         // numbers are big enough that the exact form ("145,368,051 / 181,632,304") would overflow
         // the 280px pill and spill past the track.
         const compact = isMobile || boss.health.max >= 10_000_000;
-        const text = boss.isDead
+        const text = dead
           ? 'DEAD'
           : isMobile
             ? `${pct.toFixed(1)}%`
@@ -192,14 +194,18 @@ export const BossHealthPanel: React.FC<BossHealthPanelProps> = ({
           if (refs.readout) refs.readout.textContent = text;
           // Screen-reader value: written on first sight, then throttled to 1Hz (the visual
           // bar moves continuously, but an aria-valuenow write on every change would spam AT
-          // buffers on fast burns). Death always writes through immediately.
+          // buffers on fast burns). Death and resurrection always write through immediately.
           const nowMs = performance.now();
           const lastAriaAt = lastAriaWrite.get(boss.id);
           if (
             refs.track &&
-            (lastAriaAt === undefined || nowMs - lastAriaAt >= 1000 || boss.isDead)
+            (lastAriaAt === undefined ||
+              nowMs - lastAriaAt >= 1000 ||
+              dead ||
+              prev?.text === 'DEAD')
           ) {
-            refs.track.setAttribute('aria-valuenow', String(Math.round(pct)));
+            refs.track.setAttribute('aria-valuenow', String(Math.round(dead ? 0 : pct)));
+            refs.track.setAttribute('aria-valuetext', text);
             lastAriaWrite.set(boss.id, nowMs);
           }
           lastWritten.set(boss.id, { width, color, text });

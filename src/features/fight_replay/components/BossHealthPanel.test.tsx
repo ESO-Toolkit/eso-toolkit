@@ -89,6 +89,34 @@ describe('BossHealthPanel', () => {
       expect(fill?.style.width).toBe('0%');
     });
     expect(track?.textContent).toContain('DEAD');
+    expect(track?.getAttribute('aria-valuenow')).toBe('0');
+    expect(track?.getAttribute('aria-valuetext')).toBe('DEAD');
+  });
+
+  it('updates death and resurrection at event times while seeking through one spatial sample', async () => {
+    const lookup = makeLookup([boss(1, 'Boss', 12)]);
+    lookup.fightDuration = 3000;
+    lookup.lifecycleEventsByActorId = {
+      1: [
+        { timestamp: 1200, isDead: true, deathTimeMs: 1200 },
+        { timestamp: 1400, isDead: false },
+      ],
+    };
+    const original = JSON.stringify(lookup);
+    const timeRef = { current: 1199 };
+    render(<BossHealthPanel lookup={lookup} timeRef={timeRef} />);
+    const track = await screen.findByRole('progressbar');
+    for (const t of [1199, 1200, 1399, 1400, 1200, 1199]) {
+      timeRef.current = t;
+      const dead = t >= 1200 && t < 1400;
+      await waitFor(() => {
+        expect((track.firstElementChild as HTMLElement).style.width).toBe(dead ? '0%' : '12%');
+        expect(track.getAttribute('aria-valuenow')).toBe(dead ? '0' : '12');
+        if (dead) expect(track.textContent).toContain('DEAD');
+        else expect(track.textContent).toContain('12.0%');
+      });
+    }
+    expect(JSON.stringify(lookup)).toBe(original);
   });
 
   it('renders bars only for bosses in a mixed player/boss lookup', async () => {

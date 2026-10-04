@@ -50,6 +50,16 @@ export interface ActorPosition {
   instance?: number;
 }
 
+export interface ActorLifecycleState {
+  isDead: boolean;
+  /** Exact fight-relative onset of the current death; cleared by resurrection. */
+  deathTimeMs?: number;
+}
+
+export interface ActorLifecycleEvent extends ActorLifecycleState {
+  timestamp: number;
+}
+
 export interface TimestampPositionLookup {
   /** Record of timestamp to Record of actorId to position data for O(1) lookup */
   positionsByTimestamp: Record<number, Record<number, ActorPosition>>;
@@ -59,6 +69,8 @@ export interface TimestampPositionLookup {
   actorIds?: number[];
   /** Completed, non-fake casts in fight-relative time, sorted and keyed by render ID. */
   castTimesByActorId?: Record<number, number[]>;
+  /** Death/resurrection transitions in fight-relative time, sorted and keyed by render ID. */
+  lifecycleEventsByActorId?: Record<number, ActorLifecycleEvent[]>;
   /** Fight duration for bounds checking */
   fightDuration: number;
   /** Fight start time for calculations */
@@ -75,6 +87,32 @@ export interface FightEvents {
   death: DeathEvent[];
   resource: ResourceChangeEvent[];
   cast: CastEvent[];
+}
+
+const LIVING_ACTOR_STATE: Readonly<ActorLifecycleState> = Object.freeze({ isDead: false });
+
+/**
+ * Resolve lifecycle independently of spatial sampling, without allocating or changing the lookup.
+ * Older lookups fall back to the caller's sampled state. An indexed actor with no transitions is alive.
+ */
+export function getActorLifecycleAtTimestamp(
+  lookup: TimestampPositionLookup,
+  actorId: number,
+  timeMs: number,
+  sampledState?: Readonly<ActorLifecycleState>,
+): Readonly<ActorLifecycleState> {
+  if (lookup.lifecycleEventsByActorId === undefined) return sampledState ?? LIVING_ACTOR_STATE;
+  const events = lookup.lifecycleEventsByActorId[actorId];
+  if (!events?.length) return LIVING_ACTOR_STATE;
+
+  let left = 0;
+  let right = events.length - 1;
+  while (left <= right) {
+    const mid = (left + right) >>> 1;
+    if (events[mid].timestamp <= timeMs) left = mid + 1;
+    else right = mid - 1;
+  }
+  return right < 0 ? LIVING_ACTOR_STATE : events[right];
 }
 
 export function getClosestTimestamp(
@@ -565,6 +603,7 @@ export function calculateActorPositions(
       positionsByTimestamp: {},
       sortedTimestamps: [],
       actorIds: [],
+      lifecycleEventsByActorId: {},
       fightDuration: 0,
       fightStartTime: 0,
       sampleInterval: SAMPLE_INTERVAL_MS,
@@ -791,6 +830,18 @@ export function calculateActorPositions(
     );
   });
 
+  // Keep every transition, including deaths before fight start and multiple transitions between
+  // spatial samples. Stable ordering matches the sampled worker state at equal timestamps.
+  const lifecycleEventsByActorId: Record<number, ActorLifecycleEvent[]> = {};
+  sortedActorDeathEvents.forEach((events, id) => {
+    lifecycleEventsByActorId[id] = events.map((event) => {
+      const timestamp = event.timestamp - fightStartTime;
+      return event.type === 'death'
+        ? { timestamp, isDead: true, deathTimeMs: timestamp }
+        : { timestamp, isDead: false };
+    });
+  });
+
   // No position history anywhere (e.g. a fight with no positional resources): return the
   // empty lookup WITHOUT allocating the timestamp grid. An empty grid costs tens of thousands
   // of objects and buys nothing — there is no actor to place on any frame.
@@ -799,6 +850,7 @@ export function calculateActorPositions(
       positionsByTimestamp: {},
       sortedTimestamps: [],
       actorIds: [],
+      lifecycleEventsByActorId,
       fightDuration,
       fightStartTime,
       sampleInterval: SAMPLE_INTERVAL_MS,
@@ -1297,6 +1349,7 @@ export function calculateActorPositions(
     sortedTimestamps: [...timestamps].sort((a, b) => a - b),
     actorIds: allActorIds,
     castTimesByActorId,
+    lifecycleEventsByActorId,
     fightDuration,
     fightStartTime,
     sampleInterval: adjustedInterval,

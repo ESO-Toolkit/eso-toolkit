@@ -10,6 +10,7 @@ import {
   createMockPlayersById,
   createMockActorsById,
 } from '../../test/utils/enhancedMockFactories';
+import { KnownAbilities } from '../../types/abilities';
 import { convertCoordinatesWithBottomLeft, convertRotation } from '../../utils/coordinateUtils';
 
 import {
@@ -18,6 +19,7 @@ import {
   FightEvents,
   TimestampPositionLookup,
   getActorPositionAtClosestTimestamp,
+  getActorLifecycleAtTimestamp,
   getAllActorPositionsAtTimestamp,
   getClosestTimestamp,
   resolveSampleInterval,
@@ -402,6 +404,40 @@ describe('calculateActorPositions', () => {
   });
 
   describe('death handling', () => {
+    it('indexes pre-fight and unsampled lifecycle events in stable fight-relative order', () => {
+      const events = createMockEvents();
+      events.damage = [
+        createMockPositionalDamageEvent(1001, 101, 202, createEnhancedMockResources()),
+      ];
+      events.death = [2600, 900, 2200].map((timestamp) =>
+        createMockDeathEvent({ timestamp, targetID: 101 }),
+      );
+      events.cast = [2600, 1000, 2201].map((timestamp) =>
+        createMockCastEvent({
+          timestamp,
+          sourceID: 102,
+          targetID: 101,
+          abilityGameID: KnownAbilities.RESURRECT,
+        }),
+      );
+      const lookup = calculateActorPositions({
+        fight: createEnhancedMockFight({ startTime: 1000, endTime: 3000 }),
+        events,
+        playersById: createMockPlayersById(),
+      });
+      expect(lookup.lifecycleEventsByActorId?.[101]).toEqual([
+        { timestamp: -100, isDead: true, deathTimeMs: -100 },
+        { timestamp: 0, isDead: false },
+        { timestamp: 1200, isDead: true, deathTimeMs: 1200 },
+        { timestamp: 1201, isDead: false },
+        { timestamp: 1600, isDead: true, deathTimeMs: 1600 },
+        { timestamp: 1600, isDead: false },
+      ]);
+      expect(getActorLifecycleAtTimestamp(lookup, 101, 1200).isDead).toBe(true);
+      expect(getActorLifecycleAtTimestamp(lookup, 101, 1201).isDead).toBe(false);
+      expect(getActorLifecycleAtTimestamp(lookup, 101, 1600).isDead).toBe(false);
+    });
+
     it('returns the final appended sample and an exact-end NPC death', () => {
       const fight = createEnhancedMockFight({ startTime: 1000, endTime: 1010 });
       const events = createMockEvents();
@@ -924,6 +960,9 @@ describe('calculateActorPositions', () => {
 
       const copyA = ENEMY_ID;
       const copyB = ENEMY_ID + 2 * INSTANCE_STRIDE;
+      expect(getActorLifecycleAtTimestamp(result, copyB, 4499).isDead).toBe(false);
+      expect(getActorLifecycleAtTimestamp(result, copyB, 4500).deathTimeMs).toBe(4500);
+      expect(getActorLifecycleAtTimestamp(result, copyA, 4500).isDead).toBe(false);
       const before = getActorPositionAtClosestTimestamp(result, copyB, 4400);
       const falling = getActorPositionAtClosestTimestamp(result, copyB, 4850);
       expect(before?.isDead).toBe(false);
