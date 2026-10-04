@@ -13,6 +13,7 @@ import {
   sendMessage,
   editMessage,
   getGuildChannels,
+  getChannel,
 } from '../discord.js';
 import { isGuildDestination } from '../auth.js';
 import { ChannelType } from '../types.js';
@@ -924,9 +925,8 @@ export async function finishPendingMessageCleanup(
 ): Promise<PendingCleanupResult> {
   const pending = mapping.cleanupPendingMessageIds ?? [];
   if (pending.length === 0) return { ok: true, mapping };
-  if (
-    !(await isGuildDestination(env, mapping.guildId, mapping.channelId, ChannelType.GUILD_TEXT))
-  ) {
+  const destination = await savedDestinationStatus(env, mapping);
+  if (destination === 'invalid') {
     return {
       ok: false,
       mapping,
@@ -935,7 +935,8 @@ export async function finishPendingMessageCleanup(
   }
 
   const remaining: string[] = [];
-  for (const messageId of pending) {
+  // A confirmed deleted channel has no remaining messages to clean up.
+  for (const messageId of destination === 'missing' ? [] : pending) {
     try {
       await deleteMessage(env, mapping.channelId, messageId);
     } catch (error) {
@@ -1000,6 +1001,25 @@ export async function cleanupUncommittedDiscordMutation(
   }
 }
 
+/** Distinguish deletion from foreign channels and permission/metadata failures. */
+async function savedDestinationStatus(
+  env: Env,
+  mapping: RosterMapping,
+): Promise<'valid' | 'missing' | 'invalid'> {
+  if (!/^\d{17,20}$/.test(mapping.channelId)) return 'invalid';
+  if (await isGuildDestination(env, mapping.guildId, mapping.channelId, ChannelType.GUILD_TEXT)) {
+    return 'valid';
+  }
+  // Absence from the guild list is not proof of deletion: it could be foreign.
+  // Only Discord's explicit Unknown Channel response permits recreation.
+  try {
+    await getChannel(env, mapping.channelId);
+  } catch (error) {
+    if (isMissingDiscordChannel(error)) return 'missing';
+  }
+  return 'invalid';
+}
+
 async function refreshExistingMapping(
   env: Env,
   mapping: RosterMapping,
@@ -1012,9 +1032,8 @@ async function refreshExistingMapping(
   defaultChannelId?: string,
   rolePingIds?: GuildConfig['rolePingIds'],
 ): Promise<InternalRefreshResult> {
-  if (
-    !(await isGuildDestination(env, mapping.guildId, mapping.channelId, ChannelType.GUILD_TEXT))
-  ) {
+  const destination = await savedDestinationStatus(env, mapping);
+  if (destination === 'invalid') {
     return {
       ok: false,
       error: 'The saved roster channel is unavailable or does not belong to this server.',
@@ -1025,47 +1044,49 @@ async function refreshExistingMapping(
   const components = buildRosterActionRows(snapshot.id);
   const oldMessageIds = mapping.messageId.split(',');
 
-  // A single message can be replaced atomically enough for users. Multi-part
-  // rosters are posted in full before the old set is removed, avoiding a
-  // partially updated roster when one edit in the sequence fails.
-  if (chunks.length === 1 && oldMessageIds.length === 1) {
-    try {
-      for (let i = 0; i < chunks.length; i++) {
-        const isLast = i === chunks.length - 1;
-        await editMessage(env, mapping.channelId, oldMessageIds[i], {
-          content: chunks[i],
-          ...(isLast ? { components } : {}),
-        });
+  if (destination === 'valid') {
+    // A single message can be replaced atomically enough for users. Multi-part
+    // rosters are posted in full before the old set is removed, avoiding a
+    // partially updated roster when one edit in the sequence fails.
+    if (chunks.length === 1 && oldMessageIds.length === 1) {
+      try {
+        for (let i = 0; i < chunks.length; i++) {
+          const isLast = i === chunks.length - 1;
+          await editMessage(env, mapping.channelId, oldMessageIds[i], {
+            content: chunks[i],
+            ...(isLast ? { components } : {}),
+          });
+        }
+        return { ok: true, channelId: mapping.channelId, messageId: mapping.messageId };
+      } catch (err) {
+        if (!isMissingDiscordResource(err)) {
+          console.warn('[refresh] edit failed without a recoverable missing-resource error:', err);
+          return { ok: false, error: 'Failed to edit the existing roster message.' };
+        }
+        console.warn('[refresh] roster message or channel is missing, will re-post:', err);
       }
-      return { ok: true, channelId: mapping.channelId, messageId: mapping.messageId };
-    } catch (err) {
-      if (!isMissingDiscordResource(err)) {
-        console.warn('[refresh] edit failed without a recoverable missing-resource error:', err);
-        return { ok: false, error: 'Failed to edit the existing roster message.' };
-      }
-      console.warn('[refresh] roster message or channel is missing, will re-post:', err);
     }
-  }
 
-  // Re-post path: post the NEW messages first, and only delete the OLD ones
-  // once the new post fully succeeds. This avoids a window where the old
-  // messages are gone but the new ones are incomplete; sendRosterMessages
-  // self-cleans its own partial posts on failure, so nothing is leaked.
-  try {
-    const messageIds = await sendRosterMessages(env, mapping.channelId, chunks, components);
-    return {
-      ok: true,
-      channelId: mapping.channelId,
-      messageId: messageIds,
-      postedMessageIds: messageIds.split(','),
-      cleanupPendingMessageIds: oldMessageIds,
-    };
-  } catch (err) {
-    if (!isMissingDiscordChannel(err)) {
-      console.warn('[refresh] re-post failed without a recoverable missing-channel error:', err);
-      return { ok: false, error: 'Failed to post the refreshed roster message.' };
+    // Re-post path: post the NEW messages first, and only delete the OLD ones
+    // once the new post fully succeeds. This avoids a window where the old
+    // messages are gone but the new ones are incomplete; sendRosterMessages
+    // self-cleans its own partial posts on failure, so nothing is leaked.
+    try {
+      const messageIds = await sendRosterMessages(env, mapping.channelId, chunks, components);
+      return {
+        ok: true,
+        channelId: mapping.channelId,
+        messageId: messageIds,
+        postedMessageIds: messageIds.split(','),
+        cleanupPendingMessageIds: oldMessageIds,
+      };
+    } catch (err) {
+      if (!isMissingDiscordChannel(err)) {
+        console.warn('[refresh] re-post failed without a recoverable missing-channel error:', err);
+        return { ok: false, error: 'Failed to post the refreshed roster message.' };
+      }
+      console.warn('[refresh] existing channel is missing:', err);
     }
-    console.warn('[refresh] existing channel is missing:', err);
   }
 
   // Posting to the existing channel failed. If the roster was consolidated into

@@ -410,6 +410,10 @@ describe('persisted roster destination authorization', () => {
   it.each([
     ['foreign', true],
     ['foreign', false],
+    ['wrong-type', true],
+    ['wrong-type', false],
+    ['inaccessible', true],
+    ['inaccessible', false],
     ['stale', true],
     ['stale', false],
   ] as const)(
@@ -427,11 +431,19 @@ describe('persisted roster destination authorization', () => {
       vi.stubGlobal(
         'fetch',
         vi.fn(async () =>
-          Response.json(
-            scenario === 'stale'
-              ? []
-              : [{ id: mapping.channelId, guild_id: 'foreign-guild', type: 0 }],
-          ),
+          scenario === 'inaccessible'
+            ? new Response('', { status: 403 })
+            : Response.json(
+                scenario === 'stale'
+                  ? []
+                  : [
+                      {
+                        id: mapping.channelId,
+                        guild_id: scenario === 'foreign' ? 'foreign-guild' : mapping.guildId,
+                        type: scenario === 'wrong-type' ? 4 : 0,
+                      },
+                    ],
+              ),
         ),
       );
       const result = await refreshRoster(env, directRosterId, mapping.guildId);
@@ -445,6 +457,75 @@ describe('persisted roster destination authorization', () => {
       expect(discordMocks.deleteChannel).not.toHaveBeenCalled();
       expect(discordMocks.createChannel).not.toHaveBeenCalled();
       expect(env.ROSTERS.put).not.toHaveBeenCalled();
+    },
+  );
+});
+
+describe('deleted saved channel recovery', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+  });
+
+  it.each([
+    [true, true],
+    [true, false],
+    [false, true],
+    [false, false],
+  ])(
+    'recreates only on user refresh (allowRecreate: %s, pending cleanup: %s)',
+    async (allowRecreate, pendingCleanup) => {
+      vi.clearAllMocks();
+      const { env, directRosterId, directMapping, values } = makeRefreshEnv(
+        await encodeRoster({ v: 3 }),
+      );
+      if (!pendingCleanup) {
+        values.set(
+          `roster-map:${mapping.guildId}:${directRosterId}`,
+          JSON.stringify({ ...directMapping, cleanupPendingMessageIds: undefined }),
+        );
+      }
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(async (input: RequestInfo | URL) => {
+          const path = new URL(String(input)).pathname;
+          if (path === `/api/v10/guilds/${mapping.guildId}/channels`) return Response.json([]);
+          if (path === `/api/v10/channels/${mapping.channelId}`)
+            return Response.json({ code: 10003, message: 'Unknown Channel' }, { status: 404 });
+          throw new Error(`Unexpected request: ${path}`);
+        }),
+      );
+      discordMocks.createChannel.mockResolvedValue({
+        id: '777777777777777777',
+        guild_id: mapping.guildId,
+        type: 0,
+      });
+      discordMocks.sendMessage.mockResolvedValue({ id: 'replacement-message' });
+
+      const result = await refreshRoster(env, directRosterId, mapping.guildId, { allowRecreate });
+
+      expect(result.ok).toBe(allowRecreate);
+      expect(discordMocks.editMessage).not.toHaveBeenCalled();
+      expect(discordMocks.deleteMessage).not.toHaveBeenCalled();
+      expect(discordMocks.deleteChannel).not.toHaveBeenCalled();
+      if (allowRecreate) {
+        expect(discordMocks.createChannel).toHaveBeenCalledWith(
+          env,
+          mapping.guildId,
+          expect.objectContaining({ type: 0 }),
+        );
+        expect(discordMocks.sendMessage).toHaveBeenCalledWith(
+          env,
+          '777777777777777777',
+          expect.anything(),
+        );
+        const saved = JSON.parse(values.get(`roster-map:${mapping.guildId}:${directRosterId}`)!);
+        expect(saved.channelId).toBe('777777777777777777');
+        expect(saved.cleanupPendingMessageIds).toBeUndefined();
+      } else {
+        expect(discordMocks.createChannel).not.toHaveBeenCalled();
+        expect(discordMocks.sendMessage).not.toHaveBeenCalled();
+      }
     },
   );
 });

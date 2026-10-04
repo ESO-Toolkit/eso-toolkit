@@ -321,6 +321,10 @@ export function getGuildRoles(env: Env, guildId: string): Promise<DiscordRole[]>
 
 // ── Guild channels ───────────────────────────────────────────────────────────
 
+export function getChannel(env: Env, channelId: string): Promise<DiscordChannel> {
+  return discordFetch<DiscordChannel>(env, 'GET', `/channels/${channelId}`);
+}
+
 export function getGuildChannels(env: Env, guildId: string): Promise<DiscordChannel[]> {
   return discordFetch<DiscordChannel[]>(env, 'GET', `/guilds/${guildId}/channels`);
 }
