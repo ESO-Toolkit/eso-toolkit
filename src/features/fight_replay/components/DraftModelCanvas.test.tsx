@@ -1,4 +1,4 @@
-import { act, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { Box3, BoxGeometry, Group, Mesh, MeshStandardMaterial, Texture, Vector3 } from 'three';
 
 import { DraftModelCanvas } from './DraftModelCanvas';
@@ -88,6 +88,41 @@ describe('DraftModelCanvas resource ownership', () => {
     expect(current.geometryDispose).not.toHaveBeenCalled();
     unmount();
     expect(current.geometryDispose).toHaveBeenCalledTimes(1);
+  });
+
+  it('defaults to original materials when switching drafts after enabling Clay', () => {
+    const first = makeModel();
+    const { rerender, unmount } = render(
+      <DraftModelCanvas modelUrl="/one.glb" name="First draft" posterUrl="/poster.jpg" />,
+    );
+    act(() => mockLoads[0].resolve(first));
+    fireEvent.click(screen.getByRole('button', { name: 'Clay' }));
+    expect(screen.getByRole('button', { name: 'Original materials' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+
+    rerender(<DraftModelCanvas modelUrl="/two.glb" name="Second draft" posterUrl="/poster.jpg" />);
+    expect(screen.getByRole('button', { name: 'Clay' })).toHaveAttribute('aria-pressed', 'false');
+    expect(first.materialDispose).toHaveBeenCalledTimes(1);
+    expect(first.textureDispose).toHaveBeenCalledTimes(1);
+
+    // An intervening request can finish after selection changes again.
+    rerender(<DraftModelCanvas modelUrl="/wolf.glb" name="Wolf" posterUrl="/wolf.jpg" />);
+    const wolf = makeModel();
+    act(() => mockLoads[2].resolve(wolf));
+    const stale = makeModel();
+    act(() => mockLoads[1].resolve(stale));
+    expect(screen.getByRole('button', { name: 'Clay' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Clay' })).toHaveAttribute('aria-pressed', 'false');
+    expect(stale.materialDispose).toHaveBeenCalledTimes(1);
+    expect(stale.textureDispose).toHaveBeenCalledTimes(1);
+    expect(stale.scene.parent).toBeNull();
+    expect(wolf.materialDispose).not.toHaveBeenCalled();
+    expect(wolf.textureDispose).not.toHaveBeenCalled();
+    unmount();
+    expect(wolf.materialDispose).toHaveBeenCalledTimes(1);
+    expect(wolf.textureDispose).toHaveBeenCalledTimes(1);
   });
 
   it('retains the reference image and avoids downloads when WebGL is unavailable', () => {

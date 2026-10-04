@@ -211,6 +211,10 @@ export function DraftModelCanvas({
   const failRenderer = useCallback(() => setRendererFailed(true), []);
 
   useEffect(() => {
+    setClay(false);
+  }, [modelUrl]);
+
+  useEffect(() => {
     try {
       const probe = document.createElement('canvas');
       const context = probe.getContext('webgl2') ?? probe.getContext('webgl');

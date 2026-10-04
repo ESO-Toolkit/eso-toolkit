@@ -30,10 +30,11 @@
       "sourceUrl": "https://alcasthq.com/eso-lucent-citadel-trial-guide/",
       "status": "draft-unaccepted",
       "runtimeAccepted": false,
-      "appearance": "clay-only",
+      "appearance": "texture-diagnostic",
       "triangleCount": 11987,
-      "bytes": 216528,
-      "reviewNote": "Unaccepted draft. Only clay geometry is available. The named reference shows Count Ryelaz with folded wings and both feet visible. Extended wingspan, rear wings and side or rear armor remain unsupported; dark lighting and uncertain claw edges also limit the result."
+      "bytes": 688896,
+      "reviewNote": "Unaccepted draft. Frontal armor, face and folded wings are projected from the named Count Ryelaz reference. Unobserved surfaces use approximate dark material grain. Extended wingspan, rear wings and side or rear armor remain unsupported; dark lighting, thick wing geometry and uncertain claw edges limit the result.",
+      "clayModel": "count-ryelaz-complete-folded-front/clay.glb"
     },
     {
       "id": "yaseyla-main-phase-lower-res-experimental",
@@ -46,10 +47,11 @@
       "sourceUrl": "https://alcasthq.com/eso-sanitys-edge-trial-guide/",
       "status": "draft-unaccepted",
       "runtimeAccepted": false,
-      "appearance": "clay-only",
+      "appearance": "texture-diagnostic",
       "triangleCount": 12000,
-      "bytes": 215492,
-      "reviewNote": "Unaccepted draft. Only clay geometry is available. The reference shows the opaque main-phase Exarchanic Yaseyla, but its 449-pixel body falls below the 660-pixel target. Her hands rest at her hips with weapons sheathed; drawn grips and side or rear anatomy are unobserved. Manual masking and scene lighting remain uncertain."
+      "bytes": 696180,
+      "reviewNote": "Unaccepted draft. Frontal skin and armor are projected from the opaque main-phase Exarchanic Yaseyla reference. Its 449-pixel body falls below the 660-pixel target; face and neck geometry and masking remain uncertain. Hands rest at her hips with weapons sheathed. Side and rear surfaces use approximate material grain; drawn grips, hidden clothing and anatomy remain unobserved.",
+      "clayModel": "yaseyla-main-phase-lower-res-experimental/clay.glb"
     },
     {
       "id": "ogrim-basic-green-native",
@@ -115,9 +117,9 @@
       "runtimeAccepted": false,
       "appearance": "texture-diagnostic",
       "triangleCount": 5999,
-      "bytes": 513328,
+      "bytes": 537016,
       "clayModel": "wolf-basic-oblique-front/clay.glb",
-      "reviewNote": "Unaccepted draft. The model uses one native oblique reference. Unobserved anatomy and surfaces are inferred, and the camera is uncalibrated. This texture projection remains experimental."
+      "reviewNote": "Unaccepted draft. Native facial and visible flank detail is retained; unfinished body, dorsal and lower-leg surfaces use continuous approximate fur sampled from the reference. Unseen fur layout and colors are inferred. Opposite-side facial detail, camera alignment, simplified anatomy and baked lighting remain unresolved."
     },
     {
       "id": "flame-atronach-native-pair",
@@ -249,10 +251,11 @@
       "sourceUrl": "https://en.uesp.net/wiki/Online:Banekin",
       "status": "draft-unaccepted",
       "runtimeAccepted": false,
-      "appearance": "clay-only",
+      "appearance": "texture-diagnostic",
       "triangleCount": 5998,
-      "bytes": 109096,
-      "reviewNote": "Unaccepted draft. Only clay geometry is available. One native crouched front-three-quarter screenshot meets the body-size threshold without resizing; the smaller upright reference was excluded. Pose, unseen anatomy and surfaces require mesh review."
+      "bytes": 495832,
+      "reviewNote": "Unaccepted draft. Face, horns and skin are projected from the native crouched Banekin reference. Forearm streaking and head and foot perspective mismatch remain. Unobserved rear and side surfaces use approximate material grain; their skin layout and anatomy are inferred.",
+      "clayModel": "banekin-crouched-native-front/clay.glb"
     },
     {
       "id": "bear-brown-native-front",
@@ -265,10 +268,11 @@
       "sourceUrl": "https://en.uesp.net/wiki/Online:Bear",
       "status": "draft-unaccepted",
       "runtimeAccepted": false,
-      "appearance": "clay-only",
+      "appearance": "texture-diagnostic",
       "triangleCount": 6000,
-      "bytes": 108952,
-      "reviewNote": "Unaccepted draft. Only clay geometry is available from one native oblique screenshot. The front input label is a generator slot, not a cardinal camera measurement. Matching rear, opposite-side and cardinal-front references are missing; hidden anatomy is inferred."
+      "bytes": 422592,
+      "reviewNote": "Unaccepted draft. Conservative native head and mouth detail is retained; the body and legs use continuous approximate brown fur sampled from the reference. Unseen fur layout and color are inferred, and repeated strands are visible close up. Head projection, simplified paws and anatomy and baked lighting remain unresolved.",
+      "clayModel": "bear-brown-native-front/clay.glb"
     },
     {
       "id": "crocodile-native-front",
@@ -281,10 +285,11 @@
       "sourceUrl": "https://en.uesp.net/wiki/Online:Crocodile",
       "status": "draft-unaccepted",
       "runtimeAccepted": false,
-      "appearance": "clay-only",
+      "appearance": "texture-diagnostic",
       "triangleCount": 6000,
-      "bytes": 108948,
-      "reviewNote": "Unaccepted draft. Only clay geometry is available from one native oblique screenshot. The front input label is a generator slot, not a cardinal camera measurement. Matching rear, opposite-side and cardinal-front references are missing; hidden anatomy is inferred."
+      "bytes": 523472,
+      "reviewNote": "Unaccepted draft. Native dorsal and face colors are projected from a steep front oblique. Unobserved skin uses approximate brown and tan scales. The jaw perspective, underside, hidden eyes and anatomy remain unreliable; the source camera is uncalibrated and photographed lighting remains baked.",
+      "clayModel": "crocodile-native-front/clay.glb"
     },
     {
       "id": "kwama-warrior-native-front",
@@ -297,10 +302,11 @@
       "sourceUrl": "https://en.uesp.net/wiki/Online:Kwama_Warrior",
       "status": "draft-unaccepted",
       "runtimeAccepted": false,
-      "appearance": "clay-only",
+      "appearance": "texture-diagnostic",
       "triangleCount": 5999,
-      "bytes": 109148,
-      "reviewNote": "Unaccepted draft. Only clay geometry is available from one native oblique screenshot. The front input label is a generator slot, not a cardinal camera measurement. Matching rear, opposite-side and cardinal-front references are missing; hidden anatomy is inferred."
+      "bytes": 419568,
+      "reviewNote": "Unaccepted draft. Face, arms and shell detail are projected from one native Kwama Warrior view. The shell overhang obscures the face, and red photographed lighting remains baked. Unobserved rear and side surfaces use approximate material grain; hidden shell and anatomy remain inferred.",
+      "clayModel": "kwama-warrior-native-front/clay.glb"
     },
     {
       "id": "haj-mota-exact-rgb-pair",
@@ -313,10 +319,11 @@
       "sourceUrl": "https://esomodelviewer.com/creatures/post/49-haj-mota-small",
       "status": "draft-unaccepted",
       "runtimeAccepted": false,
-      "appearance": "clay-only",
+      "appearance": "texture-diagnostic",
       "triangleCount": 5994,
-      "bytes": 109204,
-      "reviewNote": "Unaccepted draft. Only clay geometry from the repaired native-RGB run is included. Complete front and rear three-quarter plates provide approximate conditioning without camera calibration. Unseen surfaces remain inferred, and the invalid earlier texture diagnostic is excluded."
+      "bytes": 613044,
+      "reviewNote": "Unaccepted draft. Native front and rear-oblique RGB are projected with corrected camera directions. These are uncalibrated views; the rear oblique is not a cardinal rear capture. Unobserved shell and skin use approximate warm charcoal and rust scale material. Camera correspondence, hidden anatomy and baked lighting remain unresolved. Earlier invalid gray-painted textures are excluded.",
+      "clayModel": "haj-mota-exact-rgb-pair/clay.glb"
     },
     {
       "id": "coral-haj-mota-exact-rgb-pair",
@@ -329,10 +336,11 @@
       "sourceUrl": "https://esomodelviewer.com/creatures/post/139-coral-haj-mota",
       "status": "draft-unaccepted",
       "runtimeAccepted": false,
-      "appearance": "clay-only",
+      "appearance": "texture-diagnostic",
       "triangleCount": 5996,
-      "bytes": 108992,
-      "reviewNote": "Unaccepted draft. Only clay geometry from the repaired native-RGB run is included. Complete front and rear three-quarter plates provide approximate conditioning without camera calibration. Unseen surfaces remain inferred, and the invalid earlier texture diagnostic is excluded."
+      "bytes": 675040,
+      "reviewNote": "Unaccepted draft. Native front and rear-oblique RGB are projected with corrected camera directions. These are uncalibrated views; the rear oblique is not a cardinal rear capture. Unobserved shell and skin use approximate teal and gold scale material. Camera correspondence, hidden anatomy and baked lighting remain unresolved. Earlier invalid gray-painted textures are excluded.",
+      "clayModel": "coral-haj-mota-exact-rgb-pair/clay.glb"
     },
     {
       "id": "wamasu-green-oblique-pair",
@@ -471,14 +479,14 @@
       "reviewNote": "Unaccepted draft. The frontal skull face and brown-red clothing remain recognizable, but legs and feet differ from the attack pose and palms and fingers are coarse. Rear and most side surfaces use unsupported uniform brown fallback; hidden anatomy and clothing are inferred. Only this pictured female Dark Elf zombie is supported, with no runtime alias verified. Matching-pose rear and side captures are needed."
     }
   ],
-  "totalBytes": 15895249,
+  "totalBytes": 20506784,
   "counts": {
     "candidates": 28,
     "lesser": 25,
     "bosses": 3,
-    "texturedDiagnostics": 20,
-    "clayOnly": 8
+    "texturedDiagnostics": 28,
+    "clayOnly": 0
   },
-  "provenance": "Existing reviewed draft exports and publisher references. Reference thumbnails are resized display copies; model exports are copied unchanged.",
-  "limitations": "All candidates remain unaccepted for replay runtime. Oblique cameras, inferred unseen anatomy, baked lighting and projection gaps remain unresolved. Clay-only candidates have no selected valid texture diagnostic. Invalid earlier Haj Mota inputs and textures are excluded."
+  "provenance": "Publisher references and reviewed reconstruction drafts. Reference thumbnails are resized display copies. Nine texture diagnostics were repaired from lossless reference-derived atlases; model geometry is preserved. Unseen fur, scales and material grain are approximate, not additional captures.",
+  "limitations": "All candidates remain unaccepted for replay runtime. Oblique cameras, inferred unseen anatomy, baked lighting and projection gaps remain unresolved. Approximate texture completion does not establish native coverage or runtime acceptance. Invalid earlier Haj Mota inputs and textures are excluded."
 }
