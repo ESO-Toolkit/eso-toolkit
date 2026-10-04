@@ -21,6 +21,7 @@ const ROUTE_NAMES: Record<string, string> = {
   '/leaderboards': 'Leaderboards',
   '/build-leaderboard': 'Build Leaderboard',
   '/sample-report': 'Sample Report',
+  '/replay-model-drafts': 'Replay model drafts',
   '/privacy': 'Privacy Policy',
   '/terms': 'Terms of Service',
 };
@@ -67,7 +68,8 @@ export const AppLayout: React.FC = () => {
   // container instead of the default reading-width column.
   const isFightReplay = location.pathname.endsWith('/replay');
   const isBuildLeaderboard = location.pathname.startsWith('/build-leaderboard');
-  const isWideRoute = isBuildEditor || isFightReplay || isBuildLeaderboard;
+  const isReplayModelDrafts = location.pathname === '/replay-model-drafts';
+  const isWideRoute = isBuildEditor || isFightReplay || isBuildLeaderboard || isReplayModelDrafts;
 
   // Embed mode: strip chrome (header/footer) for iframe previews
   const isEmbed = searchParams.get('embed') === '1';

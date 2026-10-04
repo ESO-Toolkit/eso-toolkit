@@ -273,7 +273,7 @@ Single GPU job, one operator, no concurrent GPU work.
 Two engine features had their first real use here and both held up: **letterboxed framing** (the
 first subject wider than tall — 1805 px of wingspan against 738 px of height) and **`regions.boxes`**
 (the first subject whose head is not at the top of the silhouette, so no scalar `head_v_min` could
-select it). Box placement was verified with a membership render *before* the GPU job rather than
+select it). Box placement was verified with a membership render _before_ the GPU job rather than
 inferred from metrics afterwards; that check is now the standing rule for box-driven builds.
 
 A 75,000-triangle variant was built first and rejected — 2,447,876 bytes, only 52 KB under the
@@ -342,7 +342,7 @@ First coverage of **Lucent Citadel**, a trial that previously had nothing.
    the atlas is a high-frequency crystal mosaic, which is the content JPEG handles worst. The flat
    colour blocks that let the humanoid assets reach 39 dB simply are not present here.
 2. **18.1% "neither camera"** against Olms' 6.9% and Falgravn's 5.6%. The subject is hunched, so
-   the backs of its thighs face *downward* and no front or back camera sees them. This is the grey
+   the backs of its thighs face _downward_ and no front or back camera sees them. This is the grey
    banding visible on the legs in the back and side renders, and it is inherent to two views on
    this pose rather than a bug.
 3. **855 charts at 52.6 faces each**, between Olms (744 at 94) and the rejected Dwarven Colossus
@@ -370,7 +370,7 @@ Colossus failure mode. Worth revisiting deliberately rather than by default.
 **Operational finding: the GPU was never the bottleneck here — system RAM was.** The first
 plate-cut died with an onnxruntime out-of-memory because another agent was concurrently running
 `build-npc-asset.py` for the Saint Llothis regression check (8.9 GB working set, 1.3 GB free of
-31.7 GB). `onnxruntime` in this environment is **CPU-only**, so rembg is a 6-9 GB *system RAM*
+31.7 GB). `onnxruntime` in this environment is **CPU-only**, so rembg is a 6-9 GB _system RAM_
 consumer, not a GPU one. **The single-worker rule covers the GPU but not the CPU stages, and the
 CPU stages are the memory-hungry ones.** Extend the rule accordingly.
 
@@ -418,7 +418,7 @@ Queued as the sole heavy worker. Free system RAM before start **15.9 GB of 31.7*
 16.4 in use by the desktop. Route C, because the extracted `Lamia_A_Boss` cannot be used.
 
 **Why the extracted mesh is out, and a correction to the manifest.** The manifest suspected
-`Lamia_A_Boss` of being a *partial extraction* on the basis of its bbox (1.14 x 4.08 x 0.46) and told
+`Lamia_A_Boss` of being a _partial extraction_ on the basis of its bbox (1.14 x 4.08 x 0.46) and told
 the next session to verify that before spending anything. It was verified, on a clay render, and the
 suspicion is wrong: the extraction is **complete** — torso, arms, head and crest are all present —
 but the serpent tail is in a **straight-down bind pose**, so the model is a pencil with the torso
@@ -486,7 +486,7 @@ and it costs about a minute of GPU against an unknown amount of deformer work.
 **A box-placement technique worth adopting.** Two placements were rejected here before the third was
 accepted, and the fix was not to nudge and re-render. Colour **three adjacent bands at once** in
 `boxes.json` and read off which one holds the face from a single membership render. It also caught a
-misreading: the first two boxes *did* contain the face, but on a subject with a small head, a box
+misreading: the first two boxes _did_ contain the face, but on a subject with a small head, a box
 claiming horns and face looks at contact-sheet scale like a box claiming horns only.
 
 **Fifth confirmation that width error is not a reliability signal.** `view-05` scored **5.44%, the
@@ -521,7 +521,7 @@ measurement produced the most actionable outstanding capture request.
 
 **Do not re-run this as a two-view build, and do not try more cameras on the reconstruction.** But
 **do not file it with the Colossus either — the diagnosis is the opposite one.** The Colossus was
-*interior*-limited: four cameras moved it 62.0% -> 53.4%, 2.0 points, the worst return measured.
+_interior_-limited: four cameras moved it 62.0% -> 53.4%, 2.0 points, the worst return measured.
 Ra Kotu is **camera-limited**: `measure-view-coverage` puts four cameras at **40.1% -> 18.8%** blind
 and grazing fill at 53.8% -> 34.1%. That **21.3-point** gain is the **largest measured on this
 project**, and 18.8% would put him comfortably inside the shipped band.
@@ -564,11 +564,11 @@ plate** — one per subject, which is a much smaller ask than the front/back/clo
 blocked bosses need, and the pipeline already supports left/right cameras via
 `reference.side_plates`. Ranked by what a single profile buys:
 
-| Subject       | Blind now | Blind with profiles | Gain           |
-| ------------- | --------: | ------------------: | -------------: |
+| Subject       | Blind now | Blind with profiles |            Gain |
+| ------------- | --------: | ------------------: | --------------: |
 | Ra Kotu       |     40.1% |               18.8% | **21.3 points** |
-| Archcustodian |     40.4% |               26.0% |  14.4 points   |
-| Chimera       |     37.7% |               21.6% |  16.1 points   |
+| Archcustodian |     40.4% |               26.0% |     14.4 points |
+| Chimera       |     37.7% |               21.6% |     16.1 points |
 
 Note the gallery caveat that applies to all three: `dwarven-spider-references/view-05` looks like a
 profile in a contact sheet and is not one - it is elevated and pushed in, looking down at the body.
@@ -611,3 +611,241 @@ good.
 
 `view-07` scored **4.84%, the lowest error on this subject, and was rejected** — the overlay doubles
 both hands. Sixth confirmation that width error is not a reliability signal.
+
+## 2026-10-04 — serialized continuation and lesser-enemy expansion
+
+Operator: Codex root in `t3code-7c9dfcb6`; reference agents perform CPU-only research.
+The owner's new request expands the target to lesser enemies and trial adds. Research outputs live
+in `scratch/lesser-enemy-models-2026-10-04/`; all generated meshes remain unaccepted drafts until
+geometry, texture registration, and identity have been reviewed.
+
+Prelaunch checkpoint: RTX 4070 Ti SUPER, 16,376 MiB total, 13,480 MiB free, 18% utilization.
+Estimated reconstruction allocation is 6–8 GiB. Root serializes these prepared jobs through:
+
+```powershell
+& 'B:/CodexScratch/eso-fight-replay-3d/.venv/Scripts/python.exe' 'scratch/lesser-enemy-models-2026-10-04/run_gpu_queue.py' --generate
+```
+
+The immutable source configs are in
+`scratch/trial-reference-research/continuation-batch/shape-round2/generation-prep/queue.json`:
+
+1. `archcustodian-four-native.config.json`: four complete native camera-matched views.
+2. `count-ryelaz-complete-folded-front.config.json`: complete native folded-wing front.
+3. `yaseyla-main-phase-lower-res-experimental.config.json`: explicitly lower-resolution main-phase
+   reference; exploratory only.
+
+New outputs are isolated under `scratch/lesser-enemy-models-2026-10-04/geometry/<config-name>/`.
+`gpu-events.jsonl` records exact prepared commands, input config and launcher SHA-256 hashes,
+start/exit events, output hashes, and observed post-exit free VRAM before the next launch. Each
+child requires at least 8,192 MiB free and utilization no higher than 25%; failed jobs stop the queue.
+The log is recorded before any launch. No earlier experiment is overwritten.
+
+All three continuation children exited successfully and released VRAM before the next child.
+Raw geometry output hashes and timings are recorded in `gpu-events.jsonl`; none is accepted for
+runtime. Archcustodian's CPU clay review preserves six segmented legs, with three tiny fragments
+requiring inspection. Appearance and exact encounter skin remain unverified.
+
+### Lesser-enemy queue, prepared before launch
+
+Observed preflight: 16,376 MiB total, 13,648 MiB free, 8% utilization. Root launches the same
+serialized runner with `--configs scratch/lesser-enemy-models-2026-10-04/generation-prep/lesser-queue.json`.
+Expected allocation remains 6–8 GiB per child, with the same release guard and stop-on-failure.
+
+1. Green Ogrim: native full-body front/back, approximately 1,000 px body height.
+2. Dwarven Centurion: full front/rear three-quarter pair; conditioning is approximate.
+3. Dwarven Sphere: full front/rear three-quarter pair; conditioning is approximate.
+4. Haj Mota: full front/rear three-quarter pair; experimental camera assignment.
+5. Coral Haj Mota: separate variant, full front/rear three-quarter pair.
+6. Gray Wolf: one complete native front-left three-quarter view; unseen surfaces inferred.
+
+The Dwarven Spider uses the new Archcustodian family geometry for review rather than launching
+the identical four input plates a second time. This is proposed generic-species reuse only;
+neither exact Archcustodian skin nor runtime acceptance is established.
+
+### Additional lesser-enemy queue, prepared before launch
+
+The next root-operated batch uses `generation-prep/additional-queue.json` in the same research
+directory and the same serialized launcher, 8,192 MiB free-memory guard, utilization guard, and
+observed post-child release. Configs preserve native RGB and record original source hashes.
+
+1. Flame Atronach: complete near-cardinal front/back; native body heights 1,001/999 px.
+2. Strangler: complete native front, 1,312 px body height; back and profile inferred.
+3. Golden Lamia: complete native front, 999 px body height; oblique rear excluded from conditioning.
+4. Bull-Horned Magma Frog: complete native front, 1,013 px body height; rear inferred.
+
+These are unaccepted research drafts. Front-only jobs cannot establish unseen morphology or
+texture coverage. Root records the actual preflight in `gpu-events.jsonl` immediately before
+launch and stops instead of starting another process if the guard fails.
+
+### Third lesser-enemy queue, prepared before launch
+
+The next serialized batch is `generation-prep/third-queue.json`. Root remains the only GPU
+operator and uses the same preflight, stop-on-failure, and observed memory-release guards.
+Every prepared plate preserves original RGB, with CPU-only alpha extraction and padding.
+
+1. Ordinary green Argonian Behemoth: native front and elevated rear three-quarter pair,
+   1,013/1,010 px body height; exact rear camera is uncalibrated.
+2. Generic Stone Atronach: single complete oblique view, 993 px body height.
+3. Red folded-wing Harpy: single complete front, 696 px body height; rear inferred.
+4. Crouched Banekin: single complete oblique front, 936 px body height.
+5. Brown Bear: single complete oblique front, 860 px body height; source red effects recorded.
+6. Crocodile: single high dorsal/front oblique view, 907 px body height.
+7. Kwama Warrior: single dark oblique front, 880 px body height; small residual background flecks.
+
+Prelaunch independent inspection deferred Nix-Hound: its mouth/antenna tip meets the native
+image boundary, so a complete silhouette is not established despite 861 px body height.
+The root launch list is `generation-prep/third-queue-reviewed.json`, containing these seven
+jobs. The original eight-entry preparation list is retained as provenance and is not launched.
+
+The first two lesser batches completed ten geometry jobs with observed memory release after
+every child. Independent pixel auditing then found altered foreground RGB in the four Haj Mota
+and Coral Haj Mota prepared plates. Those two first-pass drafts are explicitly invalidated for
+strict native-RGB provenance. Corrected plates and separate reruns will preserve original RGB
+plus the existing alpha without resizing or overwriting the first pass.
+
+These jobs are exploratory drafts, not runtime registrations or broad alias assignments.
+Imp, organic Spider and orange Senche failed full-body reference/mask checks and are deferred.
+The exact native source, camera limitations, configuration hash, output hash and child timings
+remain in the research manifests and `gpu-events.jsonl`.
+
+### Recovery and exact-RGB reruns, recorded before launch
+
+The third queue completed Behemoth, Stone Atronach and Harpy. Banekin's first
+child exited with Windows access violation `3221225477` during model loading,
+without a mesh; the queue stopped. Concurrent CPU processes also reported
+allocation failures. This suggests host-memory pressure, without establishing
+the precise crash cause. Root stopped the CPU review/projection workers and
+observed the failed child exit, 13,658 MiB free VRAM, and approximately 20 GiB
+free physical memory before preparing recovery.
+
+`generation-prep/recovery-and-exact-rgb-queue.json` contains Banekin's single
+retry, Brown Bear, Crocodile and Kwama Warrior, followed by distinct
+`haj-mota-exact-rgb-pair` and `coral-haj-mota-exact-rgb-pair` reruns. The four
+corrected Haj Mota plates preserve every visible native RGB pixel and retain
+the original alpha masks and dimensions. Their first-pass drafts remain
+invalidated; new outputs do not replace them.
+
+Root continues as the sole GPU operator. The runner now also requires at least
+12,288 MiB free physical memory and 16,384 MiB available system commit, in
+addition to the existing VRAM/utilization guards. Heavy CPU review and texture
+jobs remain paused while the recovery queue runs. The failed Banekin logs are
+preserved separately before its one retry. A further failure stops the queue
+for investigation.
+
+### Fourth lesser-enemy queue, recorded before launch
+
+The recovery queue completed all six children and observed GPU release after
+each exit. CPU review found the strongest anatomy in Brown Bear, an extra
+central leg-like appendage in Kwama Warrior, and persistent underside failures
+in both corrected Haj Mota variants. None is accepted for runtime.
+
+Root's next serialized list is
+`scratch/lesser-enemy-models-2026-10-04/generation-prep/fourth-wave-reviewed-queue.json`:
+
+1. Green Wamasu: complete native front/rear obliques, 736/930 px body height.
+2. Green Daedroth: complete front/rear obliques, 984/1,013 px body height.
+3. Brown Gryphon: compatible folded-wing obliques, 1,005/964 px body height.
+4. Blue Daedric Titan: winged oblique pair, 756/734 px body height; torn wing
+   openings preserved in alpha.
+5. Iron Atronach: corrected native pair, approximately 1,000 px body height.
+6. Storm Atronach: corrected native pair; separate floating rocks preserved.
+7. Frost Atronach: corrected native pair, approximately 1,000 px body height.
+
+The original four-Atronach preparation attempt remains blocked and preserved.
+Root created separate Iron/Storm/Frost plates by removing connected neutral
+backdrop, including the verified native leg-gap seed `(960,700)`. An independent
+pixel comparison found zero visible RGB differences; no image resizing or
+synthetic anatomy was used. Root visually inspected the corrected pairs.
+Crystal Atronach remains deferred because pale silhouette edges are eroded.
+
+The same root-only runner, VRAM/utilization guards, physical-memory/commit
+guards, child-exit checks and observed post-exit release apply. Heavy CPU
+processing remains paused until this queue completes. These inputs are
+experimental conditioning: oblique cameras are uncalibrated, unseen surfaces
+are inferred, and small neutral-edge/shadow ambiguity remains. Source hashes,
+preparation manifests and actual launch events stay with the research batch.
+
+### Final zombie experiment, recorded before launch
+
+The seven-job fourth queue completed with a raw mesh and observed post-child
+GPU release for every job. Root inspected a final native 1,200-square UESP
+capture of the exact armored female Dark Elf zombie, plus its white/dark alpha
+reviews. Its 1,154 px complete body retains original RGB with alpha-only manual
+background removal; the seated skeleton, books, floor and vegetation are excluded.
+Hard traced edges and some finger-edge ambiguity remain. This front attack pose
+has no back capture, so the entire rear is inferred.
+
+`generation-prep/final-zombie-reviewed-queue.json` contains this single experimental
+job. Root remains the sole GPU operator, with the same VRAM, utilization, host
+memory, child-exit and release guards. Heavy CPU jobs remain paused. The runner
+now also requires a raw output file of at least 100 bytes after a successful
+child exit; output validity is checked separately. All earlier successful
+jobs have individually verified raw outputs. No runtime
+registration or broader zombie identity is established.
+
+### Lesser-enemy batch outcome
+
+The final zombie child completed on 2026-10-04 at 09:22:32 UTC, left a verified
+raw output, and released GPU memory before CPU review resumed. Across this
+continuation, the event log records 30 successful geometry jobs and one failed
+Banekin attempt. Two first-pass Haj Mota jobs remain invalidated for altered
+foreground RGB. The remaining 28 valid-input research candidates comprise
+25 lesser-enemy variants and three trial-boss continuations. All are unaccepted;
+zero new assets or aliases have been registered in fight replay.
+
+The lesser-enemy variants are Ogrim, Dwarven Centurion, Dwarven Sphere, Gray
+Wolf, Flame Atronach, Strangler, Golden Lamia, Bull-Horned Magma Frog, Argonian
+Behemoth, Stone Atronach, Harpy, Banekin, Brown Bear, Crocodile, Kwama Warrior,
+Haj Mota, Coral Haj Mota, Green Wamasu, Green Daedroth, Brown Gryphon, Blue
+Daedric Titan, Iron Atronach, Storm Atronach, Frost Atronach, and the armored
+female Dark Elf zombie. Proposed Dwarven Spider reuse of Archcustodian is not
+counted as an additional generated lesser-enemy mesh.
+
+Raw meshes, bounded static exports, native/clay comparisons, source provenance,
+failed attempts, and appearance diagnostics are retained under
+`scratch/lesser-enemy-models-2026-10-04/`. `batch-outcomes.json` derives counts
+from actual child exits and verifies every successful raw SHA-256 against the
+event log. `gallery.html` exposes the references and review products; its file
+counts are not counts of unique enemies or accepted assets.
+
+Review found major underside defects in both Haj Mota reruns, an extra central
+appendage in Kwama Warrior, ragged feather sheets in Gryphon, incomplete thin
+wing surfaces in Titan, and debris-like connections in Storm Atronach. Other
+meshes also retain coarse details, uncertain oblique orientation, or inferred
+surfaces. Texture projection alone does not establish appearance acceptance.
+Alit, ordinary Kagouti, ordinary Minotaur, Nix-Hound, and other remaining
+families still need complete matching native captures. The 1,679-name inventory
+across 57 families remains a backlog; these representatives do not prove broad
+actor aliases or completion of all lesser enemies.
+
+The durable checkpoint destination is
+`B:/CodexScratch/eso-fight-replay-3d/research-checkpoints/lesser-enemy-models-2026-10-04-t3code-7c9dfcb6`.
+Once copying completes, its manifest will provide evidence of copy completion
+and per-file byte/SHA-256 verification. Retained scripts/configs contain original absolute paths and are
+research snapshots rather than a portable executable package.
+
+### Final remaining native construct assessment
+
+Cached complete native references were assessed for the exact Blue Lurcher,
+Sylvan Spriggan, and Ashen Spriggan variants. Two neutral-background mask
+attempts removed gray subject material. A separate final root assessment
+preserved original RGB but retained broad studio background and floor shadows.
+Root and independent visual review rejected all three sets; their generation
+and launch flags remain false. No GPU jobs were launched from these plates.
+The final 1,080 px opaque envelope includes background and is explicitly not
+a certified body-height measurement. First-attempt manifests and contacts
+survive, but their prepared RGBA files were overwritten by the second attempt;
+the historical hashes do not describe current plates.
+
+This assessment stops after three failed mask attempts. These variants require
+a clean subject mask or alternate complete native capture before generation.
+The exact variants do not establish broader Lurcher or Spriggan aliases. The
+final readiness inventory records 22 represented families and 35 without a
+generated representative, with no overlooked certified generation input.
+
+Repository validation completed after installing the existing lockfile's
+development dependencies into this worktree. `npm run validate` passed;
+`npm run test:ci -- --maxWorkers=2` passed 527 suites, 6,568 tests and
+34 snapshots, with one suite and 13 tests skipped. Initial environment-failure
+logs remain alongside the passing results. SHA-256 checks confirmed the two
+pre-existing modified sample reports and `public/schema.graphql` were unchanged.
