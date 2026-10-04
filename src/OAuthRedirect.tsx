@@ -124,6 +124,9 @@ export const OAuthRedirect: React.FC = () => {
               body: JSON.stringify({
                 access_token: data.access_token,
                 expires_in: data.expires_in || 3600,
+                // Echo the desktop's nonce, never the independent OAuth state.
+                // Undefined is omitted for older clients that supplied no nonce.
+                state: appPortBinding.desktopState,
               }),
               signal: controller.signal,
             });

@@ -6,8 +6,8 @@
  * the website's redirect URIs registered.
  *
  * Flow:
- * 1. Desktop app opens: /app-auth?port={port}
- * 2. This page stores the port and starts the normal PKCE OAuth flow
+ * 1. Desktop app opens: /app-auth?port={port}&state={desktopNonce}
+ * 2. This page stores the callback binding and starts the normal PKCE OAuth flow
  * 3. ESO Logs redirects back to /oauth-redirect (registered URI)
  * 4. OAuthRedirect detects the app_auth_port flag and sends tokens
  *    to http://localhost:{port}/callback instead of storing them
@@ -32,11 +32,13 @@ export const APP_AUTH_PORT_KEY = 'app_auth_port';
 export interface AppAuthPortBinding {
   port: number;
   state: string;
+  /** Desktop callback nonce, independent of the OAuth provider's CSRF state. */
+  desktopState?: string;
 }
 
 /** Persist the desktop-app callback port bound to this request's OAuth state. */
-export function storeAppAuthPortBinding(port: number, state: string): void {
-  sessionStorage.setItem(APP_AUTH_PORT_KEY, JSON.stringify({ port, state }));
+export function storeAppAuthPortBinding(port: number, state: string, desktopState?: string): void {
+  sessionStorage.setItem(APP_AUTH_PORT_KEY, JSON.stringify({ port, state, desktopState }));
 }
 
 /**
@@ -48,10 +50,16 @@ export function consumeAppAuthPortBinding(): AppAuthPortBinding | null {
   sessionStorage.removeItem(APP_AUTH_PORT_KEY);
   if (!raw) return null;
   try {
-    const parsed = JSON.parse(raw) as { port?: unknown; state?: unknown };
+    const parsed = JSON.parse(raw) as { port?: unknown; state?: unknown; desktopState?: unknown };
     const port = parseAppAuthPort(typeof parsed.port === 'number' ? parsed.port : null);
     if (port === null || typeof parsed.state !== 'string' || !parsed.state) return null;
-    return { port, state: parsed.state };
+    if (
+      parsed.desktopState !== undefined &&
+      (typeof parsed.desktopState !== 'string' || !parsed.desktopState)
+    ) {
+      return null;
+    }
+    return { port, state: parsed.state, desktopState: parsed.desktopState };
   } catch {
     return null;
   }
@@ -72,7 +80,7 @@ export const AppAuth: React.FC = () => {
     // to the PKCE flow, so OAuthRedirect can confirm the port belongs to this
     // exact request before POSTing tokens to localhost.
     const state = generateOAuthState();
-    storeAppAuthPortBinding(port, state);
+    storeAppAuthPortBinding(port, state, params.get('state') || undefined);
     startPKCEAuth(state).catch(() => {
       setError('Failed to start authentication.');
       setStarting(false);

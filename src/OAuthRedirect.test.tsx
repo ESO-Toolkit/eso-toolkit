@@ -1,6 +1,7 @@
 import '@testing-library/jest-dom';
 
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
+import { StrictMode } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 
 import { consumeAppAuthPortBinding } from './AppAuth';
@@ -19,6 +20,10 @@ jest.mock('./features/auth/AuthContext', () => ({
 
 jest.mock('./store/useAppDispatch', () => ({
   useAppDispatch: jest.fn(),
+}));
+
+jest.mock('./features/auth/KalpaAuthSuccess', () => ({
+  KalpaAuthSuccess: () => <div>Desktop authenticated</div>,
 }));
 
 const mockConsumeAppAuthPortBinding = jest.mocked(consumeAppAuthPortBinding);
@@ -64,6 +69,64 @@ describe('OAuthRedirect callback failures', () => {
 
   afterAll(() => {
     jest.restoreAllMocks();
+  });
+
+  it.each(['desktop-nonce', undefined])(
+    'delivers the bound desktop nonce %p and supports older clients under StrictMode',
+    async (desktopState) => {
+      seedValidCallback();
+      mockConsumeAppAuthPortBinding.mockClear();
+      mockConsumeAppAuthPortBinding.mockReturnValue({
+        port: 12345,
+        state: callbackState,
+        desktopState,
+      });
+      mockFetch.mockImplementation(async (url: string) =>
+        url.startsWith('http://localhost:')
+          ? { ok: true }
+          : { ok: true, json: async () => ({ access_token: 'desktop-token', expires_in: 1800 }) },
+      );
+
+      render(
+        <StrictMode>
+          <MemoryRouter initialEntries={[`/oauth-redirect?code=auth-code&state=${callbackState}`]}>
+            <OAuthRedirect />
+          </MemoryRouter>
+        </StrictMode>,
+      );
+
+      expect(await screen.findByText('Desktop authenticated')).toBeInTheDocument();
+      expect(mockConsumeAppAuthPortBinding).toHaveBeenCalledTimes(1);
+      const callbacks = mockFetch.mock.calls.filter(([url]) => url.startsWith('http://localhost:'));
+      expect(callbacks.length).toBeGreaterThan(0);
+      for (const [url, options] of callbacks) {
+        expect(url).toBe('http://localhost:12345/callback');
+        expect(JSON.parse(options.body)).toEqual({
+          access_token: 'desktop-token',
+          expires_in: 1800,
+          ...(desktopState ? { state: desktopState } : {}),
+        });
+      }
+      expectNoCredentialsPersisted();
+    },
+  );
+
+  it('never sends a stale desktop binding to localhost during a normal web login', async () => {
+    seedValidCallback();
+    mockConsumeAppAuthPortBinding.mockReturnValue({
+      port: 12345,
+      state: 'unrelated-oauth-state',
+      desktopState: 'old-desktop-nonce',
+    });
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: async () => ({ access_token: 'web-token', expires_in: 1800 }),
+    });
+    renderCallback(`code=auth-code&state=${callbackState}`);
+
+    await waitFor(() => expect(mockUseAuth().rebindAccessToken).toHaveBeenCalled());
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    expect(mockFetch.mock.calls[0][0]).toBe('https://www.esologs.com/oauth/token');
   });
 
   it.each(['invalid_request', 'server_error'])(
