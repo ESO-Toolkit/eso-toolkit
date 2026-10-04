@@ -36,7 +36,7 @@ allocation, and one URL bug. Budget accordingly:
 For the authored Yandir skeletal derivative, use the
 [skeletal pilot builder instructions](../../tools/fight-replay-models/README.md#yandir-skeletal-pilot)
 instead of regenerating geometry. It uses the shipped optimized textured mesh and CPU `bpy`,
-so no GPU queue entry is needed. Preserve stationary root tracks and review continuous walking
+so no GPU queue entry is needed. Keep the scene root stationary, animate bones only, and review continuous walking
 with matching logged translation, starts/stops, and seeking at replay scale. This one-boss pilot
 has separate runtime skin validation; the static reconstruction gate below still applies to
 the source asset and other NPCs.

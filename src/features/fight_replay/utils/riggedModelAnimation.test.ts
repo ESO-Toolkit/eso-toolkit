@@ -118,7 +118,7 @@ describe('riggedModelAnimation', () => {
     expect(sample(data, 1900).castWeight).toBe(0);
   });
 
-  it('suppresses casts at exact death, freezes the corpse pose and restores it when seeking/resurrecting', () => {
+  it('freezes the active cast blend at exact death and restores it when seeking/resurrecting', () => {
     const data = lookup();
     data.castTimesByActorId = { 42: [1000, 1500] };
     data.lifecycleEventsByActorId = {
@@ -130,13 +130,61 @@ describe('riggedModelAnimation', () => {
     const living = sample(data, 1199);
     expect(living.castWeight).toBeGreaterThan(0);
     const dead = sample(data, 1200);
-    expect(dead.castWeight).toBe(0);
-    expect(dead.walkWeight).toBe(0);
-    expect(dead.idleWeight).toBe(1);
-    expect(sample(data, 1549).idleTime).toBe(dead.idleTime);
+    expect(dead.castWeight).toBeCloseTo(0.75);
+    expect(dead.castTime).toBeCloseTo(1 / 3);
+    expect(dead.walkWeight).toBeCloseTo(living.walkWeight, 2);
+    expect(dead.idleWeight + dead.walkWeight + dead.castWeight).toBeCloseTo(1);
+    expect(sample(data, 1549)).toEqual(dead);
     expect(sample(data, 1550).castWeight).toBeGreaterThan(0);
     expect(sample(data, 1199)).toEqual(living);
     expect(buildRiggedWalkTimeline(data, 42).distances).toEqual([0, 0.5, 1, 1, 1, 1.5]);
+  });
+
+  it('freezes a walking pose independently of playback history and resumes after resurrection', () => {
+    const data = lookup([0, 0.5, 1, 1.5, 2, 2.5]);
+    data.lifecycleEventsByActorId = {
+      42: [
+        { timestamp: 1200, isDead: true, deathTimeMs: 1200 },
+        { timestamp: 1750, isDead: false },
+      ],
+    };
+    const living = sample(data, 1199);
+    const directSeek = sample(data, 1749);
+    expect(directSeek.walkWeight).toBe(1);
+    expect(directSeek.walkTime).toBe(living.walkTime);
+    expect(sample(data, 1200)).toEqual(directSeek);
+    expect(sample(data, 1400)).toEqual(directSeek);
+    expect(sample(data, 1199)).toEqual(living);
+    expect(sample(data, 2500).walkTime).not.toBe(directSeek.walkTime);
+  });
+
+  it('keeps a sparse death-time pose stable and excludes casts at or after death', () => {
+    const data = lookup([0, 0.5, 1, 1.5, 2, 2.5]);
+    data.sortedTimestamps = [0, 500, 1000, 2000, 2500];
+    data.hasRegularIntervals = false;
+    data.lifecycleEventsByActorId = {
+      42: [{ timestamp: 1200, isDead: true, deathTimeMs: 1200 }],
+    };
+    data.castTimesByActorId = { 42: [1000, 1200, 1300, 2000] };
+    const dead = sample(data, 2500);
+    expect(dead.castWeight).toBeCloseTo(0.75);
+    expect(dead.castTime).toBeCloseTo(1 / 3);
+    expect(dead.walkTime).toBe(sample(data, 1199).walkTime);
+    expect(sample(data, 1200)).toEqual(dead);
+    expect(sample(data, 2050)).toEqual(dead);
+  });
+
+  it('uses a stable idle pose when death occurs at zero without a prior living pose', () => {
+    const data = lookup();
+    data.lifecycleEventsByActorId = {
+      42: [{ timestamp: 0, isDead: true, deathTimeMs: 0 }],
+    };
+    data.castTimesByActorId = { 42: [0, 500] };
+    const dead = sample(data, 0);
+    expect(dead.idleWeight).toBe(1);
+    expect(dead.walkWeight).toBe(0);
+    expect(dead.castWeight).toBe(0);
+    expect(sample(data, 2500)).toEqual(dead);
   });
 
   it('breaks travel across missing actors, teleports, and death/resurrection between samples', () => {
@@ -156,7 +204,9 @@ describe('riggedModelAnimation', () => {
   it('freezes legacy dead samples and returns finite normalized outputs for invalid durations', () => {
     const data = lookup();
     for (const time of [1000, 1500, 2000, 2500]) data.positionsByTimestamp[time][42].isDead = true;
-    expect(sample(data, 1000).idleTime).toBe(sample(data, 2500).idleTime);
+    data.castTimesByActorId = { 42: [700, 1500] };
+    expect(sample(data, 1000)).toEqual(sample(data, 2500));
+    expect(sample(data, 2500).castWeight).toBeCloseTo(1);
     const result = sample(data, NaN, 42, {
       walkDistance: 0,
       idleDuration: NaN,

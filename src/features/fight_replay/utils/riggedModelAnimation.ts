@@ -8,6 +8,8 @@ import {
 import {
   actorMotionPhase,
   CAST_REACTION_MS,
+  createStaticModelMotionSample,
+  sampleStaticModelMotion,
   type StaticModelMotionSample,
 } from './staticModelMotion';
 
@@ -121,12 +123,13 @@ export function sampleRiggedModelAnimation(
   out: RiggedModelAnimationSample,
 ): RiggedModelAnimationSample {
   const time = Number.isFinite(timeMs) ? timeMs : 0;
-  const spatialTime = getClosestTimestamp(lookup, time);
+  let spatialTime = getClosestTimestamp(lookup, time);
   const actor = getActorPositionAtClosestTimestamp(lookup, actorId, time);
   const state = getActorLifecycleAtTimestamp(lookup, actorId, time, actor ?? undefined);
-  let idleClock = time;
+  let poseClock = time;
+  let poseMotion = motion;
   if (state.isDead) {
-    idleClock = state.deathTimeMs ?? 0;
+    poseClock = state.deathTimeMs ?? 0;
     // Legacy lookups lack an exact event index. Freeze at the first contiguous dead sample.
     if (state.deathTimeMs === undefined && lookup.lifecycleEventsByActorId === undefined) {
       let index = lastIndexAtOrBefore(lookup.sortedTimestamps, spatialTime ?? time);
@@ -134,22 +137,42 @@ export function sampleRiggedModelAnimation(
         index >= 0 &&
         lookup.positionsByTimestamp[lookup.sortedTimestamps[index]]?.[actorId]?.isDead
       ) {
-        idleClock = lookup.sortedTimestamps[index--];
+        poseClock = lookup.sortedTimestamps[index--];
       }
     }
+    // Reconstruct the living blend at the death boundary, even on a direct seek into death.
+    // The supplied motion already suppresses walking/casting. Sampling just before the event
+    // avoids that suppression without retaining state from a previously rendered frame.
+    const beforeDeath = poseClock - Math.max(1, Math.abs(poseClock)) * Number.EPSILON;
+    spatialTime = getClosestTimestamp(lookup, beforeDeath);
+    const beforeActor = getActorPositionAtClosestTimestamp(lookup, actorId, beforeDeath);
+    poseMotion = createStaticModelMotionSample();
+    if (poseClock > 0 && beforeActor) {
+      sampleStaticModelMotion(
+        lookup,
+        actorId,
+        beforeDeath,
+        beforeActor.position,
+        false,
+        poseMotion,
+      );
+    }
+    // A future spatial sample must not advance the frozen walk through death or resurrection.
+    spatialTime = Math.min(spatialTime ?? beforeDeath, beforeDeath);
   }
   const idleDuration = positive(options.idleDuration);
   out.idleTime =
-    cycle(idleClock / (idleDuration * 1000) + actorMotionPhase(actorId)) * idleDuration;
-  const distanceIndex = lastIndexAtOrBefore(timeline.timestamps, spatialTime ?? time);
+    cycle(poseClock / (idleDuration * 1000) + actorMotionPhase(actorId)) * idleDuration;
+  const distanceIndex = lastIndexAtOrBefore(timeline.timestamps, spatialTime ?? poseClock);
   const distance = timeline.distances[distanceIndex] ?? 0;
   out.walkTime = cycle(distance / positive(options.walkDistance)) * positive(options.walkDuration);
   out.castTime = 0;
   let strongest = 0;
   const casts = lookup.castTimesByActorId?.[actorId] ?? [];
-  if (!state.isDead) {
-    for (let i = lastIndexAtOrBefore(casts, time); i >= 0; i--) {
-      const elapsed = time - casts[i];
+  if (!state.isDead || poseClock > 0) {
+    for (let i = lastIndexAtOrBefore(casts, poseClock); i >= 0; i--) {
+      if (state.isDead && casts[i] >= poseClock) continue;
+      const elapsed = poseClock - casts[i];
       if (elapsed >= CAST_REACTION_MS) break;
       const pulse = Math.sin((Math.PI * elapsed) / CAST_REACTION_MS) ** 2;
       if (pulse > strongest) {
@@ -158,8 +181,8 @@ export function sampleRiggedModelAnimation(
       }
     }
   }
-  out.castWeight = state.isDead ? 0 : unit(motion.castPulse);
-  out.walkWeight = state.isDead ? 0 : unit(motion.moveStrength) * (1 - out.castWeight);
+  out.castWeight = unit(state.isDead ? strongest : motion.castPulse);
+  out.walkWeight = unit(poseMotion.moveStrength) * (1 - out.castWeight);
   out.idleWeight = 1 - out.castWeight - out.walkWeight;
   return out;
 }
