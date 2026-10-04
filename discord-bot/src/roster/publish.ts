@@ -14,6 +14,7 @@ import {
   editMessage,
   getGuildChannels,
 } from '../discord.js';
+import { isGuildDestination } from '../auth.js';
 import { ChannelType } from '../types.js';
 import type { DiscordComponent, Env } from '../types.js';
 import { fetchRosterSnapshot } from './api.js';
@@ -371,6 +372,7 @@ async function doPublishRoster(
       target.mode === 'existing'
         ? await postRosterToDefaultChannel(
             env,
+            req.guildId,
             target.channelId,
             snapshot,
             decoded,
@@ -795,6 +797,7 @@ async function doPublishDirect(
     target.mode === 'existing'
       ? await postRosterToDefaultChannel(
           env,
+          req.guildId,
           target.channelId,
           snapshot,
           decoded,
@@ -921,6 +924,15 @@ export async function finishPendingMessageCleanup(
 ): Promise<PendingCleanupResult> {
   const pending = mapping.cleanupPendingMessageIds ?? [];
   if (pending.length === 0) return { ok: true, mapping };
+  if (
+    !(await isGuildDestination(env, mapping.guildId, mapping.channelId, ChannelType.GUILD_TEXT))
+  ) {
+    return {
+      ok: false,
+      mapping,
+      error: 'The saved roster channel is unavailable or does not belong to this server.',
+    };
+  }
 
   const remaining: string[] = [];
   for (const messageId of pending) {
@@ -1000,6 +1012,14 @@ async function refreshExistingMapping(
   defaultChannelId?: string,
   rolePingIds?: GuildConfig['rolePingIds'],
 ): Promise<InternalRefreshResult> {
+  if (
+    !(await isGuildDestination(env, mapping.guildId, mapping.channelId, ChannelType.GUILD_TEXT))
+  ) {
+    return {
+      ok: false,
+      error: 'The saved roster channel is unavailable or does not belong to this server.',
+    };
+  }
   const text = buildRosterText(snapshot, decoded, eventTime);
   const chunks = splitMessages(text);
   const components = buildRosterActionRows(snapshot.id);
@@ -1180,12 +1200,20 @@ async function sendRosterToChannel(
  */
 async function postRosterToDefaultChannel(
   env: Env,
+  guildId: string,
   channelId: string,
   snapshot: RosterSnapshot,
   decoded: Awaited<ReturnType<typeof decodeRosterData>>,
   eventTime?: string,
   rolePingIds?: GuildConfig['rolePingIds'],
 ): Promise<InternalRefreshResult> {
+  if (!(await isGuildDestination(env, guildId, channelId, ChannelType.GUILD_TEXT))) {
+    return {
+      ok: false,
+      error:
+        'The configured posting channel is unavailable or does not belong to this server. Update the server settings.',
+    };
+  }
   try {
     const messageId = await sendRosterToChannel(
       env,

@@ -23,6 +23,7 @@ import {
   buildAuthUrl,
   parseAppAuthPort,
   getStoredAccessToken,
+  getStoredRefreshToken,
   setStoredToken,
   clearStoredTokens,
 } from './auth';
@@ -409,6 +410,73 @@ describe('refreshAccessToken', () => {
     const result = await refreshAccessToken();
     expect(result).toBeNull();
     expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it.each([429, 500, 503])('preserves credentials after temporary HTTP %s', async (status) => {
+    setStoredToken(ACCESS_TOKEN_KEY, 'valid-access');
+    setStoredToken(REFRESH_TOKEN_KEY, 'retryable-refresh');
+    mockSessionStorage.removeItem.mockClear();
+    mockFetch.mockResolvedValueOnce({ ok: false, status });
+
+    await expect(refreshAccessToken()).resolves.toBeNull();
+    expect(getStoredAccessToken()).toBe('valid-access');
+    expect(getStoredRefreshToken()).toBe('retryable-refresh');
+    expect(mockSessionStorage.removeItem).not.toHaveBeenCalled();
+  });
+
+  it.each([new TypeError('Offline'), new DOMException('Timeout', 'AbortError')])(
+    'preserves credentials after a transport failure: %s',
+    async (error) => {
+      setStoredToken(ACCESS_TOKEN_KEY, 'valid-access');
+      setStoredToken(REFRESH_TOKEN_KEY, 'retryable-refresh');
+      mockFetch.mockRejectedValueOnce(error);
+      await expect(refreshAccessToken()).resolves.toBeNull();
+      expect(getStoredAccessToken()).toBe('valid-access');
+      expect(getStoredRefreshToken()).toBe('retryable-refresh');
+    },
+  );
+
+  it.each([null, {}, { access_token: 42 }, { access_token: 'ok', refresh_token: '' }])(
+    'rejects malformed success payloads without destroying credentials: %j',
+    async (payload) => {
+      setStoredToken(ACCESS_TOKEN_KEY, 'valid-access');
+      setStoredToken(REFRESH_TOKEN_KEY, 'retryable-refresh');
+      mockFetch.mockResolvedValueOnce({ ok: true, json: async () => payload });
+      await expect(refreshAccessToken()).resolves.toBeNull();
+      expect(getStoredAccessToken()).toBe('valid-access');
+      expect(getStoredRefreshToken()).toBe('retryable-refresh');
+    },
+  );
+
+  it('clears credentials for an explicit invalid_grant', async () => {
+    setStoredToken(ACCESS_TOKEN_KEY, 'expired-access');
+    setStoredToken(REFRESH_TOKEN_KEY, 'invalid-refresh');
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 400,
+      json: async () => ({ error: 'invalid_grant' }),
+    });
+    await expect(refreshAccessToken()).resolves.toBeNull();
+    expect(getStoredAccessToken()).toBe('');
+    expect(getStoredRefreshToken()).toBe('');
+  });
+
+  it('ignores an old refresh rejection after signing into another session', async () => {
+    setStoredToken(REFRESH_TOKEN_KEY, 'old-refresh');
+    let resolveRequest!: (value: Response) => void;
+    mockFetch.mockReturnValueOnce(
+      new Promise<Response>((resolve) => {
+        resolveRequest = resolve;
+      }),
+    );
+    const pending = refreshAccessToken();
+    clearStoredTokens();
+    setStoredToken(ACCESS_TOKEN_KEY, 'new-session');
+    setStoredToken(REFRESH_TOKEN_KEY, 'new-refresh');
+    resolveRequest({ ok: false, status: 401 } as Response);
+    await expect(pending).resolves.toBeNull();
+    expect(getStoredAccessToken()).toBe('new-session');
+    expect(getStoredRefreshToken()).toBe('new-refresh');
   });
 
   it('should exchange refresh token for a new access token', async () => {

@@ -17,7 +17,12 @@ import { onError, ErrorLink } from '@apollo/client/link/error';
 import { RetryLink } from '@apollo/client/link/retry';
 import { getOperationAST } from 'graphql';
 
-import { clearStoredTokens, refreshAccessToken } from './features/auth/auth';
+import {
+  clearStoredTokens,
+  getStoredAccessToken,
+  getStoredRefreshToken,
+  refreshAccessToken,
+} from './features/auth/auth';
 import { Logger, LogLevel } from './utils/logger';
 import {
   classifyRequestFailure,
@@ -33,35 +38,38 @@ const logger = new Logger({
 });
 
 export class EsoLogsClient {
-  private static readonly CACHE = new InMemoryCache({
-    typePolicies: {
-      Query: {
-        fields: {
-          gameData: {
-            merge(existing, incoming) {
-              // Shallow-merge so fields fetched by one query aren't discarded when
-              // a sibling query writes a different subtree of gameData.
-              return incoming && typeof incoming === 'object'
-                ? { ...existing, ...incoming }
-                : incoming;
+  private static createCache(): InMemoryCache {
+    return new InMemoryCache({
+      typePolicies: {
+        Query: {
+          fields: {
+            gameData: {
+              merge(existing, incoming) {
+                // Shallow-merge so fields fetched by one query aren't discarded when
+                // a sibling query writes a different subtree of gameData.
+                return incoming && typeof incoming === 'object'
+                  ? { ...existing, ...incoming }
+                  : incoming;
+              },
             },
-          },
-          reportData: {
-            merge(existing, incoming) {
-              // Shallow-merge so sibling reportData fields survive partial writes.
-              return incoming && typeof incoming === 'object'
-                ? { ...existing, ...incoming }
-                : incoming;
+            reportData: {
+              merge(existing, incoming) {
+                // Shallow-merge so sibling reportData fields survive partial writes.
+                return incoming && typeof incoming === 'object'
+                  ? { ...existing, ...incoming }
+                  : incoming;
+              },
             },
           },
         },
       },
-    },
-  });
+    });
+  }
 
   private accessToken: string;
   private clientApiProxyUrl: string;
   private client: ApolloClient;
+  private clientGeneration = 0;
 
   constructor(accessToken: string, clientApiProxyUrl: string) {
     this.accessToken = accessToken;
@@ -95,6 +103,7 @@ export class EsoLogsClient {
   }
 
   private createApolloClient(accessToken: string): ApolloClient {
+    const generation = this.clientGeneration;
     // Retry link: automatically retries requests that fail with HTTP 429 (rate limit)
     // or transient network errors (status 0 / no statusCode — CORS block, DNS failure,
     // dropped connection, etc.). Delays are deterministic, bounded, and honour
@@ -120,6 +129,7 @@ export class EsoLogsClient {
       const failure = classifyRequestFailure(error);
 
       if (failure.kind === 'authentication') {
+        if (generation !== this.clientGeneration) return;
         // Loop guard is PER-OPERATION, not client-wide: if THIS op was already
         // retried with a freshly refreshed token and still fails auth, the
         // refresh genuinely didn't help — clear tokens and stop. Concurrent ops
@@ -128,22 +138,29 @@ export class EsoLogsClient {
         // tripping a shared guard that wipes everyone's tokens (H2).
         if (operation.getContext().retriedAfterRefresh) {
           logger.error('Auth error persisted after token refresh — clearing tokens');
-          clearStoredTokens();
+          if (operation.getContext().headers?.Authorization === `Bearer ${this.accessToken}`) {
+            clearStoredTokens();
+          }
           return;
         }
 
         logger.warn('Authentication error detected - attempting to refresh token');
 
         // Create a new observable that will retry the request after refreshing the token
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        return new Observable((observer: any) => {
+        return new Observable((observer) => {
           let innerSub: { unsubscribe: () => void } | undefined;
+          let cancelled = false;
           // refreshAccessToken() dedupes concurrent callers via its shared
           // pendingRefreshPromise, so several ops that 401 at once all await the
           // SAME refresh instead of racing (and burning) the single-use token.
           refreshAccessToken()
             .then((newToken) => {
+              if (cancelled || generation !== this.clientGeneration) return;
               if (newToken) {
+                if (getStoredAccessToken() !== newToken) {
+                  observer.error(error);
+                  return;
+                }
                 // Update the operation context with the new token and mark it as
                 // retried, so a second auth failure on this op hits the guard
                 // above (clear tokens) rather than looping through refresh again.
@@ -165,15 +182,17 @@ export class EsoLogsClient {
                   complete: observer.complete.bind(observer),
                 });
               } else {
-                // Refresh failed, clear tokens and notify user
-                logger.error('Token refresh failed - user needs to re-authenticate');
-                clearStoredTokens();
+                // Refresh owns definitive invalidation. A temporary transport
+                // failure must leave the refresh credential available to retry.
                 observer.error(
-                  new Error('Your ESO Logs session has expired. Please log in again.'),
+                  getStoredRefreshToken()
+                    ? new Error('Unable to refresh your ESO Logs session. Please try again.')
+                    : new Error('Your ESO Logs session has expired. Please log in again.'),
                 );
               }
             })
             .catch((err) => {
+              if (cancelled || generation !== this.clientGeneration) return;
               logger.error('Error during token refresh', err);
               observer.error(err);
             });
@@ -182,6 +201,7 @@ export class EsoLogsClient {
           // while the refresh or forwarded request is in flight, tear down the
           // inner subscription.
           return () => {
+            cancelled = true;
             innerSub?.unsubscribe();
           };
         });
@@ -239,7 +259,7 @@ export class EsoLogsClient {
     return new ApolloClient({
       // retryLink must come first so it intercepts 429s before errorLink logs them
       link: from([retryLink, errorLink, authLink, customHttpLink]),
-      cache: EsoLogsClient.CACHE,
+      cache: EsoLogsClient.createCache(),
     });
   }
 
@@ -247,10 +267,11 @@ export class EsoLogsClient {
    * Updates the access token and recreates the Apollo client
    */
   public updateAccessToken(newAccessToken: string): void {
+    this.clientGeneration += 1;
+    this.client.stop();
     this.accessToken = newAccessToken;
-    // Clear cached data from the previous session to avoid leaking stale
-    // query results across different user identities.
-    EsoLogsClient.CACHE.reset();
+    // A separate cache prevents even a late response from an old client from
+    // publishing private results into the next session.
     this.client = this.createApolloClient(newAccessToken);
   }
 

@@ -17,27 +17,20 @@ interface EsoLogsClientContextType {
 
 export const EsoLogsClientContext = createContext<EsoLogsClientContextType | undefined>(undefined);
 
-// Read the initial token once at module level so the first render is already
-// synchronised with AuthContext (which also reads from tab-scoped storage). This
-// eliminates the one-frame lag where AuthContext.isLoggedIn=true but
-// EsoLogsClientContext.isLoggedIn=false, which caused visible layout shifts.
-const initialToken = getStoredAccessToken();
-
 // Proxy URL for public /api/v2/client queries — routes through the Cloudflare
 // Worker so the server-side OAuth secret is never exposed to the browser.
 // (Same-origin in dev via the Vite proxy; see getRosterHubBaseUrl.)
 const CLIENT_API_PROXY_URL = `${getRosterHubBaseUrl()}/graphql`;
 
 export const EsoLogsClientProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(!!initialToken);
   const logger = useLogger('EsoLogsClient');
-
-  // We want a singleton here - create client once and update token via methods
-
-  const client = useMemo(() => {
+  // Read credentials on each provider mount, and keep one wrapper for its lifetime.
+  const [client] = useState(() => {
     logger.info('Creating new EsoLogsClient instance');
-    return new EsoLogsClient(initialToken, CLIENT_API_PROXY_URL);
-  }, [logger]);
+    return new EsoLogsClient(getStoredAccessToken(), CLIENT_API_PROXY_URL);
+  });
+  const [isLoggedIn, setIsLoggedIn] = useState(() => !!client.getAccessToken());
+  const [apolloClient, setApolloClient] = useState(() => client.getClient());
 
   // Method to set auth token from AuthContext
   const setAuthToken = useCallback(
@@ -50,6 +43,7 @@ export const EsoLogsClientProvider: React.FC<{ children: ReactNode }> = ({ child
         if (client.getAccessToken() !== token) {
           logger.info('Updating EsoLogsClient access token');
           client.updateAccessToken(token);
+          setApolloClient(client.getClient());
           addBreadcrumb('Auth: EsoLogsClient token updated', 'auth', {
             tokenPresent: true,
           });
@@ -61,6 +55,7 @@ export const EsoLogsClientProvider: React.FC<{ children: ReactNode }> = ({ child
         // Bearer and the cache keeps the previous user's private results.
         if (client.getAccessToken() !== '') {
           client.updateAccessToken('');
+          setApolloClient(client.getClient());
           void client.clearStore().catch((error: unknown) => {
             logger.error(
               'Failed to clear EsoLogsClient cache after token removal',
@@ -82,6 +77,7 @@ export const EsoLogsClientProvider: React.FC<{ children: ReactNode }> = ({ child
     logger.info('Clearing EsoLogsClient access token');
     setIsLoggedIn(false);
     client.updateAccessToken('');
+    setApolloClient(client.getClient());
     void client.clearStore().catch((error: unknown) => {
       logger.error(
         'Failed to clear EsoLogsClient cache during logout',
@@ -113,7 +109,7 @@ export const EsoLogsClientProvider: React.FC<{ children: ReactNode }> = ({ child
 
   return (
     <EsoLogsClientContext.Provider value={contextValue}>
-      {client ? <ApolloProvider client={client.getClient()}> {children}</ApolloProvider> : children}
+      <ApolloProvider client={apolloClient}>{children}</ApolloProvider>
     </EsoLogsClientContext.Provider>
   );
 };

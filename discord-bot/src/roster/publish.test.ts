@@ -5,6 +5,7 @@ import {
   cleanupUncommittedDiscordMutation,
   finishPendingMessageCleanup,
   mintDirectRosterId,
+  publishDirect,
   refreshRoster,
   resolvePublishTarget,
   summarizeRefreshResults,
@@ -34,7 +35,7 @@ vi.mock('../discord.js', async () => {
 const mapping: RosterMapping = {
   rosterId: 'roster-1',
   guildId: 'guild-1',
-  channelId: 'channel-1',
+  channelId: '666666666666666666',
   messageId: 'message-current',
   cleanupPendingMessageIds: ['message-old-1', 'message-old-2'],
   ownerUserId: 'owner-1',
@@ -149,10 +150,17 @@ describe('mintDirectRosterId', () => {
 describe('roster publish transaction safeguards', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () =>
+        Response.json([{ id: mapping.channelId, guild_id: mapping.guildId, type: 0 }]),
+      ),
+    );
     vi.spyOn(console, 'error').mockImplementation(() => undefined);
   });
 
   afterEach(() => {
+    vi.unstubAllGlobals();
     vi.restoreAllMocks();
   });
 
@@ -195,14 +203,14 @@ describe('roster publish transaction safeguards', () => {
 
     await cleanupUncommittedDiscordMutation(env, {
       ok: true,
-      channelId: 'channel-1',
+      channelId: '666666666666666666',
       messageId: 'message-new-1',
       postedMessageIds: ['message-new-1', 'message-new-2'],
     });
 
     expect(discordMocks.deleteMessage.mock.calls).toEqual([
-      [env, 'channel-1', 'message-new-1'],
-      [env, 'channel-1', 'message-new-2'],
+      [env, '666666666666666666', 'message-new-1'],
+      [env, '666666666666666666', 'message-new-2'],
     ]);
     expect(discordMocks.deleteChannel).not.toHaveBeenCalled();
   });
@@ -251,11 +259,12 @@ describe('direct roster refresh', () => {
     vi.restoreAllMocks();
   });
 
-  it('refreshes entirely from KV without requesting the roster Hub or rescanning mappings', async () => {
+  it('refreshes from KV with live Discord validation without requesting the roster Hub or rescanning mappings', async () => {
     const rosterData = await encodeRoster({ v: 3 });
     const { directRosterId, env, list } = makeRefreshEnv(rosterData);
-    const hubFetch = vi.fn(() => {
-      throw new Error('direct refresh must not call the roster Hub');
+    const hubFetch = vi.fn(async (url: string) => {
+      expect(url).toContain('discord.com/api/v10/guilds/guild-1/channels');
+      return Response.json([{ id: mapping.channelId, guild_id: mapping.guildId, type: 0 }]);
     });
     vi.stubGlobal('fetch', hubFetch);
     discordMocks.editMessage.mockResolvedValue({ id: 'message-current' });
@@ -268,7 +277,7 @@ describe('direct roster refresh', () => {
       refreshedCount: 1,
       failedCount: 0,
     });
-    expect(hubFetch).not.toHaveBeenCalled();
+    expect(hubFetch).toHaveBeenCalled();
     expect(list).toHaveBeenCalledOnce();
     expect(discordMocks.editMessage).toHaveBeenCalledOnce();
   });
@@ -282,8 +291,9 @@ describe('direct roster refresh', () => {
     );
     vi.stubGlobal(
       'fetch',
-      vi.fn(() => {
-        throw new Error('direct refresh must not call the roster Hub');
+      vi.fn(async (url: string) => {
+        expect(url).toContain('discord.com/api/v10/guilds/guild-1/channels');
+        return Response.json([{ id: mapping.channelId, guild_id: mapping.guildId, type: 0 }]);
       }),
     );
     discordMocks.editMessage.mockRejectedValue(
@@ -308,4 +318,133 @@ describe('direct roster refresh', () => {
       messageId: 'roster-message',
     });
   });
+});
+
+describe('configured publication destination authorization', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+  });
+
+  it('publishes to a live text channel belonging to the requested server', async () => {
+    vi.clearAllMocks();
+    const channelId = '987654321098765432';
+    const rosterData = await encodeRoster({ v: 3 });
+    const { env } = makeRefreshEnv(
+      rosterData,
+      baseConfig({
+        guildId: 'guild-1',
+        defaultChannelId: channelId,
+        defaultCategoryId: '123456789012345678',
+      }),
+    );
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => Response.json([{ id: channelId, guild_id: 'guild-1', type: 0 }])),
+    );
+    discordMocks.sendMessage.mockResolvedValue({ id: 'new-roster-message' });
+    const result = await publishDirect(env, {
+      guildId: 'guild-1',
+      title: 'Test roster',
+      roster_data: rosterData,
+    });
+    expect(result.ok).toBe(true);
+    expect(discordMocks.sendMessage).toHaveBeenCalled();
+    expect(env.ROSTERS.put).toHaveBeenCalled();
+  });
+
+  it.each(['foreign', 'deleted', 'wrong-type', 'inaccessible'])(
+    'rejects a %s channel before sending messages or persisting a roster',
+    async (scenario) => {
+      vi.clearAllMocks();
+      const channelId = '987654321098765432';
+      const rosterData = await encodeRoster({ v: 3 });
+      const { env } = makeRefreshEnv(
+        rosterData,
+        baseConfig({
+          guildId: 'guild-1',
+          defaultChannelId: channelId,
+          defaultCategoryId: '123456789012345678',
+        }),
+      );
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(async () =>
+          scenario === 'inaccessible'
+            ? new Response('Forbidden', { status: 403 })
+            : Response.json(
+                scenario === 'deleted'
+                  ? []
+                  : [
+                      {
+                        id: channelId,
+                        guild_id: scenario === 'foreign' ? 'guild-2' : 'guild-1',
+                        type: scenario === 'wrong-type' ? 4 : 0,
+                      },
+                    ],
+              ),
+        ),
+      );
+
+      const result = await publishDirect(env, {
+        guildId: 'guild-1',
+        title: 'Test roster',
+        roster_data: rosterData,
+      });
+
+      expect(result.ok).toBe(false);
+      expect(result.error).toContain('configured posting channel');
+      expect(discordMocks.sendMessage).not.toHaveBeenCalled();
+      expect(discordMocks.createChannel).not.toHaveBeenCalled();
+      expect(env.ROSTERS.put).not.toHaveBeenCalled();
+    },
+  );
+});
+
+describe('persisted roster destination authorization', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+  });
+
+  it.each([
+    ['foreign', true],
+    ['foreign', false],
+    ['stale', true],
+    ['stale', false],
+  ] as const)(
+    'blocks refresh and cleanup mutations for a %s saved channel (pending cleanup: %s)',
+    async (scenario, pendingCleanup) => {
+      vi.clearAllMocks();
+      const rosterData = await encodeRoster({ v: 3 });
+      const { env, directRosterId, directMapping, values } = makeRefreshEnv(rosterData);
+      if (!pendingCleanup) {
+        values.set(
+          `roster-map:${mapping.guildId}:${directRosterId}`,
+          JSON.stringify({ ...directMapping, cleanupPendingMessageIds: undefined }),
+        );
+      }
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(async () =>
+          Response.json(
+            scenario === 'stale'
+              ? []
+              : [{ id: mapping.channelId, guild_id: 'foreign-guild', type: 0 }],
+          ),
+        ),
+      );
+      const result = await refreshRoster(env, directRosterId, mapping.guildId);
+      expect(result.ok).toBe(false);
+      expect(result.failedCount).toBe(1);
+      const cleanup = await finishPendingMessageCleanup(env, mapping);
+      expect(cleanup.ok).toBe(false);
+      expect(discordMocks.editMessage).not.toHaveBeenCalled();
+      expect(discordMocks.sendMessage).not.toHaveBeenCalled();
+      expect(discordMocks.deleteMessage).not.toHaveBeenCalled();
+      expect(discordMocks.deleteChannel).not.toHaveBeenCalled();
+      expect(discordMocks.createChannel).not.toHaveBeenCalled();
+      expect(env.ROSTERS.put).not.toHaveBeenCalled();
+    },
+  );
 });

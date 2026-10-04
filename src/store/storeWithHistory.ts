@@ -5,6 +5,7 @@ import {
   Action,
   ThunkDispatch,
   type Reducer,
+  type Middleware,
 } from '@reduxjs/toolkit';
 import {
   persistStore,
@@ -20,6 +21,7 @@ import {
 import storage from 'redux-persist/lib/storage';
 
 import type { EsoLogsClient } from '@/esologsClient';
+import { AUTH_CREDENTIALS_CLEARED_EVENT } from '@/features/auth/authEvents';
 
 // Type-only import — erased at build time, so the build-editor slice's data
 // graph (class-mastery tables, gear oracle, ESO static data) stays out of the
@@ -190,7 +192,14 @@ let combinedReducer = staticRootReducer as unknown as Reducer<RootState>;
  * swaps only the inner combineReducers, and persistence keeps working.
  * Regression-tested in storeWithHistory.injectReducer.test.ts.
  */
-const dynamicRootReducer: Reducer<RootState> = (state, action) => combinedReducer(state, action);
+const SESSION_CLEARED = 'session/cleared';
+const SESSION_PERSISTENCE_RESUMED = 'session/persistenceResumed';
+const dynamicRootReducer: Reducer<RootState> = (state, action) => {
+  const nextState = combinedReducer(action.type === SESSION_CLEARED ? undefined : state, action);
+  // Queue the clean/current state after persistence resumes, even if no user
+  // action follows the reset. Keep the same persistReducer closure.
+  return action.type === SESSION_PERSISTENCE_RESUMED ? { ...nextState } : nextState;
+};
 
 const persistedReducer = persistReducer<RootState>(persistConfig, dynamicRootReducer);
 
@@ -213,6 +222,31 @@ export type AppThunk<ReturnType = void> = ThunkAction<
 
 // Configure store with thunk extra argument
 const createStoreWithClient = (esoLogsClient: EsoLogsClient): AppStore => {
+  let sessionGeneration = 0;
+  const sessionBoundary: Middleware = () => (next) => (action) => {
+    if (typeof action === 'function') {
+      const generation = sessionGeneration;
+      const thunk = action as AppThunk<unknown>;
+      return next(((dispatch, getState, extra) =>
+        thunk(
+          ((pendingAction: Parameters<AppDispatch>[0]) =>
+            generation === sessionGeneration
+              ? dispatch(pendingAction)
+              : pendingAction) as AppDispatch,
+          getState,
+          extra,
+        )) as AppThunk<unknown>);
+    }
+    if (
+      typeof action === 'object' &&
+      action !== null &&
+      'type' in action &&
+      action.type === SESSION_CLEARED
+    ) {
+      sessionGeneration += 1;
+    }
+    return next(action);
+  };
   return configureStore({
     reducer: persistedReducer,
     middleware: (getDefaultMiddleware) =>
@@ -231,7 +265,7 @@ const createStoreWithClient = (esoLogsClient: EsoLogsClient): AppStore => {
           // Increase warning threshold for better performance
           warnAfter: 128,
         },
-      }),
+      }).prepend(sessionBoundary),
     devTools: process.env.NODE_ENV !== 'production' && {
       name: 'ESO Toolkit',
       trace: false,
@@ -286,5 +320,31 @@ export const injectReducer = <K extends keyof InjectedState>(
 };
 
 export const persistor = persistStore(store);
+
+let resetGeneration = 0;
+
+/** Erase live state, queued writes and any pending startup rehydration together. */
+export const clearSessionState = async (): Promise<void> => {
+  const generation = ++resetGeneration;
+  persistor.pause();
+  store.dispatch({ type: SESSION_CLEARED });
+  // PURGE immediately invalidates a pending REHYDRATE. Flush drains any old
+  // persistoid writes; the final purge removes even a delayed storage write.
+  await Promise.all([persistor.flush(), persistor.purge()]);
+  if (generation !== resetGeneration) return;
+  await persistor.purge();
+  if (generation !== resetGeneration) return;
+  persistor.persist();
+  store.dispatch({ type: SESSION_PERSISTENCE_RESUMED });
+};
+
+if (typeof window !== 'undefined') {
+  window.addEventListener(AUTH_CREDENTIALS_CLEARED_EVENT, () => {
+    void clearSessionState().catch(() => {
+      // Live state is already erased. Leave persistence paused if browser
+      // storage fails, so the old session cannot be written back.
+    });
+  });
+}
 
 export default store;

@@ -1,11 +1,12 @@
 import { ThemeProvider, createTheme } from '@mui/material/styles';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 
 import { useInactiveMarkAreas, usePhaseMarkLines } from '../../../hooks/useEChartsAnnotations';
 import { useEChartsTheme } from '../../../hooks/useEChartsTheme';
 import { useRoleColors } from '../../../hooks/useRoleColors';
 import type { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
 import type { PlayerPenetrationData } from '../../../workers/calculations/CalculatePenetration';
+import { PlayerDamageReductionDetails } from '../damage_reduction/PlayerDamageReductionDetails';
 
 import { PlayerPenetrationDetailsView } from './PlayerPenetrationDetailsView';
 
@@ -100,6 +101,65 @@ describe('PlayerPenetrationDetailsView availability semantics', () => {
     expect(screen.getAllByLabelText('Active: 0')).not.toHaveLength(0);
     expect(screen.getAllByLabelText('At Cap: 0%')).not.toHaveLength(0);
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
+  });
+
+  it('exposes penetration samples with player identity and units without using the chart', () => {
+    renderView(
+      createPenetrationData({
+        dataPoints: [{ timestamp: 1000, relativeTime: 1, penetration: 18200 }],
+      }),
+    );
+    fireEvent.click(
+      screen.getByRole('button', { name: 'View data table: Test Player penetration over time' }),
+    );
+    const table = within(screen.getByRole('table', { name: 'Test Player penetration over time' }));
+    expect(table.getByRole('columnheader', { name: 'Fight time (seconds)' })).toBeInTheDocument();
+    expect(table.getByRole('columnheader', { name: 'Penetration (points)' })).toBeInTheDocument();
+    expect(table.getByRole('row', { name: '1 18,200' })).toBeInTheDocument();
+  });
+
+  it('exposes both damage reduction series with player identity and percentage units', () => {
+    render(
+      <ThemeProvider theme={createTheme()}>
+        <PlayerDamageReductionDetails
+          id="100"
+          name="Test Player"
+          player={player}
+          expanded
+          onExpandChange={jest.fn()}
+          damageReductionData={{
+            playerId: 100,
+            playerName: 'Test Player',
+            staticResistance: 16500,
+            maxDynamicResistance: 16500,
+            averageDynamicResistance: 16500,
+            damageReductionSources: [],
+            dataPoints: [
+              {
+                timestamp: 1000,
+                relativeTime: 1,
+                damageReduction: 50,
+                totalResistance: 33000,
+                staticResistance: 16500,
+                dynamicResistance: 16500,
+              },
+            ],
+          }}
+        />
+      </ThemeProvider>,
+    );
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'View data table: Test Player damage reduction over time',
+      }),
+    );
+    const table = within(
+      screen.getByRole('table', { name: 'Test Player damage reduction over time' }),
+    );
+    expect(table.getByRole('columnheader', { name: 'Fight time (seconds)' })).toBeInTheDocument();
+    expect(table.getByRole('columnheader', { name: 'Damage reduction (%)' })).toBeInTheDocument();
+    expect(table.getByRole('columnheader', { name: 'Static reduction (%)' })).toBeInTheDocument();
+    expect(table.getByRole('row', { name: '1 50 25' })).toBeInTheDocument();
   });
 
   it('shows an explicit unavailable state without a numeric grade when no samples exist', () => {

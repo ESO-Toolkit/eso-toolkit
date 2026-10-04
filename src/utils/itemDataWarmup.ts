@@ -1,63 +1,23 @@
 /**
- * Gear item-data warm-up scheduling.
- *
- * The loadout gear data is big: `itemIdMap.json` is ~12 MB decoded, the icon
- * map ~3.8 MB, and the set-collections payload another ~1.9 MB that rides along
- * in the itemIdMap chunk — roughly 1.3 MB over the wire compressed, and ~18 MB
- * of JSON to parse on the main thread. Warming it in the background makes the
- * gear-heavy pages (build editor, /bv, roster tools, report player cards) feel
- * instant, which is why the entry module schedules it on idle.
- *
- * What it must NOT do is spend that budget on a page that never touches gear.
- * `/latest-reports` is the clearest case: a plain report list that was paying
- * the full 1.3 MB download plus several hundred ms of parse on every visit,
- * landing right on top of its own first render.
- *
- * So the warm-up is gated by path. The gate is a DENY list, not an allow list:
- * a route that isn't listed keeps the previous always-warm behaviour, so adding
- * a new gear page can never silently lose the optimisation. Skipping is always
- * safe regardless — every consumer of this data (`preloadItemData()` /
- * `preloadIconData()`) awaits its own load and retries, so the warm-up is a
- * latency optimisation and never a correctness dependency.
+ * Warm large gear datasets only on known gear-consuming routes. New routes
+ * opt in here; every consumer still awaits its own data, so warming is only
+ * a latency optimisation and never a correctness dependency.
  */
-
-/**
- * Route prefixes whose pages never read gear item data. Compared against
- * `location.pathname` with `startsWith`, so `/logs` also covers `/logs/foo`.
- */
-const NON_GEAR_ROUTE_PREFIXES: ReadonlyArray<string> = [
-  '/latest-reports',
-  '/my-reports',
-  '/logs',
-  '/leaderboards',
-  '/calculator',
-  '/text-editor',
-  '/ultimate-simulator',
-  '/scribing-simulator',
-  '/about',
-  '/privacy',
-  '/privacy-settings',
-  '/whats-new',
-  '/whoami',
-  '/login',
-  '/banned',
-  '/docs/calculations',
-  '/docs/discord-roster-bot',
-  '/discord-setup',
-  '/discord-server-config',
-  '/oauth-redirect',
-  '/discord-oauth-redirect',
-  '/app-auth',
+const GEAR_ROUTE_PREFIXES: ReadonlyArray<string> = [
+  '/build-editor',
+  '/loadout-manager',
+  '/bv',
+  '/b',
+  '/roster-builder',
+  '/rv',
+  '/report',
+  '/sample-report',
+  '/gear-sets',
 ];
 
-/**
- * Whether the gear item data is worth warming for `pathname`.
- *
- * Exported for tests and for the route-change hook; see the deny-list rationale
- * in the module doc comment.
- */
+/** Whether this route can use the large gear item and icon caches. */
 export function shouldWarmItemData(pathname: string): boolean {
-  return !NON_GEAR_ROUTE_PREFIXES.some(
+  return GEAR_ROUTE_PREFIXES.some(
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
   );
 }
