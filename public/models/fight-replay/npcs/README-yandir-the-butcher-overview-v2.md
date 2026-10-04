@@ -7,6 +7,14 @@ this prototype; this note is
 not a claim that Elder Scrolls Online intellectual property is freely licensed.
 
 - Reference page: <https://esomodelviewer.com/characters/post/82-yandir-the-butcher>
+- Skeletal derivative: `yandir-the-butcher-rigged-v1.glb` reuses this optimized mesh,
+  UVs, embedded JPEG, rest bounds, and orientation under the same project authorization.
+  The CPU builder `tools/fight-replay-models/yandir-rigged-v1.py` adds a 17-bone skin
+  and authored two-second `idle`, `walk`, and `cast` clips (45,000 triangles,
+  29,613 exported vertices, 2,372,188 bytes). It does not extract client animation
+  or use UniMate/ML animation generation. The scene root stays stationary;
+  replay logs supply translation and drive walk phase by traveled distance.
+  This static asset remains the loading/failure fallback.
 - Encounter: Yandir the Butcher, Kyne's Aegis trial
 - Geometry: **unchanged from v1.** Sourced from the reviewed 90,891-triangle
   `yandir-overview-polish-v17-body-only.glb` produced by Tencent Hunyuan3D-2mv (upstream commit
