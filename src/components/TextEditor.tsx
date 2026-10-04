@@ -16,6 +16,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { HexColorPicker } from 'react-colorful';
 
 import { usePageTitle } from '@/hooks/useDocumentTitle';
+import { getBaseUrl } from '@/utils/envUtils';
 
 import '../styles/texteditor-theme-bridge.css';
 
@@ -378,7 +379,7 @@ const PreviewArea = styled(Box)(({ theme }) => ({
   padding: '20px',
   borderRadius: '12px',
   minHeight: '120px',
-  backgroundImage: `url(${theme.palette.mode === 'dark' ? `${import.meta.env.BASE_URL}text-editor/text-editor-bg-dark.jpg` : `${import.meta.env.BASE_URL}text-editor/text-editor-bg-light.jpg`})`,
+  backgroundImage: `url(${theme.palette.mode === 'dark' ? `${getBaseUrl()}text-editor/text-editor-bg-dark.jpg` : `${getBaseUrl()}text-editor/text-editor-bg-light.jpg`})`,
   backgroundSize: 'cover',
   backgroundPosition: 'center',
   backgroundRepeat: 'no-repeat',
@@ -511,6 +512,7 @@ export const TextEditor: React.FC = () => {
   const editorRef = useRef<HTMLDivElement>(null);
   const savedRangeRef = useRef<Range | null>(null);
   const colorPickerRef = useRef<HTMLDivElement>(null);
+  const colorPickerTriggerRef = useRef<HTMLElement | null>(null);
 
   // Calculate optimal position for color picker
   const calculateOptimalPosition = useCallback((anchorElement: Element) => {
@@ -628,12 +630,10 @@ export const TextEditor: React.FC = () => {
         return;
       }
 
-      // Restore the range as the active selection
+      // Focus first: moving focus can change the browser selection.
+      editorRef.current.focus();
       sel.removeAllRanges();
       sel.addRange(rangeToUse);
-
-      // Ensure editor has focus for execCommand to work
-      editorRef.current.focus();
 
       // Use native browser command — handles span splitting/merging automatically
       // and integrates with browser's undo stack
@@ -663,6 +663,17 @@ export const TextEditor: React.FC = () => {
     handleInput();
   }, [handleInput]);
 
+  const closeColorPicker = useCallback((): void => {
+    setShowColorPicker(false);
+    setColorPickerAnchor(null);
+    setSelectedTextInfo(null);
+    setPreviewColor('#ffffff');
+    savedRangeRef.current = null;
+    // Return to the control that opened the dialog, without moving an active
+    // text selection back into the editor where the next key could replace it.
+    colorPickerTriggerRef.current?.focus();
+  }, []);
+
   // Apply the selected color from the color picker
   const applyPreviewColor = useCallback((): void => {
     if (!savedRangeRef.current) {
@@ -672,12 +683,12 @@ export const TextEditor: React.FC = () => {
     const colorHex = previewColor.replace('#', '').toUpperCase();
     applyColorToEditor(colorHex, savedRangeRef.current);
     closeColorPicker();
-  }, [previewColor, applyColorToEditor]);
+  }, [previewColor, applyColorToEditor, closeColorPicker]);
 
   // Cancel color selection — just close the picker
   const cancelColorSelection = useCallback((): void => {
     closeColorPicker();
-  }, []);
+  }, [closeColorPicker]);
 
   // Get clean preview text (remove color formatting codes)
   const getCleanPreviewText = (): string => {
@@ -704,24 +715,7 @@ export const TextEditor: React.FC = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, [showColorPicker, colorPickerAnchor, calculateOptimalPosition]);
 
-  // Keyboard navigation for color picker
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent): void => {
-      if (showColorPicker) {
-        if (event.key === 'Escape') {
-          cancelColorSelection();
-        } else if (event.key === 'Enter') {
-          applyPreviewColor();
-        }
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [showColorPicker, applyPreviewColor, cancelColorSelection]);
-
-  // Move focus into the color picker when it opens (non-modal dialog);
-  // focus is restored to the editor in closeColorPicker.
+  // Move focus into the non-modal dialog; dismissal returns to its trigger.
   useEffect(() => {
     if (showColorPicker) {
       colorPickerRef.current?.focus();
@@ -753,6 +747,7 @@ export const TextEditor: React.FC = () => {
       }
 
       const range = sel.getRangeAt(0).cloneRange();
+      if (!editorRef.current?.contains(range.commonAncestorContainer)) return;
       savedRangeRef.current = range;
       const selectedText = sel.toString();
 
@@ -772,6 +767,7 @@ export const TextEditor: React.FC = () => {
       setPreviewColor(defaultColor);
 
       const anchorElement = event.currentTarget as HTMLElement;
+      colorPickerTriggerRef.current = anchorElement;
       setColorPickerAnchor(anchorElement);
       setColorPickerPosition(calculateOptimalPosition(anchorElement));
       setShowColorPicker(true);
@@ -846,16 +842,6 @@ export const TextEditor: React.FC = () => {
       };
     }
   }, [isDragging, dragOffset, handleDrag]);
-
-  // Close color picker
-  const closeColorPicker = (): void => {
-    setShowColorPicker(false);
-    setColorPickerAnchor(null);
-    setSelectedTextInfo(null);
-    setPreviewColor('#ffffff');
-    savedRangeRef.current = null;
-    setTimeout(() => editorRef.current?.focus(), 10);
-  };
 
   const handleQuickColorClick = (colorHex: string): void => {
     applyColorToEditor(colorHex);
@@ -1081,6 +1067,9 @@ export const TextEditor: React.FC = () => {
           <WysiwygEditor
             ref={editorRef}
             contentEditable
+            role="textbox"
+            aria-label="ESO formatted text"
+            aria-multiline="true"
             suppressContentEditableWarning
             onInput={handleInput}
             onPaste={handlePaste}
@@ -1184,6 +1173,22 @@ export const TextEditor: React.FC = () => {
                   }}
                   role="dialog"
                   aria-labelledby="color-picker-title"
+                  onKeyDown={(event: React.KeyboardEvent<HTMLDivElement>) => {
+                    if (event.key === 'Escape') {
+                      event.preventDefault();
+                      event.stopPropagation();
+                      cancelColorSelection();
+                    } else if (
+                      event.key === 'Enter' &&
+                      !(event.target as HTMLElement).closest('button')
+                    ) {
+                      // Prevent the same Enter from editing the selected text.
+                      // Buttons retain native keyboard activation (including Cancel).
+                      event.preventDefault();
+                      event.stopPropagation();
+                      applyPreviewColor();
+                    }
+                  }}
                   onMouseDown={(e: React.MouseEvent<HTMLDivElement>) => {
                     // Don't start drag if clicking on the hex input
                     if ((e.target as HTMLElement).tagName === 'INPUT') {
@@ -1358,10 +1363,6 @@ export const TextEditor: React.FC = () => {
                         boxSizing: 'border-box',
                       }}
                       aria-label="Hex color input"
-                      onKeyDown={(e) => {
-                        // Allow all keyboard input for hex color input
-                        e.stopPropagation();
-                      }}
                       onPaste={(e) => {
                         // Allow pasting for hex color input
                         e.stopPropagation();

@@ -393,8 +393,10 @@ export const PrivacyPolicyPage: React.FC = () => {
               locally.
             </Typography>
             <Typography component="li" variant="body2" sx={{ color: 'text.secondary' }}>
-              <strong>Right to erasure (Article 17):</strong> Use the &quot;Delete All Data&quot;
-              button below to remove all application data from your browser.
+              <strong>Right to erasure (Article 17):</strong> Use the &quot;Delete data from this
+              browser&quot; button below to remove ESO Toolkit data saved in this browser and sign
+              out. Published or shared server content is managed separately through the feature
+              where you published it.
             </Typography>
             <Typography component="li" variant="body2" sx={{ color: 'text.secondary' }}>
               <strong>Right to data portability (Article 20):</strong> Use the &quot;Export
@@ -593,8 +595,9 @@ export const PrivacyPolicyPage: React.FC = () => {
 
           {deleteComplete && (
             <Alert severity="info" sx={{ mb: 3 }}>
-              All application data has been deleted. You will be prompted for consent preferences on
-              your next visit. You may need to log in again.
+              ESO Toolkit data saved in this browser has been deleted and you have been signed out.
+              Published or shared content on the server has not been deleted. You will be prompted
+              for consent preferences on your next visit.
             </Alert>
           )}
 
@@ -622,7 +625,7 @@ export const PrivacyPolicyPage: React.FC = () => {
                 '&:hover': { transform: 'translateY(-1px)' },
               }}
             >
-              Delete All Data
+              Delete data from this browser
             </Button>
           </Stack>
         </Paper>
@@ -726,33 +729,37 @@ export const PrivacyPolicyPage: React.FC = () => {
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={showDeleteDialog} onClose={() => setShowDeleteDialog(false)}>
-        <DialogTitle>Delete All Application Data?</DialogTitle>
+        <DialogTitle>Delete data from this browser?</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            This will permanently remove all application data from your browser, including:
+            This will remove ESO Toolkit data saved in this browser and sign you out, including:
           </DialogContentText>
           <Box component="ul" sx={{ pl: 3, mt: 1 }}>
             <Typography component="li" variant="body2">
               Your UI preferences and theme settings
             </Typography>
             <Typography component="li" variant="body2">
-              Saved loadouts and dashboard configuration
+              Locally saved builds, loadouts, rosters, and dashboard configuration
             </Typography>
             <Typography component="li" variant="body2">
-              Authentication tokens (you will need to log in again)
+              Sign-in credentials saved in this browser
             </Typography>
             <Typography component="li" variant="body2">
               Your consent preferences
             </Typography>
           </Box>
+          <DialogContentText sx={{ mt: 2 }}>
+            Published or shared content stored on the server is not deleted by this action. Manage
+            that content through the feature where you published it.
+          </DialogContentText>
           <DialogContentText sx={{ mt: 2, fontWeight: 600 }}>
-            This action cannot be undone.
+            Deleting data from this browser cannot be undone.
           </DialogContentText>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setShowDeleteDialog(false)}>Cancel</Button>
           <Button onClick={handleDeleteAllData} color="error" variant="contained">
-            Delete Everything
+            Delete data from this browser
           </Button>
         </DialogActions>
       </Dialog>

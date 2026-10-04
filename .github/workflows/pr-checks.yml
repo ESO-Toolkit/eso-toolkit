@@ -64,11 +64,7 @@ jobs:
       - uses: ./.github/actions/setup-node-with-cache
       - name: Lint
         run: npm run lint
-      # three.js / R3F compile shaders from these deps at runtime — a vulnerable prod dep is
-      # RCE-adjacent for the replay. Advisory (not gating): the registry is unreachable from some
-      # CI networks, and a network timeout must not fail an otherwise-green PR.
       - name: Audit production dependencies
-        continue-on-error: true
         run: npm audit --omit=dev --audit-level=high
 
   format:
@@ -153,6 +149,15 @@ jobs:
         run: npm run typecheck
       - name: Typecheck tests
         run: npm run typecheck:test
+      - name: Install Roster Hub API dependencies
+        run: npm ci --ignore-scripts
+        working-directory: roster-hub-api
+      - name: Typecheck Roster Hub API
+        run: npm run typecheck
+        working-directory: roster-hub-api
+      - name: Audit Roster Hub API production dependencies
+        run: npm audit --omit=dev --audit-level=high
+        working-directory: roster-hub-api
       - name: Check no ESO-Hub references
         run: npm run check:no-esohub
       - name: Check tooltip provenance

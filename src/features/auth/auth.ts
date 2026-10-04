@@ -1,6 +1,10 @@
 import { getBaseUrl } from '../../utils/envUtils';
 import { Logger, LogLevel } from '../../utils/logger';
 
+import { AUTH_CREDENTIALS_CLEARED_EVENT } from './authEvents';
+
+export { AUTH_CREDENTIALS_CLEARED_EVENT } from './authEvents';
+
 // Create a logger instance for auth operations
 const logger = new Logger({
   level: LogLevel.ERROR,
@@ -43,8 +47,6 @@ export const ACCESS_TOKEN_KEY = 'access_token';
 export const REFRESH_TOKEN_KEY = 'refresh_token';
 
 const volatileTokens = new Map<string, string>();
-
-export const AUTH_CREDENTIALS_CLEARED_EVENT = 'auth-credentials-cleared';
 
 // Credential erasure is a generation boundary. A refresh that began in an
 // earlier generation must never be allowed to restore credentials afterward.
@@ -368,12 +370,27 @@ export async function refreshAccessToken(): Promise<string | null> {
 
       if (!response.ok) {
         logger.error('Token refresh failed', undefined, { status: response.status });
-        // Clear invalid tokens
-        clearStoredTokens();
+        // Network outages and rate limits do not invalidate credentials. Only
+        // an explicit credential rejection may erase this same session.
+        let invalidGrant = false;
+        if (response.status === 400) {
+          const errorBody: unknown = await response.json();
+          invalidGrant =
+            typeof errorBody === 'object' &&
+            errorBody !== null &&
+            'error' in errorBody &&
+            errorBody.error === 'invalid_grant';
+        }
+        if (
+          credentialGeneration === refreshGeneration &&
+          (response.status === 401 || invalidGrant)
+        ) {
+          clearStoredTokens();
+        }
         return null;
       }
 
-      const data = await response.json();
+      const data: unknown = await response.json();
 
       // Explicit logout/privacy erasure wins over every earlier async refresh,
       // even if the network response was already too far along to abort.
@@ -381,9 +398,22 @@ export async function refreshAccessToken(): Promise<string | null> {
         return null;
       }
 
+      if (
+        typeof data !== 'object' ||
+        data === null ||
+        !('access_token' in data) ||
+        typeof data.access_token !== 'string' ||
+        !data.access_token.trim() ||
+        ('refresh_token' in data &&
+          (typeof data.refresh_token !== 'string' || !data.refresh_token.trim()))
+      ) {
+        logger.error('Token refresh returned an invalid response');
+        return null;
+      }
+
       // Store new tokens
       setStoredToken(ACCESS_TOKEN_KEY, data.access_token);
-      if (data.refresh_token) {
+      if ('refresh_token' in data && typeof data.refresh_token === 'string') {
         setStoredToken(REFRESH_TOKEN_KEY, data.refresh_token);
       }
 
@@ -395,8 +425,7 @@ export async function refreshAccessToken(): Promise<string | null> {
         return null;
       }
       logger.error('Token refresh error', error instanceof Error ? error : undefined);
-      // Clear invalid tokens
-      clearStoredTokens();
+      // Preserve credentials so a transient failure can be retried.
       return null;
     } finally {
       clearTimeout(timer);

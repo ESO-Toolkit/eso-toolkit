@@ -22,29 +22,16 @@ export function useECharts(
   config?: UseEChartsConfig,
 ): UseEChartsReturn {
   const instanceRef = useRef<echarts.ECharts | null>(null);
-  const optionRef = useRef(option);
-  optionRef.current = option;
-
-  const configRef = useRef(config);
-  configRef.current = config;
+  const renderer = config?.renderer ?? 'canvas';
 
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
     const instance = echarts.init(container, undefined, {
-      renderer: configRef.current?.renderer ?? 'canvas',
+      renderer,
     });
     instanceRef.current = instance;
-
-    if (configRef.current?.group) {
-      instance.group = configRef.current.group;
-      echarts.connect(configRef.current.group);
-    }
-
-    if (optionRef.current) {
-      instance.setOption(optionRef.current, { notMerge: true });
-    }
 
     const ro = new ResizeObserver(() => {
       if (!instance.isDisposed()) {
@@ -60,20 +47,20 @@ export function useECharts(
       }
       instanceRef.current = null;
     };
-  }, [containerRef]);
+  }, [containerRef, renderer]);
 
   useEffect(() => {
     const instance = instanceRef.current;
     if (!instance || instance.isDisposed() || !option) return;
     instance.setOption(option, { notMerge: config?.notMerge ?? true });
-  }, [option, config?.notMerge]);
+  }, [option, config?.notMerge, containerRef, renderer]);
 
   useEffect(() => {
     const instance = instanceRef.current;
     if (!instance || instance.isDisposed() || !config?.group) return;
     instance.group = config.group;
     echarts.connect(config.group);
-  }, [config?.group]);
+  }, [config?.group, containerRef, renderer]);
 
   const showLoading = useCallback(() => {
     const instance = instanceRef.current;
