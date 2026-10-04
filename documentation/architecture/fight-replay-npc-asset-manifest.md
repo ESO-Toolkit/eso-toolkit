@@ -34,32 +34,43 @@ separate rights review.
 
 ## Shipped assets
 
-| Asset                                    | Actor                           | Renderer                  |   Tris |  Verts | Materials | Texture     | GLB bytes | Reference                                                                           |
-| ---------------------------------------- | ------------------------------- | ------------------------- | -----: | -----: | --------: | ----------- | --------: | ----------------------------------------------------------------------------------- |
-| `coolstickman-walk.glb`                  | all players                     | `instanced-pose-flipbook` |      — |      — |         1 | —           |         — | CC0, Polygonal Mind                                                                 |
-| `yandir-the-butcher-overview-v2.glb`     | Yandir the Butcher              | `static-boss`             | 45,000 | 29,609 |         1 | 1024px JPEG | 1,644,896 | [post 82](https://esomodelviewer.com/characters/post/82-yandir-the-butcher)         |
-| `captain-vrol-overview-v2.glb`           | Captain Vrol                    | `static-boss`             | 44,999 | 28,796 |         1 | 1024px JPEG | 1,679,644 | [post 83](https://esomodelviewer.com/characters/post/83-captain-vrol)               |
-| `saint-llothis-overview-v1.glb`          | Saint Llothis the Pious         | `static-boss`             | 44,999 | 31,803 |         1 | 1024px JPEG | 1,774,760 | [creature 89](https://esomodelviewer.com/creatures/post/89-saint-llothis-the-pious) |
-| `saint-felms-overview-v1.glb`            | Saint Felms the Bold            | `static-boss`             | 45,000 | 30,921 |         1 | 1024px JPEG | 1,704,864 | [creature 88](https://esomodelviewer.com/creatures/post/88-saint-felms-the-bold)    |
-| `the-warrior-overview-v1.glb`            | The Warrior                     | `static-boss`             | 44,999 | 28,943 |         1 | 1024px JPEG | 1,672,496 | [post 172](https://esomodelviewer.com/characters/post/172-the-warrior)              |
-| `the-mage-overview-v1.glb`               | The Mage                        | `static-boss`             | 45,000 | 29,007 |         1 | 1024px JPEG | 1,722,144 | [post 173](https://esomodelviewer.com/characters/post/173-the-mage)                 |
-| `shade-of-galenwe-overview-v1.glb`       | Shade of Galenwe                | `static-boss`             | 44,998 | 29,810 |         1 | 1024px JPEG | 1,743,648 | [post 233](https://esomodelviewer.com/characters/post/233-shade-of-galenwe)         |
-| `shade-of-siroria-overview-v1.glb`       | Shade of Siroria                | `static-boss`             | 45,000 | 30,932 |         1 | 1024px JPEG | 1,739,784 | [post 234](https://esomodelviewer.com/characters/post/234-shade-of-siroria)         |
-| `shade-of-relequen-overview-v1.glb`      | Shade of Relequen               | `static-boss`             | 45,000 | 32,337 |         1 | 1024px JPEG | 1,741,760 | [post 235](https://esomodelviewer.com/characters/post/235-shade-of-relequen)        |
-| `the-serpent-overview-v1.glb`            | The Serpent                     | `static-boss`             | 45,000 | 28,458 |         1 | 1024px JPEG | 1,687,556 | [post 169](https://esomodelviewer.com/characters/post/169-the-serpent)              |
-| `varlariel-overview-v1.glb`              | Varlariel                       | `static-boss`             | 45,000 | 30,450 |         1 | 1024px JPEG | 1,702,168 | [creature 74](https://esomodelviewer.com/creatures/post/74-wispmother-light)        |
-| `saint-olms-overview-v1.glb`             | Saint Olms the Just             | `static-boss`             | 70,000 | 44,924 |         1 | 1024px JPEG | 2,277,308 | [creature 90](https://esomodelviewer.com/creatures/post/90-saint-olms-the-just)     |
-| `orphic-shattered-shard-overview-v1.glb` | Orphic Shattered Shard          | `static-boss`             | 44,999 | 32,092 |         1 | 1024px JPEG | 2,025,356 | [post 180](https://esomodelviewer.com/characters/post/180-shattered-shard)          |
-| `bloodknight-overview-v1.glb`            | Blood / Crimson / Bitter Knight | `static-boss`             |  5,000 |      — |         1 | 512px JPEG  |   304,148 | [creature 33](https://esomodelviewer.com/creatures/post/33-bloodknight)             |
-| `crystal-atronach-overview-v1.glb`       | Crystal Atronach                | `static-boss`             |  4,996 |      — |         1 | 512px JPEG  |   341,612 | [creature 179](https://esomodelviewer.com/creatures/post/179-crystal-atronach)      |
-| `frost-atronach-overview-v1.glb`         | Frost Atronach                  | `static-boss`             |  4,996 |      — |         1 | 512px JPEG  |   320,576 | [creature 153](https://esomodelviewer.com/creatures/post/153-frost-atronach)        |
-| `yaghra-monstrosity-overview-v1.glb`     | Yaghra Monstrosity              | `static-boss`             |  4,976 |      — |         1 | 512px JPEG  |   327,324 | [creature 120](https://esomodelviewer.com/creatures/post/120-yaghra-monstrosity)    |
-| `ash-titan-overview-v1.glb`              | Ash Titan                       | `static-boss`             |  5,000 |      — |         1 | 512px JPEG  |   330,820 | [creature 112](https://esomodelviewer.com/creatures/post/112-ash-titan)             |
-| `fire-behemoth-overview-v1.glb`          | Fire Behemoth                   | `static-boss`             |  5,000 |      — |         1 | 512px JPEG  |   324,864 | [creature 65](https://esomodelviewer.com/creatures/post/65-fire-behemoth)           |
+| Asset                                    | Actor                             | Renderer                  |   Tris |  Verts | Materials | Texture     | GLB bytes | Reference                                                                           |
+| ---------------------------------------- | --------------------------------- | ------------------------- | -----: | -----: | --------: | ----------- | --------: | ----------------------------------------------------------------------------------- |
+| `coolstickman-walk.glb`                  | all players                       | `instanced-pose-flipbook` |      — |      — |         1 | —           |         — | CC0, Polygonal Mind                                                                 |
+| `yandir-the-butcher-overview-v2.glb`     | Yandir the Butcher                | `static-boss`             | 45,000 | 29,609 |         1 | 1024px JPEG | 1,644,896 | [post 82](https://esomodelviewer.com/characters/post/82-yandir-the-butcher)         |
+| `yandir-the-butcher-rigged-v1.glb`       | Yandir the Butcher                | `skeletal-boss`           | 45,000 | 29,613 |         1 | 1024px JPEG | 2,372,188 | [post 82](https://esomodelviewer.com/characters/post/82-yandir-the-butcher)         |
+| `captain-vrol-overview-v2.glb`           | Captain Vrol                      | `static-boss`             | 44,999 | 28,796 |         1 | 1024px JPEG | 1,679,644 | [post 83](https://esomodelviewer.com/characters/post/83-captain-vrol)               |
+| `saint-llothis-overview-v1.glb`          | Saint Llothis the Pious           | `static-boss`             | 44,999 | 31,803 |         1 | 1024px JPEG | 1,774,760 | [creature 89](https://esomodelviewer.com/creatures/post/89-saint-llothis-the-pious) |
+| `saint-felms-overview-v1.glb`            | Saint Felms the Bold              | `static-boss`             | 45,000 | 30,921 |         1 | 1024px JPEG | 1,704,864 | [creature 88](https://esomodelviewer.com/creatures/post/88-saint-felms-the-bold)    |
+| `the-warrior-overview-v1.glb`            | The Warrior                       | `static-boss`             | 44,999 | 28,943 |         1 | 1024px JPEG | 1,672,496 | [post 172](https://esomodelviewer.com/characters/post/172-the-warrior)              |
+| `the-mage-overview-v1.glb`               | The Mage                          | `static-boss`             | 45,000 | 29,007 |         1 | 1024px JPEG | 1,722,144 | [post 173](https://esomodelviewer.com/characters/post/173-the-mage)                 |
+| `shade-of-galenwe-overview-v1.glb`       | Shade of Galenwe                  | `static-boss`             | 44,998 | 29,810 |         1 | 1024px JPEG | 1,743,648 | [post 233](https://esomodelviewer.com/characters/post/233-shade-of-galenwe)         |
+| `shade-of-siroria-overview-v1.glb`       | Shade of Siroria                  | `static-boss`             | 45,000 | 30,932 |         1 | 1024px JPEG | 1,739,784 | [post 234](https://esomodelviewer.com/characters/post/234-shade-of-siroria)         |
+| `shade-of-relequen-overview-v1.glb`      | Shade of Relequen                 | `static-boss`             | 45,000 | 32,337 |         1 | 1024px JPEG | 1,741,760 | [post 235](https://esomodelviewer.com/characters/post/235-shade-of-relequen)        |
+| `the-serpent-overview-v1.glb`            | The Serpent                       | `static-boss`             | 45,000 | 28,458 |         1 | 1024px JPEG | 1,687,556 | [post 169](https://esomodelviewer.com/characters/post/169-the-serpent)              |
+| `varlariel-overview-v1.glb`              | Varlariel                         | `static-boss`             | 45,000 | 30,450 |         1 | 1024px JPEG | 1,702,168 | [creature 74](https://esomodelviewer.com/creatures/post/74-wispmother-light)        |
+| `saint-olms-overview-v1.glb`             | Saint Olms the Just               | `static-boss`             | 70,000 | 44,924 |         1 | 1024px JPEG | 2,277,308 | [creature 90](https://esomodelviewer.com/creatures/post/90-saint-olms-the-just)     |
+| `orphic-shattered-shard-overview-v1.glb` | Orphic Shattered Shard            | `static-boss`             | 44,999 | 32,092 |         1 | 1024px JPEG | 2,025,356 | [post 180](https://esomodelviewer.com/characters/post/180-shattered-shard)          |
+| `bloodknight-overview-v1.glb`            | Blood / Crimson / Bitter Knight   | `static-boss`             |  5,000 |      — |         1 | 512px JPEG  |   304,148 | [creature 33](https://esomodelviewer.com/creatures/post/33-bloodknight)             |
+| `crystal-atronach-overview-v1.glb`       | Crystal Atronach                  | `static-boss`             |  4,996 |      — |         1 | 512px JPEG  |   341,612 | [creature 179](https://esomodelviewer.com/creatures/post/179-crystal-atronach)      |
+| `frost-atronach-overview-v1.glb`         | Frost Atronach                    | `static-boss`             |  4,996 |      — |         1 | 512px JPEG  |   320,576 | [creature 153](https://esomodelviewer.com/creatures/post/153-frost-atronach)        |
+| `yaghra-monstrosity-overview-v1.glb`     | Yaghra Monstrosity                | `static-boss`             |  4,976 |      — |         1 | 512px JPEG  |   327,324 | [creature 120](https://esomodelviewer.com/creatures/post/120-yaghra-monstrosity)    |
+| `ash-titan-overview-v1.glb`              | Ash Titan                         | `static-boss`             |  5,000 |      — |         1 | 512px JPEG  |   330,820 | [creature 112](https://esomodelviewer.com/creatures/post/112-ash-titan)             |
+| `fire-behemoth-overview-v1.glb`          | Fire Behemoth                     | `static-boss`             |  5,000 |      — |         1 | 512px JPEG  |   324,864 | [creature 65](https://esomodelviewer.com/creatures/post/65-fire-behemoth)           |
 | `boneman-overview-v1.glb`                | **skeleton archetype (32 names)** | `static-boss`             |  4,997 |  4,317 |         1 | 512px JPEG  |   287,232 | [creature 125](https://esomodelviewer.com/creatures/post/125-boneman-man-mer)       |
-| `lord-falgravn-overview-v1.glb`          | Lord Falgravn                   | `static-boss`             | 70,000 | 44,724 |         1 | 1024px JPEG | 2,259,112 | [creature 32](https://esomodelviewer.com/creatures/post/32-vampire-lord)            |
-| `ozara-overview-v1.glb`                  | Ozara                           | `static-boss`             | 45,000 | 27,743 |         1 | 1024px JPEG | 1,642,884 | [creature 117](https://esomodelviewer.com/creatures/post/117-lamia-red)             |
-| `xalvakka-overview-v1.glb`               | Xalvakka                        | `static-boss`             | 44,998 | 31,232 |         1 | 1024px JPEG | 1,765,596 | [creature 84](https://esomodelviewer.com/creatures/post/84-harvester-dagonic)       |
+| `lord-falgravn-overview-v1.glb`          | Lord Falgravn                     | `static-boss`             | 70,000 | 44,724 |         1 | 1024px JPEG | 2,259,112 | [creature 32](https://esomodelviewer.com/creatures/post/32-vampire-lord)            |
+| `ozara-overview-v1.glb`                  | Ozara                             | `static-boss`             | 45,000 | 27,743 |         1 | 1024px JPEG | 1,642,884 | [creature 117](https://esomodelviewer.com/creatures/post/117-lamia-red)             |
+| `xalvakka-overview-v1.glb`               | Xalvakka                          | `static-boss`             | 44,998 | 31,232 |         1 | 1024px JPEG | 1,765,596 | [creature 84](https://esomodelviewer.com/creatures/post/84-harvester-dagonic)       |
+
+The rigged Yandir pilot derives from `yandir-the-butcher-overview-v2.glb` and retains its
+project-authorized fan-prototype provenance, rest bounds, UVs, and embedded JPEG. It adds one
+17-bone skin and authored two-second `idle`, `walk`, and `cast` clips; this is not a UniMate or
+ML animation integration. The root stays stationary. Runtime translation comes from the log,
+and walk phase follows traveled distance (0.6310190558433533 model units per cycle, before
+registry scale). Actors own independent skeletons and mixers. Replay time determines poses,
+including pause, seeking, and playback speed changes. The static Yandir remains the loading or
+failure fallback; other NPCs retain their existing renderer, and barebones mode uses capsules.
+See the [builder instructions](../../tools/fight-replay-models/README.md#yandir-skeletal-pilot).
 
 Extracted client assets (see the licensing posture above — **not reconstructions**):
 
@@ -72,24 +83,24 @@ Extracted client assets (see the licensing posture above — **not reconstructio
 
 Route B — extracted ESO geometry, colour projected from reference plates (no GPU at any stage):
 
-| Asset                                          | Actor                    | Renderer      |   Tris |  Verts | Materials | Texture     | GLB bytes | Mesh / colour reference                                                            |
-| ---------------------------------------------- | ------------------------ | ------------- | -----: | -----: | --------: | ----------- | --------: | ---------------------------------------------------------------------------------- |
-| `oaxiltso-overview-v1.glb`                     | Oaxiltso                 | `static-boss` |  8,130 |  6,831 |         1 | 1024px JPEG |   747,916 | `ArgonianBehemoth_A_Red_Basic` / [creature 83](https://esomodelviewer.com/creatures/post/83-oaxiltso)        |
-| `tideborn-taleria-overview-v1.glb`             | Tideborn Taleria         | `static-boss` | 19,862 | 20,438 |         1 | 1024px JPEG | 1,288,872 | `AirAtronach_Coral_Boss` / [creature 119](https://esomodelviewer.com/creatures/post/119-tideborn-taleria)    |
-| `lightning-storm-atronach-overview-v1.glb`     | Lightning Storm Atronach | `static-boss` |  4,425 |  4,991 |         1 | 1024px JPEG |   600,496 | `StormAtronach_A_Basic` / [creature 154](https://esomodelviewer.com/creatures/post/154-storm-atronach)       |
+| Asset                                      | Actor                    | Renderer      |   Tris |  Verts | Materials | Texture     | GLB bytes | Mesh / colour reference                                                                                   |
+| ------------------------------------------ | ------------------------ | ------------- | -----: | -----: | --------: | ----------- | --------: | --------------------------------------------------------------------------------------------------------- |
+| `oaxiltso-overview-v1.glb`                 | Oaxiltso                 | `static-boss` |  8,130 |  6,831 |         1 | 1024px JPEG |   747,916 | `ArgonianBehemoth_A_Red_Basic` / [creature 83](https://esomodelviewer.com/creatures/post/83-oaxiltso)     |
+| `tideborn-taleria-overview-v1.glb`         | Tideborn Taleria         | `static-boss` | 19,862 | 20,438 |         1 | 1024px JPEG | 1,288,872 | `AirAtronach_Coral_Boss` / [creature 119](https://esomodelviewer.com/creatures/post/119-tideborn-taleria) |
+| `lightning-storm-atronach-overview-v1.glb` | Lightning Storm Atronach | `static-boss` |  4,425 |  4,991 |         1 | 1024px JPEG |   600,496 | `StormAtronach_A_Basic` / [creature 154](https://esomodelviewer.com/creatures/post/154-storm-atronach)    |
 
 ### Registry entries that ship no new bytes
 
 Two kinds of reuse exist, and they are not the same thing. Neither adds a row above, because neither
 adds a GLB.
 
-| Registry entry                     | GLB it reuses                     | Serves                                          | Kind                                    |
-| ---------------------------------- | --------------------------------- | ----------------------------------------------- | --------------------------------------- |
-| `the-serpent-overview-v1` (alias)  | `the-serpent-overview-v1.glb`     | The Serpent's Image                             | **Faithful** — same creature, same size |
-| `craglorn-troll-trash-overview-v1` | `stonebreaker-overview-v1.glb`    | Rockheaver Troll, Berserker Troll               | **Species match, wrong tier** — 0.85x   |
-| `hof-factotum-overview-v1`         | `saint-llothis-overview-v1.glb`   | Pinnacle Factotum, Reducer, Reclaimer, Reactor  | **Species match, same tier** — 1.25x    |
-| `storm-atronach-trash-overview-v1` | `lightning-storm-atronach-overview-v1.glb` | Storm Atronach (dungeons) | **Same mesh, lower tier** — 0.95x |
-| `ruined-factotum-trash-overview-v1`| `saint-llothis-overview-v1.glb`   | Ruined Factotum                                 | **Species match, lower tier** — 0.95x   |
+| Registry entry                      | GLB it reuses                              | Serves                                         | Kind                                    |
+| ----------------------------------- | ------------------------------------------ | ---------------------------------------------- | --------------------------------------- |
+| `the-serpent-overview-v1` (alias)   | `the-serpent-overview-v1.glb`              | The Serpent's Image                            | **Faithful** — same creature, same size |
+| `craglorn-troll-trash-overview-v1`  | `stonebreaker-overview-v1.glb`             | Rockheaver Troll, Berserker Troll              | **Species match, wrong tier** — 0.85x   |
+| `hof-factotum-overview-v1`          | `saint-llothis-overview-v1.glb`            | Pinnacle Factotum, Reducer, Reclaimer, Reactor | **Species match, same tier** — 1.25x    |
+| `storm-atronach-trash-overview-v1`  | `lightning-storm-atronach-overview-v1.glb` | Storm Atronach (dungeons)                      | **Same mesh, lower tier** — 0.95x       |
+| `ruined-factotum-trash-overview-v1` | `saint-llothis-overview-v1.glb`            | Ruined Factotum                                | **Species match, lower tier** — 0.95x   |
 
 A pure alias (row 1) is added to an existing entry's `aliases`. A reuse that needs its own scale
 (rows 2-3) must be a **separate catalog entry pointing at the same `path`**, because `transform` is
@@ -112,15 +123,15 @@ Queried through the site's own client-credentials GraphQL proxy against **four r
 Fabrication reports** (ESO Logs zone **6**), all four appear with `subType: Boss` and the Committee
 members are **bare**:
 
-| Encounter | Verified ESO Logs actor names |
-| --- | --- |
-| Pinnacle Factotum | `Pinnacle Factotum` |
+| Encounter                   | Verified ESO Logs actor names     |
+| --------------------------- | --------------------------------- |
+| Pinnacle Factotum           | `Pinnacle Factotum`               |
 | The Refabrication Committee | `Reducer`, `Reclaimer`, `Reactor` |
 
 The same query settled three other open questions in this document at no extra cost:
 
 - **`Hunter-Killer Positrox` and `Hunter-Killer Negatrix`** — the hyphenation was previously marked
-  *inferred*. Both appear verbatim, `subType: Boss`. (Still unbuildable: no mesh, no plates.)
+  _inferred_. Both appear verbatim, `subType: Boss`. (Still unbuildable: no mesh, no plates.)
 - **`Archcustodian`** and **`Assembly General`** confirmed verbatim.
 - **`Ruined Factotum`** exists as ordinary `NPC` trash in the same logs. It is a fifth free alias, but
   deliberately **not** added to this entry: it belongs at the lesser-enemy scale, which per the rule
@@ -130,7 +141,7 @@ The same query settled three other open questions in this document at no extra c
 has to be byte-canonical to be accepted. The reliable way to build one is to print the codegen'd
 `*Document` AST out of `src/graphql/gql/graphql.ts` with `graphql-js`, then hash it with
 `normalizeGraphqlDocument` and check it against `public/graphql-manifest.json` **before** sending.
-Reassembling a query from the `.graphql` sources and its fragments does *not* reproduce the hash.
+Reassembling a query from the `.graphql` sources and its fragments does _not_ reproduce the hash.
 Note also that this spends the site's shared OAuth budget: this verification cost roughly a dozen
 read-only calls, paced.
 
@@ -163,7 +174,9 @@ head colour onto the tail.
 - Lesser enemies: 5,000–12,000 triangles.
 - Standard bosses: 20,000–50,000 triangles.
 - Hero-boss exception (one at a time, documented): up to 100,000 triangles.
-- One mesh, one material, one draw call per asset. No skins, animations, or morph targets.
+- One mesh, one material, one draw call per asset. Static assets have no skins, animations, or
+  morph targets. The Yandir skeletal pilot is the documented exception: one 17-bone skin and
+  three clips, under the existing 2.5 MB asset gate.
 - Texture 512px by default; 1024px where the reference plates support it (a boss with registered
   closeup captures). Store as JPEG when the equivalent PNG would exceed the size gate — a 1024px
   JPEG carries more real detail than a 512px PNG at comparable bytes. Encode at q92 with chroma
@@ -534,7 +547,7 @@ Consequences worth carrying forward:
 | --------- | ------------------- | --------------------------------------------------------------------- |
 | `boss_1`  | Possessed Mantikora | **Shipped 2026-09-07** — extracted client asset, not a reconstruction |
 | `boss_2`  | Stonebreaker        | **Shipped 2026-09-07** — extracted client asset, not a reconstruction |
-| `boss_3`  | Ozara               | **Shipped 2026-09-08** — reconstruction; completes this trial          |
+| `boss_3`  | Ozara               | **Shipped 2026-09-08** — reconstruction; completes this trial         |
 | `boss_4`  | The Serpent         | **Shipped** (reconstruction, hand-registered mask)                    |
 
 **Sanctum Ophidia is complete** — the fifth fully covered trial, and the first completed by a
@@ -568,9 +581,9 @@ have built him at any quality. The extracted mesh was the only route to this enc
 ever exist, and it cost no GPU time at all.
 
 Ozara **shipped 2026-09-08 as a reconstruction**, and the question this paragraph used to pose is
-now answered. It said of `Lamia_A_Boss`: *"its bbox is 1.14 x 4.08 x 0.46 — a near-planar vertical
+now answered. It said of `Lamia_A_Boss`: _"its bbox is 1.14 x 4.08 x 0.46 — a near-planar vertical
 spike with no visible torso or arms. Verify the mesh is not a partial extraction before spending
-anything on it."*
+anything on it."_
 
 **It is not a partial extraction.** A clay render shows the torso, arms, head and crest all present;
 the serpent tail is simply in a **straight-down bind pose**, which stretches the bounding box until
@@ -582,7 +595,7 @@ instead.** Both bosses the deformer would have unlocked ship as ordinary Route C
 reconstructions, because **reconstructing from plates sidesteps bind pose entirely rather than
 correcting it**. The deformer is worth zero bosses now and should be dropped from the plan. The
 general lesson is worth more than either asset: when an extracted mesh is unusable because of its
-*pose* rather than its *topology*, reach for reconstruction before deformation.
+_pose_ rather than its _topology_, reach for reconstruction before deformation.
 
 The reconstruction that shipped instead is the strongest of the batch on every projection number:
 **14.7% neither-camera** (only Falgravn and Olms are lower), 35.1% neighbour fill, 353 charts, and
@@ -590,28 +603,28 @@ the **largest face allocation measured on this project at ~277x277 texels**.
 
 ## Coverage status — Aetherian Archive
 
-| Encounter | Name                      | Status                                                                            |
-| --------- | ------------------------- | --------------------------------------------------------------------------------- |
-| `boss_1`  | Lightning Storm Atronach  | **Shipped 2026-09-08** — Route B, extracted geometry with projected colour        |
-| `boss_2`  | Foundation Stone Atronach | **Shipped 2026-09-07** — extracted client asset, not a reconstruction             |
-| `boss_3`  | Varlariel                 | **Shipped** (reconstruction)                                                      |
-| `boss_4`  | The Mage                  | **Shipped** (reconstruction)                                                      |
+| Encounter | Name                      | Status                                                                     |
+| --------- | ------------------------- | -------------------------------------------------------------------------- |
+| `boss_1`  | Lightning Storm Atronach  | **Shipped 2026-09-08** — Route B, extracted geometry with projected colour |
+| `boss_2`  | Foundation Stone Atronach | **Shipped 2026-09-07** — extracted client asset, not a reconstruction      |
+| `boss_3`  | Varlariel                 | **Shipped** (reconstruction)                                               |
+| `boss_4`  | The Mage                  | **Shipped** (reconstruction)                                               |
 
 **Aetherian Archive is complete** — the fourth trial fully covered, after Kyne's Aegis, Asylum
 Sanctorium and (bar its mounts' alias check) Cloudrest.
 
-The `boss_1` row previously read *"Blocked — greyscale mask only, and 96 shells makes it a poor
-projection candidate"*. **Both halves of that were wrong:**
+The `boss_1` row previously read _"Blocked — greyscale mask only, and 96 shells makes it a poor
+projection candidate"_. **Both halves of that were wrong:**
 
-- *"Greyscale mask only"* was true of the **extractor's** texture for `StormAtronach_A_Basic`, which
+- _"Greyscale mask only"_ was true of the **extractor's** texture for `StormAtronach_A_Basic`, which
   rules out **Route A** (ship ESO's own diffuse). It says nothing about Route B, where the colour
   comes from plates and the extracted asset supplies geometry only. The two routes were conflated.
-- *"96 shells makes it a poor projection candidate"* applied the shell-count heuristic that Tideborn
+- _"96 shells makes it a poor projection candidate"_ applied the shell-count heuristic that Tideborn
   Taleria had **already disproved** (46 shells produced 1,748 charts; 8 shells produced 399). This
   mesh's 96 shells produced **563** charts. Blind area is the number that predicts failure, and at
   31.5% this sits inside the shipped band.
 
-The shape is in fact the strongest possible argument *for* Route B: 96 unconnected levitating stones
+The shape is in fact the strongest possible argument _for_ Route B: 96 unconnected levitating stones
 have no continuous silhouette for two-view reconstruction to infer, which is exactly the failure mode
 exact geometry removes.
 
@@ -623,14 +636,14 @@ all 58 dungeons — 6.5-9x the trial lesser-enemy surface. Name-complete coverag
 never will be; the measured recommendation is **archetype-first**, ~20-30 species assets each aliased
 to 20-50 names.
 
-| Archetype | Names | Fight-appearances | Status |
-| --- | ---: | ---: | --- |
-| Skeleton (bare humanoid) | 32 | 342 | **Shipped 2026-09-08** — `boneman-overview-v1` |
-| Ordinary humanoid | 221 | 1810 | **Permanent never-build** — a generic figure is what the capsule already is |
-| Mechanic object / hazard | 53 | 531 | **Not creatures.** `Ice Barrier` is the single most frequent name in the entire corpus |
-| Draugr / Draugrkin | ~12 | ~170 | Not built — flesh and armour, a genuinely different body from the skeleton |
-| Atronach family | 18 | 466 | **Partly covered by trial assets already on disk** — see below |
-| Everything else | — | — | Unbuilt |
+| Archetype                | Names | Fight-appearances | Status                                                                                 |
+| ------------------------ | ----: | ----------------: | -------------------------------------------------------------------------------------- |
+| Skeleton (bare humanoid) |    32 |               342 | **Shipped 2026-09-08** — `boneman-overview-v1`                                         |
+| Ordinary humanoid        |   221 |              1810 | **Permanent never-build** — a generic figure is what the capsule already is            |
+| Mechanic object / hazard |    53 |               531 | **Not creatures.** `Ice Barrier` is the single most frequent name in the entire corpus |
+| Draugr / Draugrkin       |   ~12 |              ~170 | Not built — flesh and armour, a genuinely different body from the skeleton             |
+| Atronach family          |    18 |               466 | **Partly covered by trial assets already on disk** — see below                         |
+| Everything else          |     — |                 — | Unbuilt                                                                                |
 
 **The Boneman is the first archetype asset in this catalog, and the ratio is the point.** It serves
 **32 names from one 287 KB build**, against 1.24 names per asset across the 21-asset trial catalog.
@@ -642,7 +655,7 @@ Skeletons were missed by every earlier reference sweep because the model viewer 
 `storm-atronach-trash-overview-v1` covers the dungeon `Storm Atronach` — the 4th most frequent name
 in the whole corpus, **74 fight-appearances across 11 dungeons** — at the lesser-enemy scale, off the
 already-shipped Lightning Storm Atronach GLB. This is the strongest possible reuse: the model
-viewer's own body text says that mesh serves *"generic Storm Atronachs"*, so it is not a lookalike at
+viewer's own body text says that mesh serves _"generic Storm Atronachs"_, so it is not a lookalike at
 all, it is the same asset at the right size. `ruined-factotum-trash-overview-v1` does the same for
 the HoF trash Factotum found while verifying the boss names. `Frost Atronach` (68) and `Crystal
 Atronach` (8) needed nothing — they were already aliased at trash scale.
@@ -651,7 +664,7 @@ Atronach` (8) needed nothing — they were already aliased at trash scale.
 appearances) and bare `Troll` (13) are **explicitly asserted to resolve to null** by the catalog
 tests, on the recorded grounds that a generic stone atronach is "a different, smaller creature" and
 that near-miss troll names must not borrow the Craglorn body. A tier-split entry looked like it
-answered that objection — but the objection says *different creature*, not merely *different size*,
+answered that objection — but the objection says _different creature_, not merely _different size_,
 and both shipped bodies are `_Boss` mesh variants rather than the generic ones. Overriding a tested
 decision to make a new alias pass is exactly the wrong move, so they stay unclaimed. `Gryphon` (6)
 was dropped for the same boss-variant doubt. `Argonian Behemoth` (26) stays unclaimed because
@@ -660,16 +673,16 @@ likewise specific colour variants.
 
 ## Coverage status — Rockgrove
 
-| Encounter | Name                 | Status                                                                |
-| --------- | -------------------- | --------------------------------------------------------------------- |
-| `mini_1`  | Haj Mota             | Not built — the gallery is a ~90 degree mirror arc with no opposed pair |
-| `boss_1`  | Oaxiltso             | **Shipped 2026-09-07** — Route B, extracted geometry, projected colour |
-| `boss_2`  | Flame-Herald Bahsei  | **Blocked** — his base Naga form has no published reference anywhere    |
-| `mini_2`  | Ash Titan            | **Shipped** (reconstruction, lesser-enemy budget)                      |
-| `boss_3`  | Xalvakka             | **Shipped 2026-09-08** — reconstruction                                |
+| Encounter | Name                | Status                                                                  |
+| --------- | ------------------- | ----------------------------------------------------------------------- |
+| `mini_1`  | Haj Mota            | Not built — the gallery is a ~90 degree mirror arc with no opposed pair |
+| `boss_1`  | Oaxiltso            | **Shipped 2026-09-07** — Route B, extracted geometry, projected colour  |
+| `boss_2`  | Flame-Herald Bahsei | **Blocked** — his base Naga form has no published reference anywhere    |
+| `mini_2`  | Ash Titan           | **Shipped** (reconstruction, lesser-enemy budget)                       |
+| `boss_3`  | Xalvakka            | **Shipped 2026-09-08** — reconstruction                                 |
 
 Rockgrove is **complete except Bahsei**, and Bahsei is the one genuinely reference-less boss here:
-`28-bone-goliath-argonian` covers only his *Bone Goliath* form, which the post body says explicitly,
+`28-bone-goliath-argonian` covers only his _Bone Goliath_ form, which the post body says explicitly,
 and "naga" returns zero hits across all 613 cached post bodies. He needs an in-game capture.
 
 Xalvakka and Oaxiltso between them are also the clearest demonstration of the two routes on

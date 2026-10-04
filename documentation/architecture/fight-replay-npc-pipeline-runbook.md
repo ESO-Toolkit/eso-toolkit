@@ -33,6 +33,14 @@ allocation, and one URL bug. Budget accordingly:
 
 ## Building one — the short version
 
+For the authored Yandir skeletal derivative, use the
+[skeletal pilot builder instructions](../../tools/fight-replay-models/README.md#yandir-skeletal-pilot)
+instead of regenerating geometry. It uses the shipped optimized textured mesh and CPU `bpy`,
+so no GPU queue entry is needed. Preserve stationary root tracks and review continuous walking
+with matching logged translation, starts/stops, and seeking at replay scale. This one-boss pilot
+has separate runtime skin validation; the static reconstruction gate below still applies to
+the source asset and other NPCs.
+
 ```bash
 B:/CodexScratch/eso-fight-replay-3d/.venv/Scripts/python.exe   tools/fight-replay-models/build-npc-asset.py tools/fight-replay-models/npcs/<slug>.json
 ```
@@ -178,17 +186,17 @@ Read the two-camera **neither** figure against the shipped band, which is **5.6%
 
 **Measured predictor accuracy**, screen versus the `visibility: neither` the real build reported:
 
-| Asset                    | Screen | Built | Error      |
-| ------------------------ | -----: | ----: | ---------: |
-| Ra Kotu (rejected)       |  40.1% | 38.8% |  -1.3      |
-| Xalvakka                 |  24.4% | 22.9% |  -1.5      |
-| Ozara                    |  18.4% | 14.7% |  -3.7      |
-| Lightning Storm Atronach |  27.3% | 31.5% |  +4.2      |
-| Tideborn Taleria         |  31.5% | 26.6% |  -4.9      |
-| **Oaxiltso**             |  14.8% | 31.4% | **+16.6**  |
+| Asset                    | Screen | Built |     Error |
+| ------------------------ | -----: | ----: | --------: |
+| Ra Kotu (rejected)       |  40.1% | 38.8% |      -1.3 |
+| Xalvakka                 |  24.4% | 22.9% |      -1.5 |
+| Ozara                    |  18.4% | 14.7% |      -3.7 |
+| Lightning Storm Atronach |  27.3% | 31.5% |      +4.2 |
+| Tideborn Taleria         |  31.5% | 26.6% |      -4.9 |
+| **Oaxiltso**             |  14.8% | 31.4% | **+16.6** |
 
 **The error is asymmetric, and that is what makes the screen usable.** It has never flattered a
-subject by more than ~5 points, but it once *understated* blindness by **16.6** (Oaxiltso: the screen
+subject by more than ~5 points, but it once _understated_ blindness by **16.6** (Oaxiltso: the screen
 unwraps independently and without the region density warp, so it does not see how the warp
 reallocates texel area). So:
 
@@ -202,7 +210,7 @@ Use it to say no cheaply. Do not use it to say yes.
 
 `register-npc-plates.py --region head` matches only the rows above a **detected** shoulder line, and
 the detector is wrong on several common shapes (see above). When it is wrong this fails **quietly**:
-it matches the wrong band and then reports a perfectly healthy width error *for that band*. The
+it matches the wrong band and then reports a perfectly healthy width error _for that band_. The
 Lightning Storm Atronach scored **7.79%** on what was actually a crown-to-crown fit across the top
 6% of the subject, because its levitating crown slab sits above the face.
 
@@ -216,12 +224,12 @@ register-npc-plates.py ... --closeup view-04.jpg --role head --view front \
 The fit now carries **both** readings, `shoulder_source` and `auto_shoulder_v`, and the config
 snippet records the override, so "the band was hand-set" can never be mistaken for "the detector
 agreed". Measured detector failures to date: **0.9378** on the Lightning Storm Atronach (crown above
-the face) and **0.6249** on Ozara (her *tail* dominates the normalised silhouette, so it pointed at
+the face) and **0.6249** on Ozara (her _tail_ dominates the normalised silhouette, so it pointed at
 the hips).
 
 **It is a diagnostic as much as a fix.** On both of those subjects, forcing the correct band did not
 rescue the plate — the Storm Atronach reproduced the same fit and the same doubling, and Ozara still
-returned NO VIABLE FIT. What it bought was certainty about *why*: those galleries shoot their
+returned NO VIABLE FIT. What it bought was certainty about _why_: those galleries shoot their
 closeups at a different camera elevation and distance from their base plates, and no
 scale-plus-translate can absorb that. Before this flag existed, a wrong band and a wrong camera were
 indistinguishable.
@@ -285,7 +293,7 @@ correspondence.
 
 **The same defect appears rotated 90° on near-horizontal limbs.** Lord Falgravn's outstretched wings
 put one height slice across an entire wing, so a small vertical registration error smears plate
-columns *along* the limb: the black elbow claws bleed inboard over roughly 40% of the pale wing arm,
+columns _along_ the limb: the black elbow claws bleed inboard over roughly 40% of the pale wing arm,
 with the horizontal streaking that is this defect's signature. **`envelope_sigma` is not the fix** —
 3.0 → 8.0 moved PSNR by 0.10 dB and left the band unchanged (measured, do not re-test). A registered
 closeup on the limb is the only real answer. Expect this on any wing, tail or arm held out

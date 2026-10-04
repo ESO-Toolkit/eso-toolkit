@@ -37,6 +37,24 @@ import {
   resolveReplayModelUrl,
 } from '../utils/replayActorModelRegistry';
 import {
+  buildRiggedWalkTimeline,
+  createRiggedModelAnimationSample,
+  sampleRiggedModelAnimation,
+  type RiggedWalkTimeline,
+  type RiggedModelAnimationOptions,
+} from '../utils/riggedModelAnimation';
+import {
+  RIGGED_REPLAY_MODEL_ASSETS,
+  applyRiggedModelAnimation,
+  createRiggedModelInstance,
+  disposeRiggedModelInstance,
+  disposeRiggedModelTemplate,
+  loadRiggedModelTemplate,
+  setRiggedModelAppearance,
+  type RiggedModelInstance,
+  type RiggedModelTemplate,
+} from '../utils/riggedModelInstance';
+import {
   EMPTY_STATIC_MODEL_PLAN,
   type StaticModelInstancingPlan,
   buildStaticModelInstancingPlan,
@@ -341,6 +359,26 @@ function disposeStaticModel(model: StaticModelData): void {
 
 /** Stable empty map so `setStaticModels(EMPTY_STATIC_MODELS)` is a no-op re-render, not a loop. */
 const EMPTY_STATIC_MODELS: ReadonlyMap<string, StaticModelData> = new Map();
+
+interface RiggedActorModel {
+  instance: RiggedModelInstance;
+  template: RiggedModelTemplate;
+  timeline: RiggedWalkTimeline;
+  options: RiggedModelAnimationOptions;
+}
+
+interface RiggedModelSet {
+  plan: StaticModelInstancingPlan;
+  actors: ReadonlyMap<number, RiggedActorModel>;
+  templates: readonly RiggedModelTemplate[];
+}
+
+const EMPTY_RIGGED_ACTORS: ReadonlyMap<number, RiggedActorModel> = new Map();
+
+function disposeRiggedModelSet(models: RiggedModelSet): void {
+  models.actors.forEach(({ instance }) => disposeRiggedModelInstance(instance));
+  models.templates.forEach(({ scene }) => disposeRiggedModelTemplate(scene));
+}
 
 function isPlayerActor(actor: ActorPosition): boolean {
   return actor.type === 'player';
@@ -705,6 +743,82 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
     [staticModelPlan, staticModels],
   );
 
+  // Skeletal upgrades load independently; static models/capsules remain visible until validation
+  // and cloning succeed. Each published set exclusively owns its resources. Plan identity also
+  // prevents an old fight's rig from briefly rendering during a fight switch.
+  const [loadedRiggedModels, setLoadedRiggedModels] = useState<RiggedModelSet | null>(null);
+  useEffect(() => {
+    setLoadedRiggedModels(null);
+    if (!lookup) return;
+    const assets = staticModelPlan.assets.filter((asset) =>
+      RIGGED_REPLAY_MODEL_ASSETS.has(asset.id),
+    );
+    if (!assets.length) return;
+    let cancelled = false;
+    void Promise.all(
+      assets.map(async (asset) => {
+        const upgrade = RIGGED_REPLAY_MODEL_ASSETS.get(asset.id)!;
+        const template = await loadRiggedModelTemplate(
+          sharedGltfLoader,
+          resolveReplayModelUrl(upgrade.path, import.meta.env.BASE_URL),
+        ).catch(() => null);
+        if (!template) return null;
+        const actors = new Map<number, RiggedActorModel>();
+        try {
+          for (const actorId of staticModelPlan.actorIdsByAssetId.get(asset.id) ?? []) {
+            actors.set(actorId, {
+              instance: createRiggedModelInstance(template),
+              template,
+              timeline: buildRiggedWalkTimeline(lookup, actorId),
+              options: {
+                walkDistance: upgrade.walkDistance * asset.transform.scale,
+                idleDuration: template.clips.idle.duration,
+                walkDuration: template.clips.walk.duration,
+                castDuration: template.clips.cast.duration,
+              },
+            });
+          }
+        } catch {
+          actors.forEach(({ instance }) => disposeRiggedModelInstance(instance));
+          disposeRiggedModelTemplate(template.scene);
+          return null;
+        }
+        return { template, actors };
+      }),
+    ).then((results) => {
+      const models: RiggedModelSet = {
+        plan: staticModelPlan,
+        actors: new Map(results.flatMap((result) => (result ? [...result.actors] : []))),
+        templates: results.flatMap((result) => (result ? [result.template] : [])),
+      };
+      if (cancelled) {
+        disposeRiggedModelSet(models);
+        return;
+      }
+      if (models.actors.size) setLoadedRiggedModels(models);
+      else disposeRiggedModelSet(models);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [lookup, staticModelPlan]);
+
+  useEffect(
+    () => () => {
+      if (loadedRiggedModels) disposeRiggedModelSet(loadedRiggedModels);
+    },
+    [loadedRiggedModels],
+  );
+  const riggedModels =
+    loadedRiggedModels?.plan === staticModelPlan ? loadedRiggedModels.actors : EMPTY_RIGGED_ACTORS;
+  useLayoutEffect(() => {
+    riggedModels.forEach(({ instance }) => {
+      instance.root.traverse((object) => {
+        if (object instanceof THREE.Mesh) object.castShadow = !performanceMode;
+      });
+    });
+  }, [riggedModels, performanceMode]);
+
   // Mesh refs.
   const bodyRef = useRef<THREE.InstancedMesh>(null);
   const capRef = useRef<THREE.InstancedMesh>(null);
@@ -742,6 +856,7 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
     world: new THREE.Matrix4(),
     // Whole-model motion (breathing, lean, sway, death fall). See `staticModelMotion`.
     motion: createStaticModelMotionSample(),
+    animation: createRiggedModelAnimationSample(),
     axis: new THREE.Vector3(),
     tilt: new THREE.Matrix4(),
     pivot: new THREE.Matrix4(),
@@ -1047,7 +1162,15 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
     // the user scrubs). `staticModelLayers` is a dep for exactly that reason.
     frameCacheRef.current = null;
     cacheRef.current = [];
-  }, [instanceCount, geometries, materials, glyphMaterials, poseGeometries, staticModelLayers]);
+  }, [
+    instanceCount,
+    geometries,
+    materials,
+    glyphMaterials,
+    poseGeometries,
+    staticModelLayers,
+    riggedModels,
+  ]);
 
   // When the humanoid poses or boss GLB finish loading, the shadow-CASTING geometry swaps
   // (capsule → humanoid pose meshes; boss capsule → boss model). This is a child-local state change
@@ -1056,7 +1179,7 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
   // until the playhead next moves. Fires once on mount too (harmless). See markDirty prop doc.
   useEffect(() => {
     markDirty?.();
-  }, [poseGeometries, staticModelLayers, markDirty]);
+  }, [poseGeometries, staticModelLayers, riggedModels, markDirty]);
 
   const hideInstance = useCallback((mesh: THREE.InstancedMesh | null, index: number): void => {
     if (!mesh) return;
@@ -1140,11 +1263,13 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
 
     for (let index = 0; index < instanceCount; index++) {
       const actorId = actorIds[index];
+      const riggedModel = riggedModels.get(actorId);
       const actor = positionsById?.[actorId] || null;
       const isVisible = !!actor && (playerVisibility.get(actorId) ?? true);
       const groupSymbol = glyphSymbolByIndex.current[index];
 
       if (!actor || !isVisible) {
+        if (riggedModel) riggedModel.instance.root.visible = false;
         if (cacheRef.current[index]?.visible !== false) {
           hideInstance(bodyRef.current, index);
           poseRefs.current.forEach((mesh) => hideInstance(mesh, index));
@@ -1199,7 +1324,7 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
       const modelMesh = modelAssignment
         ? staticModelMeshes.current.get(modelAssignment.asset.id)
         : undefined;
-      const useStaticModel = !!modelAssignment && !!modelData && !!modelMesh;
+      const useStaticModel = !!modelAssignment && (!!riggedModel || (!!modelData && !!modelMesh));
 
       // Per-player override (player panel) wins for living players only; dead stays grey. Only
       // players can be overridden — boss/enemy/npc/pet keep their type colors.
@@ -1296,7 +1421,7 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
           }
         }
         hideInstance(bodyRef.current, index);
-      } else if (modelAssignment && modelData && modelMesh) {
+      } else if (modelAssignment && (riggedModel || (modelData && modelMesh))) {
         // This actor renders as the GLB model. Hide its capsule body + all pose layers; the model
         // takes the body's place. Anchor ring / vision wedge / glyph / name stay.
         hideInstance(bodyRef.current, index);
@@ -1330,10 +1455,12 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
         );
         t.orient.makeRotationFromEuler(t.euler.set(orientEuler[0], orientEuler[1], orientEuler[2]));
         // Oriented bbox: re-AABB the raw box under ORIENT (8-corner transform).
-        t.box.copy(modelData.rawBox).applyMatrix4(t.orient);
+        t.box
+          .copy(riggedModel ? riggedModel.template.rawBox : modelData!.rawBox)
+          .applyMatrix4(t.orient);
         t.box.getCenter(t.center);
         t.offset.makeTranslation(-t.center.x, -t.box.min.y, -t.center.z);
-        const breathY = BREATH_AMPLITUDE * motion.breath;
+        const breathY = riggedModel ? 0 : BREATH_AMPLITUDE * motion.breath;
         const breathXZ = 1 - breathY * BREATH_WIDTH_SHARE;
         t.scale.makeScale(modelScale * breathXZ, modelScale * (1 + breathY), modelScale * breathXZ);
         t.yaw.makeRotationY(actor.rotation + yawOffset);
@@ -1356,7 +1483,7 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
           t.axis.set(-faceZ, 0, faceX);
           t.world.multiply(t.tilt.makeRotationAxis(t.axis, DEATH_FALL_TILT * motion.fall));
           t.world.multiply(t.pivot.makeTranslation(-px, 0, -pz));
-        } else if (motion.moveStrength > 0) {
+        } else if (!riggedModel && motion.moveStrength > 0) {
           // Lean into the direction of travel (not the facing: bosses strafe), then roll about the
           // facing axis for a heavy side-to-side gait.
           t.axis.set(motion.moveDirZ, 0, -motion.moveDirX);
@@ -1366,12 +1493,32 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
             t.tilt.makeRotationAxis(t.axis, MOTION_MAX_SWAY * motion.moveStrength * motion.sway),
           );
         }
-        if (!dead && motion.castPulse > 0) {
+        if (!riggedModel && !dead && motion.castPulse > 0) {
           t.axis.set(faceZ, 0, -faceX);
           t.world.multiply(t.tilt.makeRotationAxis(t.axis, CAST_REACTION_TILT * motion.castPulse));
         }
         t.world.multiply(t.yaw).multiply(t.scale).multiply(t.offset).multiply(t.orient);
-        modelMesh.setMatrixAt(modelAssignment.slot, t.world);
+        if (riggedModel) {
+          // The clip owns articulation; the log owns world position/yaw and the existing death fall.
+          hideInstance(modelMesh ?? null, modelAssignment.slot);
+          riggedModel.instance.root.visible = true;
+          riggedModel.instance.root.matrix.copy(t.world);
+          riggedModel.instance.root.matrixWorldNeedsUpdate = true;
+          applyRiggedModelAnimation(
+            riggedModel.instance,
+            sampleRiggedModelAnimation(
+              lookup!,
+              actorId,
+              currentTime,
+              riggedModel.timeline,
+              riggedModel.options,
+              motion,
+              t.animation,
+            ),
+          );
+        } else {
+          modelMesh!.setMatrixAt(modelAssignment.slot, t.world);
+        }
       } else {
         // Body capsule: at group scale, dead squashes y to 0.3. Positioned at bodyHeight*0.6.
         obj.position.set(x, y + GROUND_LEVEL + bodyHeight * 0.6 * groupScale, z);
@@ -1538,12 +1685,16 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
         // which is what makes one mesh able to serve N actors in different states — and what keeps
         // the "never flip material state per frame" rule intact. A neutral tint on a living actor is
         // (1,1,1), i.e. the albedo exactly as authored.
-        if (modelAssignment && modelMesh) {
+        if (modelAssignment && (modelMesh || riggedModel)) {
           const [tintR, tintG, tintB] = composeStaticModelInstanceColor(
             modelAssignment.tint,
             dead ? DEAD_DARKEN : 1,
           );
-          modelMesh.setColorAt(modelAssignment.slot, col.setRGB(tintR, tintG, tintB));
+          col.setRGB(tintR, tintG, tintB);
+          modelMesh?.setColorAt(modelAssignment.slot, col);
+          if (riggedModel) {
+            setRiggedModelAppearance(riggedModel.instance, col, dead ? DEAD_OPACITY : 1);
+          }
           const modelArr = o.model.get(modelAssignment.asset.id);
           if (modelArr) modelArr[modelAssignment.slot] = dead ? DEAD_OPACITY : 1;
         }
@@ -1805,6 +1956,14 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
           onClick={handleModelClick}
           onPointerOver={handleModelOver}
           onPointerOut={handleOut}
+        />
+      ))}
+      {[...riggedModels].map(([actorId, { instance }]) => (
+        <primitive
+          key={`rigged-${actorId}`}
+          object={instance.root}
+          // eslint-disable-next-line react/no-unknown-property -- Owned resources are disposed by the rig cleanup.
+          dispose={null}
         />
       ))}
       <instancedMesh ref={capRef} args={[geometries.cap, materials.cap, instanceCount]} />
