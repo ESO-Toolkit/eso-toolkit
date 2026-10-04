@@ -12,6 +12,8 @@ import {
   Select,
   Stack,
   TextField,
+  ToggleButton,
+  ToggleButtonGroup,
   Typography,
 } from '@mui/material';
 import React from 'react';
@@ -21,6 +23,12 @@ import { DraftModelCanvas } from '../features/fight_replay/components/DraftModel
 import { resolveReplayModelUrl } from '../features/fight_replay/utils/replayActorModelRegistry';
 import { usePageTitle } from '../hooks/useDocumentTitle';
 import { getBaseUrl } from '../utils/envUtils';
+
+const DraftReplayCanvas = React.lazy(() =>
+  import('../features/fight_replay/components/DraftReplayCanvas').then((module) => ({
+    default: module.DraftReplayCanvas,
+  })),
+);
 
 export interface DraftModelEntry {
   id: string;
@@ -35,6 +43,7 @@ export interface DraftModelEntry {
   reviewNote: string;
   triangleCount?: number;
   bytes?: number;
+  modelHeight?: number;
 }
 
 export interface DraftModelManifest {
@@ -110,6 +119,7 @@ export const ReplayModelDraftsPage: React.FC = () => {
 
   const entries = manifest?.entries ?? [];
   const selected = entries.find((entry) => entry.id === searchParams.get('model')) ?? entries[0];
+  const replayView = searchParams.get('view') === 'replay';
   const families = [...new Set(entries.map((entry) => entry.family))].sort();
   const query = search.trim().toLowerCase();
   const visible = entries.filter(
@@ -145,8 +155,8 @@ export const ReplayModelDraftsPage: React.FC = () => {
         </Typography>
         <Typography color="text.secondary" sx={{ mt: 1, maxWidth: 760 }}>
           {entries.length > 0 ? `${entries.length} models` : 'Models'} from the latest research
-          batch. Rotate each draft, compare it with the reference, and open its source. These
-          reconstructions still need review before they appear in fight replays.
+          batch. Rotate each draft, compare it with the reference, or preview it in the replay
+          renderer. These reconstructions still need review before use in recorded fight replays.
         </Typography>
       </Box>
 
@@ -188,11 +198,38 @@ export const ReplayModelDraftsPage: React.FC = () => {
                 </Box>
                 <Chip label={`${entries.indexOf(selected) + 1} / ${entries.length}`} size="small" />
               </Stack>
-              <DraftModelCanvas
-                modelUrl={mediaUrl(selected.model)}
-                name={selected.name}
-                posterUrl={mediaUrl(selected.previewImage)}
-              />
+              <ToggleButtonGroup
+                exclusive
+                value={replayView ? 'replay' : 'model'}
+                aria-label="Draft viewing mode"
+                size="small"
+                sx={{ mb: 2 }}
+                onChange={(_event, value: string | null) => {
+                  if (!value) return;
+                  setSearchParams((params) => {
+                    params.set('model', selected.id);
+                    if (value === 'replay') params.set('view', 'replay');
+                    else params.delete('view');
+                    return params;
+                  });
+                }}
+              >
+                <ToggleButton value="model">Model viewer</ToggleButton>
+                <ToggleButton value="replay">Replay preview</ToggleButton>
+              </ToggleButtonGroup>
+              {replayView ? (
+                <React.Suspense
+                  fallback={<CircularProgress size={24} aria-label="Loading replay preview" />}
+                >
+                  <DraftReplayCanvas entry={selected} />
+                </React.Suspense>
+              ) : (
+                <DraftModelCanvas
+                  modelUrl={mediaUrl(selected.model)}
+                  name={selected.name}
+                  posterUrl={mediaUrl(selected.previewImage)}
+                />
+              )}
               <Stack direction="row" spacing={1} sx={{ mt: 2, flexWrap: 'wrap', rowGap: 1 }}>
                 <Button
                   component="a"

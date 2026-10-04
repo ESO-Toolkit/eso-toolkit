@@ -86,6 +86,7 @@ const sharedGltfLoader = new GLTFLoader();
  */
 interface InstancedReplayFigures3DProps {
   lookup: TimestampPositionLookup | null;
+  staticModelOverrides?: ReadonlyMap<number, StaticReplayActorModelAsset>;
   timeRef?: React.RefObject<number> | { current: number };
   scale?: number;
   showNames?: boolean;
@@ -561,6 +562,7 @@ function flagOpacityNeedsUpdate(mesh: THREE.InstancedMesh | null | undefined): v
 
 export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> = ({
   lookup,
+  staticModelOverrides,
   timeRef,
   scale = 1,
   showNames = false,
@@ -588,8 +590,10 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
   // (detailedFigures=false) keeps every NPC on the capsule and never fetches.
   const staticModelPlan: StaticModelInstancingPlan = useMemo(
     () =>
-      detailedFigures ? buildStaticModelInstancingPlan(lookup, actorIds) : EMPTY_STATIC_MODEL_PLAN,
-    [lookup, actorIds, detailedFigures],
+      detailedFigures
+        ? buildStaticModelInstancingPlan(lookup, actorIds, staticModelOverrides)
+        : EMPTY_STATIC_MODEL_PLAN,
+    [lookup, actorIds, detailedFigures, staticModelOverrides],
   );
 
   // actorId → loop index. Used to check an actor's live visibility from a pointer event on a model

@@ -27,6 +27,7 @@ import { DEFAULT_ACTOR_SCALE, computeActorScaleFromFightArea } from '../utils/ma
 import { extractPlayerPaths, DEFAULT_PATH_SAMPLING } from '../utils/pathUtils';
 import { getPlayerPathColor } from '../utils/playerColors';
 import { manualLevelForPreset, qualityFlagsForLevel } from '../utils/qualityGovernor';
+import type { StaticReplayActorModelAsset } from '../utils/replayActorModelRegistry';
 import { resolveTouchPolicy } from '../utils/touchPolicy';
 
 import { AdaptiveResolution } from './AdaptiveResolution';
@@ -70,6 +71,7 @@ const logger = new Logger({
  */
 interface AnimationFrameSceneActorsProps {
   lookup: TimestampPositionLookup | null;
+  staticModelOverrides?: ReadonlyMap<number, StaticReplayActorModelAsset>;
   timeRef?: React.RefObject<number> | { current: number };
   scale: number;
   showNames?: boolean;
@@ -166,6 +168,7 @@ const SuppressNativeTouchDefaults: React.FC = () => {
  */
 const AnimationFrameSceneActors: React.FC<AnimationFrameSceneActorsProps> = ({
   lookup,
+  staticModelOverrides,
   timeRef,
   scale,
   showNames = false,
@@ -189,6 +192,7 @@ const AnimationFrameSceneActors: React.FC<AnimationFrameSceneActorsProps> = ({
   return (
     <InstancedReplayFigures3D
       lookup={lookup}
+      staticModelOverrides={staticModelOverrides}
       timeRef={timeRef}
       scale={scale}
       showNames={effectiveShowNames}
@@ -647,6 +651,8 @@ const FloorVignette: React.FC<FloorVignetteProps> = ({ centerX, centerZ, size })
  * Props for the Arena3DScene component
  */
 export interface Arena3DSceneProps {
+  /** Explicit hostile model selection for draft previews; absent in ordinary fight replays. */
+  staticModelOverrides?: ReadonlyMap<number, StaticReplayActorModelAsset>;
   timeRef: React.RefObject<number> | { current: number };
   lookup: TimestampPositionLookup | null;
   showActorNames?: boolean;
@@ -742,6 +748,7 @@ const NEVER_PLAYING_REF: React.RefObject<boolean> = { current: false };
  * including actors, lighting, map textures, camera controls, and markers.
  */
 export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
+  staticModelOverrides,
   timeRef,
   lookup,
   showActorNames = false,
@@ -1257,6 +1264,7 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
       {/* Direct useFrame Actors - Each actor uses useFrame independently */}
       <AnimationFrameSceneActors
         lookup={lookup}
+        staticModelOverrides={staticModelOverrides}
         timeRef={timeRef}
         scale={actorScale}
         showNames={showActorNames}

@@ -17,7 +17,8 @@
       "triangleCount": 11999,
       "bytes": 1037808,
       "clayModel": "archcustodian-four-native/clay.glb",
-      "reviewNote": "Unaccepted draft. The Dwarven Spider family is recognizable, but the exact Archcustodian encounter skin is unverified. Native views share a pose, but their elevated cameras are uncalibrated. Thin cables and joints may be lost in the mask or geometry."
+      "reviewNote": "Unaccepted draft. The Dwarven Spider family is recognizable, but the exact Archcustodian encounter skin is unverified. Native views share a pose, but their elevated cameras are uncalibrated. Thin cables and joints may be lost in the mask or geometry.",
+      "modelHeight": 2.00164962
     },
     {
       "id": "count-ryelaz-complete-folded-front",
@@ -34,7 +35,8 @@
       "triangleCount": 11987,
       "bytes": 688896,
       "reviewNote": "Unaccepted draft. Frontal armor, face and folded wings are projected from the named Count Ryelaz reference. Unobserved surfaces use approximate dark material grain. Extended wingspan, rear wings and side or rear armor remain unsupported; dark lighting, thick wing geometry and uncertain claw edges limit the result.",
-      "clayModel": "count-ryelaz-complete-folded-front/clay.glb"
+      "clayModel": "count-ryelaz-complete-folded-front/clay.glb",
+      "modelHeight": 1.99839377
     },
     {
       "id": "yaseyla-main-phase-lower-res-experimental",
@@ -51,7 +53,8 @@
       "triangleCount": 12000,
       "bytes": 696180,
       "reviewNote": "Unaccepted draft. Frontal skin and armor are projected from the opaque main-phase Exarchanic Yaseyla reference. Its 449-pixel body falls below the 660-pixel target; face and neck geometry and masking remain uncertain. Hands rest at her hips with weapons sheathed. Side and rear surfaces use approximate material grain; drawn grips, hidden clothing and anatomy remain unobserved.",
-      "clayModel": "yaseyla-main-phase-lower-res-experimental/clay.glb"
+      "clayModel": "yaseyla-main-phase-lower-res-experimental/clay.glb",
+      "modelHeight": 2.00118184
     },
     {
       "id": "ogrim-basic-green-native",
@@ -68,7 +71,8 @@
       "triangleCount": 5973,
       "bytes": 263652,
       "clayModel": "ogrim-basic-green-native/clay.glb",
-      "reviewNote": "Unaccepted draft. Two elevated views show the same relaxed pose, but camera elevation is uncalibrated and no full profile is available. The mask may lose tiny neutral edges. Native RGB was preserved with padding only; photographed lighting and unseen surfaces remain unreliable."
+      "reviewNote": "Unaccepted draft. Two elevated views show the same relaxed pose, but camera elevation is uncalibrated and no full profile is available. The mask may lose tiny neutral edges. Native RGB was preserved with padding only; photographed lighting and unseen surfaces remain unreliable.",
+      "modelHeight": 2.01124096
     },
     {
       "id": "dwarven-centurion-oblique-pair",
@@ -85,7 +89,8 @@
       "triangleCount": 5999,
       "bytes": 268076,
       "clayModel": "dwarven-centurion-oblique-pair/clay.glb",
-      "reviewNote": "Unaccepted draft. The generic Dwarven Centurion is based on complete front and rear three-quarter views in the same pose. These are uncalibrated obliques; the generator labels do not establish cardinal cameras. Side surfaces are inferred, and disconnected neutral details may be lost in the mask."
+      "reviewNote": "Unaccepted draft. The generic Dwarven Centurion is based on complete front and rear three-quarter views in the same pose. These are uncalibrated obliques; the generator labels do not establish cardinal cameras. Side surfaces are inferred, and disconnected neutral details may be lost in the mask.",
+      "modelHeight": 2.0005703
     },
     {
       "id": "dwarven-sphere-oblique-pair",
@@ -102,7 +107,8 @@
       "triangleCount": 5999,
       "bytes": 256852,
       "clayModel": "dwarven-sphere-oblique-pair/clay.glb",
-      "reviewNote": "Unaccepted draft. The generic Dwarven Sphere is based on complete front and rear three-quarter views in the same pose. These are uncalibrated obliques; the generator labels do not establish cardinal cameras. Side surfaces are inferred, and disconnected neutral details may be lost in the mask."
+      "reviewNote": "Unaccepted draft. The generic Dwarven Sphere is based on complete front and rear three-quarter views in the same pose. These are uncalibrated obliques; the generator labels do not establish cardinal cameras. Side surfaces are inferred, and disconnected neutral details may be lost in the mask.",
+      "modelHeight": 2.00269055
     },
     {
       "id": "wolf-basic-oblique-front",
@@ -119,7 +125,8 @@
       "triangleCount": 5999,
       "bytes": 537016,
       "clayModel": "wolf-basic-oblique-front/clay.glb",
-      "reviewNote": "Unaccepted draft. Native facial and visible flank detail is retained; unfinished body, dorsal and lower-leg surfaces use continuous approximate fur sampled from the reference. Unseen fur layout and colors are inferred. Opposite-side facial detail, camera alignment, simplified anatomy and baked lighting remain unresolved."
+      "reviewNote": "Unaccepted draft. Native facial and visible flank detail is retained; unfinished body, dorsal and lower-leg surfaces use continuous approximate fur sampled from the reference. Unseen fur layout and colors are inferred. Opposite-side facial detail, camera alignment, simplified anatomy and baked lighting remain unresolved.",
+      "modelHeight": 2.00146651
     },
     {
       "id": "flame-atronach-native-pair",
@@ -136,7 +143,8 @@
       "triangleCount": 5995,
       "bytes": 373664,
       "clayModel": "flame-atronach-native-pair/clay.glb",
-      "reviewNote": "Unaccepted draft. Orange torso and thigh fissures remain recognizable, but the crown becomes a dark face patch. Horns, shoulders, feet and sides contain broad dark fallback regions, and paint alignment fails around limbs and body landmarks. Horns, hands, feet and leg gaps disagree with the reference outlines. Near-cardinal front and rear plates provide no side evidence; profiles read as flat dark silhouettes at replay distance."
+      "reviewNote": "Unaccepted draft. Orange torso and thigh fissures remain recognizable, but the crown becomes a dark face patch. Horns, shoulders, feet and sides contain broad dark fallback regions, and paint alignment fails around limbs and body landmarks. Horns, hands, feet and leg gaps disagree with the reference outlines. Near-cardinal front and rear plates provide no side evidence; profiles read as flat dark silhouettes at replay distance.",
+      "modelHeight": 2.00092506
     },
     {
       "id": "strangler-native-front",
@@ -153,7 +161,8 @@
       "triangleCount": 5985,
       "bytes": 349480,
       "clayModel": "strangler-native-front/clay.glb",
-      "reviewNote": "Unaccepted draft. The purple mouth, green tendrils and streaked stalk identify the creature, but petals, arms and mouth interior have broad purple or gray gaps. Profiles and rear use unsupported purple fallback. Tendrils intersect or collapse, roots flatten, and the rounded head and bent stalk have unobserved depth. The replay flower outline survives, but matching rear and profile captures are needed."
+      "reviewNote": "Unaccepted draft. The purple mouth, green tendrils and streaked stalk identify the creature, but petals, arms and mouth interior have broad purple or gray gaps. Profiles and rear use unsupported purple fallback. Tendrils intersect or collapse, roots flatten, and the rounded head and bent stalk have unobserved depth. The replay flower outline survives, but matching rear and profile captures are needed.",
+      "modelHeight": 2.0000639
     },
     {
       "id": "lamia-golden-native-front",
@@ -170,7 +179,8 @@
       "triangleCount": 5996,
       "bytes": 278024,
       "clayModel": "lamia-golden-native-front/clay.glb",
-      "reviewNote": "Unaccepted draft. Golden scales and the pale underside remain recognizable, but the face becomes a mottled dark patch and fragmented paint leaves broad gold gaps. Arm contours and the lower coil disagree with the reference. Side and rear surfaces are mostly uniform gold; tail-coil depth, back scales and head-fin depth remain inferred. The near-frontal camera is uncalibrated, and the rear oblique was excluded from generation."
+      "reviewNote": "Unaccepted draft. Golden scales and the pale underside remain recognizable, but the face becomes a mottled dark patch and fragmented paint leaves broad gold gaps. Arm contours and the lower coil disagree with the reference. Side and rear surfaces are mostly uniform gold; tail-coil depth, back scales and head-fin depth remain inferred. The near-frontal camera is uncalibrated, and the rear oblique was excluded from generation.",
+      "modelHeight": 1.99827933
     },
     {
       "id": "bull-horned-magma-frog-native-front",
@@ -187,7 +197,8 @@
       "triangleCount": 5966,
       "bytes": 312688,
       "clayModel": "bull-horned-magma-frog-native-front/clay.glb",
-      "reviewNote": "Unaccepted draft. The horn and squat body identify a magma frog, but almost all orange fissures are lost to dark fallback. Registration disagrees around the horn, shoulders, toes and belly-to-leg gap. Horn lean, the rear projection and hidden anatomy are unverified, while hindlegs and toes appear flattened. All replay views read largely as dark clay; the uncalibrated frontal reference needs matching side and rear captures."
+      "reviewNote": "Unaccepted draft. The horn and squat body identify a magma frog, but almost all orange fissures are lost to dark fallback. Registration disagrees around the horn, shoulders, toes and belly-to-leg gap. Horn lean, the rear projection and hidden anatomy are unverified, while hindlegs and toes appear flattened. All replay views read largely as dark clay; the uncalibrated frontal reference needs matching side and rear captures.",
+      "modelHeight": 2.00513649
     },
     {
       "id": "argonian-behemoth-green-native-pair",
@@ -204,7 +215,8 @@
       "triangleCount": 5995,
       "bytes": 383508,
       "clayModel": "argonian-behemoth-green-native-pair/clay.glb",
-      "reviewNote": "Unaccepted draft. Front chest scales and thigh markings remain recognizable, but the head, horns and neck contain flat gaps and fingers are simplified. Rear tail and arm outlines disagree with the source, leaving fragmented dorsal texture; sides and the long tail are mostly fallback. The rear input is an elevated three-quarter view with uncalibrated alignment. This represents the ordinary green species, with no named boss identity accepted."
+      "reviewNote": "Unaccepted draft. Front chest scales and thigh markings remain recognizable, but the head, horns and neck contain flat gaps and fingers are simplified. Rear tail and arm outlines disagree with the source, leaving fragmented dorsal texture; sides and the long tail are mostly fallback. The rear input is an elevated three-quarter view with uncalibrated alignment. This represents the ordinary green species, with no named boss identity accepted.",
+      "modelHeight": 2.00090671
     },
     {
       "id": "stone-atronach-native-front",
@@ -221,7 +233,8 @@
       "triangleCount": 5992,
       "bytes": 305912,
       "clayModel": "stone-atronach-native-front/clay.glb",
-      "reviewNote": "Unaccepted draft. Scattered frontal stone detail survives, but broad gaps interrupt the surface and the rear and opposite side are mostly unsupported brown-gray fallback. Generated rocks and legs are rounded and fused compared with the native reference; baking does not repair those separations. The replay silhouette remains rocky, but face and limb detail is weak. This is the generic species, not Foundation Stone, and only one view was supplied."
+      "reviewNote": "Unaccepted draft. Scattered frontal stone detail survives, but broad gaps interrupt the surface and the rear and opposite side are mostly unsupported brown-gray fallback. Generated rocks and legs are rounded and fused compared with the native reference; baking does not repair those separations. The replay silhouette remains rocky, but face and limb detail is weak. This is the generic species, not Foundation Stone, and only one view was supplied.",
+      "modelHeight": 2.00385022
     },
     {
       "id": "harpy-native-front",
@@ -238,7 +251,8 @@
       "triangleCount": 5998,
       "bytes": 324316,
       "clayModel": "harpy-native-front/clay.glb",
-      "reviewNote": "Unaccepted draft. The face, chest, legs and parts of the lowered wings retain red detail. Outer feathers contain broad gaps, while rear and side surfaces are mostly unsupported flat red. Feathers become thick grouped paddles and talons are simplified; wing tips, feet and head also differ from the reference. The single hovering view is uncalibrated, so matching rear and side captures and feather review are needed."
+      "reviewNote": "Unaccepted draft. The face, chest, legs and parts of the lowered wings retain red detail. Outer feathers contain broad gaps, while rear and side surfaces are mostly unsupported flat red. Feathers become thick grouped paddles and talons are simplified; wing tips, feet and head also differ from the reference. The single hovering view is uncalibrated, so matching rear and side captures and feather review are needed.",
+      "modelHeight": 2.00452256
     },
     {
       "id": "banekin-crouched-native-front",
@@ -255,7 +269,8 @@
       "triangleCount": 5998,
       "bytes": 495832,
       "reviewNote": "Unaccepted draft. Face, horns and skin are projected from the native crouched Banekin reference. Forearm streaking and head and foot perspective mismatch remain. Unobserved rear and side surfaces use approximate material grain; their skin layout and anatomy are inferred.",
-      "clayModel": "banekin-crouched-native-front/clay.glb"
+      "clayModel": "banekin-crouched-native-front/clay.glb",
+      "modelHeight": 2.00204921
     },
     {
       "id": "bear-brown-native-front",
@@ -272,7 +287,8 @@
       "triangleCount": 6000,
       "bytes": 422592,
       "reviewNote": "Unaccepted draft. Conservative native head and mouth detail is retained; the body and legs use continuous approximate brown fur sampled from the reference. Unseen fur layout and color are inferred, and repeated strands are visible close up. Head projection, simplified paws and anatomy and baked lighting remain unresolved.",
-      "clayModel": "bear-brown-native-front/clay.glb"
+      "clayModel": "bear-brown-native-front/clay.glb",
+      "modelHeight": 2.00198412
     },
     {
       "id": "crocodile-native-front",
@@ -289,7 +305,8 @@
       "triangleCount": 6000,
       "bytes": 523472,
       "reviewNote": "Unaccepted draft. Native dorsal and face colors are projected from a steep front oblique. Unobserved skin uses approximate brown and tan scales. The jaw perspective, underside, hidden eyes and anatomy remain unreliable; the source camera is uncalibrated and photographed lighting remains baked.",
-      "clayModel": "crocodile-native-front/clay.glb"
+      "clayModel": "crocodile-native-front/clay.glb",
+      "modelHeight": 2.00634289
     },
     {
       "id": "kwama-warrior-native-front",
@@ -306,7 +323,8 @@
       "triangleCount": 5999,
       "bytes": 419568,
       "reviewNote": "Unaccepted draft. Face, arms and shell detail are projected from one native Kwama Warrior view. The shell overhang obscures the face, and red photographed lighting remains baked. Unobserved rear and side surfaces use approximate material grain; hidden shell and anatomy remain inferred.",
-      "clayModel": "kwama-warrior-native-front/clay.glb"
+      "clayModel": "kwama-warrior-native-front/clay.glb",
+      "modelHeight": 2.00344539
     },
     {
       "id": "haj-mota-exact-rgb-pair",
@@ -323,7 +341,8 @@
       "triangleCount": 5994,
       "bytes": 613044,
       "reviewNote": "Unaccepted draft. Native front and rear-oblique RGB are projected with corrected camera directions. These are uncalibrated views; the rear oblique is not a cardinal rear capture. Unobserved shell and skin use approximate warm charcoal and rust scale material. Camera correspondence, hidden anatomy and baked lighting remain unresolved. Earlier invalid gray-painted textures are excluded.",
-      "clayModel": "haj-mota-exact-rgb-pair/clay.glb"
+      "clayModel": "haj-mota-exact-rgb-pair/clay.glb",
+      "modelHeight": 2.00790596
     },
     {
       "id": "coral-haj-mota-exact-rgb-pair",
@@ -340,7 +359,8 @@
       "triangleCount": 5996,
       "bytes": 675040,
       "reviewNote": "Unaccepted draft. Native front and rear-oblique RGB are projected with corrected camera directions. These are uncalibrated views; the rear oblique is not a cardinal rear capture. Unobserved shell and skin use approximate teal and gold scale material. Camera correspondence, hidden anatomy and baked lighting remain unresolved. Earlier invalid gray-painted textures are excluded.",
-      "clayModel": "coral-haj-mota-exact-rgb-pair/clay.glb"
+      "clayModel": "coral-haj-mota-exact-rgb-pair/clay.glb",
+      "modelHeight": 1.99841952
     },
     {
       "id": "wamasu-green-oblique-pair",
@@ -357,7 +377,8 @@
       "triangleCount": 6000,
       "bytes": 301288,
       "clayModel": "wamasu-green-oblique-pair/clay.glb",
-      "reviewNote": "Unaccepted draft. Front face, chest and near-shoulder detail survives, but broad sides become flat dark olive fallback. Rear alignment disagrees extensively over the torso, head and tail, and jaw horns and feet merge into coarse geometry. Replay front is recognizable while sides are blank dark masses. Both views are uncalibrated obliques; rear and side captures and geometry correction are needed."
+      "reviewNote": "Unaccepted draft. Front face, chest and near-shoulder detail survives, but broad sides become flat dark olive fallback. Rear alignment disagrees extensively over the torso, head and tail, and jaw horns and feet merge into coarse geometry. Replay front is recognizable while sides are blank dark masses. Both views are uncalibrated obliques; rear and side captures and geometry correction are needed.",
+      "modelHeight": 2.00501251
     },
     {
       "id": "daedroth-green-native-pair",
@@ -374,7 +395,8 @@
       "triangleCount": 5982,
       "bytes": 343048,
       "clayModel": "daedroth-green-native-pair/clay.glb",
-      "reviewNote": "Unaccepted draft. Front face, chest and forearms retain some scales, but the tail, outer arms and sides use broad olive fallback. Rear head, tail and torso alignment is poor, leaving patchy texture; the head is flattened and feet simplified. The rear image is an uncalibrated three-quarter view with natural foot occlusion. Only the generic green species is supported, with no named actor identity accepted."
+      "reviewNote": "Unaccepted draft. Front face, chest and forearms retain some scales, but the tail, outer arms and sides use broad olive fallback. Rear head, tail and torso alignment is poor, leaving patchy texture; the head is flattened and feet simplified. The rear image is an uncalibrated three-quarter view with natural foot occlusion. Only the generic green species is supported, with no named actor identity accepted.",
+      "modelHeight": 2.00598621
     },
     {
       "id": "gryphon-brown-folded-oblique-pair",
@@ -391,7 +413,8 @@
       "triangleCount": 5973,
       "bytes": 402704,
       "clayModel": "gryphon-brown-folded-oblique-pair/clay.glb",
-      "reviewNote": "Unaccepted draft. The face and white chest remain recognizable, but rear alignment disagrees over the head, back and tail. Sides and back are mostly flat brown with displaced blue wing patches. Feather layers become solid plates, the tail differs from the photographed fan, and crest spikes and toes are coarse. Both cameras are uncalibrated; rear and side alignment and feather geometry need improvement. The compact texture export reviewed exceeded the 400,000-byte target."
+      "reviewNote": "Unaccepted draft. The face and white chest remain recognizable, but rear alignment disagrees over the head, back and tail. Sides and back are mostly flat brown with displaced blue wing patches. Feather layers become solid plates, the tail differs from the photographed fan, and crest spikes and toes are coarse. Both cameras are uncalibrated; rear and side alignment and feather geometry need improvement. The compact texture export reviewed exceeded the 400,000-byte target.",
+      "modelHeight": 2.00619125
     },
     {
       "id": "daedric-titan-blue-winged-pair",
@@ -408,7 +431,8 @@
       "triangleCount": 6000,
       "bytes": 291748,
       "clayModel": "daedric-titan-blue-winged-pair/clay.glb",
-      "reviewNote": "Unaccepted draft. Blue face and chest cues and some wing holes survive, but both fits disagree broadly over wings, arms, legs and tail. Rear wing detail is patchy, and side and rear body surfaces use dark fallback. The tail becomes a thick loop and wing membranes are coarse. Frontal wings remain recognizable at replay distance, but compatible calibrated views and wing, limb and tail correction are needed."
+      "reviewNote": "Unaccepted draft. Blue face and chest cues and some wing holes survive, but both fits disagree broadly over wings, arms, legs and tail. Rear wing detail is patchy, and side and rear body surfaces use dark fallback. The tail becomes a thick loop and wing membranes are coarse. Frontal wings remain recognizable at replay distance, but compatible calibrated views and wing, limb and tail correction are needed.",
+      "modelHeight": 1.9991703
     },
     {
       "id": "iron-atronach-native-pair",
@@ -425,7 +449,8 @@
       "triangleCount": 5989,
       "bytes": 328784,
       "clayModel": "iron-atronach-native-pair/clay.glb",
-      "reviewNote": "Unaccepted draft. Front and rear alignment is comparatively strong, retaining chest fire, red fissures and several iron plates at replay distance. Sides remain flat brown fallback with abrupt seams, and spikes and hands are coarse. The elevated oblique cameras are uncalibrated; photographed fire and lighting are baked color rather than emission. Side captures and plate alignment are still needed, and no named actor identity is verified."
+      "reviewNote": "Unaccepted draft. Front and rear alignment is comparatively strong, retaining chest fire, red fissures and several iron plates at replay distance. Sides remain flat brown fallback with abrupt seams, and spikes and hands are coarse. The elevated oblique cameras are uncalibrated; photographed fire and lighting are baked color rather than emission. Side captures and plate alignment are still needed, and no named actor identity is verified.",
+      "modelHeight": 2.00373912
     },
     {
       "id": "storm-atronach-native-pair",
@@ -442,7 +467,8 @@
       "triangleCount": 5996,
       "bytes": 343868,
       "clayModel": "storm-atronach-native-pair/clay.glb",
-      "reviewNote": "Unaccepted draft. The disconnected floating rock form is identifiable, with patchy front and rear stone detail. Broad sides and many shoulder and boot surfaces become dark fallback, while fits disagree around shoulders, hands and feet. Detached rocks and fingers are simplified, and photographed depth is uncertain. Both elevated obliques are uncalibrated; side captures and rock and hand alignment are needed, with no named actor identity verified."
+      "reviewNote": "Unaccepted draft. The disconnected floating rock form is identifiable, with patchy front and rear stone detail. Broad sides and many shoulder and boot surfaces become dark fallback, while fits disagree around shoulders, hands and feet. Detached rocks and fingers are simplified, and photographed depth is uncertain. Both elevated obliques are uncalibrated; side captures and rock and hand alignment are needed, with no named actor identity verified.",
+      "modelHeight": 2.00101256
     },
     {
       "id": "frost-atronach-native-pair",
@@ -459,7 +485,8 @@
       "triangleCount": 5992,
       "bytes": 310976,
       "clayModel": "frost-atronach-native-pair/clay.glb",
-      "reviewNote": "Unaccepted draft. Front face and chest and rear blue plate streaks remain recognizable at replay distance. Fits disagree around forearms and feet, rear texture placement is uneven, and sides become flat blue fallback. Head, shoulder and forearm geometry lose crystalline facets. Both elevated obliques are uncalibrated; side captures and plate registration and geometry correction are needed, with no named actor identity verified."
+      "reviewNote": "Unaccepted draft. Front face and chest and rear blue plate streaks remain recognizable at replay distance. Fits disagree around forearms and feet, rear texture placement is uneven, and sides become flat blue fallback. Head, shoulder and forearm geometry lose crystalline facets. Both elevated obliques are uncalibrated; side captures and plate registration and geometry correction are needed, with no named actor identity verified.",
+      "modelHeight": 1.99922693
     },
     {
       "id": "female-dark-elf-zombie-native-front",
@@ -476,7 +503,8 @@
       "triangleCount": 5999,
       "bytes": 283920,
       "clayModel": "female-dark-elf-zombie-native-front/clay.glb",
-      "reviewNote": "Unaccepted draft. The frontal skull face and brown-red clothing remain recognizable, but legs and feet differ from the attack pose and palms and fingers are coarse. Rear and most side surfaces use unsupported uniform brown fallback; hidden anatomy and clothing are inferred. Only this pictured female Dark Elf zombie is supported, with no runtime alias verified. Matching-pose rear and side captures are needed."
+      "reviewNote": "Unaccepted draft. The frontal skull face and brown-red clothing remain recognizable, but legs and feet differ from the attack pose and palms and fingers are coarse. Rear and most side surfaces use unsupported uniform brown fallback; hidden anatomy and clothing are inferred. Only this pictured female Dark Elf zombie is supported, with no runtime alias verified. Matching-pose rear and side captures are needed.",
+      "modelHeight": 1.99947619
     }
   ],
   "totalBytes": 20506784,

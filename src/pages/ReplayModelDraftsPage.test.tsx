@@ -13,6 +13,13 @@ import {
 } from './ReplayModelDraftsPage';
 
 jest.mock('../utils/envUtils', () => ({ getBaseUrl: jest.fn() }));
+jest.mock('../features/fight_replay/components/DraftReplayCanvas', () => ({
+  DraftReplayCanvas: ({ entry: selected }: { entry: DraftModelEntry }) => (
+    <div data-testid="replay-canvas" data-model={selected.model}>
+      {selected.name}
+    </div>
+  ),
+}));
 jest.mock('../features/fight_replay/components/DraftModelCanvas', () => ({
   DraftModelCanvas: ({
     modelUrl,
@@ -154,6 +161,33 @@ describe('ReplayModelDraftsPage', () => {
     });
     expect(screen.getByText('Showing 1 of 3 drafts')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'View Brown Bear' })).toBeInTheDocument();
+  });
+
+  it('opens replay deep links and preserves the replay mode when selecting another model', async () => {
+    renderPage('/replay-model-drafts?model=spider&view=replay&embed=1');
+    expect(await screen.findByTestId('replay-canvas')).toHaveAttribute(
+      'data-model',
+      'models/spider.glb',
+    );
+    expect(screen.queryByTestId('draft-canvas')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'View Brown Bear' }));
+    expect(screen.getByTestId('replay-canvas')).toHaveAttribute('data-model', 'models/bear.glb');
+    expect(screen.getByTestId('location')).toHaveTextContent('model=bear&view=replay&embed=1');
+  });
+
+  it('switches between model and replay viewers with shareable URLs', async () => {
+    renderPage('/replay-model-drafts?model=boss&embed=1');
+    await screen.findByTestId('draft-canvas');
+    fireEvent.click(screen.getByRole('button', { name: 'Replay preview' }));
+    await screen.findByTestId('replay-canvas');
+    expect(screen.getByTestId('location')).toHaveTextContent('model=boss&embed=1&view=replay');
+    fireEvent.click(screen.getByRole('button', { name: 'Model viewer' }));
+    expect(screen.getByTestId('draft-canvas')).toHaveAttribute(
+      'data-model',
+      `${prefix}models/boss.glb`,
+    );
+    expect(screen.getByTestId('location')).toHaveTextContent('model=boss&embed=1');
+    expect(screen.queryByTestId('replay-canvas')).not.toBeInTheDocument();
   });
 
   it('retries a failed manifest request and aborts requests on cleanup', async () => {

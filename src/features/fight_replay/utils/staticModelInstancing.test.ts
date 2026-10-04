@@ -131,6 +131,46 @@ describe('getStaticModelForActor', () => {
 });
 
 describe('buildStaticModelInstancingPlan', () => {
+  it.each(['enemy', 'boss'] as const)('selects an explicit draft override for a %s', (type) => {
+    const lookup = makeLookup([{ 10: actorAt(type, 'Unregistered Draft') }]);
+    const plan = buildStaticModelInstancingPlan(lookup, [10], new Map([[10, UNTINTED]]));
+
+    expect(plan.assets).toEqual([UNTINTED]);
+    expect(plan.byActorId.get(10)).toEqual({ asset: UNTINTED, slot: 0, tint: NEUTRAL_MODEL_TINT });
+    expect(plan.actorIdsByAssetId.get(UNTINTED.id)).toEqual([10]);
+  });
+
+  it('replaces only the selected hostile while retaining ordinary registry assignments', () => {
+    const lookup = makeLookup([
+      { 10: actorAt('enemy', 'Blood Knight'), 11: actorAt('enemy', 'Half-Giant Raider') },
+    ]);
+    const plan = buildStaticModelInstancingPlan(lookup, [10, 11], new Map([[10, UNTINTED]]));
+
+    expect(plan.byActorId.get(10)?.asset).toBe(UNTINTED);
+    expect(plan.byActorId.get(11)?.asset).toBe(RAIDER);
+    expect(buildStaticModelInstancingPlan(lookup, [10, 11]).byActorId.get(10)?.asset).toBe(
+      BLOODKNIGHT,
+    );
+  });
+
+  it('falls back to the registry when an override does not support the hostile type', () => {
+    const lookup = makeLookup([{ 10: actorAt('boss', 'Blood Knight') }]);
+    const plan = buildStaticModelInstancingPlan(lookup, [10], new Map([[10, RAIDER]]));
+
+    expect(plan.byActorId.get(10)?.asset).toBe(BLOODKNIGHT);
+  });
+
+  it.each(['player', 'friendly_npc', 'pet'] as const)(
+    'rejects an override for a %s even when the asset claims to support that type',
+    (type) => {
+      const lookup = makeLookup([{ 10: actorAt(type, 'Unregistered Draft') }]);
+      const maliciousAsset: StaticReplayActorModelAsset = { ...UNTINTED, actorTypes: [type] };
+      const plan = buildStaticModelInstancingPlan(lookup, [10], new Map([[10, maliciousAsset]]));
+
+      expect(plan).toBe(EMPTY_STATIC_MODEL_PLAN);
+    },
+  );
+
   it('gives every actor sharing one asset its own slot in that asset mesh', () => {
     // The regression this whole change exists for: under the old "first match wins" resolver, raider
     // #2 would have stayed a capsule next to its identical, fully-modelled sibling.
