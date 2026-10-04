@@ -7,11 +7,16 @@ this prototype; this note is
 not a claim that Elder Scrolls Online intellectual property is freely licensed.
 
 - Reference page: <https://esomodelviewer.com/characters/post/82-yandir-the-butcher>
-- Skeletal derivative: `yandir-the-butcher-rigged-v1.glb` reuses this optimized mesh,
+- Skeletal derivative: `yandir-the-butcher-rigged-v2.glb` reuses this optimized mesh,
   UVs, embedded JPEG, rest bounds, and orientation under the same project authorization.
-  The CPU builder `tools/fight-replay-models/yandir-rigged-v1.py` adds a 17-bone skin
-  and authored two-second `idle`, `walk`, and `cast` clips (45,000 triangles,
-  29,613 exported vertices, 2,372,188 bytes). It does not extract client animation
+  The CPU builder `tools/fight-replay-models/yandir-rigged-v2.py` adds a 17-bone skin
+  and authored 3.2-second `idle` and two-second `walk`/`cast` clips (45,000 triangles,
+  29,613 exported vertices, 2,411,900 bytes). Idle rotates the upper body while keeping feet planted;
+  cast holds a raised-arm pose shaped by the runtime's single 600 ms sin-squared reaction.
+  `check-yandir-rig.py --require-visible` checks the exported rig and at least one pixel
+  of idle silhouette travel at 48 px from four elevated angles; see the
+  [builder instructions](../../../../tools/fight-replay-models/README.md#yandir-skeletal-pilot).
+  It does not extract client animation
   or use UniMate/ML animation generation. The scene root stays stationary;
   replay logs supply translation and drive walk phase by traveled distance.
   This static asset remains the loading/failure fallback.

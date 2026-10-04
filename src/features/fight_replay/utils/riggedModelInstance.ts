@@ -16,7 +16,7 @@ export const RIGGED_REPLAY_MODEL_ASSETS: ReadonlyMap<
   [
     'yandir-the-butcher-overview-v2',
     {
-      path: 'models/fight-replay/npcs/yandir-the-butcher-rigged-v1.glb',
+      path: 'models/fight-replay/npcs/yandir-the-butcher-rigged-v2.glb',
       // Model-space travel per cycle, measured by the authoring script. Runtime applies catalog scale.
       walkDistance: 0.6310190558433533,
     },
