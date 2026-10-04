@@ -1,0 +1,494 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   ESO Helper Design System — tokens + type
+   ═══════════════════════════════════════════════════════════════════════════
+   SOURCE OF TRUTH: src/ReduxThemeProvider.tsx (MUI createTheme + GlobalStyles).
+   The app publishes these tokens at runtime as CSS custom properties on :root
+   (ReduxThemeProvider.tsx:587-610) and flips <html data-color-scheme="dark|light">
+   (ReduxThemeProvider.tsx:32-34). This file mirrors that mechanism.
+
+   All values verified against source on 2026-07-26. Per-section citations below.
+   Cited files (repo eso-log-aggregator):
+     - src/ReduxThemeProvider.tsx:37-69 (core tokens), :587-610 (CSS vars)
+     - src/utils/roleColors.ts                  (role colors)
+     - src/components/GearIcon.tsx:41-58        (gear-UI rarity, + desaturated)
+     - src/utils/gearMappings.ts:166-174        (gear-UI rarity incl. Trash)
+     - src/features/build-editor/theme/buildEditorTokens.ts   (BE glass + rarity)
+     - src/features/build-editor/theme/classColorMap.ts       (class accents)
+     - src/utils/echartsTheme.ts                (chart palettes)
+     - src/styles/view-transitions.css:17-21    (--vt-* easings)
+     - src/utils/playerCardStyleUtils.ts        (glossy chip variants)
+     - src/components/MetricPill.tsx:27-53      (metric-pill intents)
+   NOTE: class colors live in src/features/build-editor/theme/classColorMap.ts.
+   A previous version of this file cited src/utils/classColors.ts — that file
+   does NOT exist and never did in the current tree.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Fonts ──────────────────────────────────────────────────────────────────
+   Body: Inter (variable). Headings: Space Grotesk 600. Noto Sans appears in
+   the MUI font stack ONLY as a system glyph fallback — never load it as a
+   webfont or use it deliberately. Source: ReduxThemeProvider.tsx:89-99. */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   1. CORE TOKENS — dark is the default scheme
+   Source: src/ReduxThemeProvider.tsx:37-69 (verified 2026-07-26)
+   ═══════════════════════════════════════════════════════════════════════════ */
+:root,
+[data-color-scheme='dark'] {
+  --bg: #0b1220;
+  --panel: #0f172a;
+  --panel-2: #0d1430;
+  --text: #e5e7eb;
+  --muted: #94a3b8;
+  --accent: #38bdf8;   /* brand cyan */
+  --accent-2: #00e1ff;
+  --ok: #22c55e;
+  --warn: #ff9800;
+  --danger: #ef4444;
+  --border: #1f2937;
+
+  /* Scrollbar theme — ReduxThemeProvider.tsx:602-609 */
+  --scrollbar-track: rgba(15, 23, 42, 0.5);
+  --scrollbar-thumb: rgba(56, 189, 248, 0.3);
+  --scrollbar-thumb-hover: rgba(56, 189, 248, 0.5);
+  --scrollbar-thumb-active: rgba(56, 189, 248, 0.7);
+
+  /* Surface rgba / gradient tokens (dark) */
+  --surface-paper: linear-gradient(180deg, rgba(15, 23, 42, 0.66) 0%, rgba(3, 7, 18, 0.66) 100%);   /* MuiPaper + MuiCard, :161-163 / :226-228 */
+  --surface-dialog: linear-gradient(135deg, rgba(15, 23, 42, 0.97) 0%, rgba(13, 20, 48, 0.97) 100%); /* MuiDialog, :388-390 */
+  --surface-menu-solid: #0f172a;                                   /* global MuiMenu/MuiPopover paper, :178 */
+  --surface-menu-glass: rgb(45, 64, 99);                           /* cyan dropdown glass, dropdownMenu.ts:140 */
+  --surface-tooltip-gear: rgba(10, 16, 32, 0.78);                  /* .gear-set-tooltip, :234 */
+  --surface-tooltip-skill: rgba(10, 16, 32, 0.92);                 /* .skill-tooltip, :246 */
+  --surface-be-glass: rgba(15, 23, 42, 0.84);                      /* BE_TOKENS.glass.bg */
+  --surface-be-glass-border: rgba(255, 255, 255, 0.09);            /* BE_TOKENS.glass.border */
+  --surface-chip-default: rgba(2, 6, 23, 0.45);                    /* MuiChip colorDefault, :325 */
+  --surface-input-well: rgba(0, 0, 0, 0.22);                       /* BE_TOKENS.input.dark.bg */
+  --surface-accordion-wash: linear-gradient(135deg, rgb(110 170 240 / 25%) 0%, rgb(152 131 227 / 15%) 50%, rgb(173 192 255 / 8%) 100%); /* MuiAccordion, :501-502 (same string both modes) */
+
+  /* Shadow tokens (dark) */
+  --shadow-paper: 0 8px 30px rgba(0, 0, 0, 0.25);                                            /* MuiPaper, :166-167 */
+  --shadow-card-hover: 0 10px 40px rgba(0, 0, 0, 0.3), 0 0 60px rgba(56, 189, 248, 0.08);    /* MuiCard :hover, :266-267 */
+  --shadow-dialog: 0 24px 64px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.03) inset; /* MuiDialog, :397-398 */
+  --shadow-glossy-chip: 0 8px 32px 0 rgba(0, 0, 0, 0.37), inset 0 1px 0 rgba(255, 255, 255, 0.2), inset 0 -1px 0 rgba(0, 0, 0, 0.2); /* playerCardStyleUtils.ts:39-41 */
+  --shadow-be-glass: 0 8px 32px rgba(0, 0, 0, 0.32), 0 1px 0 rgba(255, 255, 255, 0.05) inset;  /* BE_TOKENS.glass.shadow */
+  --shadow-glass-card: 0 10px 40px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.06); /* glassCardSurface.ts:47-48 */
+
+  /* Gradient tokens (dark) */
+  --grad-button-primary: linear-gradient(135deg, #38bdf8, #00e1ff);  /* MuiButton containedPrimary, :284 (accent → accent-2) */
+  --grad-chrome: rgba(11, 18, 32, 0.95);                              /* MuiAppBar bg, :150 */
+  --chrome-border: rgba(56, 189, 248, 0.15);                          /* MuiAppBar borderBottom, :152-153 */
+
+  /* Role colors — src/utils/roleColors.ts:5-9 (DARK_ROLE_COLORS, solids) */
+  --role-dps: #ff8b61;
+  --role-healer: #b970ff;
+  --role-tank: #62baff;
+  /* Dark mode has no role gradients — gradient vars alias the solids so
+     interchangeable use is safe. Light mode overrides with real gradients. */
+  --role-dps-gradient: var(--role-dps);
+  --role-healer-gradient: var(--role-healer);
+  --role-tank-gradient: var(--role-tank);
+
+  /* Chart palette — src/utils/echartsTheme.ts:7-20 (DARK_PALETTE) */
+  --chart-1: #38bdf8;  /* sky */
+  --chart-2: #f43f5e;  /* rose */
+  --chart-3: #22c55e;  /* green */
+  --chart-4: #f59e0b;  /* amber */
+  --chart-5: #a855f7;  /* purple */
+  --chart-6: #06b6d4;  /* cyan */
+  --chart-7: #eab308;  /* yellow */
+  --chart-8: #8b5cf6;  /* violet */
+  --chart-9: #10b981;  /* emerald */
+  --chart-10: #ef4444; /* red */
+  --chart-11: #3b82f6; /* blue */
+  --chart-12: #ec4899; /* pink */
+  --chart-grid-line: rgba(255, 255, 255, 0.06);  /* echartsTheme.ts:69 */
+  --chart-tooltip-bg: rgba(15, 23, 42, 0.88);    /* echartsTheme.ts:70-73 (0.95 when intensity=bold) */
+
+  /* Inset top-highlight (dark values) — see §6 for the full alpha scale */
+  --inset-hl-panel: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --inset-hl-menu: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  --inset-hl-glossy: inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   2. LIGHT SCHEME — [data-color-scheme='light'] on <html>
+   Source: src/ReduxThemeProvider.tsx:53-68 (verified 2026-07-26)
+
+   ⚠ IMPORTANT: light --accent is DELIBERATELY #0f172a (dark slate), NOT a
+   light blue. Light mode's primary/accent reads as near-black ink; the cyan
+   #38bdf8 survives only where recipes hard-code it. Do not "fix" this.
+   ═══════════════════════════════════════════════════════════════════════════ */
+[data-color-scheme='light'] {
+  --bg: #f8fafc;
+  --panel: #ffffff;
+  --panel-2: #f8fafc;
+  --text: #1e293b;
+  --muted: #64748b;
+  --accent: #0f172a;   /* dark slate — intentional, see note above */
+  --accent-2: #1e293b;
+  --ok: #059669;
+  --warn: #f97316;
+  --danger: #dc2626;
+  --border: #bcd9ff;
+
+  --scrollbar-track: rgba(188, 217, 255, 0.2);
+  --scrollbar-thumb: rgba(15, 23, 42, 0.25);
+  --scrollbar-thumb-hover: rgba(15, 23, 42, 0.4);
+  --scrollbar-thumb-active: rgba(15, 23, 42, 0.55);
+
+  --surface-paper: linear-gradient(180deg, rgb(230 241 248 / 56%) 0%, rgb(255 255 255 / 95%) 100%);
+  --surface-dialog: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.98) 100%);
+  --surface-menu-solid: #ffffff;
+  --surface-menu-glass: rgb(250, 253, 255);
+  --surface-tooltip-gear: rgba(255, 255, 255, 0.82);
+  --surface-tooltip-skill: rgba(255, 255, 255, 0.92);
+  --surface-be-glass: rgba(255, 255, 255, 0.84);
+  --surface-be-glass-border: rgba(15, 23, 42, 0.13);
+  --surface-chip-default: rgba(241, 245, 249, 0.8);
+  --surface-input-well: rgba(0, 0, 0, 0.04);
+
+  --shadow-paper: 0 4px 12px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.03);
+  --shadow-card-hover: 0 6px 20px rgba(15, 23, 42, 0.08), 0 2px 8px rgba(15, 23, 42, 0.04);
+  --shadow-dialog: 0 12px 40px rgba(15, 23, 42, 0.12), 0 4px 12px rgba(15, 23, 42, 0.06);
+  --shadow-glossy-chip: 0 4px 16px 0 rgba(59, 130, 246, 0.15), 0 2px 8px 0 rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.2), inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+  --shadow-be-glass: 0 4px 24px rgba(15, 23, 42, 0.10), 0 1px 0 rgba(255, 255, 255, 0.80) inset;
+  --shadow-glass-card: 0 6px 28px rgba(15, 23, 42, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+
+  --grad-button-primary: linear-gradient(135deg, #0f172a, #1e293b);
+  --grad-chrome: rgba(255, 255, 255, 0.98);
+  --chrome-border: rgba(15, 23, 42, 0.08);
+
+  /* Role colors — light mode ships GRADIENTS (roleColors.ts:12-16); the solid
+     vars fall back to LIGHT_ROLE_COLORS_SOLID (roleColors.ts:19-23) for
+     contexts that can't take a gradient (progress bars, text, borders). */
+  --role-dps: #ff5722;      /* solid fallback */
+  --role-healer: #7c3aed;   /* solid fallback */
+  --role-tank: #0891b2;     /* solid fallback */
+  --role-dps-gradient: linear-gradient(135deg, #ff9246 36% 36%, #ff3400e6 100%);
+  --role-healer-gradient: linear-gradient(135deg, #9333ea 0%, #c084fc 100%);
+  --role-tank-gradient: linear-gradient(135deg, #0ea5e9 0%, #38bdf8 100%);
+
+  /* Chart palette — echartsTheme.ts:22-35 (LIGHT_PALETTE, Tailwind-600 tones) */
+  --chart-1: #0284c7;  /* sky-600 */
+  --chart-2: #e11d48;  /* rose-600 */
+  --chart-3: #16a34a;  /* green-600 */
+  --chart-4: #d97706;  /* amber-600 */
+  --chart-5: #9333ea;  /* purple-600 */
+  --chart-6: #0891b2;  /* cyan-600 */
+  --chart-7: #ca8a04;  /* yellow-600 */
+  --chart-8: #7c3aed;  /* violet-600 */
+  --chart-9: #059669;  /* emerald-600 */
+  --chart-10: #dc2626; /* red-600 */
+  --chart-11: #2563eb; /* blue-600 */
+  --chart-12: #db2777; /* pink-600 */
+  --chart-grid-line: rgba(0, 0, 0, 0.06);
+  --chart-tooltip-bg: rgba(255, 255, 255, 0.88);
+
+  /* Light-mode inset highlights run far hotter (0.6–0.9) — see §6 */
+  --inset-hl-panel: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  --inset-hl-menu: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  --inset-hl-glossy: inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   3. MODE-INDEPENDENT PALETTES
+   ═══════════════════════════════════════════════════════════════════════════ */
+:root {
+  /* ── Rarity, GEAR-UI SURFACE (ESO in-game palette) ────────────────────────
+     Used for gear icon borders, tooltips, report gear tables.
+     Source: src/components/GearIcon.tsx:41-48; Trash tier only exists in
+     src/utils/gearMappings.ts:166-174 (QUALITY_COLORS; #9d9d9d ≠ #9e9e9e). */
+  --rarity-eso-trash: #9d9d9d;
+  --rarity-eso-normal: #ffffff;
+  --rarity-eso-fine: #62a603;
+  --rarity-eso-superior: #417dc1;
+  --rarity-eso-epic: #c040c0;
+  --rarity-eso-legendary: #ffbf00;
+  --rarity-eso-mythic: #ff6b35;
+
+  /* Desaturated ESO set — gear DETAILS TABLE only. GearIcon.tsx:51-58. */
+  --rarity-eso-normal-desat: #e5e5e5;
+  --rarity-eso-fine-desat: #7cb342;
+  --rarity-eso-superior-desat: #5c9ce6;
+  --rarity-eso-epic-desat: #9978d4;
+  --rarity-eso-legendary-desat: #dec369;
+  --rarity-eso-mythic-desat: #c47a5a;
+
+  /* ── Rarity, BUILD-EDITOR SURFACE (Material palette) ──────────────────────
+     Used for build-editor gear-slot borders ONLY. Deliberately different from
+     the gear-UI set — do NOT unify, do NOT invent a blend of the two.
+     Source: buildEditorTokens.ts:38-45 (BE_TOKENS.rarity). No trash tier. */
+  --rarity-be-normal: #9e9e9e;
+  --rarity-be-fine: #4caf50;
+  --rarity-be-superior: #2196f3;
+  --rarity-be-epic: #9c27b0;
+  --rarity-be-legendary: #ff9800;
+  --rarity-be-mythic: #f44336;
+
+  /* ── Class accents ────────────────────────────────────────────────────────
+     Source: src/features/build-editor/theme/classColorMap.ts (NOT the
+     nonexistent src/utils/classColors.ts). At runtime,
+     BuildEditorThemeProvider.tsx:26-29 injects the selected class as
+     --be-accent / --be-accent-rgb / --be-glow / --be-gradient on the build
+     editor wrapper; build-editor recipes consume var(--be-accent) etc.
+     Glow = rgba(accent, 0.35) (0.30 for any-class);
+     gradient = linear-gradient(135deg, accent 0%, lighter-tint 100%). */
+  --class-any-class: #94a3b8;        --class-any-class-rgb: 148, 163, 184;
+  --class-dragonknight: #e05c00;     --class-dragonknight-rgb: 224, 92, 0;
+  --class-sorcerer: #00acc1;         --class-sorcerer-rgb: 0, 172, 193;
+  --class-nightblade: #e53935;       --class-nightblade-rgb: 229, 57, 53;
+  --class-templar: #ffb300;          --class-templar-rgb: 255, 179, 0;
+  --class-warden: #26a69a;           --class-warden-rgb: 38, 166, 154;
+  --class-necromancer: #7c4dff;      --class-necromancer-rgb: 124, 77, 255;
+  --class-arcanist: #43a047;         --class-arcanist-rgb: 67, 160, 71;
+
+  /* Summary-card accents (RGB triplets) — glassCardSurface.ts:5-12 */
+  --summary-accent-info: 56, 189, 248;    /* brand cyan — header/overview */
+  --summary-accent-damage: 251, 191, 36;  /* amber — damage breakdown */
+  --summary-accent-death: 248, 113, 113;  /* coral — death analysis */
+
+  /* Build-editor attribute colors — buildEditorTokens.ts:48-52 */
+  --attr-magicka: #6c8fff;
+  --attr-health: #e05c5c;
+  --attr-stamina: #4caf82;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   4. VIEW-TRANSITION EASING TOKENS
+   Source: src/styles/view-transitions.css:17-21 (verified 2026-07-26)
+   ═══════════════════════════════════════════════════════════════════════════ */
+:root {
+  --vt-decel: cubic-bezier(0.16, 1, 0.3, 1);
+  --vt-ease-out: cubic-bezier(0.32, 0.72, 0, 1);
+  --vt-snap: cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   5. BLUR-TIER LADDER (emergent rule across all glass recipes)
+   Always pair `backdrop-filter` with `-webkit-backdrop-filter`.
+   All blur is stripped at html[data-perf='low'] (src/index.css:136-140).
+   ═══════════════════════════════════════════════════════════════════════════ */
+:root {
+  --blur-chrome: 10px;        /* app bar / bottom bars: 8–10px (ReduxThemeProvider.tsx:151, SetupTabBar) */
+  --blur-chip: 10px;          /* chips & pills: 6–10px (glossy chips 10, MetricPill 10, card-grid footer 6) */
+  --blur-card: 16px;          /* cards & panels: 12–16px (glassCardSurface 16, card-grid 12, filter panel 16, field 12, segmented 8) */
+  --blur-dialog: 20px;        /* dialogs: 10–20px (MuiDialog 20, PickerDialog reduced 10) */
+  --blur-menu: 20px;          /* menus: 20–24px (cyan dropdown 20 + saturate(1.5), HeaderBar dropdown 24) */
+  --blur-hero: 24px;          /* hero/mobile-sheet/tooltip max tier: 22–24px (HeaderBar sheet 24) */
+  --blur-tooltip: 16px;       /* tooltips: blur(16px) saturate(1.4) (ReduxThemeProvider.tsx:235) */
+  --blur-alert: 8px;          /* alerts (MuiAlert, ReduxThemeProvider.tsx:458) */
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   6. INSET TOP-HIGHLIGHT ALPHA SCALE (emergent rule)
+   Pattern: `inset 0 1px 0 rgba(255,255,255, α)` appended to the depth shadow.
+     α = 0.05–0.06  panels / large glass cards (dark)
+     α = 0.08–0.12  menus & dropdowns (dark; cyan dropdown uses 0.12)
+     α = 0.2–0.3    glossy chips (both modes; 0.3 on hover)
+     α = 0.6–0.9    light mode panels/menus (e.g. 0.8 BE glass, 0.9 dropdowns)
+   Bottom shading inset (`inset 0 -1px 0 rgba(0,0,0,…)`) exists ONLY in the
+   glossy chip recipe (G4). Recessed inputs invert the scheme with dark inner
+   shadows: inset 0 2px 4px rgba(0,0,0,0.4).
+   Ready-made tokens: --inset-hl-panel / --inset-hl-menu / --inset-hl-glossy
+   (defined per scheme in §1/§2).
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   7. RADII / SPACING / MOTION
+   ═══════════════════════════════════════════════════════════════════════════ */
+:root {
+  /* Radii scale — from MUI theme + recipes */
+  --radius-base: 10px;        /* theme.shape.borderRadius (ReduxThemeProvider.tsx:88), list items, dropdown items */
+  --radius-card: 14px;        /* MuiPaper / MuiCard (:165, :230), dropdown paper, electric-border ring */
+  --radius-control: 8px;      /* buttons, inputs, selects (:278, :333) */
+  --radius-badge: 12px;       /* alerts, accordions, tooltips (:457, :504, :243) */
+  --radius-dialog: 24px;      /* MuiDialog (:396) */
+  --radius-chip-glossy: 28px; /* glossy chips (playerCardStyleUtils.ts:35; re-typed at 25px in report_details copies) */
+  --radius-pill: 9999px;      /* fully-rounded pills */
+
+  /* Spacing — MUI 8px unit; sx values are unit multiples (0.5 → 4px) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+
+  /* Motion — durations from BE_TOKENS.duration + common theme transitions */
+  --motion-fast: 0.15s;       /* hovers, menu item transitions */
+  --motion-normal: 0.25s;     /* standard transitions (theme uses 0.2–0.3s freely) */
+  --motion-slow: 0.4s;
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);           /* input transitions (:334) */
+  --ease-entrance: cubic-bezier(0.26, 0.53, 0.74, 1.48);   /* tooltipEnter / .u-fade-in (:883) */
+
+  /* Focus ring — .u-focus-ring (ReduxThemeProvider.tsx:904-908); build editor
+     uses the same geometry with var(--be-accent). */
+  --focus-ring: 2px solid var(--accent);
+  --focus-ring-offset: 2px;
+  /* Filter-bar field focus — latestReportsStyles.ts:29-30 */
+  --focus-field-border: rgba(96, 165, 250, 0.55);
+  --focus-field-glow: 0 0 0 3px rgba(96, 165, 250, 0.12);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   8. CHIP VARIANT COLORS (glossy gear chips)
+   Source: src/utils/playerCardStyleUtils.ts:95-243 (buildVariantSx).
+   Pattern (dark): 3-stop 135° gradient at alphas 0.25/0.15/0.08 + border at
+   0.3–0.35 + bright label color. Light: alphas 0.12/0.08/0.04 + dark label.
+   ═══════════════════════════════════════════════════════════════════════════ */
+:root,
+[data-color-scheme='dark'] {
+  --chip-green-bg: linear-gradient(135deg, rgba(76, 217, 100, 0.25) 0%, rgba(76, 217, 100, 0.15) 50%, rgba(76, 217, 100, 0.08) 100%);
+  --chip-green-border: rgba(76, 217, 100, 0.3);      --chip-green-text: #5ce572;
+  --chip-blue-bg: linear-gradient(135deg, rgba(0, 122, 255, 0.25) 0%, rgba(0, 122, 255, 0.15) 50%, rgba(0, 122, 255, 0.08) 100%);
+  --chip-blue-border: rgba(0, 122, 255, 0.3);        --chip-blue-text: #4da3ff;
+  --chip-lightblue-bg: linear-gradient(135deg, rgba(94, 234, 255, 0.25) 0%, rgba(94, 234, 255, 0.15) 50%, rgba(94, 234, 255, 0.08) 100%);
+  --chip-lightblue-border: rgba(94, 234, 255, 0.35); --chip-lightblue-text: #7ee8ff;
+  --chip-purple-bg: linear-gradient(135deg, rgba(175, 82, 222, 0.25) 0%, rgba(175, 82, 222, 0.15) 50%, rgba(175, 82, 222, 0.08) 100%);
+  --chip-purple-border: rgba(175, 82, 222, 0.3);     --chip-purple-text: #c57fff;
+  --chip-indigo-bg: linear-gradient(135deg, rgba(88, 86, 214, 0.25) 0%, rgba(88, 86, 214, 0.15) 50%, rgba(88, 86, 214, 0.08) 100%);
+  --chip-indigo-border: rgba(88, 86, 214, 0.3);      --chip-indigo-text: #8583ff;
+  --chip-gold-bg: linear-gradient(135deg, rgba(255, 193, 7, 0.25) 0%, rgba(255, 193, 7, 0.15) 50%, rgba(255, 193, 7, 0.08) 100%);
+  --chip-gold-border: rgba(255, 193, 7, 0.35);       --chip-gold-text: #ffd54f;
+  --chip-silver-bg: linear-gradient(135deg, rgba(236, 240, 241, 0.25) 0%, rgba(236, 240, 241, 0.15) 50%, rgba(236, 240, 241, 0.08) 100%);
+  --chip-silver-border: rgba(236, 240, 241, 0.35);   --chip-silver-text: #ecf0f1;
+  --chip-champion-red-bg: linear-gradient(135deg, rgba(255, 68, 68, 0.25) 0%, rgba(255, 68, 68, 0.15) 50%, rgba(255, 68, 68, 0.08) 100%);
+  --chip-champion-red-border: rgba(255, 68, 68, 0.3);   --chip-champion-red-text: #ff6666;
+  --chip-champion-blue-bg: linear-gradient(135deg, rgba(68, 136, 255, 0.25) 0%, rgba(68, 136, 255, 0.15) 50%, rgba(68, 136, 255, 0.08) 100%);
+  --chip-champion-blue-border: rgba(68, 136, 255, 0.3); --chip-champion-blue-text: #66aaff;
+  --chip-champion-green-bg: linear-gradient(135deg, rgba(68, 255, 136, 0.25) 0%, rgba(68, 255, 136, 0.15) 50%, rgba(68, 255, 136, 0.08) 100%);
+  --chip-champion-green-border: rgba(68, 255, 136, 0.3); --chip-champion-green-text: #66ffaa;
+  /* legendary: rainbow bg + borderImage + 3s legendaryGlow pulse — see SKILL.md */
+  --chip-legendary-bg: linear-gradient(135deg, rgba(255, 0, 150, 0.2) 0%, rgba(255, 150, 0, 0.2) 20%, rgba(255, 255, 0, 0.2) 40%, rgba(0, 255, 0, 0.2) 60%, rgba(0, 150, 255, 0.2) 80%, rgba(150, 0, 255, 0.2) 100%);
+  --chip-legendary-border-image: linear-gradient(135deg, #ff0096, #ff9600, #ffff00, #00ff00, #0096ff, #9600ff) 1;
+  --chip-legendary-text: #ffffff;
+}
+
+[data-color-scheme='light'] {
+  --chip-green-bg: linear-gradient(135deg, rgba(5, 150, 105, 0.12) 0%, rgba(16, 185, 129, 0.08) 50%, rgba(34, 197, 94, 0.04) 100%);
+  --chip-green-border: rgba(5, 150, 105, 0.3);       --chip-green-text: #065f46;
+  --chip-blue-bg: linear-gradient(135deg, rgba(37, 99, 235, 0.12) 0%, rgba(59, 130, 246, 0.08) 50%, rgba(96, 165, 250, 0.04) 100%);
+  --chip-blue-border: rgba(37, 99, 235, 0.3);        --chip-blue-text: #1e3a8a;
+  --chip-lightblue-bg: linear-gradient(135deg, rgba(2, 132, 199, 0.12) 0%, rgba(14, 165, 233, 0.08) 50%, rgba(56, 189, 248, 0.04) 100%);
+  --chip-lightblue-border: rgba(2, 132, 199, 0.3);   --chip-lightblue-text: #0c4a6e;
+  --chip-purple-bg: linear-gradient(135deg, rgba(126, 34, 206, 0.12) 0%, rgba(147, 51, 234, 0.08) 50%, rgba(168, 85, 247, 0.04) 100%);
+  --chip-purple-border: rgba(126, 34, 206, 0.3);     --chip-purple-text: #581c87;
+  --chip-indigo-bg: linear-gradient(135deg, rgba(67, 56, 202, 0.12) 0%, rgba(99, 102, 241, 0.08) 50%, rgba(129, 140, 248, 0.04) 100%);
+  --chip-indigo-border: rgba(67, 56, 202, 0.3);      --chip-indigo-text: #3730a3;
+  --chip-gold-bg: linear-gradient(135deg, rgba(217, 119, 6, 0.12) 0%, rgba(245, 158, 11, 0.08) 50%, rgba(251, 191, 36, 0.04) 100%);
+  --chip-gold-border: rgba(217, 119, 6, 0.3);        --chip-gold-text: #92400e;
+  --chip-silver-bg: linear-gradient(135deg, rgba(100, 116, 139, 0.12) 0%, rgba(148, 163, 184, 0.08) 50%, rgba(203, 213, 225, 0.04) 100%);
+  --chip-silver-border: rgba(100, 116, 139, 0.3);    --chip-silver-text: #334155;
+  --chip-champion-red-bg: linear-gradient(135deg, rgba(220, 38, 38, 0.12) 0%, rgba(239, 68, 68, 0.08) 50%, rgba(248, 113, 113, 0.04) 100%);
+  --chip-champion-red-border: rgba(220, 38, 38, 0.3);   --chip-champion-red-text: #991b1b;
+  --chip-champion-blue-bg: linear-gradient(135deg, rgba(37, 99, 235, 0.12) 0%, rgba(59, 130, 246, 0.08) 50%, rgba(96, 165, 250, 0.04) 100%);
+  --chip-champion-blue-border: rgba(37, 99, 235, 0.3);  --chip-champion-blue-text: #1e3a8a;
+  --chip-champion-green-bg: linear-gradient(135deg, rgba(5, 150, 105, 0.12) 0%, rgba(16, 185, 129, 0.08) 50%, rgba(34, 197, 94, 0.04) 100%);
+  --chip-champion-green-border: rgba(5, 150, 105, 0.3); --chip-champion-green-text: #065f46;
+  --chip-legendary-text: #1f2937;  /* bg + borderImage same as dark */
+}
+
+/* MetricPill intents (comp-metric-pills) — MetricPill.tsx:27-53. A DIVERGENT
+   sibling of the chip palette above (success reuses green, info reuses
+   lightBlue, but warning text is #ff9800 and neutral is slate). Both palettes
+   are canonical for their own component — do not merge them. */
+:root {
+  --pill-success-border: rgba(76, 217, 100, 0.3);   --pill-success-text: #5ce572;
+  --pill-warning-border: rgba(255, 193, 7, 0.35);   --pill-warning-text: #ff9800;
+  --pill-danger-border: rgba(255, 68, 68, 0.3);     --pill-danger-text: #ff6666;
+  --pill-info-border: rgba(94, 234, 255, 0.35);     --pill-info-text: #7ee8ff;
+  --pill-neutral-border: rgba(148, 163, 184, 0.3);  --pill-neutral-text: var(--text);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   9. TYPE SCALE
+   Body Inter; headings Space Grotesk 600 (ReduxThemeProvider.tsx:89-99).
+   Classes used across preview cards; sizes are the design-system ramp.
+   ═══════════════════════════════════════════════════════════════════════════ */
+body,
+.p {
+  font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, Ubuntu, Cantarell, 'Noto Sans', 'Helvetica Neue', Arial, sans-serif;
+  color: var(--text);
+  font-size: 1rem;
+  line-height: 1.6;
+  font-optical-sizing: auto;
+  -webkit-font-smoothing: antialiased;
+}
+
+.h-display,
+.h1,
+.h2,
+.h3 {
+  font-family: 'Space Grotesk', Inter, system-ui, sans-serif;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.h-display { font-size: clamp(2.2rem, 4vw, 3.2rem); line-height: 1.1; letter-spacing: -0.02em; }
+.h1 { font-size: 2rem; line-height: 1.2; }
+.h2 { font-size: 1.5rem; line-height: 1.25; }
+.h3 { font-size: 1.17rem; line-height: 1.3; }
+
+.eyebrow {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+}
+
+.subtitle { font-size: 0.9rem; line-height: 1.5; color: var(--muted); }
+.caption { font-size: 0.75rem; line-height: 1.4; color: var(--muted); }
+
+.mono {
+  font-family: 'JetBrains Mono', source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+  font-size: 0.85em;
+  font-variant-numeric: tabular-nums; /* .u-tabular idiom for stat columns */
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   10. BACK-COMPAT ALIASES
+   Keep older card markup working; prefer the canonical names above.
+   ═══════════════════════════════════════════════════════════════════════════ */
+:root {
+  --panel2: var(--panel-2);
+  --text-muted: var(--muted);
+  --color-bg: var(--bg);
+  --color-panel: var(--panel);
+  --color-accent: var(--accent);
+  --color-border: var(--border);
+  --success: var(--ok);
+  --warning: var(--warn);
+  --error: var(--danger);
+
+  /* aliases used by pre-2026-07 preview cards */
+  --font-sans: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, Ubuntu,
+               Cantarell, 'Noto Sans', 'Helvetica Neue', Arial, sans-serif;
+  --font-display: 'Space Grotesk', Inter, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Source Code Pro', Menlo, Monaco, Consolas,
+               'Courier New', monospace;
+  --text-2: #cbd5e1;
+  --text-3: var(--muted);
+  --text-4: #64748b;
+  --fg-1: var(--text);
+  --fg-2: var(--text-2);
+  --fg-3: var(--text-3);
+  --fg-4: var(--text-4);
+  --bg-0: #030712;            /* paper-gradient floor (MuiPaper dark stop 2) */
+  --bg-1: var(--bg);
+  --bg-2: var(--panel);
+  --bg-3: var(--panel-2);
+  --r-xs: 4px;
+  --r-sm: var(--radius-control);
+  --r-md: var(--radius-badge);
+  --r-lg: var(--radius-card);
+  --r-xl: 20px;
+  --r-pill: var(--radius-pill);
+  --grad-accent: var(--grad-button-primary);
+  --grad-hero: linear-gradient(135deg, #ffffff 0%, #38bdf8 50%, #00e1ff 100%);
+}
+
+/* ⚠ LEGACY, NOT the design system: src/index.css:120-127 declares a
+   conflicting `--site-*` palette (#121212 / #7289da / 8px radius) used only
+   by the old Pickr theme. Never source values from it. */
