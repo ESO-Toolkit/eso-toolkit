@@ -1,0 +1,78 @@
+{
+  "voice": {
+    "id": "XfNU2rGpBa01ckF309OY",
+    "name": "Nichalia"
+  },
+  "model": "eleven_v4",
+  "settings": {
+    "stability": 0.55,
+    "similarity_boost": 0.8,
+    "style": 0.18,
+    "use_speaker_boost": true,
+    "speed": 0.96
+  },
+  "captions": {
+    "E-S-O": "ESO",
+    "E-S-O-T-K": "esotk.com.",
+    "dot": "",
+    "com.": ""
+  },
+  "lines": [
+    {
+      "id": "intro",
+      "say": "This is a vet hard mode Tideborn Taleria kill, uploaded to E-S-O Logs."
+    },
+    {
+      "id": "paste",
+      "say": "Paste the same link into E-S-O Toolkit."
+    },
+    {
+      "id": "insights",
+      "say": "The insights page answers the usual post-pull questions: who ran Colossus, Barrier and Horn, which champion points were slotted, how long the key buffs and debuffs stayed up, and where the damage came from."
+    },
+    {
+      "id": "tables",
+      "say": "The damage and healing tables show who died, who got rezzed, and everyone's casts per minute."
+    },
+    {
+      "id": "graph",
+      "say": "The damage graph shows exactly when it went wrong: five players died within two seconds, and the group's damage stayed down for about fifty seconds."
+    },
+    {
+      "id": "gear",
+      "say": "E-S-O Logs lists a player's gear one item per row. E-S-O Toolkit groups it into sets, shows both bars the way they look in game, and flags low-quality gear and enchants."
+    },
+    {
+      "id": "info",
+      "say": "If you'd rather see it item by item, the Info button lists every piece, just like E-S-O Logs."
+    },
+    {
+      "id": "scribe",
+      "say": "It also works out which scripts a scribed skill was running, from the combat events."
+    },
+    {
+      "id": "replay",
+      "say": "E-S-O Logs replays the fight on a flat map. E-S-O Toolkit rebuilds it in 3D, so you can orbit the arena and follow any player."
+    },
+    {
+      "id": "builds",
+      "say": "To copy a build, send it straight to the Build Editor. Or start from what top players run: the Build Leaderboard groups top-ranked parses by the build behind them, for each class and boss."
+    },
+    {
+      "id": "calc",
+      "say": "The scribing planner builds a skill one script at a time, and the calculators check your penetration and crit."
+    },
+    {
+      "id": "roster",
+      "say": "For trials, the Roster Builder plans the whole group: tanks, healers and damage dealers, their sets and ultimates, and separate builds for each fight. Share it as a link, publish it to Roster Hub, or post it to Discord, where the roster bot takes sign-ups."
+    },
+    {
+      "id": "kalpa",
+      "say": "For addons there is Kalpa, a free addon manager. It installs and updates addons in one click, pulls in the libraries they depend on, and installs whole community packs from Pack Hub."
+    },
+    {
+      "id": "outro",
+      "say": "E-S-O Logs records the fight. E-S-O Toolkit shows you what happened, and what to fix next time. It's free, at E-S-O-T-K dot com."
+    }
+  ]
+}
