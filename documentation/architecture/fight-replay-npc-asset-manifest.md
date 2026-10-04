@@ -38,7 +38,7 @@ separate rights review.
 | ---------------------------------------- | --------------------------------- | ------------------------- | -----: | -----: | --------: | ----------- | --------: | ----------------------------------------------------------------------------------- |
 | `coolstickman-walk.glb`                  | all players                       | `instanced-pose-flipbook` |      — |      — |         1 | —           |         — | CC0, Polygonal Mind                                                                 |
 | `yandir-the-butcher-overview-v2.glb`     | Yandir the Butcher                | `static-boss`             | 45,000 | 29,609 |         1 | 1024px JPEG | 1,644,896 | [post 82](https://esomodelviewer.com/characters/post/82-yandir-the-butcher)         |
-| `yandir-the-butcher-rigged-v1.glb`       | Yandir the Butcher                | `skeletal-boss`           | 45,000 | 29,613 |         1 | 1024px JPEG | 2,372,188 | [post 82](https://esomodelviewer.com/characters/post/82-yandir-the-butcher)         |
+| `yandir-the-butcher-rigged-v2.glb`       | Yandir the Butcher                | `skeletal-boss`           | 45,000 | 29,613 |         1 | 1024px JPEG | 2,411,900 | [post 82](https://esomodelviewer.com/characters/post/82-yandir-the-butcher)         |
 | `captain-vrol-overview-v2.glb`           | Captain Vrol                      | `static-boss`             | 44,999 | 28,796 |         1 | 1024px JPEG | 1,679,644 | [post 83](https://esomodelviewer.com/characters/post/83-captain-vrol)               |
 | `saint-llothis-overview-v1.glb`          | Saint Llothis the Pious           | `static-boss`             | 44,999 | 31,803 |         1 | 1024px JPEG | 1,774,760 | [creature 89](https://esomodelviewer.com/creatures/post/89-saint-llothis-the-pious) |
 | `saint-felms-overview-v1.glb`            | Saint Felms the Bold              | `static-boss`             | 45,000 | 30,921 |         1 | 1024px JPEG | 1,704,864 | [creature 88](https://esomodelviewer.com/creatures/post/88-saint-felms-the-bold)    |
@@ -64,13 +64,20 @@ separate rights review.
 
 The rigged Yandir pilot derives from `yandir-the-butcher-overview-v2.glb` and retains its
 project-authorized fan-prototype provenance, rest bounds, UVs, and embedded JPEG. It adds one
-17-bone skin and authored two-second `idle`, `walk`, and `cast` clips; this is not a UniMate or
-ML animation integration. The root stays stationary. Runtime translation comes from the log,
+17-bone skin, a 3.2-second `idle` (97 samples), and two-second `walk` and `cast` clips
+(61 samples each); this is not a UniMate or ML animation integration. Idle uses rotation-only
+upper-body motion with planted feet. Cast holds a raised-arm pose; the runtime's 600 ms
+sin-squared reaction supplies the single envelope. The scene root stays stationary.
+Runtime translation comes from the log,
 and walk phase follows traveled distance (0.6310190558433533 model units per cycle, before
 registry scale). Actors own independent skeletons and mixers. Replay time determines poses,
 including pause, seeking, and playback speed changes. The static Yandir remains the loading or
 failure fallback; other NPCs retain their existing renderer, and barebones mode uses capsules.
 See the [builder instructions](../../tools/fight-replay-models/README.md#yandir-skeletal-pilot).
+The CPU acceptance check passed texture/rest-bounds, weight, loop, stationary-root, and
+foot-contact guards. Maximum idle silhouette travel at 48 px measured 2.40–2.77 px across
+four 45-degree elevated views, above the 1 px minimum; this measures outer boundaries,
+excluding shading and interior contours.
 
 Extracted client assets (see the licensing posture above — **not reconstructions**):
 

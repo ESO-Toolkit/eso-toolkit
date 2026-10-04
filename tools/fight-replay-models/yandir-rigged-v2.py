@@ -1,7 +1,7 @@
 """Build Yandir's in-place skeletal replay clips from the shipped textured mesh.
 
 Run with the Hunyuan venv Python (bpy required), from the repository root:
-  python tools/fight-replay-models/yandir-rigged-v1.py
+  python tools/fight-replay-models/yandir-rigged-v2.py
 
 The mesh, UVs, embedded texture, model orientation and rest dimensions are preserved.
 The authored gait uses a 60% stance duty cycle and analytic two-bone leg targets.
@@ -15,7 +15,7 @@ from mathutils import Matrix, Vector
 
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE = ROOT / 'public/models/fight-replay/npcs/yandir-the-butcher-overview-v2.glb'
-OUTPUT = ROOT / 'public/models/fight-replay/npcs/yandir-the-butcher-rigged-v1.glb'
+OUTPUT = ROOT / 'public/models/fight-replay/npcs/yandir-the-butcher-rigged-v2.glb'
 bpy.ops.wm.read_factory_settings(use_empty=True)
 bpy.ops.import_scene.gltf(filepath=str(SOURCE))
 mesh = next(o for o in bpy.context.scene.objects if o.type == 'MESH')
@@ -168,27 +168,40 @@ def walk(t):
 
 def idle(t):
     reset()
-    breath = math.sin(t)
+    sway = math.sin(t)
     spine = rig.pose.bones['spine']
     spine.rotation_mode = 'XYZ'
-    spine.rotation_euler = (0, .012 * breath, .008 * breath)
-    spine.scale.y = 1 + .003 * breath
+    spine.rotation_euler = (math.radians(3) * sway, 0, math.radians(2) * sway)
+    chest = rig.pose.bones['chest']
+    chest.rotation_mode = 'XYZ'
+    chest.rotation_euler = (math.radians(1.5) * sway,
+                            math.radians(1) * math.sin(t + math.pi / 4), 0)
+    head = rig.pose.bones['head']
+    head.rotation_mode = 'XYZ'
+    head.rotation_euler.x = -math.radians(1.5) * sway
+    for side in ['L', 'R']:
+        arm = rig.pose.bones[f'upper_arm.{side}']
+        arm.rotation_mode = 'XYZ'
+        arm.rotation_euler.x = math.radians(3) * math.sin(t - math.pi / 4)
+    # The lower body stays planted. Rotation, rather than mesh scaling, makes
+    # the combat-ready idle readable at replay size without stretching armor.
     bpy.context.view_layer.update()
 
 
 def cast(t):
     reset()
-    pulse = math.sin(t / 2) ** 2
+    # Runtime applies a sin² reaction weight. Keep this pose at full amplitude
+    # so the authored clip does not attenuate that envelope a second time.
     chest = rig.pose.bones['chest']
     chest.rotation_mode = 'XYZ'
-    chest.rotation_euler.x = .055 * pulse
+    chest.rotation_euler.x = .055
     for side in ['L', 'R']:
         arm = rig.pose.bones[f'upper_arm.{side}']
         arm.rotation_mode = 'XYZ'
-        arm.rotation_euler.x = .42 * pulse
+        arm.rotation_euler.x = .42
         forearm = rig.pose.bones[f'forearm.{side}']
         forearm.rotation_mode = 'XYZ'
-        forearm.rotation_euler.x = .25 * pulse
+        forearm.rotation_euler.x = .25
     bpy.context.view_layer.update()
 
 
@@ -198,12 +211,13 @@ def cast(t):
 scene = bpy.context.scene
 scene.render.fps = 30
 scene.frame_start = 0
-scene.frame_end = 60
+scene.frame_end = 96
 samples = {}
+clip_frames = {'idle': 96, 'walk': 60, 'cast': 60}
 for name, sampler in [('idle', idle), ('walk', walk), ('cast', cast)]:
     samples[name] = []
-    for frame in range(61):
-        sampler(2 * math.pi * frame / 60)
+    for frame in range(clip_frames[name] + 1):
+        sampler(2 * math.pi * frame / clip_frames[name])
         samples[name].append({bone.name: bone.matrix_basis.copy() for bone in rig.pose.bones})
 reset()
 rig.animation_data_create()
@@ -247,7 +261,8 @@ bpy.ops.export_scene.gltf(
 print(json.dumps({
     'output': str(OUTPUT), 'height': height,
     'walk_distance_per_cycle': 2 * STRIDE / STANCE,
-    'clip_duration_seconds': 2, 'samples_per_clip': 61,
+    'clip_duration_seconds': {name: frames / scene.render.fps for name, frames in clip_frames.items()},
+    'samples_per_clip': {name: frames + 1 for name, frames in clip_frames.items()},
     'vertices_before_export': len(mesh.data.vertices),
     'triangles': sum(len(poly.vertices) - 2 for poly in mesh.data.polygons),
     'bones': len(rig.data.bones), 'materials': len(mesh.data.materials),
