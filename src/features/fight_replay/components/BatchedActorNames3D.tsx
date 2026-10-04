@@ -7,6 +7,7 @@ import {
   ActorPosition,
   TimestampPositionLookup,
   getActorPositionAtClosestTimestamp,
+  getActorLifecycleAtTimestamp,
 } from '../../../workers/calculations/CalculateActorPositions';
 import { RenderPriority } from '../constants/renderPriorities';
 import { getReplayActorLabelColor } from '../utils/actorVisualState';
@@ -217,6 +218,10 @@ export const BatchedActorNames3D: React.FC<BatchedActorNames3DProps> = ({
   // Scratch objects reused every frame (no per-frame allocation in the hot loop).
   const scratchWorld = useRef(new THREE.Vector3());
   const scratchProjected = useRef(new THREE.Vector3());
+  const visualState = useRef<Pick<ActorPosition, 'type' | 'role' | 'isDead'>>({
+    type: 'enemy',
+    isDead: false,
+  });
   // Pooled NameScreenItem objects (grow-only, never shrunk) so Pass 1 mutates existing objects
   // instead of allocating ~N fresh ones every frame — that per-frame garbage was a steady GC drip
   // at the playback frame rate. `screenItems` is the reused active list (length reset each frame; it
@@ -304,8 +309,12 @@ export const BatchedActorNames3D: React.FC<BatchedActorNames3DProps> = ({
 
       // Update text content/color only when the underlying data changes (opacity is set below,
       // every frame the pass runs, because the declutter result can change without the data).
-      const color = getReplayActorLabelColor(actor);
-      const alive = !actor.isDead;
+      const visual = visualState.current;
+      visual.type = actor.type;
+      visual.role = actor.role;
+      visual.isDead = getActorLifecycleAtTimestamp(lookup, actorId, currentTime, actor).isDead;
+      const color = getReplayActorLabelColor(visual);
+      const alive = !visual.isDead;
       const prev = lastData.current.get(actorId);
       if (!prev || prev.name !== actor.name || prev.color !== color || prev.alive !== alive) {
         text.text = actor.name;

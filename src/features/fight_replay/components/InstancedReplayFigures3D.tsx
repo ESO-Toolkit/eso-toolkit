@@ -15,6 +15,7 @@ import {
   ActorPosition,
   TimestampPositionLookup,
   getActorPositionsByIdAtClosestTimestamp,
+  getActorLifecycleAtTimestamp,
 } from '../../../workers/calculations/CalculateActorPositions';
 import { RenderPriority } from '../constants/renderPriorities';
 import {
@@ -765,6 +766,10 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
   const frameCacheRef = useRef<FrameCache | null>(null);
   const tempObject = useRef(new THREE.Object3D());
   const tempColor = useRef(new THREE.Color());
+  const visualState = useRef<Pick<ActorPosition, 'type' | 'role' | 'isDead'>>({
+    type: 'enemy',
+    isDead: false,
+  });
   // Holds the active-pose matrix while the pose loop hides the other layers. hideInstance() reuses
   // the shared tempObject and clobbers its matrix, so the visible-pose matrix must be stashed here
   // BEFORE the hide calls run — otherwise the active write picks up a hidden matrix.
@@ -1170,7 +1175,7 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
 
       const [x, y, z] = actor.position;
       const groupScale = isThreatActor(actor) ? THREAT_SCALE : PLAYER_SCALE;
-      const dead = actor.isDead;
+      const dead = getActorLifecycleAtTimestamp(lookup, actorId, currentTime, actor).isDead;
       const isThreat = isThreatActor(actor);
       const selected = selectedActorId === actorId;
       const taunted = actor.isTaunted || false;
@@ -1199,9 +1204,13 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
       // Per-player override (player panel) wins for living players only; dead stays grey. Only
       // players can be overridden — boss/enemy/npc/pet keep their type colors.
       const override = isPlayerActor(actor) ? playerColorOverrides.get(actorId) : undefined;
-      const accentColor = getReplayActorResolvedAccentColor(actor, override);
-      const coreColor = getReplayActorCoreColor(actor, override);
-      const shellColor = getReplayActorShellColor(actor, override);
+      const visual = visualState.current;
+      visual.type = actor.type;
+      visual.role = actor.role;
+      visual.isDead = dead;
+      const accentColor = getReplayActorResolvedAccentColor(visual, override);
+      const coreColor = getReplayActorCoreColor(visual, override);
+      const shellColor = getReplayActorShellColor(visual, override);
 
       const bodyOpacity = dead ? 0.4 : 1;
       const capOpacity = dead ? 0.4 : 1;

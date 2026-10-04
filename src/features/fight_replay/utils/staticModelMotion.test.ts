@@ -73,6 +73,50 @@ function sampleAt(lookup: TimestampPositionLookup, timeMs: number) {
 }
 
 describe('staticModelMotion', () => {
+  it('starts falling at the exact death time even when the nearest sample is still alive', () => {
+    const lookup = buildLookup(3000, (t) => ({ x: 0, z: 0, dead: t >= 1200 }), 500);
+    lookup.lifecycleEventsByActorId = {
+      [ACTOR]: [{ timestamp: 1200, isDead: true, deathTimeMs: 1200 }],
+    };
+    expect(sampleAt(lookup, 1199).breath).not.toBe(0);
+    expect(sampleAt(lookup, 1200).fall).toBe(0);
+    expect(sampleAt(lookup, 1200).breath).toBe(0);
+    expect(sampleAt(lookup, 1300).fall).toBeCloseTo((100 / DEATH_FALL_MS) ** 2);
+    expect(findDeathOnsetMs(lookup, ACTOR, 1300)).toBe(1200);
+  });
+
+  it('resurrects between samples and uses the next death onset when seeking in either direction', () => {
+    const lookup = buildLookup(3000, (t) => ({ x: 0, z: 0, dead: t >= 1200 }), 500);
+    lookup.lifecycleEventsByActorId = {
+      [ACTOR]: [
+        { timestamp: 1200, isDead: true, deathTimeMs: 1200 },
+        { timestamp: 1400, isDead: false },
+        { timestamp: 1700, isDead: true, deathTimeMs: 1700 },
+      ],
+    };
+    const original = JSON.stringify(lookup);
+    expect(sampleAt(lookup, 1399).breath).toBe(0);
+    expect(sampleAt(lookup, 1400).fall).toBe(0);
+    expect(sampleAt(lookup, 1400).breath).not.toBe(0);
+    expect(sampleAt(lookup, 1700).fall).toBe(0);
+    expect(sampleAt(lookup, 1800).fall).toBeCloseTo((100 / DEATH_FALL_MS) ** 2);
+    const expected = new Map([1300, 1400, 1800, 3000].map((t) => [t, sampleAt(lookup, t)]));
+    for (const t of [3000, 1800, 1400, 1300, 1400, 3000]) {
+      expect(sampleAt(lookup, t)).toEqual(expected.get(t));
+    }
+    expect(JSON.stringify(lookup)).toBe(original);
+  });
+
+  it('keeps a living actor upright despite a future dead sample', () => {
+    const lookup = buildLookup(3000, (t) => ({ x: 0, z: 0, dead: t >= 1400 }), 500);
+    lookup.lifecycleEventsByActorId = {
+      [ACTOR]: [{ timestamp: 1400, isDead: true, deathTimeMs: 1400 }],
+    };
+    expect(getActorPositionAtClosestTimestamp(lookup, ACTOR, 1399)?.isDead).toBe(true);
+    expect(sampleAt(lookup, 1399).fall).toBe(0);
+    expect(sampleAt(lookup, 1399).breath).not.toBe(0);
+  });
+
   it('gives each actor a stable phase in [0, 1)', () => {
     for (const id of [0, 1, 2, 99, 12345]) {
       const phase = actorMotionPhase(id);

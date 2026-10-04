@@ -1,6 +1,7 @@
 import {
   type TimestampPositionLookup,
   getActorPositionAtClosestTimestamp,
+  getActorLifecycleAtTimestamp,
   getClosestTimestamp,
 } from '../../../workers/calculations/CalculateActorPositions';
 
@@ -97,6 +98,9 @@ export function findDeathOnsetMs(
   actorId: number,
   timeMs: number,
 ): number | null {
+  if (lookup.lifecycleEventsByActorId !== undefined) {
+    return getActorLifecycleAtTimestamp(lookup, actorId, timeMs).deathTimeMs ?? null;
+  }
   const current = getActorPositionAtClosestTimestamp(lookup, actorId, timeMs);
   if (current?.isDead && current.deathTimeMs !== undefined) return current.deathTimeMs;
   let alive = timeMs - DEATH_FALL_MS;
@@ -143,9 +147,10 @@ function sampleCastPulse(times: readonly number[] | undefined, timeMs: number): 
 
 /**
  * Fill `out` with the motion terms for one actor at `timeMs` (fight-relative milliseconds, the
- * same clock as the lookup). `position` and `isDead` are the actor's sample at `timeMs`, which the
- * caller already has. Movement uses the actual span between lookup samples, while cast and death
- * reactions use event times so their phases remain stable with adaptive sampling.
+ * same clock as the lookup). `position` is the spatial sample the caller already has; `isDead`
+ * supplies the legacy fallback when no lifecycle index exists. Movement uses the span between
+ * samples, while cast and death reactions use event times so their phases remain stable with
+ * adaptive sampling.
  */
 export function sampleStaticModelMotion(
   lookup: TimestampPositionLookup,
@@ -156,8 +161,12 @@ export function sampleStaticModelMotion(
   out: StaticModelMotionSample,
 ): StaticModelMotionSample {
   const phase = actorMotionPhase(actorId);
+  const dead =
+    lookup.lifecycleEventsByActorId === undefined
+      ? isDead
+      : getActorLifecycleAtTimestamp(lookup, actorId, timeMs).isDead;
 
-  if (isDead) {
+  if (dead) {
     out.breath = 0;
     out.moveStrength = 0;
     out.moveDirX = 0;
