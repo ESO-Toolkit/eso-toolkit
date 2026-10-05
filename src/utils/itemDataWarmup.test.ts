@@ -57,6 +57,14 @@ describe('scheduleItemDataWarmupForPath', () => {
     expect(idle).toHaveBeenCalledTimes(1);
   });
 
+  it('skips gear warm-up on the draft gallery and still schedules after opening a gear page', () => {
+    scheduleItemDataWarmupForPath('/replay-model-drafts');
+    expect(idle).not.toHaveBeenCalled();
+
+    scheduleItemDataWarmupForPath('/build-editor');
+    expect(idle).toHaveBeenCalledTimes(1);
+  });
+
   it('schedules only once across repeated navigations', () => {
     scheduleItemDataWarmupForPath('/build-editor');
     scheduleItemDataWarmupForPath('/roster-builder');

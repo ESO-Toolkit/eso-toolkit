@@ -35,6 +35,7 @@ const NON_GEAR_ROUTE_PREFIXES: ReadonlyArray<string> = [
   '/ultimate-simulator',
   '/scribing-simulator',
   '/about',
+  '/replay-model-drafts',
   '/privacy',
   '/privacy-settings',
   '/whats-new',

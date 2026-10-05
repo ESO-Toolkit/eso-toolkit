@@ -55,7 +55,9 @@ jest.mock('./features/auth/AuthContext', () => ({
 }));
 
 jest.mock('./features/auth/AuthenticatedRoute', () => ({
-  AuthenticatedRoute: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  AuthenticatedRoute: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="authenticated-route">{children}</div>
+  ),
 }));
 
 jest.mock('./features/user_reports/UserReports', () => ({
@@ -142,6 +144,10 @@ jest.mock('./pages/AboutPage', () => ({
   AboutPage: () => <div>About Route</div>,
 }));
 
+jest.mock('./pages/ReplayModelDraftsPage', () => ({
+  ReplayModelDraftsPage: () => <div>Replay Model Drafts Route</div>,
+}));
+
 describe('App', () => {
   beforeEach(() => {
     jest.mocked(getBaseUrl).mockReturnValue('/');
@@ -178,6 +184,18 @@ describe('App', () => {
     render(<App />);
 
     expect(await screen.findByText('About Route')).toBeInTheDocument();
+  });
+
+  it('renders the public draft gallery under a preview base without preloading report data', async () => {
+    jest.mocked(getBaseUrl).mockReturnValue('/dev-previews/pr-test/');
+    window.history.pushState({}, 'Drafts', '/dev-previews/pr-test/replay-model-drafts?model=bear');
+    preloadReportFightDetailsForInitialRoute(window.location.pathname);
+
+    render(<App />);
+
+    expect(await screen.findByText('Replay Model Drafts Route')).toBeInTheDocument();
+    expect(screen.queryByTestId('authenticated-route')).not.toBeInTheDocument();
+    expect(preloadReportFightDetails).not.toHaveBeenCalled();
   });
 
   it('redirects the legacy logs route to the log analyzer', async () => {

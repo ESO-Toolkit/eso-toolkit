@@ -200,6 +200,7 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
 }) => {
   // Parse URL parameters for actor initialization
   const [searchParams] = useSearchParams();
+  const draftModelsEnabled = searchParams.get('draftModels') === '1';
   const params = useParams();
   const actorParam = searchParams.get('actorId');
   const selectedActorIdFromUrl = React.useMemo(() => parseActorIdParam(actorParam), [actorParam]);
@@ -1445,6 +1446,7 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
           }
         >
           <Arena3D
+            draftModelsEnabled={draftModelsEnabled}
             timeRef={animTimeRef}
             isFullscreen={isImmersive}
             onToggleFullscreen={toggleFullscreen}

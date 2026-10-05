@@ -82,6 +82,7 @@ export function getStaticModelForActor(
 export function buildStaticModelInstancingPlan(
   lookup: TimestampPositionLookup | null,
   actorIds: readonly number[],
+  staticModelOverrides?: ReadonlyMap<number, StaticReplayActorModelAsset>,
 ): StaticModelInstancingPlan {
   const positions = lookup?.positionsByTimestamp;
   if (!positions || actorIds.length === 0) return EMPTY_STATIC_MODEL_PLAN;
@@ -100,7 +101,14 @@ export function buildStaticModelInstancingPlan(
       if (seen.has(actorId) || !wanted.has(actorId)) continue;
       seen.add(actorId);
       const actor = atTs[actorId];
-      const asset = getStaticModelForActor(actor);
+      const override = staticModelOverrides?.get(actorId);
+      // Preview overrides are opt-in and hostile-only, even if an asset claims player support.
+      const asset =
+        override &&
+        (actor.type === 'enemy' || actor.type === 'boss') &&
+        override.actorTypes.includes(actor.type)
+          ? override
+          : getStaticModelForActor(actor);
       if (!asset) continue;
       let slots = actorIdsByAssetId.get(asset.id);
       if (!slots) {

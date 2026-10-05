@@ -166,6 +166,11 @@
     "description": "Explore an Elder Scrolls Online combat report with ESO Toolkit.",
     "prerender": true
   },
+  "/replay-model-drafts": {
+    "title": "Replay Model Drafts | ESO Toolkit",
+    "description": "Review reconstructed fight-replay enemy drafts and their game references.",
+    "prerender": false
+  },
   "/terms": {
     "title": "Terms of Use | ESO Toolkit",
     "description": "Read the terms that govern use of the hosted ESO Toolkit service.",

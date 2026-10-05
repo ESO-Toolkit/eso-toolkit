@@ -11,7 +11,7 @@
  */
 
 import { useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { useReportFightParams } from '../../../hooks/useReportFightParams';
 
@@ -40,6 +40,8 @@ export interface UseReplayNavigationResult {
  */
 export function useReplayNavigation(): UseReplayNavigationResult {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const draftModelsEnabled = searchParams.get('draftModels') === '1';
   const { reportId } = useReportFightParams();
 
   const goToFight = useCallback(
@@ -47,6 +49,7 @@ export function useReplayNavigation(): UseReplayNavigationResult {
       if (!reportId) return;
 
       const params = new URLSearchParams();
+      if (draftModelsEnabled) params.set('draftModels', '1');
       // Finite, non-negative only: NaN/Infinity/negatives would seed garbage or be mistaken for
       // "no param" downstream (arrival treats missing and 0 identically — fight start).
       if (options?.time != null && Number.isFinite(options.time) && options.time >= 0) {
@@ -57,7 +60,7 @@ export function useReplayNavigation(): UseReplayNavigationResult {
 
       navigate(path, { replace: options?.replace ?? false });
     },
-    [navigate, reportId],
+    [navigate, reportId, draftModelsEnabled],
   );
 
   return { goToFight, canNavigate: Boolean(reportId) };
