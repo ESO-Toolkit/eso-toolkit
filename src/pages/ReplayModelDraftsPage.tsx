@@ -20,9 +20,20 @@ import React from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import { DraftModelCanvas } from '../features/fight_replay/components/DraftModelCanvas';
+import {
+  parseDraftModelManifest,
+  type DraftModelEntry,
+  type DraftModelManifest,
+} from '../features/fight_replay/utils/draftReplayModels';
 import { resolveReplayModelUrl } from '../features/fight_replay/utils/replayActorModelRegistry';
 import { usePageTitle } from '../hooks/useDocumentTitle';
 import { getBaseUrl } from '../utils/envUtils';
+
+export { parseDraftModelManifest } from '../features/fight_replay/utils/draftReplayModels';
+export type {
+  DraftModelEntry,
+  DraftModelManifest,
+} from '../features/fight_replay/utils/draftReplayModels';
 
 const DraftReplayCanvas = React.lazy(() =>
   import('../features/fight_replay/components/DraftReplayCanvas').then((module) => ({
@@ -30,64 +41,8 @@ const DraftReplayCanvas = React.lazy(() =>
   })),
 );
 
-export interface DraftModelEntry {
-  id: string;
-  name: string;
-  kind: 'lesser' | 'boss';
-  family: string;
-  model: string;
-  clayModel?: string;
-  referenceImage: string;
-  previewImage: string;
-  sourceUrl: string;
-  reviewNote: string;
-  triangleCount?: number;
-  bytes?: number;
-  modelHeight?: number;
-}
-
-export interface DraftModelManifest {
-  status: 'draft-unaccepted';
-  entries: DraftModelEntry[];
-  totalBytes: number;
-}
-
 const mediaUrl = (path: string): string =>
   resolveReplayModelUrl(`replay-model-drafts/${path}`, getBaseUrl());
-
-/** Reject an incomplete or accidentally published runtime manifest. */
-export function parseDraftModelManifest(value: unknown): DraftModelManifest {
-  if (!value || typeof value !== 'object') {
-    throw new Error('The draft gallery manifest is invalid.');
-  }
-  const manifest = value as Partial<DraftModelManifest>;
-  const ids = new Set<string>();
-  if (
-    manifest.status !== 'draft-unaccepted' ||
-    !Array.isArray(manifest.entries) ||
-    manifest.entries.length === 0 ||
-    !manifest.entries.every((entry) => {
-      if (!entry || typeof entry !== 'object') return false;
-      const strings = [
-        entry.id,
-        entry.name,
-        entry.family,
-        entry.model,
-        entry.referenceImage,
-        entry.previewImage,
-        entry.sourceUrl,
-        entry.reviewNote,
-      ];
-      if (strings.some((field) => typeof field !== 'string' || field.length === 0)) return false;
-      if (!['lesser', 'boss'].includes(entry.kind) || ids.has(entry.id)) return false;
-      ids.add(entry.id);
-      return true;
-    })
-  ) {
-    throw new Error('The draft gallery manifest is invalid.');
-  }
-  return manifest as DraftModelManifest;
-}
 
 export const ReplayModelDraftsPage: React.FC = () => {
   usePageTitle('/replay-model-drafts');
@@ -156,7 +111,8 @@ export const ReplayModelDraftsPage: React.FC = () => {
         <Typography color="text.secondary" sx={{ mt: 1, maxWidth: 760 }}>
           {entries.length > 0 ? `${entries.length} models` : 'Models'} from the latest research
           batch. Rotate each draft, compare it with the reference, or preview it in the replay
-          renderer. These reconstructions still need review before use in recorded fight replays.
+          renderer. Recorded fights can also preview matching enemies with the draft models enabled.
+          These reconstructions remain provisional.
         </Typography>
       </Box>
 

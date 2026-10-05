@@ -15,6 +15,7 @@ import { Logger, LogLevel } from '../../../utils/logger';
 import { MapTimeline } from '../../../utils/mapTimelineUtils';
 import { getActorPositionAtClosestTimestamp } from '../../../workers/calculations/CalculateActorPositions';
 import { ARENA_HEIGHT, TRANSPORT_MOTION } from '../constants/replayDesign';
+import { useDraftReplayModels } from '../hooks/useDraftReplayModels';
 import { useReplayShortcuts, type ReplayShortcutBinding } from '../hooks/useReplayShortcuts';
 import { MapMarkersState, ReplayMarker, ShapeKind, ShapeStyle } from '../types/mapMarkers';
 import { computeRobustActorFraming } from '../utils/cameraFraming';
@@ -103,6 +104,7 @@ type ContextMenuState =
     };
 
 interface Arena3DProps {
+  draftModelsEnabled?: boolean;
   timeRef: React.RefObject<number> | { current: number };
   showActorNames?: boolean;
   mapTimeline?: MapTimeline;
@@ -268,8 +270,10 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
   showKeyboardHelp: showKeyboardHelpProp,
   onCloseKeyboardHelp,
   chromeVisible = true,
+  draftModelsEnabled = false,
 }) => {
   const { lookup, isActorPositionsLoading } = useActorPositionsTask();
+  const draftModels = useDraftReplayModels(draftModelsEnabled, lookup);
 
   // The two mobile sub-states (see the isMobile prop doc). On desktop both are false.
   //  - mobilePreview: scroll-safe teaser on the report page; the canvas must NOT capture touches.
@@ -828,6 +832,37 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
     >
       {/* Screen-reader cast list: the canvas exposes nothing to AT (see ArenaCastTable). */}
       <ArenaCastTable lookup={lookup} onFollow={onActorClick} />
+      {draftModelsEnabled && (
+        <Box
+          role="status"
+          sx={{
+            position: 'absolute',
+            left: 12,
+            bottom: mobileImmersive ? 150 : 96,
+            zIndex: 5,
+            maxWidth: 'min(280px, calc(100% - 24px))',
+            px: 1.5,
+            py: 0.75,
+            borderRadius: 2,
+            bgcolor: 'background.paper',
+            border: '1px solid',
+            borderColor: 'divider',
+            pointerEvents: 'none',
+          }}
+        >
+          <Typography variant="caption">
+            {draftModels.status === 'error'
+              ? 'Draft models unavailable. Showing standard models.'
+              : draftModels.status !== 'ready'
+                ? 'Loading draft models…'
+                : qualityPreset === 'barebones'
+                  ? 'Draft preview · Change replay quality from Barebones to see models'
+                  : draftModels.overrides.size === 0
+                    ? 'Draft preview · No matching enemies in this fight'
+                    : 'Draft models · Recorded fight preview'}
+          </Typography>
+        </Box>
+      )}
       <ReplayErrorBoundary checkWebGL={true}>
         <Canvas
           // No key: the Canvas (GL context, shader programs, shadow state) persists across
@@ -939,6 +974,7 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
               following={followingActorId != null}
               timeRef={timeRef}
               lookup={lookup}
+              staticModelOverrides={draftModels.overrides}
               showActorNames={showActorNames && namesEnabled}
               mapTimeline={mapTimeline}
               scrubbingMode={scrubbingMode}

@@ -3,14 +3,13 @@ import { Canvas } from '@react-three/fiber';
 import React from 'react';
 import { NeutralToneMapping } from 'three';
 
-import type { DraftModelEntry } from '../../../pages/ReplayModelDraftsPage';
+import { createDraftReplayModelAsset, type DraftModelEntry } from '../utils/draftReplayModels';
 import {
   buildDraftReplayFight,
   buildDraftReplayLookup,
   DRAFT_REPLAY_ACTOR_ID,
   DRAFT_REPLAY_DURATION_MS,
 } from '../utils/draftReplayPreview';
-import type { StaticReplayActorModelAsset } from '../utils/replayActorModelRegistry';
 
 import { Arena3DScene } from './Arena3DScene';
 import { ReplayErrorBoundary } from './ReplayErrorBoundary';
@@ -30,25 +29,7 @@ export const DraftReplayCanvas: React.FC<{ entry: DraftModelEntry }> = ({ entry 
   const lookup = React.useMemo(() => buildDraftReplayLookup(entry), [entry]);
   const fight = React.useMemo(() => buildDraftReplayFight(entry.name), [entry.name]);
   const overrides = React.useMemo(() => {
-    const asset: StaticReplayActorModelAsset = {
-      id: `draft-preview-${entry.id}`,
-      path: `replay-model-drafts/${entry.model}`,
-      renderer: 'static-boss',
-      actorTypes: ['enemy', 'boss'],
-      aliases: [],
-      transform: {
-        orientEuler: [0, 0, 0],
-        scale: 1.25,
-        yOffset: 0,
-        yawOffset: 0,
-        modelHeight: entry.modelHeight ?? 2,
-      },
-      provenance: {
-        designation: 'project-authorized-fan-prototype',
-        sourceUrl: entry.sourceUrl,
-        attributionFile: 'public/replay-model-drafts/manifest.json',
-      },
-    };
+    const asset = createDraftReplayModelAsset(entry);
     return new Map([[DRAFT_REPLAY_ACTOR_ID, asset]]);
   }, [entry]);
 
