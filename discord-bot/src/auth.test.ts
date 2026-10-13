@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { verifyHttpCaller } from './auth';
-import type { Env } from './types';
+import { hasRosterPermission, verifyHttpCaller } from './auth';
+import type { DiscordInteraction, Env } from './types';
 
 const GUILD = '111111111111111111';
 const USER = '222222222222222222';
@@ -85,5 +85,28 @@ describe('verifyHttpCaller — requireManageGuild gate', () => {
     const env = makeEnv({ guildId: GUILD, namePattern: 'x' });
     const res = await verifyHttpCaller(env, GUILD, null, { requireManageGuild: true });
     expect(res.authorized).toBe(false);
+  });
+});
+
+describe('manager access with configured publish roles', () => {
+  it.each([WITH_MANAGE, (1n << 3n).toString()])(
+    'allows managers and administrators without the publish role (%s)',
+    async (permissions) => {
+      const env = makeEnv({ guildId: GUILD, allowedRoleIds: [PUBLISH_ROLE] });
+      vi.stubGlobal('fetch', mockFetch({ memberRoles: [], guildPerms: permissions }));
+      expect((await verifyHttpCaller(env, GUILD, 'Bearer tok')).authorized).toBe(true);
+      expect(
+        hasRosterPermission(
+          { member: { roles: [], permissions } } as unknown as DiscordInteraction,
+          [PUBLISH_ROLE],
+        ),
+      ).toBe(true);
+    },
+  );
+
+  it('still rejects members without a configured role or management permission', async () => {
+    const env = makeEnv({ guildId: GUILD, allowedRoleIds: [PUBLISH_ROLE] });
+    vi.stubGlobal('fetch', mockFetch({ memberRoles: [], guildPerms: NO_MANAGE }));
+    expect((await verifyHttpCaller(env, GUILD, 'Bearer tok')).authorized).toBe(false);
   });
 });

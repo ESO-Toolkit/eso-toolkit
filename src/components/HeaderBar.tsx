@@ -41,7 +41,6 @@ import {
   useViewTransitionNavigate,
   type ViewTransitionType,
 } from '../hooks/useViewTransitionNavigate';
-import { persistor } from '../store/storeWithHistory';
 import { clearUserContext } from '../utils/errorTracking';
 import {
   importBuildHubPage,
@@ -735,7 +734,6 @@ export const HeaderBar: React.FC = () => {
     clearUserContext();
     // Purge account-bound persisted state (loadouts/builds) so it can't outlive
     // the session on a shared machine.
-    void persistor.purge();
     rebindAccessToken();
     navigate('/', { vtType: 'down' });
     setMobileOpen(false);

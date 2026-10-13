@@ -14,7 +14,7 @@
  * requiring MANAGE_GUILD (admin-only until a role is set up via /roster config set-role).
  */
 
-import { getGuildMember, Permission } from './discord.js';
+import { getGuildChannels, getGuildMember, Permission } from './discord.js';
 import { getGuildConfig } from './roster/kv.js';
 import type { DiscordInteraction, Env } from './types.js';
 
@@ -34,13 +34,13 @@ export function hasRosterPermission(
 
   // If specific roles are configured, check for overlap
   if (allowedRoleIds && allowedRoleIds.length > 0) {
-    return memberRoles.some((r) => allowedRoleIds.includes(r));
+    if (memberRoles.some((r) => allowedRoleIds.includes(r))) return true;
   }
 
   // Fallback: require MANAGE_GUILD
   const perms = interaction.member?.permissions;
   if (!perms) return false;
-  return (BigInt(perms) & Permission.MANAGE_GUILD) === Permission.MANAGE_GUILD;
+  return (BigInt(perms) & (Permission.MANAGE_GUILD | Permission.ADMINISTRATOR)) !== 0n;
 }
 
 // ── HTTP-based permission check (web UI publish) ──────────────────────────
@@ -105,16 +105,9 @@ export async function verifyHttpCaller(
     try {
       const member = await getGuildMember(env, guildId, me.id);
       const hasRole = member.roles.some((r) => allowedRoles.includes(r));
-      if (!hasRole) {
-        return {
-          authorized: false,
-          userId: me.id,
-          error: 'You do not have the required role to publish rosters in this server.',
-        };
-      }
-      return { authorized: true, userId: me.id };
+      if (hasRole) return { authorized: true, userId: me.id };
     } catch {
-      return { authorized: false, userId: me.id, error: 'You are not a member of this server.' };
+      // Guild managers may recover configuration even without the publish role.
     }
   }
 
@@ -135,7 +128,7 @@ export async function verifyHttpCaller(
   }
 
   const hasManage =
-    (BigInt(guild.permissions) & Permission.MANAGE_GUILD) === Permission.MANAGE_GUILD;
+    (BigInt(guild.permissions) & (Permission.MANAGE_GUILD | Permission.ADMINISTRATOR)) !== 0n;
   if (!hasManage) {
     return {
       authorized: false,
@@ -145,7 +138,7 @@ export async function verifyHttpCaller(
       // publish-oriented "set up a role" hint.
       error: opts.requireManageGuild
         ? 'Manage Server (MANAGE_GUILD) permission is required for this action.'
-        : 'No allowed roles are configured for this server. Only server admins can publish until a role is set up with /roster config set-role.',
+        : 'A configured publish role or Manage Server permission is required.',
     };
   }
 
@@ -170,4 +163,23 @@ export async function verifyWebhookSecret(env: Env, authHeader: string | null): 
   return (
     crypto.subtle as unknown as { timingSafeEqual(a: ArrayBuffer, b: ArrayBuffer): boolean }
   ).timingSafeEqual(a.buffer as ArrayBuffer, b.buffer as ArrayBuffer);
+}
+
+/** Validate against live Discord metadata; stale or foreign destinations fail closed. */
+export async function isGuildDestination(
+  env: Env,
+  guildId: string,
+  channelId: string,
+  type: number,
+): Promise<boolean> {
+  if (!/^\d{17,20}$/.test(channelId)) return false;
+  try {
+    const channels = await getGuildChannels(env, guildId);
+    return channels.some(
+      (channel) =>
+        channel.id === channelId && channel.guild_id === guildId && channel.type === type,
+    );
+  } catch {
+    return false;
+  }
 }

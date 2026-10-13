@@ -2,11 +2,15 @@ import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import React, { Suspense } from 'react';
 
-const ChartLoadingFallback: React.FC = () => (
+const ChartLoadingFallback: React.FC<Pick<EChartInnerProps, 'height' | 'style'>> = ({
+  height = 300,
+  style,
+}) => (
   <Box
     role="status"
     aria-live="polite"
-    sx={{ justifyContent: 'center', alignItems: 'center', height: '300px', display: 'flex' }}
+    sx={{ justifyContent: 'center', alignItems: 'center', display: 'flex' }}
+    style={{ width: '100%', height, ...style }}
   >
     <CircularProgress aria-label="Loading chart" />
   </Box>
@@ -23,7 +27,7 @@ interface EChartInnerProps {
 const LazyEChartInner = React.lazy(() => import('./EChartInner'));
 
 const EChart: React.FC<EChartInnerProps> = (props) => (
-  <Suspense fallback={<ChartLoadingFallback />}>
+  <Suspense fallback={<ChartLoadingFallback height={props.height} style={props.style} />}>
     <LazyEChartInner {...props} />
   </Suspense>
 );

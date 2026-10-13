@@ -7,7 +7,7 @@
  *   3. Public API (GET /discord/bot/*, POST /discord/oauth/*, CORS-enabled)
  */
 
-import { verifyHttpCaller, verifyWebhookSecret } from './auth.js';
+import { isGuildDestination, verifyHttpCaller, verifyWebhookSecret } from './auth.js';
 import { getBotGuilds, getGuildChannels, getGuildRoles } from './discord.js';
 import { handleButton } from './handlers/buttons.js';
 import { handleCommand } from './handlers/commands.js';
@@ -625,6 +625,24 @@ async function handleGuildApi(request: Request, url: URL, env: Env): Promise<Res
       body = (await request.json()) as Record<string, unknown>;
     } catch {
       return jsonResponse({ error: 'Invalid JSON body.' }, 400);
+    }
+
+    for (const [field, channelType] of [
+      ['defaultChannelId', 0],
+      ['defaultCategoryId', 4],
+    ] as const) {
+      const destination = body[field];
+      if (
+        destination !== undefined &&
+        destination !== '' &&
+        (typeof destination !== 'string' ||
+          !(await isGuildDestination(env, guildId, destination, channelType)))
+      ) {
+        return jsonResponse(
+          { error: `${field} must be an accessible channel of the correct type in this server.` },
+          400,
+        );
+      }
     }
 
     const existing = (await getGuildConfig(env, guildId)) ?? getDefaultGuildConfig(guildId);

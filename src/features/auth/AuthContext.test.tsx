@@ -48,7 +48,7 @@ jest.mock('../../EsoLogsClientContext', () => ({
 // Now import after mocking
 import { checkUserBan } from '../../utils/banlist';
 
-import { clearStoredTokens } from './auth';
+import { clearStoredTokens, refreshAccessToken } from './auth';
 import { AuthProvider, useAuth } from './AuthContext';
 
 // Mock localStorage
@@ -146,7 +146,9 @@ describe('AuthContext', () => {
   const mockCheckUserBan = checkUserBan as jest.MockedFunction<typeof checkUserBan>;
 
   beforeEach(() => {
+    clearStoredTokens();
     jest.clearAllMocks();
+    jest.mocked(refreshAccessToken).mockResolvedValue(null);
     window.sessionStorage.clear();
     mockLocalStorage.getItem.mockReturnValue('');
     mockSetAuthToken.mockClear();
@@ -164,6 +166,47 @@ describe('AuthContext', () => {
         },
       },
     });
+  });
+
+  it('preserves credentials during temporary refresh failures and bounds automatic retries', async () => {
+    jest.useFakeTimers();
+    const token = createMockToken(Math.floor(Date.now() / 1000) + 30);
+    window.sessionStorage.setItem('access_token', token);
+    window.sessionStorage.setItem('refresh_token', 'refresh-credential');
+    const view = renderWithAuthProvider(<TestComponent />);
+
+    try {
+      await act(async () => {
+        await jest.advanceTimersByTimeAsync(300_000);
+      });
+      expect(refreshAccessToken).toHaveBeenCalledTimes(6);
+      expect(window.sessionStorage.getItem('refresh_token')).toBe('refresh-credential');
+      expect(screen.getByTestId('access-token')).toHaveTextContent(token);
+      expect(mockClearAuthToken).not.toHaveBeenCalled();
+    } finally {
+      view.unmount();
+      jest.useRealTimers();
+    }
+  });
+
+  it('does not restore live auth when an outstanding refresh completes after logout', async () => {
+    const token = createMockToken(Math.floor(Date.now() / 1000) + 30);
+    window.sessionStorage.setItem('access_token', token);
+    window.sessionStorage.setItem('refresh_token', 'refresh-credential');
+    let finishRefresh!: (token: string) => void;
+    jest.mocked(refreshAccessToken).mockReturnValueOnce(
+      new Promise((resolve) => {
+        finishRefresh = resolve;
+      }),
+    );
+    renderWithAuthProvider(<TestComponent />);
+    await waitFor(() => expect(refreshAccessToken).toHaveBeenCalledTimes(1));
+    act(() => clearStoredTokens());
+    await act(async () => finishRefresh('late-token'));
+
+    expect(screen.getByTestId('is-logged-in')).toHaveTextContent('false');
+    expect(screen.getByTestId('access-token')).toBeEmptyDOMElement();
+    expect(mockSetAuthToken).not.toHaveBeenCalledWith('late-token', expect.anything());
   });
 
   it('should provide initial state when not logged in', () => {

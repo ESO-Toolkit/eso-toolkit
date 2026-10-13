@@ -273,16 +273,15 @@ for (const route of staticRoutes) {
 // DEFECT 2: the sitemap used to be hand-maintained and had already drifted from
 // this route list. Generate it from the same array so the two can never diverge.
 // URLs use the trailing-slash form because the slash-less form 301-redirects.
-const lastmod = new Date().toISOString().slice(0, 10);
+// No content modification dates are tracked; a build date would misrepresent
+// unchanged pages as newly updated. Omit optional lastmod until dates exist.
 const sitemapUrls = [
   `${SITE_ORIGIN}/`,
   ...staticRoutes.filter((route) => !route.noindex).map((route) => `${SITE_ORIGIN}/${route.path}/`),
 ].sort();
 const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${sitemapUrls
-  .map((loc) => `  <url><loc>${loc}</loc><lastmod>${lastmod}</lastmod></url>`)
-  .join('\n')}
+${sitemapUrls.map((loc) => `  <url><loc>${loc}</loc></url>`).join('\n')}
 </urlset>
 `;
 fs.writeFileSync(path.join(buildDirectory, 'sitemap.xml'), sitemap);
@@ -290,4 +289,4 @@ fs.writeFileSync(path.join(buildDirectory, 'sitemap.xml'), sitemap);
 console.log(
   `Generated static route shells: ${staticRoutes.map((route) => `/${route.path}`).join(', ')}`,
 );
-console.log(`Generated sitemap.xml with ${sitemapUrls.length} URLs (lastmod ${lastmod})`);
+console.log(`Generated sitemap.xml with ${sitemapUrls.length} URLs`);

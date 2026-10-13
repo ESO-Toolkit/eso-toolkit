@@ -14,7 +14,16 @@ export const ReportFightDetails: React.FC = () => {
   const { reportId, fightId, tabId } = useReportFightDetailsNavigation();
 
   // OPTIMIZED: Single selector instead of multiple useSelector calls
-  const { reportData, isReportLoading } = useReportData();
+  const {
+    reportData: storedReportData,
+    isReportLoading,
+    reportError,
+    reportStateId,
+    refetchReport,
+  } = useReportData();
+  // Route changes can render before the store switches its active report.
+  const reportData = storedReportData?.code === reportId ? storedReportData : null;
+  const currentReportError = reportStateId === reportId ? reportError : null;
 
   // FIXED: Memoize fight lookup to prevent infinite renders in child components
   const fight = React.useMemo(() => {
@@ -63,6 +72,9 @@ export const ReportFightDetails: React.FC = () => {
       <ReportFightDetailsView
         fight={fight}
         fightsLoading={isReportLoading}
+        reportData={reportData}
+        reportError={currentReportError}
+        onRetry={refetchReport}
         reportId={reportId || undefined}
         fightId={fightId || undefined}
         tabId={tabId || undefined}

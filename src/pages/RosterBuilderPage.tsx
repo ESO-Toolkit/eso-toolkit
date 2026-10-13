@@ -82,6 +82,7 @@ import {
   type LogCombatantInfoEvent,
   type LogPlayerDetails,
 } from '../utils/logToRoster';
+import { parseEsoLogsReportUrl } from '../utils/parseEsoLogsReportUrl';
 import { generateDiscordFormat } from '../utils/rosterDiscordFormat';
 // roleColors used by RosterCardSections
 import { encodeRosterToURL, decodeRosterFromURL } from '../utils/rosterEncoding';
@@ -894,13 +895,8 @@ export const RosterBuilderPage: React.FC = () => {
     try {
       setImportLoading(true);
 
-      // Parse URL to extract code and fight ID
-      // Expected formats:
-      // https://www.esologs.com/reports/<code>#fight=<fightId>
-      // https://www.esologs.com/reports/<code>?fight=<fightId>
-      // https://www.esologs.com/reports/<code>
-      const urlMatch = importUrl.match(/esologs\.com\/reports\/([^#/?]+)(?:[#?]fight=(\d+))?/);
-      if (!urlMatch) {
+      const parsedReport = parseEsoLogsReportUrl(importUrl);
+      if (!parsedReport) {
         setSnackbar({
           open: true,
           message:
@@ -911,8 +907,7 @@ export const RosterBuilderPage: React.FC = () => {
         return;
       }
 
-      const [, code, fightIdStr] = urlMatch;
-      const fightId = fightIdStr ? parseInt(fightIdStr, 10) : undefined;
+      const { code, fightId } = parsedReport;
 
       // Fetch player details from the report
       const response = await client.query<GetPlayersForReportQuery>({
@@ -2650,17 +2645,17 @@ export const RosterBuilderPage: React.FC = () => {
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
             <strong>Example URL formats:</strong>
             <br />
-            • With fight ID (hash): https://www.esologs.com/reports/ABC123#fight=5
+            • With fight ID (hash): https://www.esologs.com/reports/F4f2bMwWtgVKxjB9#fight=5
             <br />
-            • With fight ID (query): https://www.esologs.com/reports/ABC123?fight=5
-            <br />• Without fight ID: https://www.esologs.com/reports/ABC123
+            • With fight ID (query): https://www.esologs.com/reports/F4f2bMwWtgVKxjB9?fight=5
+            <br />• Without fight ID: https://www.esologs.com/reports/F4f2bMwWtgVKxjB9
           </Typography>
           <TextField
             autoFocus
             fullWidth
             variant="outlined"
             label="ESO Logs URL"
-            placeholder="https://www.esologs.com/reports/ABC123#fight=5"
+            placeholder="https://www.esologs.com/reports/F4f2bMwWtgVKxjB9#fight=5"
             value={importUrl}
             onChange={(e) => setImportUrl(e.target.value)}
             sx={{ mt: 2, ...glassTextField }}

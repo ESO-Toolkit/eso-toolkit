@@ -10,6 +10,7 @@ import {
 } from '@mui/material';
 import React from 'react';
 
+import { ChartDataTable } from '../../../components/ChartDataTable';
 import { EChart } from '../../../components/EChart';
 import { MetricPill } from '../../../components/MetricPill';
 import { PlayerIcon } from '../../../components/PlayerIcon';
@@ -428,6 +429,11 @@ export const PlayerPenetrationDetailsView: React.FC<PlayerPenetrationDetailsView
                   <Box role="img" aria-label="Penetration over time chart">
                     <EChart option={chartOption} height={300} group="fightReport" />
                   </Box>
+                  <ChartDataTable
+                    caption={`${resolveActorName(player)} penetration over time`}
+                    columns={['Fight time (seconds)', 'Penetration (points)']}
+                    rows={chartData}
+                  />
                   <Typography
                     variant="caption"
                     sx={{ color: 'text.secondary', mt: 1, display: 'block' }}

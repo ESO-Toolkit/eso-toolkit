@@ -13,6 +13,7 @@ import {
 } from '@mui/material';
 import React from 'react';
 
+import { ChartDataTable } from '../../../components/ChartDataTable';
 import { EChart } from '../../../components/EChart';
 import { MetricPill } from '../../../components/MetricPill';
 import { PlayerIcon } from '../../../components/PlayerIcon';
@@ -94,6 +95,11 @@ export const PlayerDamageReductionDetails: React.FC<PlayerDamageReductionDetails
   }, [damageReductionData?.dataPoints, damageReductionData?.staticResistance]);
 
   const phaseMarkLines = usePhaseMarkLines(phaseTransitionInfo, expanded);
+
+  const tableData = React.useMemo(
+    () => chartData.map(([time, reduction], index) => [time, reduction, staticChartData[index][1]]),
+    [chartData, staticChartData],
+  );
 
   const chartOption = React.useMemo(() => {
     const lineColor = '#2196f3';
@@ -603,6 +609,11 @@ export const PlayerDamageReductionDetails: React.FC<PlayerDamageReductionDetails
                 <Box role="img" aria-label="Damage reduction over time chart">
                   <EChart option={chartOption} height={300} group="fightReport" />
                 </Box>
+                <ChartDataTable
+                  caption={`${resolveActorName(player, id, name)} damage reduction over time`}
+                  columns={['Fight time (seconds)', 'Damage reduction (%)', 'Static reduction (%)']}
+                  rows={tableData}
+                />
               </CardContent>
             </Card>
           ) : (

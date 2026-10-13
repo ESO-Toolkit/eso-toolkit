@@ -1,11 +1,12 @@
 import { Store } from '@reduxjs/toolkit';
-import { render } from '@testing-library/react';
+import { cleanup, render, screen } from '@testing-library/react';
 import React from 'react';
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 
 import { LoggerProvider, LogLevel } from './contexts/LoggerContext';
 import { EsoLogsClientProvider } from './EsoLogsClientContext';
+import * as auth from './features/auth/auth';
 import { AuthProvider } from './features/auth/AuthContext';
 import { OAuthRedirect } from './OAuthRedirect';
 
@@ -68,9 +69,30 @@ jest.mock('./store/storeWithHistory', () => ({
   default: mockStore,
 }));
 
-describe('OAuthRedirect Storybook Snapshot', () => {
-  it('matches the default story snapshot', () => {
-    const { container } = render(
+describe('OAuthRedirect with story providers', () => {
+  const originalFetch = global.fetch;
+  const mockFetch = jest.fn();
+
+  beforeEach(() => {
+    sessionStorage.clear();
+    localStorage.clear();
+    mockFetch.mockReset();
+    // Keep the exchange pending so the loading state is deterministic.
+    mockFetch.mockImplementation(() => new Promise<Response>(() => {}));
+    global.fetch = mockFetch;
+    jest.spyOn(auth, 'getRedirectUri').mockReturnValue('https://example.test/oauth-redirect');
+  });
+
+  afterEach(() => {
+    cleanup();
+    global.fetch = originalFetch;
+    jest.restoreAllMocks();
+    sessionStorage.clear();
+    localStorage.clear();
+  });
+
+  const renderRedirect = (): void => {
+    render(
       <MemoryRouter initialEntries={['/oauth-redirect?code=test-code&state=test-state']}>
         <Provider store={mockStore}>
           <LoggerProvider
@@ -91,6 +113,33 @@ describe('OAuthRedirect Storybook Snapshot', () => {
         </Provider>
       </MemoryRouter>,
     );
-    expect(container.firstChild).toMatchSnapshot();
+  };
+
+  it('shows the exchange progress with valid OAuth state and PKCE setup', () => {
+    auth.setPkceCodeVerifier('test-code-verifier');
+    auth.setOAuthState('test-state');
+
+    renderRedirect();
+
+    expect(screen.getByRole('progressbar')).toBeInTheDocument();
+    expect(screen.getByText('Exchanging authorization code for token...')).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    expect(mockFetch).toHaveBeenCalledWith(
+      'https://www.esologs.com/oauth/token',
+      expect.objectContaining({
+        method: 'POST',
+        body: expect.stringContaining('code_verifier=test-code-verifier'),
+      }),
+    );
+  });
+
+  it('shows the restart action without requesting a token when PKCE setup is missing', () => {
+    renderRedirect();
+
+    expect(screen.getByRole('alert')).toHaveTextContent('Missing PKCE code verifier');
+    expect(screen.getByRole('button', { name: 'Restart Authentication' })).toBeInTheDocument();
+    expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
+    expect(mockFetch).not.toHaveBeenCalled();
   });
 });

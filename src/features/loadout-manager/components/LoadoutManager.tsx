@@ -77,7 +77,8 @@ import {
   selectLoadoutState,
   selectTrialPages,
 } from '../store/selectors';
-import type { ClipboardSetup, LoadoutSetup, LoadoutState } from '../types/loadout.types';
+import type { ClipboardSetup, LoadoutSetup } from '../types/loadout.types';
+import { parseLoadoutImport } from '../utils/loadoutImport';
 import {
   extractWizardWardrobeData,
   parseWizardWardrobeSavedVariablesWithFallback,
@@ -406,14 +407,12 @@ export const LoadoutManager: React.FC = () => {
       const lowerName = file.name.toLowerCase();
 
       if (lowerName.endsWith('.json')) {
-        const json = JSON.parse(text) as LoadoutState;
-        if (json && typeof json === 'object' && 'pages' in json && 'characters' in json) {
-          dispatch(loadState(json));
-          registerSlotsFromLoadoutState(json, 'manual', { reset: true });
-          setSelectedSetupIndex(null);
-          showSnackbar('Imported loadout JSON.', 'success');
-          return;
-        }
+        const json = parseLoadoutImport(text, loadoutState);
+        dispatch(loadState(json));
+        registerSlotsFromLoadoutState(json, 'manual', { reset: true });
+        setSelectedSetupIndex(null);
+        showSnackbar('Imported loadout JSON.', 'success');
+        return;
       }
 
       const parsed = parseWizardWardrobeSavedVariablesWithFallback(text);

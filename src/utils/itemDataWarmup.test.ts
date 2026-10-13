@@ -12,23 +12,32 @@ describe('shouldWarmItemData', () => {
     '/roster-builder',
     '/report/AbCd1234/fight/5',
     '/gear-sets',
-    '/',
+    '/loadout-manager',
+    '/rv',
+    '/sample-report',
   ])('warms for the gear route %s', (pathname) => {
     expect(shouldWarmItemData(pathname)).toBe(true);
   });
 
-  it.each(['/latest-reports', '/my-reports', '/leaderboards', '/calculator', '/privacy'])(
-    'skips the non-gear route %s',
-    (pathname) => {
-      expect(shouldWarmItemData(pathname)).toBe(false);
-    },
-  );
+  it.each([
+    '/',
+    '/terms',
+    '/kalpa',
+    '/kalpa/support',
+    '/unknown',
+    '/latest-reports',
+    '/my-reports',
+    '/leaderboards',
+    '/calculator',
+    '/privacy',
+  ])('skips the non-gear route %s', (pathname) => {
+    expect(shouldWarmItemData(pathname)).toBe(false);
+  });
 
-  it('matches a denied prefix on segment boundaries only', () => {
-    // A nested path under a denied route is still denied…
-    expect(shouldWarmItemData('/latest-reports/')).toBe(false);
-    // …but a different route that merely starts with the same characters is not.
-    expect(shouldWarmItemData('/calculators-comparison')).toBe(true);
+  it('matches gear routes on segment boundaries only', () => {
+    expect(shouldWarmItemData('/build-editor/')).toBe(true);
+    expect(shouldWarmItemData('/build-editorial')).toBe(false);
+    expect(shouldWarmItemData('/reporting')).toBe(false);
   });
 });
 
@@ -47,10 +56,13 @@ describe('scheduleItemDataWarmupForPath', () => {
     delete (window as unknown as { requestIdleCallback?: unknown }).requestIdleCallback;
   });
 
-  it('does not schedule anything on a non-gear route', () => {
-    scheduleItemDataWarmupForPath('/latest-reports');
-    expect(idle).not.toHaveBeenCalled();
-  });
+  it.each(['/', '/terms', '/kalpa', '/latest-reports'])(
+    'does not schedule anything on %s',
+    (pathname) => {
+      scheduleItemDataWarmupForPath(pathname);
+      expect(idle).not.toHaveBeenCalled();
+    },
+  );
 
   it('schedules once on a gear route', () => {
     scheduleItemDataWarmupForPath('/build-editor');

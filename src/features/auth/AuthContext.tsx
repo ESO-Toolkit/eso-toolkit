@@ -18,6 +18,7 @@ import { Logger, LogLevel } from '../../utils/logger';
 import {
   AUTH_CREDENTIALS_CLEARED_EVENT,
   getStoredAccessToken,
+  getStoredRefreshToken,
   removeStoredToken,
   ACCESS_TOKEN_KEY,
   refreshAccessToken,
@@ -179,8 +180,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, [clearAuthToken]);
 
   // Schedule proactive token refresh 60 s before expiry so the session never
-  // silently dies mid-use.  If the refresh fails, tokens are cleared by
-  // refreshAccessToken() itself and the user is logged out cleanly.
+  // silently dies mid-use. Only definitive credential rejection logs out;
+  // temporary failures get a bounded retry while credentials remain available.
   useEffect(() => {
     if (!accessToken || !accessTokenExpiry || accessTokenExpired) return;
 
@@ -195,33 +196,45 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const msUntilRefresh = accessTokenExpiry - Date.now() - 60_000;
     if (msUntilRefresh > MAX_TIMEOUT_MS) return;
 
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let retries = 0;
+    const epoch = authEpochRef.current;
+    const retry = (): void => {
+      if (!cancelled && epoch === authEpochRef.current && getStoredRefreshToken() && retries < 5) {
+        retries += 1;
+        timer = setTimeout(doRefresh, 30_000);
+      }
+    };
     const doRefresh = (): void => {
       void refreshAccessToken()
         ?.then((newToken) => {
+          if (cancelled || epoch !== authEpochRef.current) return;
           if (newToken) {
-            updateAccessToken(newToken);
+            if (getStoredAccessToken() === newToken) updateAccessToken(newToken);
             return;
           }
-          // A null result means either no refresh token is stored (ESO Logs
-          // does not always issue one — the current access token is still
-          // valid, so keep it) or a hard refresh failure (refreshAccessToken
-          // already purged storage). Only log out in the latter case.
+          // Transient failures and missing refresh tokens preserve the session.
+          // Definitive rejection already purges storage in refreshAccessToken.
           if (!getStoredAccessToken()) {
             updateAccessToken('');
+          } else {
+            retry();
           }
         })
-        ?.catch(() => updateAccessToken(''));
+        ?.catch(retry);
     };
 
     if (msUntilRefresh <= 0) {
       // Already within the refresh window — refresh immediately
       doRefresh();
-      return;
+    } else {
+      timer = setTimeout(doRefresh, msUntilRefresh);
     }
-
-    const timer = setTimeout(doRefresh, msUntilRefresh);
-
-    return () => clearTimeout(timer);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
   }, [accessToken, accessTokenExpiry, accessTokenExpired, updateAccessToken]);
 
   // Fetch current user data

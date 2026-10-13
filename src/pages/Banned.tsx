@@ -8,7 +8,6 @@ import { usePageTitle } from '@/hooks/useDocumentTitle';
 
 import { clearStoredTokens } from '../features/auth/auth';
 import { useAuth } from '../features/auth/AuthContext';
-import { persistor } from '../store/storeWithHistory';
 import { clearUserContext } from '../utils/errorTracking';
 
 /**
@@ -27,7 +26,6 @@ export const Banned: React.FC = () => {
     clearUserContext();
     // Purge account-bound persisted state (loadouts/builds) so it can't outlive
     // the session on a shared machine.
-    void persistor.purge();
     setAccessToken('');
     navigate('/');
   };
