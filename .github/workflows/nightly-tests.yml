@@ -267,7 +267,7 @@ jobs:
           PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS: 'true'
 
       - name: Upload Test Results
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         if: always()
         with:
           name: nightly-test-results-shard-${{ matrix.shard }}-${{ github.run_id }}
@@ -277,7 +277,7 @@ jobs:
           retention-days: 30
 
       - name: Upload Test Report
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         if: always()
         with:
           name: nightly-playwright-report-shard-${{ matrix.shard }}-${{ github.run_id }}
@@ -285,7 +285,7 @@ jobs:
           retention-days: 30
 
       - name: Upload Blob Report
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         if: always()
         with:
           name: nightly-blob-shard-${{ matrix.shard }}
@@ -459,7 +459,7 @@ jobs:
           echo "✅ Consolidation complete"
 
       - name: Upload Consolidated Results
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         if: always()
         with:
           name: nightly-consolidated-results-${{ github.run_id }}
