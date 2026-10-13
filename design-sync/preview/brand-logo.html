@@ -1,0 +1,24 @@
+<!-- @dsCard group="Brand" -->
+<meta charset="utf-8"><title>Logo & Wordmark</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>html,body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif;padding:24px;box-sizing:border-box}
+.logo-row{display:flex;gap:40px;align-items:center;flex-wrap:wrap}
+.mark{display:flex;align-items:center;gap:8px}
+.mark img{width:30px;height:30px;object-fit:contain}
+.mark .wm{font-family:'Space Grotesk',Inter,system-ui,sans-serif;font-size:20px;font-weight:800;letter-spacing:-.02em;background:linear-gradient(135deg,#ffffff 0%,#f8fafc 50%,#e2e8f0 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.mark.big img{width:96px;height:96px}
+.mark.big .wm{font-size:32px}
+.light-chip{background:#f8fafc;border-radius:10px;padding:10px 16px}
+.light-chip .wm{background:linear-gradient(135deg,#0f172a 0%,#1e293b 50%,#334155 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.lockup{display:flex;flex-direction:column;align-items:flex-start;gap:2px}
+.lockup .tag{font-family:Consolas,Menlo,monospace;font-size:10px;color:var(--muted);letter-spacing:.15em;text-transform:uppercase}
+.src{font-size:10px;color:var(--muted);font-family:Consolas,Menlo,monospace;margin-top:16px;line-height:1.6}
+</style>
+<div class="logo-row">
+  <div class="mark"><img src="../assets/eso-helper-logo.png"><div class="wm">ESO Toolkit</div></div>
+  <div class="mark light-chip"><img src="../assets/eso-helper-logo.png"><div class="wm">ESO Toolkit</div></div>
+  <div class="mark big"><img src="../assets/eso-helper-logo.png"><div class="lockup"><div class="wm">ESO Toolkit</div><div class="tag">Combat analysis · esotk.com</div></div></div>
+</div>
+<div class="src">header lockup — HeaderBar.tsx:836-858: icon 30px (src/assets/ESOHelpers-logo-icon.svg) + "ESO Toolkit" in Space Grotesk 800, ls −.02em.<br>
+wordmark gradient (135°): dark #ffffff → #f8fafc 50% → #e2e8f0 · light #0f172a → #1e293b 50% → #334155 — NOT the cyan accent gradient.<br>
+Uppercase transform applies on the home route only (:846-847). No glow/drop-shadow on the mark in source.</div>
