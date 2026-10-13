@@ -176,7 +176,7 @@ jobs:
       pull-requests: write
     steps:
       - name: Download coverage report
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         with:
           name: coverage-report-${{ github.run_number }}
           path: coverage
@@ -295,14 +295,14 @@ jobs:
 
       - name: Download Coverage Badge JSON
         if: github.event_name != 'merge_group' && github.event_name != 'pull_request'
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         with:
           name: coverage-badge-json
           path: deploy-staging/badges/
 
       - name: Download Storybook
         if: github.event_name != 'merge_group' && github.event_name != 'pull_request'
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         with:
           name: storybook-static
           path: deploy-staging/storybook/
