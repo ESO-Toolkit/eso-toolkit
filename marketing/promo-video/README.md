@@ -1,0 +1,134 @@
+# ESO Toolkit promo video
+
+A two-minute narrated explainer for esotk.com in four chapters: reading a log (the same fight in
+ESO Logs and in ESO Toolkit), planning a build, running a trial, and managing addons with Kalpa.
+It is rendered in two masters from the same code: 1920×1080 for the site and YouTube, and
+1080×1920 for Shorts, Reels and TikTok, both at 60 fps with burned-in, word-synced captions.
+
+## Story
+
+Every beat is cued from the narration's word timestamps, so each panel moves on the word that
+describes it. A glass rail across the top names the chapters (Read the log, Plan your build, Run
+the trial, Your addons); each new chapter opens with a title card that flies up into the rail.
+
+| Narration                                                                           | Picture                                                                                                                                                                                                                                                         |
+| ----------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| "This is a vet hard mode Tideborn Taleria kill, uploaded to ESO Logs."              | The sentence set on black, then ESO Logs' damage page for that kill arrives.                                                                                                                                                                                    |
+| "Paste the same link into ESO Toolkit."                                             | An address bar over the blurred page: the domain is selected and retyped as esotk.com, and on Enter the bar opens into ESO Toolkit's Insights page.                                                                                                             |
+| "The insights page answers the usual post-pull questions…"                          | The camera moves over the page and a spotlight follows the narration: Colossus, Barrier and Horn, the champion points, the buff and debuff uptimes (their rows arriving one by one), and where the damage came from.                                            |
+| "The damage and healing tables show who died, who got rezzed…"                      | The Damage Breakdown panel opens into the Damage Done table, and the Healing Done table joins it; one highlight band moves from deaths to resurrects to casts per minute. The kill is a messier one from Latest Reports, so the columns have something to show. |
+| "The damage graph shows exactly when it went wrong…"                                | The table opens into its page and the camera travels down to Damage Over Time. The crosshair scrubs to 75 s, just after five players died (1:13.1 to 1:14.6), the camera leans in on its tooltip, then the fifty seconds of low damage are marked on the chart. |
+| "ESO Logs lists a player's gear one item per row. ESO Toolkit groups it into sets…" | The camera pulls back and crosses to ESO Logs' gear table, swept row by row. ESO Toolkit's player card rises over it; each item's name flies into its set chip and each skill-bar entry onto its icon, then the build checks are listed beside the card.        |
+| "If you'd rather see it item by item, the Info button lists every piece…"           | The card settles into its page, the camera pushes in on its Info button, and the Info panel opens out of the button with every item, one per row.                                                                                                               |
+| "It also works out which scripts a scribed skill was running…"                      | Hovering the Leashing Soul icon grows its tooltip out of the icon; the spotlight steps through the focus, signature and affix scripts.                                                                                                                          |
+| "ESO Logs replays the fight on a flat map. ESO Toolkit rebuilds it in 3D…"          | The camera crosses back to ESO Logs' replay, then a match cut onto ESO Toolkit's 3D replay seen from straight above, lined up on the same map at the same moment, which then tilts down into 3D.                                                                |
+| "Found a build worth copying? Send it to the Build Editor…"                         | The player card's "Extract build to editor" button, then the extracted build in the Build Editor.                                                                                                                                                               |
+| "…The Build Leaderboard sorts top-ranked parses…"                                   | The Build Leaderboard for Tideborn Taleria: build patterns, the recommended build, its defining setup, then the class and boss lists.                                                                                                                           |
+| "Plan a scribed skill script by script…"                                            | The scribing planner rebuilds Leashing Soul one script at a time, then the penetration calculator.                                                                                                                                                              |
+| "Leading a trial? The Roster Builder plans the whole group…"                        | A community roster in the Roster Builder: role counts, each tank's sets and ultimate, and the builder's warning about a set that does not suit the ultimate.                                                                                                    |
+| "…even builds for each fight."                                                      | Per-fight builds: the Cloudrest encounter timeline, with Z'Maja selected.                                                                                                                                                                                       |
+| "Share it as a link, publish it to Roster Hub, or post it to Discord…"              | The shared read-only roster flies into its card on Roster Hub, then the Discord roster bot's guide.                                                                                                                                                             |
+| "And for your addons, there's Kalpa…"                                               | The Kalpa page and its addon list, the dependency-resolution feature, then an addon pack on Pack Hub.                                                                                                                                                           |
+| "ESO Logs records the fight. ESO Toolkit helps…"                                    | ESO Logs fills the frame, then squeezes into a split screen as ESO Toolkit slides in. Everything collapses into the ESO Toolkit mark.                                                                                                                           |
+
+## How it is made
+
+- **Footage:** real stills and clips of esotk.com and esologs.com. The log chapter uses one
+  report (Tideborn Taleria, veteran hard mode) and one Saint Olms replay; the Build Leaderboard
+  shows the same boss, and the scribing planner rebuilds the same skill. The roster chapter uses
+  a community roster from Roster Hub. The capture scripts also record where each row, chip, icon,
+  card and button sits, so the camera, focus pulls and flights can target them.
+- **Renderer:** hand-written WebGL2 in `engine/`, with no video framework. Every scene is a
+  full-bleed camera move over real page captures (2-3× stills), with motion blur on the moves.
+  Transitions mean something: an element that opens something (the address bar, a panel, a
+  button, an icon) grows into it as a rounded window over the blurred page; a change of site
+  pulls the camera back to show both sites as neighbouring screens (ESO Logs always on the left)
+  and crosses between them; the replay is a match cut on the same map. Captions and labels sit on glass that refracts
+  the blurred frame behind it. Shared-element flights carry gear rows and skill entries from one
+  site's layout to the other's, and pixel-particle morphs carry each image's real colours from
+  one page to the next. HDR bloom, a neutral tone map and grain follow.
+- **Emphasis:** one system throughout. A named element is lit in place with its own measured
+  corner radius (grown concentrically by its padding) while everything else drops to 50%
+  brightness and 60% saturation; inside lists and tables the other items drop further than the
+  surroundings; a component the camera acts on lifts as a card with an offset shadow over its
+  page, which becomes a soft, dark colour field. Nothing is outlined or made to glow. Subjects
+  centre on (960, 460), clear of the caption band and the label zone.
+- **Narration:** ElevenLabs Eleven v4, voice "Nichalia", one request per line with the
+  neighbouring lines as context. The audio and word timings are committed in
+  `assets/narration/`, so rendering does not need an API key.
+- **Soundtrack:** a synthesized music bed and sound design (Web Audio, rendered offline). It is
+  ducked about 14 dB under the voice and mastered to -14 LUFS, -1.5 dBTP.
+
+## Workflow
+
+Requires Node 24 and Google Chrome with GPU acceleration.
+
+```bash
+npm ci
+
+# 1. Footage. esologs.com shows a human check, which the scripts do not bypass: open a browser
+#    with remote debugging, pass the check by hand, then capture through that session.
+brave.exe --user-data-dir=out/brave-profile --remote-debugging-port=9334 https://www.esologs.com
+npm run capture:esologs
+npm run capture:esotk
+
+# 2. Narration (only when the script in narration.json changes).
+ELEVENLABS_API_KEY=... npm run narration
+
+# 3. Soundtrack, then the two masters.
+npm run soundtrack
+npm run render:landscape
+npm run render:vertical
+# 4K master of the same layout (3840x2160).
+node scripts/render.mjs --scale 2
+
+# Quick look: 960x540 with a fast encode (a few minutes for the whole cut); add --range
+# start,end (frames) for one section, which gets the matching slice of the soundtrack.
+node scripts/render.mjs --preview
+
+# Review single frames: out/stills/
+npm run stills -- 1476,2718
+node scripts/render.mjs --portrait --stills 1476
+```
+
+Captures, the soundtrack and renders are written to the gitignored `out/` folder. To retime the
+cut, change the line start times in `timeline.json`; picture, captions and audio all follow.
+
+## Structure
+
+| Path                          | Purpose                                                                                                        |
+| ----------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `narration.json`              | Voice, model, settings and the script, one entry per line.                                                     |
+| `timeline.json`               | When each narration line starts, and the total length.                                                         |
+| `engine/director.js`          | Every beat: camera views, flights, morphs, focus pulls and captions, cued from the narration.                  |
+| `engine/stage.js`             | Screenshot cards, shared-element flights and the pixel-particle morph.                                         |
+| `engine/main.js`              | Frame renderer: layers, blur, focus pulls, glass, bloom and tone map.                                          |
+| `engine/formations.js`        | Particle layouts for the open and the end card.                                                                |
+| `engine/overlay.js`           | Glass captions and tags, callouts, the link pill and the end card type.                                        |
+| `scripts/capture-esologs.mjs` | ESO Logs stills, layout data and the replay clip (manual human check).                                         |
+| `scripts/capture-esotk.mjs`   | ESO Toolkit stills (reports, builds, rosters, Kalpa), layout data and the 3D replay clip.                      |
+| `scripts/voiceover.mjs`       | ElevenLabs narration with word timestamps.                                                                     |
+| `scripts/soundtrack.mjs`      | Music, sound design, narration mix and mastering.                                                              |
+| `scripts/render.mjs`          | Frame-accurate capture in headless Chrome, encoded with ffmpeg.                                                |
+| `scripts/audit.mjs`           | Composition audit: where each moment's subject sits against the working frame (960, 460) and the safe margins. |
+
+## Content rules
+
+- The narration only says what ESO Toolkit adds to an ESO Logs report. It never says what ESO
+  Logs lacks, and it credits ESO Logs for recording the fight.
+- ESO Logs is shown only in unedited captures of its own pages, labelled as ESO Logs. Its logo
+  is not used.
+- The end card carries the independent-fan-project disclaimer.
+- The build check lists exactly what ESO Toolkit checks: enchant quality, gear quality, CP 160
+  gear and key buffs.
+- The replay boss is Saint Olms the Just, whose model is a screenshot-based reconstruction. Do not
+  feature the models that `replayActorModelRegistry.ts` marks as extracted game assets.
+- The 3D replay clip (`replayTopDown`) starts straight down, turned to ESO Logs' map orientation;
+  `REPLAY_ALIGN` in `engine/director.js` is the measured scale and offset between the two clips.
+  Re-measure it if either clip is recaptured.
+- Tools that show an "Under Active Development" banner stay out of the video, except the Roster
+  Builder, which is filmed below its banner.
+- The in-game ESOTK addon is not released yet, so the video does not mention importing rosters
+  in game.
+- The Kalpa window on esotk.com/kalpa is drawn by the page, not captured from the app, so it is
+  presented as the Kalpa page.
