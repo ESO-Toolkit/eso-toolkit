@@ -118,31 +118,26 @@ test.describe('Nightly Regression - Pages & Features', () => {
       await expectPageLoads(page, '/about', 'about', /about eso toolkit/i);
     });
 
-    test('sample report page should redirect to or display a report', async ({ page }) => {
+    test('sample report page should redirect to a populated bundled report', async ({ page }) => {
       await page.goto('/sample-report', {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
-      await page
-        .waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad })
-        .catch(() => {});
-      await waitForAppMount(page);
-
-      // Either redirects to a real report URL or renders inline
-      const url = page.url();
-      const isOnReport = url.includes('/report/');
-      const hasReportContent = await page
-        .locator(
-          '[data-testid="fight-list"], [data-testid^="trial-section-"], [data-testid^="fight-button-"], [data-testid="fight-details-loaded"], [data-testid="report-fight-details-loaded"]',
-        )
-        .first()
-        .isVisible({ timeout: 5000 })
-        .catch(() => false);
-
-      expect(
-        isOnReport || hasReportContent,
-        '/sample-report should load or redirect to a report',
-      ).toBeTruthy();
+      // The shell can mount before the lazy sample route redirects. Retry the
+      // destination and content assertions instead of sampling the loading state.
+      await expect(page).toHaveURL(/\/report\/(?:F4f2bMwWtgVKxjB9|YArFDbq7BdhwL691)\/?(?:[?#]|$)/, {
+        timeout: TEST_TIMEOUTS.appMount,
+      });
+      await expect(page.getByTestId('fight-list')).toBeVisible({
+        timeout: TEST_TIMEOUTS.dataLoad,
+      });
+      await expect(page.getByRole('button', { name: /#\d+.*(?:KILL|%)/ }).first()).toBeVisible({
+        timeout: TEST_TIMEOUTS.dataLoad,
+      });
+      await createSkeletonDetector(page).waitForSkeletonsToDisappear({
+        timeout: TEST_TIMEOUTS.appMount,
+        selector: '.MuiSkeleton-root',
+      });
 
       await page.screenshot({
         path: 'test-results/nightly-regression-pages-sample-report.png',
