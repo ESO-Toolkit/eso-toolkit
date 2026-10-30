@@ -183,81 +183,32 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: ./.github/actions/setup-node-with-cache
 
-      - name: Get Playwright version
-        id: playwright-version
-        run: |
-          # Get Playwright version from package-lock.json for more accuracy
-          if [ -f package-lock.json ]; then
-            PLAYWRIGHT_VERSION=$(node -p "require('./package-lock.json').packages['node_modules/@playwright/test'].version")
-          else
-            PLAYWRIGHT_VERSION=$(node -p "require('./package.json').devDependencies['@playwright/test']" | tr -d '^~')
-          fi
-          echo "PLAYWRIGHT_VERSION=${PLAYWRIGHT_VERSION}" >> $GITHUB_OUTPUT
-          echo "Playwright version: ${PLAYWRIGHT_VERSION}"
-
-      - name: Cache Playwright browsers
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
-        id: playwright-cache
-        with:
-          path: |
-            ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-${{ steps.playwright-version.outputs.PLAYWRIGHT_VERSION }}
-          restore-keys: |
-            playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-
-            playwright-${{ runner.os }}-
-
-      - name: Cache status and verification
-        run: |
-          echo "Cache hit: ${{ steps.playwright-cache.outputs.cache-hit }}"
-          echo "Cache key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-${{ steps.playwright-version.outputs.PLAYWRIGHT_VERSION }}"
-
-          # Check if cache directory exists and show contents
-          if [ -d ~/.cache/ms-playwright ]; then
-            echo "✅ Playwright cache directory exists"
-            echo "Cache contents:"
-            find ~/.cache/ms-playwright -maxdepth 2 -type d 2>/dev/null || echo "No browser directories found"
-          else
-            echo "❌ Playwright cache directory does not exist"
-          fi
-
       - name: Install Playwright Browsers
-        run: |
-          echo "🔄 Installing Playwright browsers..."
-          if [ "${{ steps.playwright-cache.outputs.cache-hit }}" = "true" ]; then
-            echo "⚡ Cache hit - installing system dependencies and verifying browsers..."
-            npx playwright install-deps
-            # Verify browsers are available, install if missing
-            if ! npx playwright install --dry-run 2>/dev/null; then
-              echo "🔧 Some browsers missing despite cache hit - installing..."
-              npx playwright install
-            fi
-          else
-            echo "🔄 Cache miss - installing browsers and dependencies..."
-            npx playwright install --with-deps
-          fi
+        # Browser revisions can share directory names across Ubuntu releases while
+        # requiring different system libraries. Install for this runner instead of
+        # restoring binaries cached under the generic Linux OS key.
+        run: npx playwright install --with-deps chromium firefox webkit
 
       - name: Verify Playwright Installation
         run: |
-          echo "🔍 Verifying Playwright installation..."
           npx playwright --version
+          timeout 120s node <<'NODE'
+          const { chromium, firefox, webkit } = require('@playwright/test');
 
-          # Verify browsers are available
-          if [ -d ~/.cache/ms-playwright ]; then
-            echo "✅ Browser cache directory exists"
-            echo "Installed browsers:"
-            find ~/.cache/ms-playwright -name "chrome-*" -o -name "chromium-*" -o -name "firefox-*" -o -name "webkit-*" | head -5
-          else
-            echo "❌ No browser cache found"
-            exit 1
-          fi
+          async function verifyBrowsers() {
+            for (const browserType of [chromium, firefox, webkit]) {
+              const browser = await browserType.launch({ timeout: 30_000 });
+              await browser.close();
+              console.log(`${browserType.name()} launched successfully`);
+            }
+          }
 
-          # Test browser launch capability
-          echo "🛠️ Testing browser launch capability..."
-          if ! timeout 30s npx playwright install --dry-run; then
-            echo "❌ Browser installation verification failed"
-            exit 1
-          fi
-          echo "✅ All browsers verified and ready"
+          verifyBrowsers().catch((error) => {
+            console.error(error);
+            process.exitCode = 1;
+          });
+          NODE
+
       - name: Block external network access
         run: |
           # Block access to known external services during testing
@@ -303,7 +254,6 @@ jobs:
           NODE_OPTIONS: '--max_old_space_size=8192 --max_semi_space_size=1024'
           # CI environment flags
           CI: 'true'
-          PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS: 'true'
           # Prevent external network requests during testing
           NO_PROXY: '*'
           HTTP_PROXY: 'http://127.0.0.1:9999'
@@ -328,7 +278,6 @@ jobs:
         env:
           NODE_OPTIONS: '--max_old_space_size=8192 --max_semi_space_size=1024'
           CI: 'true'
-          PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS: 'true'
           NO_PROXY: '*'
           HTTP_PROXY: 'http://127.0.0.1:9999'
           HTTPS_PROXY: 'http://127.0.0.1:9999'
