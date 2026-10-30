@@ -120,68 +120,31 @@ jobs:
 
       - uses: ./.github/actions/setup-node-with-cache
 
-      - name: Get Playwright version
-        id: playwright-version
-        run: |
-          # Get Playwright version from package-lock.json for more accuracy
-          if [ -f package-lock.json ]; then
-            PLAYWRIGHT_VERSION=$(node -p "require('./package-lock.json').packages['node_modules/@playwright/test'].version")
-          else
-            PLAYWRIGHT_VERSION=$(node -p "require('./package.json').devDependencies['@playwright/test']" | tr -d '^~')
-          fi
-          echo "PLAYWRIGHT_VERSION=${PLAYWRIGHT_VERSION}" >> $GITHUB_OUTPUT
-          echo "Playwright version: ${PLAYWRIGHT_VERSION}"
-
-      - name: Cache Playwright browsers
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
-        id: playwright-cache
-        with:
-          path: |
-            ~/.cache/ms-playwright
-          key: playwright-nightly-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-${{ steps.playwright-version.outputs.PLAYWRIGHT_VERSION }}
-          restore-keys: |
-            playwright-nightly-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-
-            playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-
-            playwright-nightly-${{ runner.os }}-
-
       - name: Install Playwright Browsers
-        run: |
-          echo "🔄 Installing Playwright browsers..."
-          if [ "${{ steps.playwright-cache.outputs.cache-hit }}" = "true" ]; then
-            echo "⚡ Cache hit - installing system dependencies and verifying browsers..."
-            npx playwright install-deps
-            # Verify browsers are available, install if missing
-            if ! npx playwright install --dry-run 2>/dev/null; then
-              echo "🔧 Some browsers missing despite cache hit - installing..."
-              npx playwright install
-            fi
-          else
-            echo "🔄 Cache miss - installing browsers and dependencies..."
-            npx playwright install --with-deps
-          fi
+        # Browser revisions can share directory names across Ubuntu releases while
+        # requiring different system libraries. Install for this runner instead of
+        # restoring binaries cached under the generic Linux OS key.
+        run: npx playwright install --with-deps chromium firefox webkit
 
       - name: Verify Playwright Installation
         run: |
-          echo "🔍 Verifying Playwright installation..."
           npx playwright --version
+          timeout 120s node <<'NODE'
+          const { chromium, firefox, webkit } = require('@playwright/test');
 
-          # Verify browsers are available
-          if [ -d ~/.cache/ms-playwright ]; then
-            echo "✅ Browser cache directory exists"
-            echo "Installed browsers:"
-            find ~/.cache/ms-playwright -name "chrome-*" -o -name "chromium-*" -o -name "firefox-*" -o -name "webkit-*" | head -5
-          else
-            echo "❌ No browser cache found"
-            exit 1
-          fi
+          async function verifyBrowsers() {
+            for (const browserType of [chromium, firefox, webkit]) {
+              const browser = await browserType.launch({ timeout: 30_000 });
+              await browser.close();
+              console.log(`${browserType.name()} launched successfully`);
+            }
+          }
 
-          # Test browser launch capability
-          echo "🛠️ Testing browser launch capability..."
-          if ! timeout 30s npx playwright install --dry-run; then
-            echo "❌ Browser installation verification failed"
-            exit 1
-          fi
-          echo "✅ All browsers verified and ready"
+          verifyBrowsers().catch((error) => {
+            console.error(error);
+            process.exitCode = 1;
+          });
+          NODE
 
       # No build step needed - testing against production website
 
@@ -217,14 +180,14 @@ jobs:
                 TEST_CMD="npm run test:nightly:all"
                 ;;
             esac
-            
+
             # Add headed mode if requested (disable sharding for debugging)
             if [ "${{ github.event.inputs.headed }}" = "true" ]; then
               TEST_CMD="npm run test:nightly:headed"
               TOTAL_SHARDS="1"
               CURRENT_SHARD="1"
             fi
-            
+
             # Add debug mode if requested (disable sharding for debugging)
             if [ "${{ github.event.inputs.debug_mode }}" = "true" ]; then
               TEST_CMD="npm run test:nightly:debug"
@@ -263,8 +226,6 @@ jobs:
           # ESO Logs OAuth credentials for authenticated tests
           OAUTH_CLIENT_ID: ${{ secrets.OAUTH_CLIENT_ID }}
           OAUTH_CLIENT_SECRET: ${{ secrets.OAUTH_CLIENT_SECRET }}
-          # Playwright optimizations
-          PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS: 'true'
 
       - name: Upload Test Results
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
@@ -338,7 +299,7 @@ jobs:
   # Post a "starting" Discord notification and open a forum thread before tests run.
   # Runs in parallel with nightly-tests (both depend only on setup).
   notify-nightly-start:
-    name: "Nightly Start"
+    name: 'Nightly Start'
     runs-on: ubuntu-latest
     needs: [setup]
     if: always()
@@ -419,12 +380,12 @@ jobs:
           for shard_dir in ./artifacts/nightly-test-results-shard-*; do
             if [ -d "$shard_dir" ]; then
               echo "Processing $shard_dir..."
-              
+
               # Copy test results
               if [ -d "$shard_dir/test-results-nightly" ]; then
                 cp -r "$shard_dir/test-results-nightly"/* consolidated-results/test-results-nightly/ 2>/dev/null || true
               fi
-              
+
               # Copy report files
               if [ -d "$shard_dir/playwright-report-nightly" ]; then
                 cp -r "$shard_dir/playwright-report-nightly"/* consolidated-results/playwright-report-nightly/ 2>/dev/null || true
@@ -520,7 +481,7 @@ jobs:
 
   # Merge per-shard blob reports into a single HTML report and deploy to GitHub Pages
   deploy-report:
-    name: "Deploy Report"
+    name: 'Deploy Report'
     runs-on: ubuntu-latest
     needs: [nightly-tests]
     if: always() && needs.nightly-tests.result != 'cancelled'
@@ -578,7 +539,7 @@ jobs:
           external-repository: ESO-Toolkit/eso-log-aggregator-reports
           publish-dir: ./playwright-report
           destination-dir: nightly-tests/${{ github.run_number }}
-          commit-message: "Deploy nightly report from run ${{ github.run_number }}"
+          commit-message: 'Deploy nightly report from run ${{ github.run_number }}'
 
       - name: Set Report URL
         id: url
@@ -586,7 +547,7 @@ jobs:
 
   # Post nightly test results to Discord, replying in the thread opened by notify-nightly-start
   discord-notify:
-    name: "Nightly Results"
+    name: 'Nightly Results'
     runs-on: ubuntu-latest
     needs: [setup, nightly-tests, consolidate-results, notify-nightly-start, deploy-report]
     if: always()
