@@ -1,0 +1,155 @@
+<!-- @dsCard group="Colors" -->
+<meta charset="utf-8">
+<title>Rarity Palettes — Gear UI (ESO) vs Build Editor (Material)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; box-sizing:border-box; }
+  body { font-family:Inter,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif; background:#0b1220; padding:20px; }
+  h1,h2,h3 { font-family:'Space Grotesk',Inter,system-ui,sans-serif; font-weight:600; }
+
+  [data-color-scheme="dark"] {
+    --bg:#0b1220; --panel:#0f172a; --panel-2:#0d1430; --text:#e5e7eb; --muted:#94a3b8;
+    --accent:#38bdf8; --accent-2:#00e1ff; --ok:#22c55e; --warn:#ff9800; --danger:#ef4444;
+    --border:#1f2937;
+  }
+  [data-color-scheme="light"] {
+    --bg:#f8fafc; --panel:#ffffff; --panel-2:#f8fafc; --text:#1e293b; --muted:#64748b;
+    --accent:#0f172a; --accent-2:#1e293b; --ok:#059669; --warn:#f97316; --danger:#dc2626;
+    --border:#bcd9ff;
+  }
+  /* NOTE: light --accent is deliberately dark slate #0f172a, NOT a light blue.
+     Cyan #38bdf8 accents remain hard-coded in many dark-leaning recipes even in light mode. */
+
+  .ds-card { max-width:1100px; margin:0 auto; color:#e5e7eb; }
+  .ds-title { font-size:1.4rem; color:#e5e7eb; margin-bottom:4px; }
+  .ds-sub { font-size:.8rem; color:#94a3b8; margin-bottom:16px; }
+  .ds-modes { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  @media (max-width:760px){ .ds-modes { grid-template-columns:1fr; } }
+  .ds-mode { border-radius:16px; padding:18px; background:var(--bg); color:var(--text); border:1px solid var(--border); position:relative; overflow:hidden; }
+  .ds-mode > h2 { font-size:.72rem; text-transform:uppercase; letter-spacing:.12em; color:var(--muted); margin-bottom:14px; position:relative; z-index:1; }
+  .ds-src { font-size:.68rem; color:var(--muted); font-family:'JetBrains Mono',Consolas,monospace; margin-top:6px; }
+
+  /* card-specific */
+  .sec { margin-bottom:18px; position:relative; z-index:1; }
+  .sec h3 { font-size:.7rem; text-transform:uppercase; letter-spacing:.1em; color:var(--muted); margin-bottom:8px; }
+  .tile-row { display:grid; grid-template-columns:repeat(auto-fill,minmax(64px,1fr)); gap:8px; }
+  .gear { text-align:center; }
+  /* mock gear tile — real treatment from GearIcon.tsx:102-112:
+     border: quality !== 'normal' ? `2px solid ${colors[quality]}` : 'none'; borderRadius rounded ? 4 : 0 */
+  .gear .tile { width:44px; height:44px; margin:0 auto; border-radius:4px;
+    background:radial-gradient(circle at 35% 30%, rgba(255,255,255,0.18), rgba(255,255,255,0.02) 60%), #1a2333; }
+  [data-color-scheme="light"] .gear .tile {
+    background:radial-gradient(circle at 35% 30%, rgba(255,255,255,0.5), rgba(0,0,0,0.06) 60%), #cbd5e1; }
+  .gear .lab { font-size:.58rem; color:var(--muted); margin-top:4px; }
+  .gear .hex { font-family:'JetBrains Mono',Consolas,monospace; font-size:.58rem; color:var(--text); }
+  .note { padding:10px 12px; border-radius:10px; border:1px solid var(--border); background:var(--panel); font-size:.72rem; line-height:1.5; color:var(--text); position:relative; z-index:1; }
+  .note strong { color:var(--warn); }
+</style>
+<div class="ds-card">
+  <h1 class="ds-title">Rarity Palettes — Gear UI (ESO) vs Build Editor (Material)</h1>
+  <p class="ds-sub">Two DIFFERENT rarity systems live in the app, on different surfaces. Sources: src/components/GearIcon.tsx:41-58, src/utils/gearMappings.ts:166-174, src/features/build-editor/theme/buildEditorTokens.ts:38-45</p>
+  <div class="ds-modes">
+
+    <section class="ds-mode" data-color-scheme="dark">
+      <h2>Dark</h2>
+
+      <div class="sec">
+        <h3>(a) Gear-UI ESO palette — qualityColors</h3>
+        <div class="tile-row">
+          <div class="gear"><div class="tile" style="border:none"></div><div class="lab">normal (no border)</div><div class="hex">#ffffff</div></div>
+          <div class="gear"><div class="tile" style="border:2px solid #62a603"></div><div class="lab">fine</div><div class="hex">#62a603</div></div>
+          <div class="gear"><div class="tile" style="border:2px solid #417dc1"></div><div class="lab">superior</div><div class="hex">#417dc1</div></div>
+          <div class="gear"><div class="tile" style="border:2px solid #c040c0"></div><div class="lab">epic</div><div class="hex">#c040c0</div></div>
+          <div class="gear"><div class="tile" style="border:2px solid #ffbf00"></div><div class="lab">legendary</div><div class="hex">#ffbf00</div></div>
+          <div class="gear"><div class="tile" style="border:2px solid #ff6b35"></div><div class="lab">mythic</div><div class="hex">#ff6b35</div></div>
+          <div class="gear"><div class="tile" style="border:2px solid #9d9d9d"></div><div class="lab">trash*</div><div class="hex">#9d9d9d</div></div>
+        </div>
+        <div class="ds-src">GearIcon.tsx:41-48 (border treatment :107 — 2px solid, radius 4, normal renders borderless). *trash (#9d9d9d, quality 0) exists only in QUALITY_COLORS — gearMappings.ts:166-174; GearIcon's quality prop has no trash tier.</div>
+      </div>
+
+      <div class="sec">
+        <h3>(a) Gear-UI desaturated set — gear details table</h3>
+        <div class="tile-row">
+          <div class="gear"><div class="tile" style="border:none"></div><div class="lab">normal (no border)</div><div class="hex">#e5e5e5</div></div>
+          <div class="gear"><div class="tile" style="border:2px solid #7cb342"></div><div class="lab">fine</div><div class="hex">#7cb342</div></div>
+          <div class="gear"><div class="tile" style="border:2px solid #5c9ce6"></div><div class="lab">superior</div><div class="hex">#5c9ce6</div></div>
+          <div class="gear"><div class="tile" style="border:2px solid #9978d4"></div><div class="lab">epic</div><div class="hex">#9978d4</div></div>
+          <div class="gear"><div class="tile" style="border:2px solid #dec369"></div><div class="lab">legendary</div><div class="hex">#dec369</div></div>
+          <div class="gear"><div class="tile" style="border:2px solid #c47a5a"></div><div class="lab">mythic</div><div class="hex">#c47a5a</div></div>
+        </div>
+        <div class="ds-src">desaturatedQualityColors — GearIcon.tsx:51-58 (useDesaturatedColors, gear details table only)</div>
+      </div>
+
+      <div class="sec">
+        <h3>(b) Build-editor Material palette — BE_TOKENS.rarity</h3>
+        <div class="tile-row">
+          <div class="gear"><div class="tile" style="border:2px solid #9e9e9e"></div><div class="lab">normal</div><div class="hex">#9e9e9e</div></div>
+          <div class="gear"><div class="tile" style="border:2px solid #4caf50"></div><div class="lab">fine</div><div class="hex">#4caf50</div></div>
+          <div class="gear"><div class="tile" style="border:2px solid #2196f3"></div><div class="lab">superior</div><div class="hex">#2196f3</div></div>
+          <div class="gear"><div class="tile" style="border:2px solid #9c27b0"></div><div class="lab">epic</div><div class="hex">#9c27b0</div></div>
+          <div class="gear"><div class="tile" style="border:2px solid #ff9800"></div><div class="lab">legendary</div><div class="hex">#ff9800</div></div>
+          <div class="gear"><div class="tile" style="border:2px solid #f44336"></div><div class="lab">mythic</div><div class="hex">#f44336</div></div>
+        </div>
+        <div class="ds-src">buildEditorTokens.ts:38-45 — gear-slot borders inside the build editor only</div>
+      </div>
+
+      <div class="note">
+        <strong>Do not merge these palettes.</strong> (a) is the ESO in-game rarity palette, used on gear icons in
+        report/player views (GearIcon + gearMappings). (b) is a Material-Design palette scoped to the build editor's
+        gear slots (BE_TOKENS). Same tier names, different hexes, different surfaces — pick by surface, never unify.
+      </div>
+    </section>
+
+    <section class="ds-mode" data-color-scheme="light">
+      <h2>Light</h2>
+
+      <div class="sec">
+        <h3>(a) Gear-UI ESO palette — qualityColors</h3>
+        <div class="tile-row">
+          <div class="gear"><div class="tile" style="border:none"></div><div class="lab">normal (no border)</div><div class="hex">#ffffff</div></div>
+          <div class="gear"><div class="tile" style="border:2px solid #62a603"></div><div class="lab">fine</div><div class="hex">#62a603</div></div>
+          <div class="gear"><div class="tile" style="border:2px solid #417dc1"></div><div class="lab">superior</div><div class="hex">#417dc1</div></div>
+          <div class="gear"><div class="tile" style="border:2px solid #c040c0"></div><div class="lab">epic</div><div class="hex">#c040c0</div></div>
+          <div class="gear"><div class="tile" style="border:2px solid #ffbf00"></div><div class="lab">legendary</div><div class="hex">#ffbf00</div></div>
+          <div class="gear"><div class="tile" style="border:2px solid #ff6b35"></div><div class="lab">mythic</div><div class="hex">#ff6b35</div></div>
+          <div class="gear"><div class="tile" style="border:2px solid #9d9d9d"></div><div class="lab">trash*</div><div class="hex">#9d9d9d</div></div>
+        </div>
+        <div class="ds-src">Rarity hexes are NOT theme-aware — identical in both modes. GearIcon.tsx:41-48; gearMappings.ts:166-174 (*trash)</div>
+      </div>
+
+      <div class="sec">
+        <h3>(a) Gear-UI desaturated set — gear details table</h3>
+        <div class="tile-row">
+          <div class="gear"><div class="tile" style="border:none"></div><div class="lab">normal (no border)</div><div class="hex">#e5e5e5</div></div>
+          <div class="gear"><div class="tile" style="border:2px solid #7cb342"></div><div class="lab">fine</div><div class="hex">#7cb342</div></div>
+          <div class="gear"><div class="tile" style="border:2px solid #5c9ce6"></div><div class="lab">superior</div><div class="hex">#5c9ce6</div></div>
+          <div class="gear"><div class="tile" style="border:2px solid #9978d4"></div><div class="lab">epic</div><div class="hex">#9978d4</div></div>
+          <div class="gear"><div class="tile" style="border:2px solid #dec369"></div><div class="lab">legendary</div><div class="hex">#dec369</div></div>
+          <div class="gear"><div class="tile" style="border:2px solid #c47a5a"></div><div class="lab">mythic</div><div class="hex">#c47a5a</div></div>
+        </div>
+        <div class="ds-src">desaturatedQualityColors — GearIcon.tsx:51-58</div>
+      </div>
+
+      <div class="sec">
+        <h3>(b) Build-editor Material palette — BE_TOKENS.rarity</h3>
+        <div class="tile-row">
+          <div class="gear"><div class="tile" style="border:2px solid #9e9e9e"></div><div class="lab">normal</div><div class="hex">#9e9e9e</div></div>
+          <div class="gear"><div class="tile" style="border:2px solid #4caf50"></div><div class="lab">fine</div><div class="hex">#4caf50</div></div>
+          <div class="gear"><div class="tile" style="border:2px solid #2196f3"></div><div class="lab">superior</div><div class="hex">#2196f3</div></div>
+          <div class="gear"><div class="tile" style="border:2px solid #9c27b0"></div><div class="lab">epic</div><div class="hex">#9c27b0</div></div>
+          <div class="gear"><div class="tile" style="border:2px solid #ff9800"></div><div class="lab">legendary</div><div class="hex">#ff9800</div></div>
+          <div class="gear"><div class="tile" style="border:2px solid #f44336"></div><div class="lab">mythic</div><div class="hex">#f44336</div></div>
+        </div>
+        <div class="ds-src">buildEditorTokens.ts:38-45 — also mode-independent</div>
+      </div>
+
+      <div class="note">
+        <strong>Do not merge these palettes.</strong> (a) ESO palette on gear icons in report/player views;
+        (b) Material palette on build-editor gear slots. Same tier names, different hexes, different surfaces —
+        pick by surface, never unify.
+      </div>
+    </section>
+
+  </div>
+</div>

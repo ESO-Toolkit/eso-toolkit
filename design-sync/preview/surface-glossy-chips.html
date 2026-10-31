@@ -1,0 +1,188 @@
+<!-- @dsCard group="Surfaces" -->
+<meta charset="utf-8">
+<title>Glossy Chip Glass (G4) — Shine Sweep, Gloss Dome, 11 Variants</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; box-sizing:border-box; }
+  body { font-family:Inter,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif; background:#0b1220; padding:20px; }
+  h1,h2,h3 { font-family:'Space Grotesk',Inter,system-ui,sans-serif; font-weight:600; }
+
+  [data-color-scheme="dark"] {
+    --bg:#0b1220; --panel:#0f172a; --panel-2:#0d1430; --text:#e5e7eb; --muted:#94a3b8;
+    --accent:#38bdf8; --accent-2:#00e1ff; --ok:#22c55e; --warn:#ff9800; --danger:#ef4444;
+    --border:#1f2937;
+  }
+  [data-color-scheme="light"] {
+    --bg:#f8fafc; --panel:#ffffff; --panel-2:#f8fafc; --text:#1e293b; --muted:#64748b;
+    --accent:#0f172a; --accent-2:#1e293b; --ok:#059669; --warn:#f97316; --danger:#dc2626;
+    --border:#bcd9ff;
+  }
+  /* NOTE: light --accent is deliberately dark slate #0f172a, NOT a light blue.
+     Cyan #38bdf8 accents remain hard-coded in many dark-leaning recipes even in light mode. */
+
+  .ds-card { max-width:1100px; margin:0 auto; color:#e5e7eb; }
+  .ds-title { font-size:1.4rem; color:#e5e7eb; margin-bottom:4px; }
+  .ds-sub { font-size:.8rem; color:#94a3b8; margin-bottom:16px; }
+  .ds-modes { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  @media (max-width:760px){ .ds-modes { grid-template-columns:1fr; } }
+  .ds-mode { border-radius:16px; padding:18px; background:var(--bg); color:var(--text); border:1px solid var(--border); position:relative; overflow:hidden; }
+  .ds-mode > h2 { font-size:.72rem; text-transform:uppercase; letter-spacing:.12em; color:var(--muted); margin-bottom:14px; position:relative; z-index:1; }
+  .ds-src { font-size:.68rem; color:var(--muted); font-family:'JetBrains Mono',Consolas,monospace; margin-top:6px; }
+
+  .ds-backdrop { position:absolute; inset:0; pointer-events:none; }
+  [data-color-scheme="dark"] .ds-backdrop {
+    background:
+      radial-gradient(ellipse 60% 40% at 20% 25%, rgba(56,189,248,.28), transparent 65%),
+      radial-gradient(ellipse 50% 45% at 80% 30%, rgba(129,140,248,.24), transparent 65%),
+      radial-gradient(ellipse 55% 50% at 55% 80%, rgba(192,132,252,.18), transparent 65%),
+      #0b1220;
+  }
+  [data-color-scheme="light"] .ds-backdrop {
+    background:
+      radial-gradient(ellipse 60% 40% at 20% 25%, rgba(125,211,252,.5), transparent 65%),
+      radial-gradient(ellipse 50% 45% at 80% 30%, rgba(196,181,253,.42), transparent 65%),
+      radial-gradient(ellipse 55% 50% at 55% 80%, rgba(167,243,208,.38), transparent 65%),
+      #f8fafc;
+  }
+  .demo-z { position:relative; z-index:1; }
+  .chips { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+
+  /* ── G4 glossy chip — src/utils/playerCardStyleUtils.ts:30-84 ──────────
+     getGlossyBaseSx: the only recipe with BOTH a top-highlight AND a
+     bottom-shading inset; ::before skewed shine sweep; ::after gloss dome
+     with elliptical radius. Radius 28 here; re-typed at 25px in 10
+     report_details files. */
+  .chip {
+    position:relative; overflow:hidden; cursor:pointer; display:inline-flex; align-items:center;
+    padding:6px 14px; font-size:.74rem; line-height:1.4;
+    transition:all 0.3s ease;
+    border-radius:28px;
+    backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+    border:1px solid rgba(255, 255, 255, 0.15); /* DEFECT: hard-coded white in BOTH modes */
+  }
+  [data-color-scheme="dark"] .chip {
+    box-shadow:0 8px 32px 0 rgba(0, 0, 0, 0.37), inset 0 1px 0 rgba(255, 255, 255, 0.2), inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+    color:#ffffff; text-shadow:0 1px 3px rgba(0,0,0,0.5); font-weight:500;
+  }
+  [data-color-scheme="light"] .chip {
+    box-shadow:0 4px 16px 0 rgba(59, 130, 246, 0.15), 0 2px 8px 0 rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.2), inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+    color:#1f2937; text-shadow:0 1px 2px rgba(255,255,255,0.8); font-weight:600;
+  }
+  /* ::before — skewed shine sweep (hover slides left -100% → 100%) */
+  .chip::before {
+    content:""; position:absolute; top:0; left:-100%; width:100%; height:100%;
+    background:linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+    transform:skewX(-15deg); transform-origin:center center;
+    transition:left 0.5s ease;
+  }
+  /* ::after — gloss dome, elliptical radius */
+  .chip::after {
+    content:""; position:absolute; top:0; left:0; right:0; height:50%;
+    background:linear-gradient(180deg, rgba(255,255,255,0.15) 0%, transparent 100%);
+    border-radius:28px 28px 100px 100px / 28px 28px 50px 50px;
+    pointer-events:none;
+  }
+  .chip:hover, .chip.is-hover { transform:translateY(-2px); }
+  [data-color-scheme="dark"] .chip:hover, [data-color-scheme="dark"] .chip.is-hover {
+    box-shadow:0 12px 40px 0 rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.3), inset 0 -1px 0 rgba(0,0,0,0.3);
+  }
+  [data-color-scheme="light"] .chip:hover, [data-color-scheme="light"] .chip.is-hover {
+    box-shadow:0 8px 24px 0 rgba(59, 130, 246, 0.25), 0 4px 12px 0 rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.3), inset 0 -1px 0 rgba(0,0,0,0.15);
+  }
+  .chip:hover::before { left:100%; }
+  /* .is-hover demo loops the sweep so it stays visible (in-app it is a one-shot 0.5s hover transition) */
+  @keyframes shineSweepDemo { 0% { left:-100%; } 20% { left:100%; } 100% { left:100%; } }
+  .chip.is-hover::before { animation:shineSweepDemo 2.5s ease infinite; }
+
+  /* ── Dark variants — playerCardStyleUtils.ts:95-165 ── */
+  [data-color-scheme="dark"] .v-green { background:linear-gradient(135deg, rgba(76, 217, 100, 0.25) 0%, rgba(76, 217, 100, 0.15) 50%, rgba(76, 217, 100, 0.08) 100%); border-color:rgba(76, 217, 100, 0.3); color:#5ce572; }
+  [data-color-scheme="dark"] .v-blue { background:linear-gradient(135deg, rgba(0, 122, 255, 0.25) 0%, rgba(0, 122, 255, 0.15) 50%, rgba(0, 122, 255, 0.08) 100%); border-color:rgba(0, 122, 255, 0.3); color:#4da3ff; }
+  [data-color-scheme="dark"] .v-lightBlue { background:linear-gradient(135deg, rgba(94, 234, 255, 0.25) 0%, rgba(94, 234, 255, 0.15) 50%, rgba(94, 234, 255, 0.08) 100%); border-color:rgba(94, 234, 255, 0.35); color:#7ee8ff; }
+  [data-color-scheme="dark"] .v-purple { background:linear-gradient(135deg, rgba(175, 82, 222, 0.25) 0%, rgba(175, 82, 222, 0.15) 50%, rgba(175, 82, 222, 0.08) 100%); border-color:rgba(175, 82, 222, 0.3); color:#c57fff; }
+  [data-color-scheme="dark"] .v-indigo { background:linear-gradient(135deg, rgba(88, 86, 214, 0.25) 0%, rgba(88, 86, 214, 0.15) 50%, rgba(88, 86, 214, 0.08) 100%); border-color:rgba(88, 86, 214, 0.3); color:#8583ff; }
+  [data-color-scheme="dark"] .v-gold { background:linear-gradient(135deg, rgba(255, 193, 7, 0.25) 0%, rgba(255, 193, 7, 0.15) 50%, rgba(255, 193, 7, 0.08) 100%); border-color:rgba(255, 193, 7, 0.35); color:#ffd54f; }
+  [data-color-scheme="dark"] .v-silver { background:linear-gradient(135deg, rgba(236, 240, 241, 0.25) 0%, rgba(236, 240, 241, 0.15) 50%, rgba(236, 240, 241, 0.08) 100%); border-color:rgba(236, 240, 241, 0.35); color:#ecf0f1; }
+  [data-color-scheme="dark"] .v-championRed { background:linear-gradient(135deg, rgba(255, 68, 68, 0.25) 0%, rgba(255, 68, 68, 0.15) 50%, rgba(255, 68, 68, 0.08) 100%); border-color:rgba(255, 68, 68, 0.3); color:#ff6666; }
+  [data-color-scheme="dark"] .v-championBlue { background:linear-gradient(135deg, rgba(68, 136, 255, 0.25) 0%, rgba(68, 136, 255, 0.15) 50%, rgba(68, 136, 255, 0.08) 100%); border-color:rgba(68, 136, 255, 0.3); color:#66aaff; }
+  [data-color-scheme="dark"] .v-championGreen { background:linear-gradient(135deg, rgba(68, 255, 136, 0.25) 0%, rgba(68, 255, 136, 0.15) 50%, rgba(68, 255, 136, 0.08) 100%); border-color:rgba(68, 255, 136, 0.3); color:#66ffaa; }
+
+  /* ── Light variants — playerCardStyleUtils.ts:167-237 ── */
+  [data-color-scheme="light"] .v-green { background:linear-gradient(135deg, rgba(5, 150, 105, 0.12) 0%, rgba(16, 185, 129, 0.08) 50%, rgba(34, 197, 94, 0.04) 100%); border-color:rgba(5, 150, 105, 0.3); color:#065f46; }
+  [data-color-scheme="light"] .v-blue { background:linear-gradient(135deg, rgba(37, 99, 235, 0.12) 0%, rgba(59, 130, 246, 0.08) 50%, rgba(96, 165, 250, 0.04) 100%); border-color:rgba(37, 99, 235, 0.3); color:#1e3a8a; }
+  [data-color-scheme="light"] .v-lightBlue { background:linear-gradient(135deg, rgba(2, 132, 199, 0.12) 0%, rgba(14, 165, 233, 0.08) 50%, rgba(56, 189, 248, 0.04) 100%); border-color:rgba(2, 132, 199, 0.3); color:#0c4a6e; }
+  [data-color-scheme="light"] .v-purple { background:linear-gradient(135deg, rgba(126, 34, 206, 0.12) 0%, rgba(147, 51, 234, 0.08) 50%, rgba(168, 85, 247, 0.04) 100%); border-color:rgba(126, 34, 206, 0.3); color:#581c87; }
+  [data-color-scheme="light"] .v-indigo { background:linear-gradient(135deg, rgba(67, 56, 202, 0.12) 0%, rgba(99, 102, 241, 0.08) 50%, rgba(129, 140, 248, 0.04) 100%); border-color:rgba(67, 56, 202, 0.3); color:#3730a3; }
+  [data-color-scheme="light"] .v-gold { background:linear-gradient(135deg, rgba(217, 119, 6, 0.12) 0%, rgba(245, 158, 11, 0.08) 50%, rgba(251, 191, 36, 0.04) 100%); border-color:rgba(217, 119, 6, 0.3); color:#92400e; }
+  [data-color-scheme="light"] .v-silver { background:linear-gradient(135deg, rgba(100, 116, 139, 0.12) 0%, rgba(148, 163, 184, 0.08) 50%, rgba(203, 213, 225, 0.04) 100%); border-color:rgba(100, 116, 139, 0.3); color:#334155; }
+  [data-color-scheme="light"] .v-championRed { background:linear-gradient(135deg, rgba(220, 38, 38, 0.12) 0%, rgba(239, 68, 68, 0.08) 50%, rgba(248, 113, 113, 0.04) 100%); border-color:rgba(220, 38, 38, 0.3); color:#991b1b; }
+  [data-color-scheme="light"] .v-championBlue { background:linear-gradient(135deg, rgba(37, 99, 235, 0.12) 0%, rgba(59, 130, 246, 0.08) 50%, rgba(96, 165, 250, 0.04) 100%); border-color:rgba(37, 99, 235, 0.3); color:#1e3a8a; }
+  [data-color-scheme="light"] .v-championGreen { background:linear-gradient(135deg, rgba(5, 150, 105, 0.12) 0%, rgba(16, 185, 129, 0.08) 50%, rgba(34, 197, 94, 0.04) 100%); border-color:rgba(5, 150, 105, 0.3); color:#065f46; }
+
+  /* ── Rainbow legendary (B6) — playerCardStyleUtils.ts:156-164,228-236 + legendaryGlow :17-28 ── */
+  @keyframes legendaryGlow {
+    0%, 100% { box-shadow:0 8px 32px 0 rgba(255, 0, 150, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.3); }
+    50% { box-shadow:0 8px 32px 0 rgba(0, 150, 255, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.3); }
+  }
+  .v-legendary {
+    background:linear-gradient(135deg, rgba(255,0,150,0.2) 0%, rgba(255,150,0,0.2) 20%, rgba(255,255,0,0.2) 40%, rgba(0,255,0,0.2) 60%, rgba(0,150,255,0.2) 80%, rgba(150,0,255,0.2) 100%);
+    border-image:linear-gradient(135deg, #ff0096, #ff9600, #ffff00, #00ff00, #0096ff, #9600ff) 1;
+    border:1px solid transparent;
+    animation:legendaryGlow 3s ease-in-out infinite;
+  }
+  [data-color-scheme="dark"] .v-legendary { color:#ffffff; }
+  [data-color-scheme="light"] .v-legendary { color:#1f2937; font-weight:bold; }
+
+  .callout { margin-top:14px; padding:10px 12px; border-radius:10px; border:1px solid #1f2937; background:#0f172a; font-size:.7rem; line-height:1.5; color:#e5e7eb; }
+  .callout strong { color:#ef4444; }
+  .callout code { font-family:'JetBrains Mono',Consolas,monospace; font-size:.66rem; }
+</style>
+<div class="ds-card">
+  <h1 class="ds-title">Glossy Chip Glass (G4) — Shine Sweep + Gloss Dome</h1>
+  <p class="ds-sub">The gear-set chip recipe: blur(10px), radius 28, top-highlight AND bottom-shading insets, a ::before skewed shine sweep on hover, and a ::after elliptical gloss dome. 11 color variants per mode incl. the animated rainbow legendary. Source: src/utils/playerCardStyleUtils.ts:17-243.</p>
+  <div class="ds-modes">
+    <section class="ds-mode" data-color-scheme="dark">
+      <div class="ds-backdrop"></div>
+      <h2>Dark</h2>
+      <div class="demo-z">
+        <div class="chips">
+          <span class="chip v-green">5pc Set — green</span>
+          <span class="chip v-blue is-hover">Arena — blue (.is-hover: shine sweep)</span>
+          <span class="chip v-lightBlue">1pc Monster — lightBlue</span>
+          <span class="chip v-purple">2pc Monster — purple</span>
+          <span class="chip v-indigo">indigo</span>
+          <span class="chip v-gold">Mythic — gold</span>
+          <span class="chip v-silver">Default — silver</span>
+          <span class="chip v-championRed">championRed</span>
+          <span class="chip v-championBlue">championBlue</span>
+          <span class="chip v-championGreen">championGreen</span>
+          <span class="chip v-legendary">legendary — rainbow borderImage + legendaryGlow</span>
+        </div>
+        <div class="ds-src">darkVariants — playerCardStyleUtils.ts:95-165; base :30-84; mapping getGearChipProps :252-296</div>
+      </div>
+    </section>
+    <section class="ds-mode" data-color-scheme="light">
+      <div class="ds-backdrop"></div>
+      <h2>Light</h2>
+      <div class="demo-z">
+        <div class="chips">
+          <span class="chip v-green">5pc Set — green</span>
+          <span class="chip v-blue is-hover">Arena — blue (.is-hover: shine sweep)</span>
+          <span class="chip v-lightBlue">1pc Monster — lightBlue</span>
+          <span class="chip v-purple">2pc Monster — purple</span>
+          <span class="chip v-indigo">indigo</span>
+          <span class="chip v-gold">Mythic — gold</span>
+          <span class="chip v-silver">Default — silver</span>
+          <span class="chip v-championRed">championRed</span>
+          <span class="chip v-championBlue">championBlue</span>
+          <span class="chip v-championGreen">championGreen</span>
+          <span class="chip v-legendary">legendary — same rainbow both modes</span>
+        </div>
+        <div class="ds-src">lightVariants — playerCardStyleUtils.ts:167-237 (championBlue ≡ blue, championGreen ≡ green in light)</div>
+      </div>
+    </section>
+  </div>
+  <div class="callout">
+    <strong>Known defect (document, don't replicate):</strong> the base border is hard-coded <code>1px solid rgba(255, 255, 255, 0.15)</code> — a white border even in light mode (playerCardStyleUtils.ts:38); variants that set <code>borderColor</code> mask it, but silver/default light chips keep the near-invisible white edge. Also: the legendary <code>borderImage</code> shorthand suppresses <code>border-radius</code> on the border paint (square rainbow ring on a 28px-radius chip) — same caveat that got borderImage removed from GlassPanel (GlassPanel.tsx:6-9). The <code>.is-hover</code> sweep here loops for demo purposes; in-app it's a one-shot <code>transition: left 0.5s ease</code> from <code>left:-100%</code> to <code>100%</code> on hover.
+  </div>
+</div>

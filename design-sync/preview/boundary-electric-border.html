@@ -1,0 +1,147 @@
+<!-- @dsCard group="Boundaries" -->
+<meta charset="utf-8">
+<title>Electric Border — animated conic top-DPS ring (B5)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; box-sizing:border-box; }
+  body { font-family:Inter,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif; background:#0b1220; padding:20px; }
+  h1,h2,h3 { font-family:'Space Grotesk',Inter,system-ui,sans-serif; font-weight:600; }
+
+  [data-color-scheme="dark"] {
+    --bg:#0b1220; --panel:#0f172a; --panel-2:#0d1430; --text:#e5e7eb; --muted:#94a3b8;
+    --accent:#38bdf8; --accent-2:#00e1ff; --ok:#22c55e; --warn:#ff9800; --danger:#ef4444;
+    --border:#1f2937;
+  }
+  [data-color-scheme="light"] {
+    --bg:#f8fafc; --panel:#ffffff; --panel-2:#f8fafc; --text:#1e293b; --muted:#64748b;
+    --accent:#0f172a; --accent-2:#1e293b; --ok:#059669; --warn:#f97316; --danger:#dc2626;
+    --border:#bcd9ff;
+  }
+
+  .ds-card { max-width:1100px; margin:0 auto; color:#e5e7eb; }
+  .ds-title { font-size:1.4rem; color:#e5e7eb; margin-bottom:4px; }
+  .ds-sub { font-size:.8rem; color:#94a3b8; margin-bottom:16px; }
+  .ds-modes { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  @media (max-width:760px){ .ds-modes { grid-template-columns:1fr; } }
+  .ds-mode { border-radius:16px; padding:18px; background:var(--bg); color:var(--text); border:1px solid var(--border); position:relative; overflow:hidden; }
+  .ds-mode > h2 { font-size:.72rem; text-transform:uppercase; letter-spacing:.12em; color:var(--muted); margin-bottom:14px; position:relative; z-index:1; }
+  .ds-src { font-size:.68rem; color:var(--muted); font-family:'JetBrains Mono',Consolas,monospace; margin-top:6px; }
+
+  .ds-z { position:relative; z-index:1; }
+
+  /* ── @property + keyframes — src/ReduxThemeProvider.tsx:866-881 ── */
+  @property --tdps-angle {
+    syntax: "<angle>";
+    initial-value: 0deg;
+    inherits: false;
+  }
+  /* Sweep the gradient's start angle, NOT the element's transform — that keeps the
+     rectangular ring in place and moves only the bright "current" travelling around its edge. */
+  @keyframes electricBorderSpin { to { --tdps-angle: 360deg; } }
+  /* Gentle glow pulse on the outer halo */
+  @keyframes electricBorderPulse { 0%, 100% { opacity: 0.55; } 50% { opacity: 1; } }
+
+  /* ── Host card — PlayerCard.tsx:588-611 (cardStyles, isTopDps branch) ── */
+  .tdps-card { position:relative; margin:12px 6px 8px; border-radius:12px;
+    overflow:visible; /* let ring + halo (negative insets) render beyond the card edge — PlayerCard.tsx:601-605 */
+    background:linear-gradient(135deg, rgb(110 170 240 / 25%) 0%, rgb(152 131 227 / 15%) 50%, rgb(173 192 255 / 8%) 100%); }
+  [data-color-scheme="dark"] .tdps-card {
+    border:1px solid rgba(245,158,11,0.55);
+    box-shadow:0 0 16px rgba(245,158,11,0.18), 0 0 40px rgba(245,158,11,0.06), inset 0 1px 0 rgba(251,191,36,0.12); }
+  [data-color-scheme="light"] .tdps-card {
+    border:1px solid rgba(180,83,9,0.5);
+    box-shadow:0 0 16px rgba(180,83,9,0.12), 0 0 40px rgba(245,158,11,0.08), inset 0 1px 0 rgba(251,191,36,0.18); }
+
+  /* ── Ring: rotating conic "current" — PlayerCard.tsx:1210-1233 ── */
+  .tdps-ring { position:absolute; inset:-1px; border-radius:14px; padding:1.5px; z-index:2; pointer-events:none;
+    background:conic-gradient(from var(--tdps-angle), transparent 0deg, rgba(251,191,36,0.15) 40deg, rgba(245,158,11,0.85) 80deg, #fde68a 100deg, rgba(245,158,11,0.85) 120deg, rgba(251,191,36,0.15) 160deg, transparent 200deg, transparent 360deg);
+    -webkit-mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite:xor;
+    mask-composite:exclude;
+    animation:electricBorderSpin 4s linear infinite;
+    filter:drop-shadow(0 0 4px rgba(245,158,11,0.55)); }
+
+  /* ── Halo: soft pulsing outer glow — PlayerCard.tsx:1236-1250 ── */
+  .tdps-halo { position:absolute; inset:-3px; border-radius:16px; z-index:0; pointer-events:none;
+    animation:electricBorderPulse 2.8s ease-in-out infinite; }
+  [data-color-scheme="dark"] .tdps-halo {
+    box-shadow:0 0 14px 1px rgba(245,158,11,0.35), 0 0 34px 4px rgba(245,158,11,0.12); }
+  [data-color-scheme="light"] .tdps-halo {
+    box-shadow:0 0 14px 1px rgba(180,83,9,0.28), 0 0 34px 4px rgba(245,158,11,0.14); }
+
+  /* mock card content */
+  .tdps-content { position:relative; z-index:1; padding:16px; }
+  .tdps-head { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+  .tdps-avatar { width:36px; height:36px; border-radius:10px; background:linear-gradient(135deg,#f59e0b,#fde68a); }
+  .tdps-name { font-weight:700; font-size:.92rem; }
+  .tdps-class { font-size:.7rem; color:var(--muted); }
+  .tdps-badge { margin-left:auto; font-size:.64rem; font-weight:800; letter-spacing:.08em; text-transform:uppercase;
+    color:#f59e0b; border:1px solid rgba(245,158,11,0.45); background:rgba(245,158,11,0.12);
+    padding:3px 8px; border-radius:999px; }
+  .tdps-stats { display:flex; gap:16px; font-variant-numeric:tabular-nums; }
+  .tdps-stat b { display:block; font-size:1.05rem; font-family:'Space Grotesk',Inter,sans-serif; }
+  .tdps-stat span { font-size:.64rem; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; }
+
+  .note { font-size:.74rem; color:#94a3b8; line-height:1.5; margin-top:14px;
+    border:1px solid #1f2937; border-radius:10px; padding:10px 14px; background:#0f172a; }
+  .note b { color:#e5e7eb; }
+</style>
+<div class="ds-card">
+  <h1 class="ds-title">Electric Border — animated conic top-DPS ring (B5)</h1>
+  <p class="ds-sub">@property --tdps-angle + electricBorderSpin/Pulse (ReduxThemeProvider.tsx:866-881); ring + halo + host geometry (PlayerCard.tsx:588-611, 1210-1250)</p>
+  <div class="ds-modes">
+    <section class="ds-mode" data-color-scheme="dark">
+      <h2>Dark</h2>
+      <div class="ds-z">
+        <div class="tdps-card">
+          <div class="tdps-ring" aria-hidden="true"></div>
+          <div class="tdps-halo" aria-hidden="true"></div>
+          <div class="tdps-content">
+            <div class="tdps-head">
+              <div class="tdps-avatar"></div>
+              <div><div class="tdps-name">@arcanist-prime</div><div class="tdps-class">Arcanist — DPS</div></div>
+              <div class="tdps-badge">Top DPS</div>
+            </div>
+            <div class="tdps-stats">
+              <div class="tdps-stat"><b>131.2k</b><span>DPS</span></div>
+              <div class="tdps-stat"><b>24.1%</b><span>of group</span></div>
+              <div class="tdps-stat"><b>0</b><span>deaths</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="ds-src">ring: inset -1px, radius 14px, padding 1.5px, conic from var(--tdps-angle), mask XOR, spin 4s linear — PlayerCard.tsx:1210-1233 · halo: inset -3px, radius 16px, pulse 2.8s — :1236-1250</div>
+      </div>
+    </section>
+    <section class="ds-mode" data-color-scheme="light">
+      <h2>Light</h2>
+      <div class="ds-z">
+        <div class="tdps-card">
+          <div class="tdps-ring" aria-hidden="true"></div>
+          <div class="tdps-halo" aria-hidden="true"></div>
+          <div class="tdps-content">
+            <div class="tdps-head">
+              <div class="tdps-avatar"></div>
+              <div><div class="tdps-name">@arcanist-prime</div><div class="tdps-class">Arcanist — DPS</div></div>
+              <div class="tdps-badge">Top DPS</div>
+            </div>
+            <div class="tdps-stats">
+              <div class="tdps-stat"><b>131.2k</b><span>DPS</span></div>
+              <div class="tdps-stat"><b>24.1%</b><span>of group</span></div>
+              <div class="tdps-stat"><b>0</b><span>deaths</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="ds-src">light halo: 0 0 14px 1px rgba(180,83,9,0.28), 0 0 34px 4px rgba(245,158,11,0.14); host border rgba(180,83,9,0.5) — PlayerCard.tsx:594-609, 1244-1247</div>
+      </div>
+    </section>
+  </div>
+  <div class="note">
+    <b>Mechanics.</b> <code>@property --tdps-angle</code> (syntax <code>&lt;angle&gt;</code>, initial 0deg, inherits false) lets the
+    conic-gradient's start angle interpolate; without it the ring is a graceful static fallback. The host card must set
+    <code>overflow: visible</code> (PlayerCard.tsx:605) plus the amber 1px border, or MUI Card's default clipping cuts off the
+    negative-inset ring and halo. The conic gradient is mode-independent; only host border/shadow and halo change per mode.
+    Both layers animate via CSS keyframes so the global <code>prefers-reduced-motion</code> rule neutralises them automatically.
+  </div>
+</div>

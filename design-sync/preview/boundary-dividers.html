@@ -1,0 +1,170 @@
+<!-- @dsCard group="Boundaries" -->
+<meta charset="utf-8">
+<title>Dividers — tri-color hairline, shimmer, fading rules (B14)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; box-sizing:border-box; }
+  body { font-family:Inter,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif; background:#0b1220; padding:20px; }
+  h1,h2,h3 { font-family:'Space Grotesk',Inter,system-ui,sans-serif; font-weight:600; }
+
+  [data-color-scheme="dark"] {
+    --bg:#0b1220; --panel:#0f172a; --panel-2:#0d1430; --text:#e5e7eb; --muted:#94a3b8;
+    --accent:#38bdf8; --accent-2:#00e1ff; --ok:#22c55e; --warn:#ff9800; --danger:#ef4444;
+    --border:#1f2937;
+  }
+  [data-color-scheme="light"] {
+    --bg:#f8fafc; --panel:#ffffff; --panel-2:#f8fafc; --text:#1e293b; --muted:#64748b;
+    --accent:#0f172a; --accent-2:#1e293b; --ok:#059669; --warn:#f97316; --danger:#dc2626;
+    --border:#bcd9ff;
+  }
+
+  .ds-card { max-width:1100px; margin:0 auto; color:#e5e7eb; }
+  .ds-title { font-size:1.4rem; color:#e5e7eb; margin-bottom:4px; }
+  .ds-sub { font-size:.8rem; color:#94a3b8; margin-bottom:16px; }
+  .ds-modes { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  @media (max-width:760px){ .ds-modes { grid-template-columns:1fr; } }
+  .ds-mode { border-radius:16px; padding:18px; background:var(--bg); color:var(--text); border:1px solid var(--border); position:relative; overflow:hidden; }
+  .ds-mode > h2 { font-size:.72rem; text-transform:uppercase; letter-spacing:.12em; color:var(--muted); margin-bottom:14px; position:relative; z-index:1; }
+  .ds-src { font-size:.68rem; color:var(--muted); font-family:'JetBrains Mono',Consolas,monospace; margin-top:6px; }
+
+  .ds-z { position:relative; z-index:1; }
+  .demo-block { margin-bottom:20px; }
+  .demo-label { font-size:.7rem; font-weight:600; color:var(--text); margin-bottom:10px; }
+
+  /* ── @property registrations + shimmer keyframes — LandingPage.tsx:17-32 ── */
+  @property --divider-pos {
+    syntax: '<percentage>';
+    inherits: false;
+    initial-value: 50%;
+  }
+  @property --glow-opacity {
+    syntax: '<number>';
+    inherits: false;
+    initial-value: 0.3;
+  }
+  @keyframes dividerShimmer {
+    0%   { --divider-pos: 20%; --glow-opacity: 0.3; }
+    50%  { --divider-pos: 80%; --glow-opacity: 0.6; }
+    100% { --divider-pos: 20%; --glow-opacity: 0.3; }
+  }
+
+  /* ── Tri-color hairline + bloom + scanning dot — LandingPage.tsx:1104-1141, keyframes :1220-1224 ── */
+  @keyframes scanDot {
+    0%, 100% { left: 0%; opacity: 0; }
+    5%   { opacity: 1; }
+    50%  { left: 100%; opacity: 1; }
+    55%  { opacity: 0; }
+  }
+  .bridge-rule { position:relative; width:100%; height:1px; margin:18px 0 8px; }
+  [data-color-scheme="dark"] .bridge-rule {
+    background:linear-gradient(90deg, transparent 0%, rgba(56, 189, 248, 0.3) 20%, rgba(129, 140, 248, 0.4) 50%, rgba(192, 132, 252, 0.3) 80%, transparent 100%); }
+  [data-color-scheme="light"] .bridge-rule {
+    background:linear-gradient(90deg, transparent 0%, rgba(56, 189, 248, 0.2) 20%, rgba(99, 102, 241, 0.3) 50%, rgba(168, 85, 247, 0.2) 80%, transparent 100%); }
+  .bridge-rule::before { content:""; position:absolute; top:-8px; left:10%; right:10%; height:16px; filter:blur(6px); }
+  [data-color-scheme="dark"] .bridge-rule::before {
+    background:linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.08) 30%, rgba(129, 140, 248, 0.12) 50%, rgba(192, 132, 252, 0.08) 70%, transparent); }
+  [data-color-scheme="light"] .bridge-rule::before {
+    background:linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.05) 30%, rgba(99, 102, 241, 0.08) 50%, transparent); }
+  .bridge-rule::after { content:""; position:absolute; top:-3px; left:0; width:7px; height:7px; border-radius:50%;
+    animation:scanDot 4s ease-in-out infinite; }
+  [data-color-scheme="dark"] .bridge-rule::after {
+    background:#38bdf8; box-shadow:0 0 12px 3px rgba(56, 189, 248, 0.4); }
+  [data-color-scheme="light"] .bridge-rule::after {
+    background:#0ea5e9; box-shadow:0 0 10px 2px rgba(14, 165, 233, 0.3); }
+
+  /* ── @property shimmer dividers — violet consumer LandingPage.tsx:1545-1557, amber :1797-1810 ── */
+  .shimmer-strip { position:relative; height:34px; border-radius:8px; background:var(--panel-2);
+    border:1px solid var(--border); overflow:hidden; }
+  .shimmer-strip::before { content:""; position:absolute; top:0; left:0; right:0; height:2px;
+    animation:dividerShimmer 6s ease-in-out infinite; }
+  [data-color-scheme="dark"] .shimmer-strip.violet::before {
+    background:linear-gradient(90deg, transparent, rgba(139, 92, 246, var(--glow-opacity)) var(--divider-pos), transparent); }
+  [data-color-scheme="light"] .shimmer-strip.violet::before {
+    background:linear-gradient(90deg, transparent, rgba(139, 92, 246, calc(var(--glow-opacity) * 0.7)) var(--divider-pos), transparent); }
+  [data-color-scheme="dark"] .shimmer-strip.amber::before {
+    background:linear-gradient(90deg, transparent, rgba(245, 158, 11, var(--glow-opacity)) var(--divider-pos), transparent);
+    animation-delay:-3s; }
+  [data-color-scheme="light"] .shimmer-strip.amber::before {
+    background:linear-gradient(90deg, transparent, rgba(180, 120, 20, calc(var(--glow-opacity) * 0.7)) var(--divider-pos), transparent);
+    animation-delay:-3s; }
+  .shimmer-strip .lbl { position:absolute; inset:0; display:flex; align-items:center; padding:0 12px;
+    font-size:.72rem; color:var(--muted); }
+
+  /* ── Mirrored fading caption rules — LandingPage.tsx:1192-1218 (.bridge-caption) ── */
+  .bridge-caption { display:flex; align-items:center; justify-content:center; gap:0.75rem;
+    font-size:0.78rem; font-weight:500; letter-spacing:0.08em; text-transform:uppercase; }
+  [data-color-scheme="dark"] .bridge-caption { color:rgba(255, 255, 255, 0.25); }
+  [data-color-scheme="light"] .bridge-caption { color:rgba(0, 0, 0, 0.25); }
+  .bridge-caption::before, .bridge-caption::after { content:""; width:2.5rem; height:1px; flex-shrink:0; }
+  [data-color-scheme="dark"] .bridge-caption::before { background:linear-gradient(90deg, transparent, rgba(255,255,255,0.12)); }
+  [data-color-scheme="light"] .bridge-caption::before { background:linear-gradient(90deg, transparent, rgba(0,0,0,0.08)); }
+  [data-color-scheme="dark"] .bridge-caption::after { background:linear-gradient(90deg, rgba(255,255,255,0.12), transparent); }
+  [data-color-scheme="light"] .bridge-caption::after { background:linear-gradient(90deg, rgba(0,0,0,0.08), transparent); }
+
+  /* ── Header fade rule — HeaderBar.tsx:404-409 (section-header ::after) ── */
+  .header-fade { display:flex; align-items:center; gap:10px; }
+  .header-fade .txt { font-size:0.7rem; letter-spacing:0.08em; text-transform:uppercase; font-weight:700;
+    background:linear-gradient(135deg, #38bdf8 0%, #818cf8 100%);
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+  .header-fade::after { content:""; flex:1; height:1px;
+    background:linear-gradient(90deg, rgba(56, 189, 248, 0.25), transparent); }
+</style>
+<div class="ds-card">
+  <h1 class="ds-title">Dividers — tri-color hairline, shimmer, fading rules (B14)</h1>
+  <p class="ds-sub">All animated. Sources: LandingPage.tsx:17-32 (@property), :1104-1141 (bridge-rule), :1192-1218 (caption), :1220-1224 (scanDot), :1545-1557 &amp; :1797-1810 (shimmer consumers), HeaderBar.tsx:404-409</p>
+  <div class="ds-modes">
+    <section class="ds-mode" data-color-scheme="dark">
+      <h2>Dark</h2>
+      <div class="ds-z">
+        <div class="demo-block">
+          <div class="demo-label">Tri-color hairline + blur bloom + scanning dot</div>
+          <div class="bridge-rule"></div>
+          <div class="ds-src">cyan .3 / indigo .4 / violet .3 gradient; ::before 16px bloom blur(6px); ::after 7px dot, scanDot 4s — LandingPage.tsx:1104-1141</div>
+        </div>
+        <div class="demo-block">
+          <div class="demo-label">@property shimmer dividers — violet + amber (delay -3s)</div>
+          <div class="shimmer-strip violet" style="margin-bottom:8px"><span class="lbl">Kalpa section — rgba(139,92,246, var(--glow-opacity)) at var(--divider-pos)</span></div>
+          <div class="shimmer-strip amber"><span class="lbl">Amber section — animationDelay: -3s desynchronises the pair</span></div>
+          <div class="ds-src">@property --divider-pos / --glow-opacity + dividerShimmer 6s — LandingPage.tsx:17-32; consumers :1545-1557, :1797-1810</div>
+        </div>
+        <div class="demo-block">
+          <div class="demo-label">Mirrored fading caption rules</div>
+          <div class="bridge-caption">Live tools</div>
+          <div class="ds-src">::before fades in →, ::after fades out → (2.5rem × 1px) — LandingPage.tsx:1204-1217</div>
+        </div>
+        <div class="demo-block">
+          <div class="demo-label">Header fade rule (menu section header)</div>
+          <div class="header-fade"><span class="txt">Reports</span></div>
+          <div class="ds-src">::after flex:1, linear-gradient(90deg, alpha(accent, 0.25), transparent) — HeaderBar.tsx:404-409</div>
+        </div>
+      </div>
+    </section>
+    <section class="ds-mode" data-color-scheme="light">
+      <h2>Light</h2>
+      <div class="ds-z">
+        <div class="demo-block">
+          <div class="demo-label">Tri-color hairline + blur bloom + scanning dot</div>
+          <div class="bridge-rule"></div>
+          <div class="ds-src">light: alphas drop to .2/.3/.2, dot #0ea5e9, bloom loses the violet stop — LandingPage.tsx:1110, 1123, 1136-1139</div>
+        </div>
+        <div class="demo-block">
+          <div class="demo-label">@property shimmer dividers — violet + amber (delay -3s)</div>
+          <div class="shimmer-strip violet" style="margin-bottom:8px"><span class="lbl">Light: alpha scaled by calc(var(--glow-opacity) * 0.7)</span></div>
+          <div class="shimmer-strip amber"><span class="lbl">Amber goes earthier: rgba(180,120,20, …)</span></div>
+          <div class="ds-src">LandingPage.tsx:1555, :1807</div>
+        </div>
+        <div class="demo-block">
+          <div class="demo-label">Mirrored fading caption rules</div>
+          <div class="bridge-caption">Live tools</div>
+          <div class="ds-src">light: rgba(0,0,0,0.08) rules, rgba(0,0,0,0.25) text — LandingPage.tsx:1202-1217</div>
+        </div>
+        <div class="demo-block">
+          <div class="demo-label">Header fade rule (menu section header)</div>
+          <div class="header-fade"><span class="txt">Reports</span></div>
+          <div class="ds-src">HeaderBar.tsx:404-409 (accent alpha 0.25 both modes)</div>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>

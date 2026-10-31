@@ -1,0 +1,26 @@
+<!-- @dsCard group="Colors" -->
+<meta charset="utf-8"><title>Primary / Accent</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  html,body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif;}
+  body{padding:20px;box-sizing:border-box;}
+  .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center;}
+  .swatch{width:80px;height:80px;border-radius:var(--radius-base);border:1px solid var(--border);display:flex;align-items:flex-end;padding:6px;font-size:10px;color:var(--text);text-shadow:0 1px 2px rgba(0,0,0,.6);font-family:Consolas,Menlo,monospace;}
+  .stack{display:flex;flex-direction:column;gap:4px;}
+  .label{font-size:10px;color:var(--muted);font-family:Consolas,Menlo,monospace;letter-spacing:.05em;}
+  .val{font-size:11px;color:var(--muted);font-family:Consolas,Menlo,monospace;}
+  .src{font-size:10px;color:var(--muted);font-family:Consolas,Menlo,monospace;margin-top:14px;}
+</style>
+<div class="row">
+  <div class="swatch" style="background:#38bdf8">#38bdf8</div>
+  <div class="swatch" style="background:#00e1ff">#00e1ff</div>
+  <div class="swatch" style="background:var(--grad-button-primary)">gradient</div>
+  <div class="stack">
+    <div class="label">PRIMARY / ACCENT (DARK)</div>
+    <div class="val">--accent&nbsp;&nbsp;#38bdf8 · sky-400</div>
+    <div class="val">--accent-2 #00e1ff · bright cyan</div>
+    <div class="val">--grad-button-primary 135° (accent → accent-2)</div>
+    <div class="val">⚠ light-mode --accent is #0f172a (dark slate), NOT a light blue</div>
+  </div>
+</div>
+<div class="src">src/ReduxThemeProvider.tsx:46-47 (tokens), :61-62 (light), :284 (contained-primary gradient)</div>

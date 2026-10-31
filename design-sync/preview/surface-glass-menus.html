@@ -1,0 +1,255 @@
+<!-- @dsCard group="Surfaces" -->
+<meta charset="utf-8">
+<title>Menu Glass — Cyan Dropdown (G2) + HeaderBar Rich Dropdown (G8)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; box-sizing:border-box; }
+  body { font-family:Inter,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif; background:#0b1220; padding:20px; }
+  h1,h2,h3 { font-family:'Space Grotesk',Inter,system-ui,sans-serif; font-weight:600; }
+
+  [data-color-scheme="dark"] {
+    --bg:#0b1220; --panel:#0f172a; --panel-2:#0d1430; --text:#e5e7eb; --muted:#94a3b8;
+    --accent:#38bdf8; --accent-2:#00e1ff; --ok:#22c55e; --warn:#ff9800; --danger:#ef4444;
+    --border:#1f2937;
+  }
+  [data-color-scheme="light"] {
+    --bg:#f8fafc; --panel:#ffffff; --panel-2:#f8fafc; --text:#1e293b; --muted:#64748b;
+    --accent:#0f172a; --accent-2:#1e293b; --ok:#059669; --warn:#f97316; --danger:#dc2626;
+    --border:#bcd9ff;
+  }
+  /* NOTE: light --accent is deliberately dark slate #0f172a, NOT a light blue.
+     Cyan #38bdf8 accents remain hard-coded in many dark-leaning recipes even in light mode. */
+
+  .ds-card { max-width:1100px; margin:0 auto; color:#e5e7eb; }
+  .ds-title { font-size:1.4rem; color:#e5e7eb; margin-bottom:4px; }
+  .ds-sub { font-size:.8rem; color:#94a3b8; margin-bottom:16px; }
+  .ds-modes { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  @media (max-width:760px){ .ds-modes { grid-template-columns:1fr; } }
+  .ds-mode { border-radius:16px; padding:18px; background:var(--bg); color:var(--text); border:1px solid var(--border); position:relative; overflow:hidden; }
+  .ds-mode > h2 { font-size:.72rem; text-transform:uppercase; letter-spacing:.12em; color:var(--muted); margin-bottom:14px; position:relative; z-index:1; }
+  .ds-src { font-size:.68rem; color:var(--muted); font-family:'JetBrains Mono',Consolas,monospace; margin-top:6px; }
+
+  .ds-backdrop { position:absolute; inset:0; pointer-events:none; }
+  [data-color-scheme="dark"] .ds-backdrop {
+    background:
+      radial-gradient(ellipse 60% 40% at 20% 25%, rgba(56,189,248,.28), transparent 65%),
+      radial-gradient(ellipse 50% 45% at 80% 30%, rgba(129,140,248,.24), transparent 65%),
+      radial-gradient(ellipse 55% 50% at 55% 80%, rgba(192,132,252,.18), transparent 65%),
+      #0b1220;
+  }
+  [data-color-scheme="light"] .ds-backdrop {
+    background:
+      radial-gradient(ellipse 60% 40% at 20% 25%, rgba(125,211,252,.5), transparent 65%),
+      radial-gradient(ellipse 50% 45% at 80% 30%, rgba(196,181,253,.42), transparent 65%),
+      radial-gradient(ellipse 55% 50% at 55% 80%, rgba(167,243,208,.38), transparent 65%),
+      #f8fafc;
+  }
+  .demo-z { position:relative; z-index:1; }
+  .sect { font-size:.62rem; text-transform:uppercase; letter-spacing:.1em; color:var(--muted); margin:16px 0 8px; position:relative; z-index:1; }
+  .sect:first-of-type { margin-top:0; }
+
+  /* ── G2 cyan dropdown glass — src/theme/dropdownMenu.ts:126-210 ────────
+     Opaque slate fill (wins over global .MuiMenu-paper !important via && +
+     !important), brightest border in the system, 2px top sheen, items with
+     cyan gradient fill + inset 3px left rail. */
+  .g2 {
+    position:relative; border-radius:14px; overflow:hidden; padding:7px 0;
+    backdrop-filter:blur(20px) saturate(1.5); -webkit-backdrop-filter:blur(20px) saturate(1.5);
+  }
+  [data-color-scheme="dark"] .g2 {
+    background-color:rgb(45,64,99);
+    border:1px solid rgba(56,189,248,0.6);
+    box-shadow:0 24px 60px rgba(0,0,0,0.65), 0 0 36px rgba(56,189,248,0.3), inset 0 1px 0 rgba(255,255,255,0.12);
+  }
+  [data-color-scheme="light"] .g2 {
+    background-color:rgb(250,253,255);
+    border:1px solid rgba(40,145,200,0.4);
+    box-shadow:0 20px 48px rgba(15,23,42,0.22), 0 0 24px rgba(40,145,200,0.18), inset 0 1px 0 rgba(255,255,255,0.9);
+  }
+  .g2::before {
+    content:""; position:absolute; top:0; left:0; right:0; height:2px; pointer-events:none; z-index:1;
+  }
+  [data-color-scheme="dark"] .g2::before { background:linear-gradient(90deg, transparent, rgba(0,225,255,0.7), transparent); }
+  [data-color-scheme="light"] .g2::before { background:linear-gradient(90deg, transparent, rgba(40,145,200,0.6), transparent); }
+  .g2 .mi {
+    border-radius:10px; margin:0 7px; padding:9px 12px; font-size:.78rem;
+    transition:background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+    color:var(--text);
+  }
+  [data-color-scheme="dark"] .g2 .mi:hover, [data-color-scheme="dark"] .g2 .mi.is-hover {
+    background:linear-gradient(90deg, rgba(56,189,248,0.20), rgba(56,189,248,0.06));
+    box-shadow:inset 3px 0 0 rgb(56,189,248);
+  }
+  [data-color-scheme="light"] .g2 .mi:hover, [data-color-scheme="light"] .g2 .mi.is-hover {
+    background:linear-gradient(90deg, rgba(40,145,200,0.16), rgba(40,145,200,0.04));
+    box-shadow:inset 3px 0 0 rgb(40,145,200);
+  }
+  [data-color-scheme="dark"] .g2 .mi.is-selected {
+    color:rgb(186,236,255); font-weight:600;
+    background:linear-gradient(90deg, rgba(56,189,248,0.32), rgba(0,225,255,0.10));
+    box-shadow:inset 3px 0 0 rgb(56,189,248), 0 0 16px rgba(56,189,248,0.18);
+  }
+  [data-color-scheme="light"] .g2 .mi.is-selected {
+    color:rgb(20,110,160); font-weight:600;
+    background:linear-gradient(90deg, rgba(40,145,200,0.22), rgba(40,145,200,0.06));
+    box-shadow:inset 3px 0 0 rgb(40,145,200);
+  }
+
+  /* ── G8 HeaderBar rich dropdown — src/components/HeaderBar.tsx:307-372 ──
+     accent: dark #38bdf8 / light #3b82f6; accentAlt: dark #0ea5e9 / light #2563eb */
+  @keyframes dropdownShimmer {
+    0% { background-position:-200% center; }
+    100% { background-position:200% center; }
+  }
+  .g8 {
+    position:relative; overflow:hidden; min-width:280px; border-radius:16px; padding:6px 0 8px;
+    backdrop-filter:blur(24px); -webkit-backdrop-filter:blur(24px);
+  }
+  [data-color-scheme="dark"] .g8 {
+    background:linear-gradient(180deg, rgba(15, 23, 42, 0.78) 0%, rgba(3, 7, 18, 0.88) 100%);
+    border:1px solid rgba(56,189,248,0.12);
+    box-shadow:0 20px 60px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(56,189,248,0.08), inset 0 1px 0 rgba(255,255,255,0.05);
+  }
+  [data-color-scheme="light"] .g8 {
+    background:linear-gradient(180deg, rgba(255, 255, 255, 0.88) 0%, rgba(248, 250, 252, 0.94) 100%);
+    border:1px solid rgba(59,130,246,0.1);
+    box-shadow:0 20px 60px rgba(15, 23, 42, 0.15), 0 0 0 1px rgba(59,130,246,0.06);
+  }
+  /* Animated shimmer accent line */
+  .g8::before {
+    content:""; display:block; position:absolute; top:0; left:0; right:0; height:2px;
+    background-size:200% 100%;
+    animation:dropdownShimmer 3s linear infinite;
+    z-index:2;
+  }
+  [data-color-scheme="dark"] .g8::before {
+    background-image:linear-gradient(90deg, transparent 0%, #38bdf8 15%, #0ea5e9 50%, #38bdf8 85%, transparent 100%);
+    background-size:200% 100%;
+  }
+  [data-color-scheme="light"] .g8::before {
+    background-image:linear-gradient(90deg, transparent 0%, #3b82f6 15%, #2563eb 50%, #3b82f6 85%, transparent 100%);
+    background-size:200% 100%;
+  }
+  /* Noise texture — inline SVG feTurbulence, HeaderBar.tsx:303 */
+  .g8::after {
+    content:""; position:absolute; inset:0;
+    background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+    background-size:128px 128px;
+    pointer-events:none; z-index:0; border-radius:inherit;
+  }
+  [data-color-scheme="dark"] .g8::after { opacity:0.4; }
+  [data-color-scheme="light"] .g8::after { opacity:0.2; }
+  /* Mouse-tracked spotlight — HeaderBar.tsx:362-371 */
+  .g8 .dropdown-spotlight {
+    position:absolute; inset:0; pointer-events:none; z-index:0; border-radius:inherit;
+    transition:background 0.15s ease;
+  }
+  [data-color-scheme="dark"] .g8 .dropdown-spotlight {
+    background:radial-gradient(320px circle at var(--mouse-x, 50%) var(--mouse-y, 0%), rgba(56,189,248,0.07), transparent 60%);
+  }
+  [data-color-scheme="light"] .g8 .dropdown-spotlight {
+    background:radial-gradient(320px circle at var(--mouse-x, 50%) var(--mouse-y, 0%), rgba(59,130,246,0.05), transparent 60%);
+  }
+  /* Section header — HeaderBar.tsx:377-411 */
+  .g8 .hd { display:flex; align-items:center; gap:8px; padding:16px 16px 8px; position:relative; z-index:1; }
+  .g8 .hd .lbl {
+    font-family:'Space Grotesk',Inter,system-ui,sans-serif; font-weight:700; font-size:.7rem;
+    letter-spacing:.08em; text-transform:uppercase;
+    -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+  }
+  [data-color-scheme="dark"] .g8 .hd .lbl { background-image:linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%); }
+  [data-color-scheme="light"] .g8 .hd .lbl { background-image:linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
+  .g8 .hd::after { content:""; flex:1; height:1px; }
+  [data-color-scheme="dark"] .g8 .hd::after { background:linear-gradient(90deg, rgba(56,189,248,0.25), transparent); }
+  [data-color-scheme="light"] .g8 .hd::after { background:linear-gradient(90deg, rgba(59,130,246,0.25), transparent); }
+  /* Menu item + hover rail — HeaderBar.tsx:415-469 (rail at :454-456) */
+  .g8 .mi {
+    padding:8px 12px; border-radius:10px; margin:2px 6px; font-size:.875rem; font-weight:550;
+    position:relative; z-index:1; color:var(--text);
+    transition:background 0.25s ease, transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s ease;
+  }
+  .g8 .mi .sub { font-size:.7rem; opacity:.45; transition:opacity 0.25s ease; }
+  [data-color-scheme="dark"] .g8 .mi:hover, [data-color-scheme="dark"] .g8 .mi.is-hover {
+    background:linear-gradient(135deg, rgba(56,189,248,0.12) 0%, rgba(56,189,248,0.03) 100%);
+    transform:translateX(4px);
+    box-shadow:inset 2px 0 0 #38bdf8, 0 2px 12px rgba(56,189,248,0.1);
+  }
+  [data-color-scheme="light"] .g8 .mi:hover, [data-color-scheme="light"] .g8 .mi.is-hover {
+    background:linear-gradient(135deg, rgba(59,130,246,0.1) 0%, rgba(59,130,246,0.02) 100%);
+    transform:translateX(4px);
+    box-shadow:inset 2px 0 0 #3b82f6, 0 2px 8px rgba(59,130,246,0.06);
+  }
+  .g8 .mi:hover .sub, .g8 .mi.is-hover .sub { opacity:.75; }
+
+  .callout { margin-top:14px; padding:10px 12px; border-radius:10px; border:1px solid #1f2937; background:#0f172a; font-size:.7rem; line-height:1.5; color:#e5e7eb; }
+  .callout code { font-family:'JetBrains Mono',Consolas,monospace; font-size:.66rem; }
+</style>
+<div class="ds-card">
+  <h1 class="ds-title">Menu Glass — Cyan Dropdown (G2) + HeaderBar Rich Dropdown (G8)</h1>
+  <p class="ds-sub">G2: the shared Select-menu paper — opaque slate fill, the system's brightest border rgba(56,189,248,0.6), 2px cyan sheen, items with a 3px inset left rail. G8: the richest glass — blur(24px), animated shimmer strip, SVG noise, JS mouse-tracked spotlight, and 2px-rail items. Sources: src/theme/dropdownMenu.ts:126-210; src/components/HeaderBar.tsx:307-372,455-456.</p>
+  <div class="ds-modes">
+    <section class="ds-mode" data-color-scheme="dark">
+      <div class="ds-backdrop"></div>
+      <h2>Dark</h2>
+      <div class="demo-z">
+        <div class="sect">G2 — dropdownMenuPaperSx(true)</div>
+        <div class="g2">
+          <div class="mi">All encounters</div>
+          <div class="mi is-hover">Trial bosses only (.is-hover — inset 3px 0 0 rgb(56,189,248))</div>
+          <div class="mi is-selected">Last boss pull (.Mui-selected)</div>
+          <div class="mi">Trash fights</div>
+        </div>
+        <div class="ds-src">src/theme/dropdownMenu.ts:126-210 — fill rgb(45,64,99), border rgba(56,189,248,0.6), blur(20px) saturate(1.5)</div>
+
+        <div class="sect">G8 — HeaderBar dropdownPaperSx (move mouse over it)</div>
+        <div class="g8">
+          <div class="dropdown-spotlight"></div>
+          <div class="hd"><span class="lbl">Tools</span></div>
+          <div class="mi">Build Editor<div class="sub">Craft and share loadouts</div></div>
+          <div class="mi is-hover">Fight Replay (.is-hover — inset 2px 0 0 #38bdf8 + translateX(4px))<div class="sub">3D encounter playback</div></div>
+          <div class="mi">Roster Hub<div class="sub">Community rosters</div></div>
+        </div>
+        <div class="ds-src">src/components/HeaderBar.tsx:307-372 paper; :415-469 items; rail :454-456</div>
+      </div>
+    </section>
+    <section class="ds-mode" data-color-scheme="light">
+      <div class="ds-backdrop"></div>
+      <h2>Light</h2>
+      <div class="demo-z">
+        <div class="sect">G2 — dropdownMenuPaperSx(false)</div>
+        <div class="g2">
+          <div class="mi">All encounters</div>
+          <div class="mi is-hover">Trial bosses only (.is-hover — inset 3px 0 0 rgb(40,145,200))</div>
+          <div class="mi is-selected">Last boss pull (.Mui-selected — no glow in light)</div>
+          <div class="mi">Trash fights</div>
+        </div>
+        <div class="ds-src">src/theme/dropdownMenu.ts:126-210 — fill rgb(250,253,255), border rgba(40,145,200,0.4), cyan rgb(40,145,200)</div>
+
+        <div class="sect">G8 — HeaderBar dropdownPaperSx (move mouse over it)</div>
+        <div class="g8">
+          <div class="dropdown-spotlight"></div>
+          <div class="hd"><span class="lbl">Tools</span></div>
+          <div class="mi">Build Editor<div class="sub">Craft and share loadouts</div></div>
+          <div class="mi is-hover">Fight Replay (.is-hover — inset 2px 0 0 #3b82f6 + translateX(4px))<div class="sub">3D encounter playback</div></div>
+          <div class="mi">Roster Hub<div class="sub">Community rosters</div></div>
+        </div>
+        <div class="ds-src">src/components/HeaderBar.tsx:307-372 — accent #3b82f6, accentAlt #2563eb</div>
+      </div>
+    </section>
+  </div>
+  <div class="callout">
+    <strong>Notes:</strong> G2's fill is deliberately <em>opaque</em> — it must win over the global <code>.MuiMenu-paper</code> background <code>!important</code> rule via <code>&amp;&amp;</code> + <code>!important</code> — so its <code>blur(20px) saturate(1.5)</code> only shows at the anti-aliased edge. A verbatim duplicate lives at <code>UltimateCalculator.tsx:536-620</code>. G2 rails are <code>inset 3px 0 0</code>; G8's are <code>inset 2px 0 0</code> plus <code>translateX(4px)</code> — two rail dialects, both layout-safe (shadow, not border). G8 items also stagger in with <code>menuItemIn 0.3s ease-out</code> delayed <code>index * 0.04s</code>.
+  </div>
+</div>
+<script>
+  // Mouse-tracked spotlight (G8) — mirrors the useCallback handler in HeaderBar.tsx
+  document.querySelectorAll('.g8').forEach(function (paper) {
+    paper.addEventListener('mousemove', function (e) {
+      var r = paper.getBoundingClientRect();
+      var spot = paper.querySelector('.dropdown-spotlight');
+      spot.style.setProperty('--mouse-x', ((e.clientX - r.left) / r.width * 100).toFixed(1) + '%');
+      spot.style.setProperty('--mouse-y', ((e.clientY - r.top) / r.height * 100).toFixed(1) + '%');
+    });
+  });
+</script>
