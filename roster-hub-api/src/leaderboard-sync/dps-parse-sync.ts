@@ -24,6 +24,8 @@ import {
   fetchTrialZones,
   getClientToken,
 } from './esologs-client';
+import { ensureDpsParsesSchema } from '../db/dps-parse-schema';
+
 import { buildDpsEncounterTargets, type DpsEncounterTarget } from './dps-encounter-targets';
 import {
   hasRealCombatantInfo,
@@ -220,6 +222,10 @@ export async function syncDpsParses(
 ): Promise<DpsSyncResult[]> {
   const results: DpsSyncResult[] = [];
   let subrequests = 0;
+
+  // The cron must not depend on a read request having warmed the schema first —
+  // on a fresh database this sync is the very first thing to touch these tables.
+  await ensureDpsParsesSchema(env.DB);
 
   const token = await getClientToken(env);
   subrequests++;
