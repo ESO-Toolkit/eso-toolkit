@@ -15,7 +15,7 @@
   },
   "packageManager": "npm@11.5.2",
   "dependencies": {
-    "@apollo/client": "^4.2.12",
+    "@apollo/client": "^4.3.7",
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
@@ -46,7 +46,7 @@
     "dompurify": "^3.4.17",
     "echarts": "^6.0.0",
     "framer-motion": "^12.43.0",
-    "graphql": "^16.14.2",
+    "graphql": "^16.15.0",
     "history": "^5.3.0",
     "memoize-one": "^6.0.0",
     "notistack": "^3.0.2",
@@ -71,8 +71,8 @@
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",
     "@eslint/js": "^9.39.4",
-    "@graphql-codegen/add": "^7.1.0",
-    "@graphql-codegen/cli": "^7.2.0",
+    "@graphql-codegen/add": "^7.1.1",
+    "@graphql-codegen/cli": "^7.4.6",
     "@graphql-codegen/client-preset": "^6.0.0",
     "@graphql-codegen/typed-document-node": "^7.0.0",
     "@graphql-codegen/typescript-react-apollo": "^4.4.2",
