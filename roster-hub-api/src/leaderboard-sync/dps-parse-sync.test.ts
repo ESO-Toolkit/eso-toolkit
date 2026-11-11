@@ -131,6 +131,40 @@ describe('selectTargets', () => {
     expect(picked.at(-1)?.encounterId).toBe(60);
   });
 
+  // Regression: demoted targets sorted last but were never reached when healthy
+  // targets filled every slot, so they stayed stale across a season rollover.
+  it('reserves a slot to recheck the stalest demoted target when slots are full', async () => {
+    mockedListStale.mockResolvedValue([
+      { encounter_id: 60, difficulty: 122, empty_streak: 5 }, // demoted, stalest
+      { encounter_id: 61, difficulty: 122, empty_streak: 4 }, // demoted
+      { encounter_id: 57, difficulty: 122, empty_streak: 0 },
+      { encounter_id: 58, difficulty: 122, empty_streak: 0 },
+      { encounter_id: 59, difficulty: 122, empty_streak: 0 },
+    ]);
+
+    const targets = [
+      makeTarget(57, 'A'),
+      makeTarget(58, 'B'),
+      makeTarget(59, 'C'),
+      makeTarget(60, 'Xoryn'),
+      makeTarget(61, 'Other'),
+    ];
+    const picked = await selectTargets(env, targets, { maxEncounters: 3 });
+
+    expect(picked.map((t) => t.encounterId)).toEqual([57, 58, 60]);
+  });
+
+  it('keeps every slot for healthy targets when only one slot exists', async () => {
+    mockedListStale.mockResolvedValue([
+      { encounter_id: 60, difficulty: 122, empty_streak: 5 },
+      { encounter_id: 57, difficulty: 122, empty_streak: 0 },
+    ]);
+    const picked = await selectTargets(env, [makeTarget(60, 'X'), makeTarget(57, 'Y')], {
+      maxEncounters: 1,
+    });
+    expect(picked.map((t) => t.encounterId)).toEqual([57]);
+  });
+
   it('still prioritises never-synced targets ahead of ranked-back ones', async () => {
     mockedListStale.mockResolvedValue([
       { encounter_id: 60, difficulty: 122, empty_streak: 5 },
