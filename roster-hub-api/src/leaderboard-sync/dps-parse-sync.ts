@@ -344,12 +344,24 @@ export async function selectTargets(
   // slice below then takes the freshest `limit` from the reordered list.
   const demotedLast = (t: DpsEncounterTarget): number => (skip.has(keyOf(t)) ? 1 : 0);
 
-  return [...allTargets]
-    .sort(
-      (a, b) =>
-        demotedLast(a) - demotedLast(b) || (rank.get(keyOf(a)) ?? -1) - (rank.get(keyOf(b)) ?? -1),
-    )
-    .slice(0, limit);
+  const ordered = [...allTargets].sort(
+    (a, b) =>
+      demotedLast(a) - demotedLast(b) || (rank.get(keyOf(a)) ?? -1) - (rank.get(keyOf(b)) ?? -1),
+  );
+  const picked = ordered.slice(0, limit);
+
+  // Demotion alone starves: with more healthy targets than slots per run, the
+  // demoted ones sit past the slice forever, so a boss that gained rankings (new
+  // season partition) is never rechecked and its old-partition rows are never
+  // pruned. Reserve the last slot for the demoted target checked longest ago
+  // (`ordered` is already stalest-first within the demoted group). Needs
+  // limit >= 2 so healthy targets keep at least one slot.
+  if (limit >= 2 && !picked.some((t) => skip.has(keyOf(t)))) {
+    const probe = ordered.slice(limit).find((t) => skip.has(keyOf(t)));
+    if (probe) picked[limit - 1] = probe;
+  }
+
+  return picked;
 }
 
 async function syncOneEncounter(
