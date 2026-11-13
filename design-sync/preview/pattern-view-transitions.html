@@ -1,0 +1,301 @@
+<!-- @dsCard group="Patterns" -->
+<meta charset="utf-8">
+<title>View Transitions — 8 Types + Easing Tokens</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; box-sizing:border-box; }
+  body { font-family:Inter,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif; background:#0b1220; padding:20px; }
+  h1,h2,h3 { font-family:'Space Grotesk',Inter,system-ui,sans-serif; font-weight:600; }
+
+  [data-color-scheme="dark"] {
+    --bg:#0b1220; --panel:#0f172a; --panel-2:#0d1430; --text:#e5e7eb; --muted:#94a3b8;
+    --accent:#38bdf8; --accent-2:#00e1ff; --ok:#22c55e; --warn:#ff9800; --danger:#ef4444;
+    --border:#1f2937;
+  }
+  [data-color-scheme="light"] {
+    --bg:#f8fafc; --panel:#ffffff; --panel-2:#f8fafc; --text:#1e293b; --muted:#64748b;
+    --accent:#0f172a; --accent-2:#1e293b; --ok:#059669; --warn:#f97316; --danger:#dc2626;
+    --border:#bcd9ff;
+  }
+  /* NOTE: light --accent is deliberately dark slate #0f172a, NOT a light blue.
+     Cyan #38bdf8 accents remain hard-coded in many dark-leaning recipes even in light mode. */
+
+  .ds-card { max-width:1100px; margin:0 auto; color:#e5e7eb; }
+  .ds-title { font-size:1.4rem; color:#e5e7eb; margin-bottom:4px; }
+  .ds-sub { font-size:.8rem; color:#94a3b8; margin-bottom:16px; }
+  .ds-modes { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  @media (max-width:760px){ .ds-modes { grid-template-columns:1fr; } }
+  .ds-mode { border-radius:16px; padding:18px; background:var(--bg); color:var(--text); border:1px solid var(--border); position:relative; overflow:hidden; }
+  .ds-mode > h2 { font-size:.72rem; text-transform:uppercase; letter-spacing:.12em; color:var(--muted); margin-bottom:14px; position:relative; z-index:1; }
+  .ds-src { font-size:.68rem; color:var(--muted); font-family:'JetBrains Mono',Consolas,monospace; margin-top:6px; }
+
+  /* ── Easing tokens (view-transitions.css:17-21) ─────────────────────── */
+  :root {
+    --vt-decel: cubic-bezier(0.16, 1, 0.3, 1);
+    --vt-ease-out: cubic-bezier(0.32, 0.72, 0, 1);
+    --vt-snap: cubic-bezier(0.2, 0.9, 0.3, 1);
+  }
+  .ease-panel { border-radius:16px; padding:18px; background:#0f172a; border:1px solid #1f2937; margin-bottom:16px; }
+  .ease-panel h2 { font-size:.72rem; text-transform:uppercase; letter-spacing:.12em; color:#94a3b8; margin-bottom:12px; }
+  .ease-row { display:grid; grid-template-columns:150px 1fr 240px; gap:12px; align-items:center; margin-bottom:10px; }
+  .ease-name { font-family:'JetBrains Mono',Consolas,monospace; font-size:.7rem; color:#38bdf8; }
+  .ease-track { position:relative; height:14px; border-radius:7px; background:#0b1220; border:1px solid #1f2937; }
+  .ease-dot { position:absolute; top:2px; left:2px; width:8px; height:8px; border-radius:50%; background:#38bdf8;
+    animation:runner 2.4s infinite; }
+  .ease-val { font-family:'JetBrains Mono',Consolas,monospace; font-size:.64rem; color:#94a3b8; }
+  @keyframes runner { 0%{transform:translateX(0)} 50%,80%{transform:translateX(min(48vw,560px))} 92%,100%{transform:translateX(0)} }
+  .e-decel { animation-timing-function:var(--vt-decel); }
+  .e-out { animation-timing-function:var(--vt-ease-out); }
+  .e-snap { animation-timing-function:var(--vt-snap); }
+  @media (max-width:760px){ .ease-row { grid-template-columns:110px 1fr; } .ease-val { display:none; } }
+
+  /* ── Demo tiles ─────────────────────────────────────────────────────── */
+  /* Real view transitions snapshot the page; a static card can't run them.
+     Each tile REPLAYS the type's exact keyframe geometry as a looping CSS
+     animation: the transition plays in the first ~350ms of a 2.8s cycle
+     (same ms proportions as the real durations), holds, then resets. */
+  .vt-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; position:relative; z-index:1; }
+  .vt-stage { position:relative; height:104px; border-radius:10px; overflow:hidden; background:var(--bg); border:1px solid var(--border); }
+  .vtp { position:absolute; inset:8px; border-radius:8px; background:var(--panel); border:1px solid var(--border); padding:8px; }
+  .vtp .hd { height:7px; border-radius:3px; margin-bottom:6px; background:var(--accent); opacity:.8; width:45%; }
+  .vtp .bar { height:5px; border-radius:2px; background:var(--muted); opacity:.3; margin-bottom:5px; }
+  .vtp.new { background:var(--panel-2); }
+  .vtp.new .hd { background:var(--accent-2); }
+  .vt-name { font-size:.72rem; font-weight:600; margin-top:6px; color:var(--text); font-family:'JetBrains Mono',Consolas,monospace; }
+
+  /* default crossfade — :267-273 (old 150ms ease-out / new 150ms ease-out) */
+  @keyframes dvt-fade-old { 0%{opacity:1} 5%,78%{opacity:0} 88%,100%{opacity:1} }
+  @keyframes dvt-fade-new { 0%{opacity:0} 5%,78%{opacity:1} 88%,100%{opacity:0} }
+  .t-fade .old { animation:dvt-fade-old 2.8s infinite ease-out; }
+  .t-fade .new { animation:dvt-fade-new 2.8s infinite ease-out; }
+
+  /* forward — :277-285 (old vt-recede 200ms ease-in z1 / new vt-card-expand 280ms --vt-decel z2) */
+  @keyframes dvt-recede { 0%{opacity:1;transform:scale(1)} 7%,78%{opacity:0;transform:scale(0.95)} 88%,100%{opacity:1;transform:scale(1)} }
+  @keyframes dvt-card-expand { 0%{clip-path:inset(4% round 16px);opacity:0} 10%,78%{clip-path:inset(0% round 0px);opacity:1} 88%,100%{clip-path:inset(4% round 16px);opacity:0} }
+  .t-fwd .old { animation:dvt-recede 2.8s infinite ease-in; z-index:1; }
+  .t-fwd .new { animation:dvt-card-expand 2.8s infinite var(--vt-decel); z-index:2; }
+
+  /* back — :289-297 (old vt-card-collapse 220ms ease-in z2 / new vt-surface 250ms --vt-decel z1) */
+  @keyframes dvt-card-collapse { 0%{clip-path:inset(0% round 0px);opacity:1} 8%,78%{clip-path:inset(4% round 16px);opacity:0} 88%,100%{clip-path:inset(0% round 0px);opacity:1} }
+  @keyframes dvt-surface { 0%{opacity:0;transform:scale(0.95)} 9%,78%{opacity:1;transform:scale(1)} 88%,100%{opacity:0;transform:scale(0.95)} }
+  .t-back .old { animation:dvt-card-collapse 2.8s infinite ease-in; z-index:2; }
+  .t-back .new { animation:dvt-surface 2.8s infinite var(--vt-decel); z-index:1; }
+
+  /* up — :321-329 (old vt-shrink-out 340ms ease-in z1 / new vt-circle-reveal 350ms --vt-ease-out z2) */
+  @keyframes dvt-shrink-out { 0%{opacity:1;transform:scale(1)} 12%,78%{opacity:0;transform:scale(0.92)} 88%,100%{opacity:1;transform:scale(1)} }
+  @keyframes dvt-circle-reveal { 0%{clip-path:circle(0% at 50% 45%)} 12.5%,78%{clip-path:circle(100% at 50% 45%)} 88%,100%{clip-path:circle(0% at 50% 45%)} }
+  .t-up .old { animation:dvt-shrink-out 2.8s infinite ease-in; z-index:1; }
+  .t-up .new { animation:dvt-circle-reveal 2.8s infinite var(--vt-ease-out); z-index:2; }
+
+  /* down — :333-341 (old vt-circle-close 280ms ease-in z2 / new vt-grow-in 280ms --vt-decel 30ms z1) */
+  @keyframes dvt-circle-close { 0%{clip-path:circle(100% at 50% 45%);opacity:1} 10%,78%{clip-path:circle(0% at 50% 45%);opacity:0} 88%,100%{clip-path:circle(100% at 50% 45%);opacity:1} }
+  @keyframes dvt-grow-in { 0%,1%{opacity:0;transform:scale(0.92)} 11%,78%{opacity:1;transform:scale(1)} 88%,100%{opacity:0;transform:scale(0.92)} }
+  .t-down .old { animation:dvt-circle-close 2.8s infinite ease-in; z-index:2; }
+  .t-down .new { animation:dvt-grow-in 2.8s infinite var(--vt-decel); z-index:1; }
+
+  /* hero — root :304-312 + group morph :239-261 (group 400ms --vt-snap; old fade 160ms; new fade 200ms +80ms) */
+  @keyframes dvt-hero-card {
+    0%   { top:54%; left:8%; width:38%; height:36%; border-radius:8px; }
+    14%,78% { top:8%; left:5%; width:90%; height:84%; border-radius:8px; }
+    92%,100% { top:54%; left:8%; width:38%; height:36%; border-radius:8px; }
+  }
+  .t-hero .old { animation:dvt-fade-old 2.8s infinite ease-out; z-index:1; }
+  .t-hero .hero-el { position:absolute; background:var(--panel-2); border:1px solid var(--accent);
+    padding:6px; overflow:hidden; z-index:2; animation:dvt-hero-card 2.8s infinite var(--vt-snap); }
+  .t-hero .hero-el .hd { height:6px; border-radius:3px; background:var(--accent-2); opacity:.8; width:55%; margin-bottom:5px; }
+  .t-hero .hero-el .bar { height:4px; border-radius:2px; background:var(--muted); opacity:.3; margin-bottom:4px; }
+
+  /* slide-left — :345-353 (old vt-slide-to-left 220ms ease-in z1 / new vt-slide-from-right 260ms --vt-decel z2) */
+  @keyframes dvt-slide-to-left { 0%{transform:translateX(0);opacity:1} 8%,78%{transform:translateX(-6%);opacity:0} 88%,100%{transform:translateX(0);opacity:1} }
+  @keyframes dvt-slide-from-right { 0%{transform:translateX(6%);opacity:0} 9%,78%{transform:translateX(0);opacity:1} 88%,100%{transform:translateX(6%);opacity:0} }
+  .t-sl .old { animation:dvt-slide-to-left 2.8s infinite ease-in; z-index:1; }
+  .t-sl .new { animation:dvt-slide-from-right 2.8s infinite var(--vt-decel); z-index:2; }
+
+  /* slide-right — :357-365 (old vt-slide-to-right 220ms ease-in z1 / new vt-slide-from-left 260ms --vt-decel z2) */
+  @keyframes dvt-slide-to-right { 0%{transform:translateX(0);opacity:1} 8%,78%{transform:translateX(6%);opacity:0} 88%,100%{transform:translateX(0);opacity:1} }
+  @keyframes dvt-slide-from-left { 0%{transform:translateX(-6%);opacity:0} 9%,78%{transform:translateX(0);opacity:1} 88%,100%{transform:translateX(-6%);opacity:0} }
+  .t-sr .old { animation:dvt-slide-to-right 2.8s infinite ease-in; z-index:1; }
+  .t-sr .new { animation:dvt-slide-from-left 2.8s infinite var(--vt-decel); z-index:2; }
+
+  pre.code { background:#0d1430; border:1px solid #1f2937; border-radius:10px; padding:12px;
+    font-family:'JetBrains Mono',Consolas,monospace; font-size:.64rem; line-height:1.5;
+    color:#94a3b8; overflow:auto; max-height:360px; margin-top:8px; white-space:pre; }
+  .doc-panel { border-radius:16px; padding:18px; background:#0f172a; border:1px solid #1f2937; margin-top:16px; }
+  .doc-panel h2 { font-size:.72rem; text-transform:uppercase; letter-spacing:.12em; color:#94a3b8; margin-bottom:10px; }
+  .note { font-size:.72rem; color:#94a3b8; line-height:1.5; margin-top:8px; }
+  .note b { color:#e5e7eb; font-weight:600; }
+</style>
+<div class="ds-card">
+  <h1 class="ds-title">View Transitions — 8 Types + Easing Tokens</h1>
+  <p class="ds-sub">View Transitions API Level 2 with <code>html:active-view-transition-type(...)</code> per-type animations. Source: src/styles/view-transitions.css (driver: src/hooks/useViewTransitionNavigate.ts). Tiles below are looping CSS re-creations of the real keyframes — actual view transitions cannot run inside a static card; exact CSS is transcribed at the bottom.</p>
+
+  <div class="ease-panel">
+    <h2>Easing tokens — view-transitions.css:17-21</h2>
+    <div class="ease-row"><span class="ease-name">--vt-decel</span><div class="ease-track"><div class="ease-dot e-decel"></div></div><span class="ease-val">cubic-bezier(0.16, 1, 0.3, 1)</span></div>
+    <div class="ease-row"><span class="ease-name">--vt-ease-out</span><div class="ease-track"><div class="ease-dot e-out"></div></div><span class="ease-val">cubic-bezier(0.32, 0.72, 0, 1)</span></div>
+    <div class="ease-row"><span class="ease-name">--vt-snap</span><div class="ease-track"><div class="ease-dot e-snap"></div></div><span class="ease-val">cubic-bezier(0.2, 0.9, 0.3, 1)</span></div>
+    <p class="note">No <code>filter: blur()</code> anywhere in the transition keyframes — it forces software rasterization on the full-page snapshot. Only opacity, transform, and clip-path (all GPU-composited) — view-transitions.css:24-26.</p>
+  </div>
+
+  <div class="ds-modes">
+    <section class="ds-mode" data-color-scheme="dark">
+      <h2>Dark</h2>
+      <div class="vt-grid">
+        <div><div class="vt-stage t-fade"><div class="vtp old"><div class="hd"></div><div class="bar"></div><div class="bar" style="width:70%"></div></div><div class="vtp new"><div class="hd"></div><div class="bar"></div><div class="bar" style="width:60%"></div></div></div><div class="vt-name">(none) — crossfade</div><div class="ds-src">old/new vt-fade 150ms ease-out — :267-273</div></div>
+        <div><div class="vt-stage t-fwd"><div class="vtp old"><div class="hd"></div><div class="bar"></div><div class="bar" style="width:70%"></div></div><div class="vtp new"><div class="hd"></div><div class="bar"></div><div class="bar" style="width:60%"></div></div></div><div class="vt-name">forward — container expand</div><div class="ds-src">vt-recede 200ms ease-in / vt-card-expand 280ms --vt-decel — :277-285</div></div>
+        <div><div class="vt-stage t-back"><div class="vtp new"><div class="hd"></div><div class="bar"></div><div class="bar" style="width:60%"></div></div><div class="vtp old"><div class="hd"></div><div class="bar"></div><div class="bar" style="width:70%"></div></div></div><div class="vt-name">back — container collapse</div><div class="ds-src">vt-card-collapse 220ms ease-in / vt-surface 250ms --vt-decel — :289-297</div></div>
+        <div><div class="vt-stage t-up"><div class="vtp old"><div class="hd"></div><div class="bar"></div><div class="bar" style="width:70%"></div></div><div class="vtp new"><div class="hd"></div><div class="bar"></div><div class="bar" style="width:60%"></div></div></div><div class="vt-name">up — circle reveal</div><div class="ds-src">vt-shrink-out 340ms ease-in / vt-circle-reveal 350ms --vt-ease-out — :321-329</div></div>
+        <div><div class="vt-stage t-down"><div class="vtp new"><div class="hd"></div><div class="bar"></div><div class="bar" style="width:60%"></div></div><div class="vtp old"><div class="hd"></div><div class="bar"></div><div class="bar" style="width:70%"></div></div></div><div class="vt-name">down — circle close</div><div class="ds-src">vt-circle-close 280ms ease-in / vt-grow-in 280ms --vt-decel 30ms — :333-341</div></div>
+        <div><div class="vt-stage t-hero"><div class="vtp old"><div class="hd"></div><div class="bar"></div><div class="bar" style="width:70%"></div></div><div class="hero-el"><div class="hd"></div><div class="bar"></div><div class="bar" style="width:55%"></div></div></div><div class="vt-name">hero — shared element morph</div><div class="ds-src">group 400ms --vt-snap; root fades — :239-261, :304-312</div></div>
+        <div><div class="vt-stage t-sl"><div class="vtp old"><div class="hd"></div><div class="bar"></div><div class="bar" style="width:70%"></div></div><div class="vtp new"><div class="hd"></div><div class="bar"></div><div class="bar" style="width:60%"></div></div></div><div class="vt-name">slide-left — lateral peer</div><div class="ds-src">vt-slide-to-left 220ms / vt-slide-from-right 260ms --vt-decel — :345-353</div></div>
+        <div><div class="vt-stage t-sr"><div class="vtp old"><div class="hd"></div><div class="bar"></div><div class="bar" style="width:70%"></div></div><div class="vtp new"><div class="hd"></div><div class="bar"></div><div class="bar" style="width:60%"></div></div></div><div class="vt-name">slide-right — lateral peer</div><div class="ds-src">vt-slide-to-right 220ms / vt-slide-from-left 260ms --vt-decel — :357-365</div></div>
+      </div>
+    </section>
+
+    <section class="ds-mode" data-color-scheme="light">
+      <h2>Light</h2>
+      <div class="vt-grid">
+        <div><div class="vt-stage t-fade"><div class="vtp old"><div class="hd"></div><div class="bar"></div><div class="bar" style="width:70%"></div></div><div class="vtp new"><div class="hd"></div><div class="bar"></div><div class="bar" style="width:60%"></div></div></div><div class="vt-name">(none) — crossfade</div><div class="ds-src">old/new vt-fade 150ms ease-out — :267-273</div></div>
+        <div><div class="vt-stage t-fwd"><div class="vtp old"><div class="hd"></div><div class="bar"></div><div class="bar" style="width:70%"></div></div><div class="vtp new"><div class="hd"></div><div class="bar"></div><div class="bar" style="width:60%"></div></div></div><div class="vt-name">forward — container expand</div><div class="ds-src">vt-recede 200ms ease-in / vt-card-expand 280ms --vt-decel — :277-285</div></div>
+        <div><div class="vt-stage t-back"><div class="vtp new"><div class="hd"></div><div class="bar"></div><div class="bar" style="width:60%"></div></div><div class="vtp old"><div class="hd"></div><div class="bar"></div><div class="bar" style="width:70%"></div></div></div><div class="vt-name">back — container collapse</div><div class="ds-src">vt-card-collapse 220ms ease-in / vt-surface 250ms --vt-decel — :289-297</div></div>
+        <div><div class="vt-stage t-up"><div class="vtp old"><div class="hd"></div><div class="bar"></div><div class="bar" style="width:70%"></div></div><div class="vtp new"><div class="hd"></div><div class="bar"></div><div class="bar" style="width:60%"></div></div></div><div class="vt-name">up — circle reveal</div><div class="ds-src">vt-shrink-out 340ms ease-in / vt-circle-reveal 350ms --vt-ease-out — :321-329</div></div>
+        <div><div class="vt-stage t-down"><div class="vtp new"><div class="hd"></div><div class="bar"></div><div class="bar" style="width:60%"></div></div><div class="vtp old"><div class="hd"></div><div class="bar"></div><div class="bar" style="width:70%"></div></div></div><div class="vt-name">down — circle close</div><div class="ds-src">vt-circle-close 280ms ease-in / vt-grow-in 280ms --vt-decel 30ms — :333-341</div></div>
+        <div><div class="vt-stage t-hero"><div class="vtp old"><div class="hd"></div><div class="bar"></div><div class="bar" style="width:70%"></div></div><div class="hero-el"><div class="hd"></div><div class="bar"></div><div class="bar" style="width:55%"></div></div></div><div class="vt-name">hero — shared element morph</div><div class="ds-src">group 400ms --vt-snap; root fades — :239-261, :304-312</div></div>
+        <div><div class="vt-stage t-sl"><div class="vtp old"><div class="hd"></div><div class="bar"></div><div class="bar" style="width:70%"></div></div><div class="vtp new"><div class="hd"></div><div class="bar"></div><div class="bar" style="width:60%"></div></div></div><div class="vt-name">slide-left — lateral peer</div><div class="ds-src">vt-slide-to-left 220ms / vt-slide-from-right 260ms --vt-decel — :345-353</div></div>
+        <div><div class="vt-stage t-sr"><div class="vtp old"><div class="hd"></div><div class="bar"></div><div class="bar" style="width:70%"></div></div><div class="vtp new"><div class="hd"></div><div class="bar"></div><div class="bar" style="width:60%"></div></div></div><div class="vt-name">slide-right — lateral peer</div><div class="ds-src">vt-slide-to-right 220ms / vt-slide-from-left 260ms --vt-decel — :357-365</div></div>
+      </div>
+    </section>
+  </div>
+
+  <div class="doc-panel">
+    <h2>Actual keyframes + type selectors — src/styles/view-transitions.css (verbatim)</h2>
+    <pre class="code">/* ── Easing tokens ── :17-21 */
+:root {
+  --vt-decel: cubic-bezier(0.16, 1, 0.3, 1);
+  --vt-ease-out: cubic-bezier(0.32, 0.72, 0, 1);
+  --vt-snap: cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+
+/* ── Keyframes ── :28-198 (no filter:blur — GPU-composited props only) */
+@keyframes vt-fade-out { from { opacity: 1; } to { opacity: 0; } }
+@keyframes vt-fade-in  { from { opacity: 0; } to { opacity: 1; } }
+@keyframes vt-recede {
+  from { opacity: 1; transform: scale(1); }
+  to   { opacity: 0; transform: scale(0.95); }
+}
+@keyframes vt-card-expand {
+  from { clip-path: inset(4% round 16px); opacity: 0; }
+  to   { clip-path: inset(0% round 0px); opacity: 1; }
+}
+@keyframes vt-card-collapse {
+  from { clip-path: inset(0% round 0px); opacity: 1; }
+  to   { clip-path: inset(4% round 16px); opacity: 0; }
+}
+@keyframes vt-surface {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes vt-circle-reveal {
+  from { clip-path: circle(0% at 50% 45%); }
+  to   { clip-path: circle(100% at 50% 45%); }
+}
+@keyframes vt-shrink-out {
+  from { opacity: 1; transform: scale(1); }
+  to   { opacity: 0; transform: scale(0.92); }
+}
+@keyframes vt-circle-close {
+  from { clip-path: circle(100% at 50% 45%); opacity: 1; }
+  to   { clip-path: circle(0% at 50% 45%); opacity: 0; }
+}
+@keyframes vt-grow-in {
+  from { opacity: 0; transform: scale(0.92); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes vt-slide-to-left    { from { transform: translateX(0);    opacity: 1; } to { transform: translateX(-6%); opacity: 0; } }
+@keyframes vt-slide-from-right { from { transform: translateX(6%);   opacity: 0; } to { transform: translateX(0);   opacity: 1; } }
+@keyframes vt-slide-to-right   { from { transform: translateX(0);    opacity: 1; } to { transform: translateX(6%);  opacity: 0; } }
+@keyframes vt-slide-from-left  { from { transform: translateX(-6%);  opacity: 0; } to { transform: translateX(0);   opacity: 1; } }
+@keyframes vt-tab-exit {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to   { opacity: 0; transform: translateY(-6px) scale(0.99); }
+}
+@keyframes vt-tab-enter {
+  from { opacity: 0; transform: translateY(8px) scale(0.99); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ── Global resets ── :206-217 (kill UA 250ms group anim, plus-lighter blend, isolate) */
+::view-transition-group(root) { animation: none; }
+::view-transition-image-pair(root) { isolation: auto; }
+::view-transition-old(root),
+::view-transition-new(root) { mix-blend-mode: normal; }
+
+/* ── Header isolation ── :221-232 */
+::view-transition-group(site-header) { animation: none; z-index: 100; }
+::view-transition-old(site-header) { display: none; }
+::view-transition-new(site-header) { animation: none; }
+
+/* ── Hero morph (shared element) ── :239-261 */
+::view-transition-group(build-hero),
+::view-transition-group(roster-hero) {
+  animation-duration: 400ms;
+  animation-timing-function: var(--vt-snap);
+  z-index: 10;
+}
+::view-transition-image-pair(build-hero),
+::view-transition-image-pair(roster-hero) { isolation: auto; }
+::view-transition-old(build-hero),
+::view-transition-old(roster-hero) { animation: vt-fade-out 160ms ease-out both; mix-blend-mode: normal; }
+::view-transition-new(build-hero),
+::view-transition-new(roster-hero) { animation: vt-fade-in 200ms ease-in 80ms both; mix-blend-mode: normal; }
+
+/* ── Default (crossfade) ── :267-273 */
+::view-transition-old(root) { animation: vt-fade-out 150ms ease-out both; }
+::view-transition-new(root) { animation: vt-fade-in 150ms ease-out both; }
+
+/* ── Forward ── :277-285 */
+html:active-view-transition-type(forward)::view-transition-old(root) { animation: vt-recede 200ms ease-in both; z-index: 1; }
+html:active-view-transition-type(forward)::view-transition-new(root) { animation: vt-card-expand 280ms var(--vt-decel) both; z-index: 2; }
+
+/* ── Back ── :289-297 */
+html:active-view-transition-type(back)::view-transition-old(root) { animation: vt-card-collapse 220ms ease-in both; z-index: 2; }
+html:active-view-transition-type(back)::view-transition-new(root) { animation: vt-surface 250ms var(--vt-decel) both; z-index: 1; }
+
+/* ── Hero override (softens root; placed after "forward" so source order wins) ── :304-312 */
+html:active-view-transition-type(hero)::view-transition-old(root) { animation: vt-fade-out 200ms ease-out both; z-index: 1; }
+html:active-view-transition-type(hero)::view-transition-new(root) { animation: vt-fade-in 280ms var(--vt-decel) 40ms both; z-index: 2; }
+
+/* ── Up ── :321-329 (old fade spans almost all of the 350ms reveal so the
+   receding page under-paints outside the expanding circle) */
+html:active-view-transition-type(up)::view-transition-old(root) { animation: vt-shrink-out 340ms ease-in both; z-index: 1; }
+html:active-view-transition-type(up)::view-transition-new(root) { animation: vt-circle-reveal 350ms var(--vt-ease-out) both; z-index: 2; }
+
+/* ── Down ── :333-341 */
+html:active-view-transition-type(down)::view-transition-old(root) { animation: vt-circle-close 280ms ease-in both; z-index: 2; }
+html:active-view-transition-type(down)::view-transition-new(root) { animation: vt-grow-in 280ms var(--vt-decel) 30ms both; z-index: 1; }
+
+/* ── Slide Left ── :345-353 */
+html:active-view-transition-type(slide-left)::view-transition-old(root) { animation: vt-slide-to-left 220ms ease-in both; z-index: 1; }
+html:active-view-transition-type(slide-left)::view-transition-new(root) { animation: vt-slide-from-right 260ms var(--vt-decel) both; z-index: 2; }
+
+/* ── Slide Right ── :357-365 */
+html:active-view-transition-type(slide-right)::view-transition-old(root) { animation: vt-slide-to-right 220ms ease-in both; z-index: 1; }
+html:active-view-transition-type(slide-right)::view-transition-new(root) { animation: vt-slide-from-left 260ms var(--vt-decel) both; z-index: 2; }
+
+/* ── Tab content ── :371-388 (styles remain, but see AnimatedTabContent note below) */
+::view-transition-group(tab-content) { animation-duration: 200ms; animation-timing-function: var(--vt-decel); }
+::view-transition-image-pair(tab-content) { isolation: auto; }
+::view-transition-old(tab-content) { animation: vt-tab-exit 120ms ease-out both; mix-blend-mode: normal; }
+::view-transition-new(tab-content) { animation: vt-tab-enter 180ms var(--vt-decel) both; mix-blend-mode: normal; }
+
+/* ── Accessibility ── :392-399 */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) { animation-duration: 0s !important; animation-delay: 0s !important; }
+}</pre>
+    <p class="note"><b>Driver:</b> src/hooks/useViewTransitionNavigate.ts wraps react-router navigate in <code>document.startViewTransition({ update, types })</code> (Level 2, :195-208; Level 1 fallback :210-218). Types are <code>['forward'|'back'|'up'|'down'|'slide-left'|'slide-right', 'hero'?]</code> (:181). For a hero morph it stamps <code>element.style.viewTransitionName</code> on the source before snapshot (:171-174) and waits (via MutationObserver, capped 300ms) for the destination element marked <code>data-vt-hero="&lt;name&gt;"</code> to mount — every route is React.lazy, so resolving on the first commit would capture the Suspense skeleton (:57-119). A module-level <code>vtActive</code> guard skips VT on rapid-fire navigations (:163-166), and reduced-motion users get a plain instant navigate (:156-159).</p>
+    <p class="note"><b>Deliberate non-use:</b> AnimatedTabContent does NOT use view transitions — it previously did, and the opaque VT snapshot overlay froze the page for 2-3+ seconds while React synchronously rendered heavy panel trees (Players, Insights). It now uses a lightweight CSS fade-in instead (src/components/AnimatedTabContent.tsx:12-15). The <code>tab-content</code> pseudo styles above (:371-388) remain in the stylesheet but are orphaned by that change.</p>
+  </div>
+</div>

@@ -1,0 +1,27 @@
+<!-- @dsCard group="Components" -->
+<meta charset="utf-8"><title>Status Badges</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>html,body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif;padding:20px;box-sizing:border-box}
+.row{display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+
+/* MarketingBadge — cyan glass pill with float animation */
+.marketing{display:inline-flex;align-items:center;gap:.5rem;background:linear-gradient(135deg,rgba(56,189,248,.1),rgba(0,225,255,.05));border:1px solid rgba(56,189,248,.2);border-radius:50px;padding:.5rem 1.2rem;font-size:.9rem;font-weight:600;color:#38bdf8;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:0 4px 20px rgba(56,189,248,.1);animation:float 3s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+
+/* Addon eyebrow + COMING SOON pill (dark values) */
+.eyebrow{display:inline-flex;align-items:center;gap:10px;padding:5px 10px;border-radius:6px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.15)}
+.eyebrow .t{font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.12em;color:#f59e0b}
+.coming{padding:2px 6px;border-radius:4px;background:rgba(245,158,11,.18);font-size:.65rem;font-weight:700;color:#fbbf24;letter-spacing:.08em;animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.7}}
+
+.src{font-size:10px;color:var(--muted);font-family:Consolas,Menlo,monospace;margin-top:8px;line-height:1.6}
+</style>
+<div class="row">
+<span class="marketing">✨ Combat analysis for ESO</span>
+</div>
+<div class="row">
+<span class="eyebrow"><span class="t">In-Game Addon</span><span class="coming">COMING SOON</span></span>
+</div>
+<div class="src">MarketingBadge — src/components/MarketingBadge.tsx:4-22 (cyan glass pill, radius 50px, float 3s).<br>
+"COMING SOON" pill — src/components/LandingPage.tsx:2874-2924 (amber rgba(245,158,11,.18) bg, #fbbf24 text, radius 4px, pulse 2s opacity 1→0.7; eyebrow #f59e0b).<br>
+The gold-gradient badge + Live/Beta pills of the older card came from the legacy static src/landingpage.css and are not in the live app.</div>

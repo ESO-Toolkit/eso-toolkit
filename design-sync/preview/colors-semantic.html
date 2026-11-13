@@ -1,0 +1,21 @@
+<!-- @dsCard group="Colors" -->
+<meta charset="utf-8"><title>Chip Label Palette</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>html,body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif;padding:20px;box-sizing:border-box}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.sw{aspect-ratio:2/1;border-radius:8px;padding:8px;display:flex;flex-direction:column;justify-content:flex-end;font-family:Consolas,Menlo,monospace;font-size:10px;color:#0b1220;font-weight:600}
+.dark{color:#fff;text-shadow:0 1px 2px #0008}
+.src{font-size:10px;color:var(--muted);font-family:Consolas,Menlo,monospace;margin-top:12px;line-height:1.6}
+</style>
+<div class="grid">
+<div class="sw" style="background:#5ce572">#5ce572 green · 5pc set</div>
+<div class="sw" style="background:#4da3ff">#4da3ff blue · arena</div>
+<div class="sw" style="background:#7ee8ff">#7ee8ff lightBlue · 1pc monster</div>
+<div class="sw" style="background:#c57fff">#c57fff purple · 2pc monster</div>
+<div class="sw" style="background:#ffd54f">#ffd54f gold · mythic</div>
+<div class="sw dark" style="background:#ff6666">#ff6666 championRed</div>
+<div class="sw" style="background:#66aaff">#66aaff championBlue</div>
+<div class="sw" style="background:#66ffaa">#66ffaa championGreen</div>
+</div>
+<div class="src">Glossy-chip label colors (dark) — src/utils/playerCardStyleUtils.ts:95-165; mapping getGearChipProps :252-296.<br>
+Theme semantic tokens are separate: --ok #22c55e · --warn #ff9800 · --danger #ef4444 (ReduxThemeProvider.tsx:48-50).</div>

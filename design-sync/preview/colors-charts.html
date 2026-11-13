@@ -1,0 +1,170 @@
+<!-- @dsCard group="Colors" -->
+<meta charset="utf-8">
+<title>Chart Palettes — ECharts Dark/Light + Glow Line & Gradient Area</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; box-sizing:border-box; }
+  body { font-family:Inter,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif; background:#0b1220; padding:20px; }
+  h1,h2,h3 { font-family:'Space Grotesk',Inter,system-ui,sans-serif; font-weight:600; }
+
+  [data-color-scheme="dark"] {
+    --bg:#0b1220; --panel:#0f172a; --panel-2:#0d1430; --text:#e5e7eb; --muted:#94a3b8;
+    --accent:#38bdf8; --accent-2:#00e1ff; --ok:#22c55e; --warn:#ff9800; --danger:#ef4444;
+    --border:#1f2937;
+  }
+  [data-color-scheme="light"] {
+    --bg:#f8fafc; --panel:#ffffff; --panel-2:#f8fafc; --text:#1e293b; --muted:#64748b;
+    --accent:#0f172a; --accent-2:#1e293b; --ok:#059669; --warn:#f97316; --danger:#dc2626;
+    --border:#bcd9ff;
+  }
+  /* NOTE: light --accent is deliberately dark slate #0f172a, NOT a light blue.
+     Cyan #38bdf8 accents remain hard-coded in many dark-leaning recipes even in light mode. */
+
+  .ds-card { max-width:1100px; margin:0 auto; color:#e5e7eb; }
+  .ds-title { font-size:1.4rem; color:#e5e7eb; margin-bottom:4px; }
+  .ds-sub { font-size:.8rem; color:#94a3b8; margin-bottom:16px; }
+  .ds-modes { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  @media (max-width:760px){ .ds-modes { grid-template-columns:1fr; } }
+  .ds-mode { border-radius:16px; padding:18px; background:var(--bg); color:var(--text); border:1px solid var(--border); position:relative; overflow:hidden; }
+  .ds-mode > h2 { font-size:.72rem; text-transform:uppercase; letter-spacing:.12em; color:var(--muted); margin-bottom:14px; position:relative; z-index:1; }
+  .ds-src { font-size:.68rem; color:var(--muted); font-family:'JetBrains Mono',Consolas,monospace; margin-top:6px; }
+
+  /* card-specific */
+  .sec { margin-bottom:18px; position:relative; z-index:1; }
+  .sec h3 { font-size:.7rem; text-transform:uppercase; letter-spacing:.1em; color:var(--muted); margin-bottom:8px; }
+  .pal { display:grid; grid-template-columns:1fr 1fr; gap:4px 10px; }
+  .pal .p { display:flex; align-items:center; gap:7px; font-size:.66rem; }
+  .pal .n { font-family:'JetBrains Mono',Consolas,monospace; color:var(--muted); width:16px; text-align:right; }
+  .pal .c { width:26px; height:16px; border-radius:4px; border:1px solid var(--border); flex:none; }
+  .pal .hex { font-family:'JetBrains Mono',Consolas,monospace; color:var(--text); }
+  .pal .nm { color:var(--muted); }
+  .chart-demo { border:1px solid var(--border); border-radius:10px; background:var(--panel); padding:8px 10px 4px; }
+  .chart-demo svg { display:block; width:100%; height:auto; }
+  .demo-cap { font-size:.62rem; color:var(--muted); margin-top:2px; }
+</style>
+<div class="ds-card">
+  <h1 class="ds-title">Chart Palettes — ECharts Dark/Light + Glow Line &amp; Gradient Area</h1>
+  <p class="ds-sub">12-series palettes and the signature glow/gradient series styles. Source: src/utils/echartsTheme.ts (palettes :7-35, glowLineStyle :84-96, gradientAreaStyle :98-116)</p>
+  <div class="ds-modes">
+
+    <section class="ds-mode" data-color-scheme="dark">
+      <h2>Dark</h2>
+
+      <div class="sec">
+        <h3>DARK_PALETTE (Tailwind 400/500 tier)</h3>
+        <div class="pal">
+          <div class="p"><span class="n">1</span><span class="c" style="background:#38bdf8"></span><span class="hex">#38bdf8</span><span class="nm">sky</span></div>
+          <div class="p"><span class="n">2</span><span class="c" style="background:#f43f5e"></span><span class="hex">#f43f5e</span><span class="nm">rose</span></div>
+          <div class="p"><span class="n">3</span><span class="c" style="background:#22c55e"></span><span class="hex">#22c55e</span><span class="nm">green</span></div>
+          <div class="p"><span class="n">4</span><span class="c" style="background:#f59e0b"></span><span class="hex">#f59e0b</span><span class="nm">amber</span></div>
+          <div class="p"><span class="n">5</span><span class="c" style="background:#a855f7"></span><span class="hex">#a855f7</span><span class="nm">purple</span></div>
+          <div class="p"><span class="n">6</span><span class="c" style="background:#06b6d4"></span><span class="hex">#06b6d4</span><span class="nm">cyan</span></div>
+          <div class="p"><span class="n">7</span><span class="c" style="background:#eab308"></span><span class="hex">#eab308</span><span class="nm">yellow</span></div>
+          <div class="p"><span class="n">8</span><span class="c" style="background:#8b5cf6"></span><span class="hex">#8b5cf6</span><span class="nm">violet</span></div>
+          <div class="p"><span class="n">9</span><span class="c" style="background:#10b981"></span><span class="hex">#10b981</span><span class="nm">emerald</span></div>
+          <div class="p"><span class="n">10</span><span class="c" style="background:#ef4444"></span><span class="hex">#ef4444</span><span class="nm">red</span></div>
+          <div class="p"><span class="n">11</span><span class="c" style="background:#3b82f6"></span><span class="hex">#3b82f6</span><span class="nm">blue</span></div>
+          <div class="p"><span class="n">12</span><span class="c" style="background:#ec4899"></span><span class="hex">#ec4899</span><span class="nm">pink</span></div>
+        </div>
+        <div class="ds-src">src/utils/echartsTheme.ts:7-20</div>
+      </div>
+
+      <div class="sec">
+        <h3>glowLineStyle + gradientAreaStyle — bold</h3>
+        <div class="chart-demo">
+          <svg viewBox="0 0 300 84" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <defs>
+              <linearGradient id="areaDarkBold" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#38bdf866"/>
+                <stop offset="1" stop-color="#38bdf800"/>
+              </linearGradient>
+            </defs>
+            <path d="M0,64 L40,42 L80,52 L120,24 L160,38 L200,14 L240,30 L280,10 L300,18 L300,84 L0,84 Z" fill="url(#areaDarkBold)"/>
+            <path d="M0,64 L40,42 L80,52 L120,24 L160,38 L200,14 L240,30 L280,10 L300,18" fill="none" stroke="#38bdf8" stroke-width="2" style="filter:drop-shadow(0 2px 12px #38bdf8)"/>
+          </svg>
+          <div class="demo-cap">bold: shadowBlur 12, shadowColor = series color, shadowOffsetY 2; area top alpha 0.4 → '66' suffix</div>
+        </div>
+        <div class="ds-src">glowLineStyle('#38bdf8','bold') → { shadowBlur:12, shadowColor:'#38bdf8', shadowOffsetY:2 } — echartsTheme.ts:84-96; gradientAreaStyle → vertical '#38bdf866' → '#38bdf800' — :98-116</div>
+      </div>
+
+      <div class="sec">
+        <h3>glowLineStyle + gradientAreaStyle — subtle</h3>
+        <div class="chart-demo">
+          <svg viewBox="0 0 300 84" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <defs>
+              <linearGradient id="areaDarkSubtle" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#38bdf826"/>
+                <stop offset="1" stop-color="#38bdf800"/>
+              </linearGradient>
+            </defs>
+            <path d="M0,64 L40,42 L80,52 L120,24 L160,38 L200,14 L240,30 L280,10 L300,18 L300,84 L0,84 Z" fill="url(#areaDarkSubtle)"/>
+            <path d="M0,64 L40,42 L80,52 L120,24 L160,38 L200,14 L240,30 L280,10 L300,18" fill="none" stroke="#38bdf8" stroke-width="2" style="filter:drop-shadow(0 0 4px #38bdf880)"/>
+          </svg>
+          <div class="demo-cap">subtle: shadowBlur 4, shadowColor = color + '80', shadowOffsetY 0; area top alpha 0.15 → '26' suffix</div>
+        </div>
+        <div class="ds-src">perfTier 'low' returns {} for BOTH — no glow, no area fill — echartsTheme.ts:89,103</div>
+      </div>
+    </section>
+
+    <section class="ds-mode" data-color-scheme="light">
+      <h2>Light</h2>
+
+      <div class="sec">
+        <h3>LIGHT_PALETTE (same hues, -600 tier)</h3>
+        <div class="pal">
+          <div class="p"><span class="n">1</span><span class="c" style="background:#0284c7"></span><span class="hex">#0284c7</span><span class="nm">sky-600</span></div>
+          <div class="p"><span class="n">2</span><span class="c" style="background:#e11d48"></span><span class="hex">#e11d48</span><span class="nm">rose-600</span></div>
+          <div class="p"><span class="n">3</span><span class="c" style="background:#16a34a"></span><span class="hex">#16a34a</span><span class="nm">green-600</span></div>
+          <div class="p"><span class="n">4</span><span class="c" style="background:#d97706"></span><span class="hex">#d97706</span><span class="nm">amber-600</span></div>
+          <div class="p"><span class="n">5</span><span class="c" style="background:#9333ea"></span><span class="hex">#9333ea</span><span class="nm">purple-600</span></div>
+          <div class="p"><span class="n">6</span><span class="c" style="background:#0891b2"></span><span class="hex">#0891b2</span><span class="nm">cyan-600</span></div>
+          <div class="p"><span class="n">7</span><span class="c" style="background:#ca8a04"></span><span class="hex">#ca8a04</span><span class="nm">yellow-600</span></div>
+          <div class="p"><span class="n">8</span><span class="c" style="background:#7c3aed"></span><span class="hex">#7c3aed</span><span class="nm">violet-600</span></div>
+          <div class="p"><span class="n">9</span><span class="c" style="background:#059669"></span><span class="hex">#059669</span><span class="nm">emerald-600</span></div>
+          <div class="p"><span class="n">10</span><span class="c" style="background:#dc2626"></span><span class="hex">#dc2626</span><span class="nm">red-600</span></div>
+          <div class="p"><span class="n">11</span><span class="c" style="background:#2563eb"></span><span class="hex">#2563eb</span><span class="nm">blue-600</span></div>
+          <div class="p"><span class="n">12</span><span class="c" style="background:#db2777"></span><span class="hex">#db2777</span><span class="nm">pink-600</span></div>
+        </div>
+        <div class="ds-src">src/utils/echartsTheme.ts:22-35</div>
+      </div>
+
+      <div class="sec">
+        <h3>glowLineStyle + gradientAreaStyle — bold</h3>
+        <div class="chart-demo">
+          <svg viewBox="0 0 300 84" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <defs>
+              <linearGradient id="areaLightBold" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#0284c766"/>
+                <stop offset="1" stop-color="#0284c700"/>
+              </linearGradient>
+            </defs>
+            <path d="M0,64 L40,42 L80,52 L120,24 L160,38 L200,14 L240,30 L280,10 L300,18 L300,84 L0,84 Z" fill="url(#areaLightBold)"/>
+            <path d="M0,64 L40,42 L80,52 L120,24 L160,38 L200,14 L240,30 L280,10 L300,18" fill="none" stroke="#0284c7" stroke-width="2" style="filter:drop-shadow(0 2px 12px #0284c7)"/>
+          </svg>
+          <div class="demo-cap">bold: shadowBlur 12, shadowColor = series color, shadowOffsetY 2; area top alpha 0.4 → '66' suffix</div>
+        </div>
+        <div class="ds-src">glowLineStyle('#0284c7','bold') → { shadowBlur:12, shadowColor:'#0284c7', shadowOffsetY:2 } — echartsTheme.ts:84-96; gradientAreaStyle → vertical '#0284c766' → '#0284c700' — :98-116</div>
+      </div>
+
+      <div class="sec">
+        <h3>glowLineStyle + gradientAreaStyle — subtle</h3>
+        <div class="chart-demo">
+          <svg viewBox="0 0 300 84" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <defs>
+              <linearGradient id="areaLightSubtle" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#0284c726"/>
+                <stop offset="1" stop-color="#0284c700"/>
+              </linearGradient>
+            </defs>
+            <path d="M0,64 L40,42 L80,52 L120,24 L160,38 L200,14 L240,30 L280,10 L300,18 L300,84 L0,84 Z" fill="url(#areaLightSubtle)"/>
+            <path d="M0,64 L40,42 L80,52 L120,24 L160,38 L200,14 L240,30 L280,10 L300,18" fill="none" stroke="#0284c7" stroke-width="2" style="filter:drop-shadow(0 0 4px #0284c780)"/>
+          </svg>
+          <div class="demo-cap">subtle: shadowBlur 4, shadowColor = color + '80', shadowOffsetY 0; area top alpha 0.15 → '26' suffix</div>
+        </div>
+        <div class="ds-src">alpha suffixes are computed 8-digit hex: Math.round(opacity*255).toString(16) — echartsTheme.ts:109-111; perfTier 'low' → {} (no glow, no area)</div>
+      </div>
+    </section>
+
+  </div>
+</div>

@@ -1,0 +1,135 @@
+<!-- @dsCard group="Components" -->
+<meta charset="utf-8"><title>Glossy Gear Chips</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif;padding:28px;box-sizing:border-box}
+.group{display:flex;flex-direction:column;gap:12px;margin-bottom:30px}
+.group .lbl{font:700 10px Consolas,Menlo,monospace;letter-spacing:.18em;color:var(--muted);text-transform:uppercase}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;padding:18px 20px;background:#0b1220;border:1px solid var(--border);border-radius:12px}
+.caption{font:500 11px Consolas,Menlo,monospace;color:var(--muted);margin-top:2px}
+
+/* glossyBaseSx — exact port of src/utils/playerCardStyleUtils.ts:30-84 */
+.chip{
+  /* MUI Chip size="small" defaults */
+  display:inline-flex;align-items:center;
+  height:24px;
+  font-size:.8125rem;
+  line-height:18px;
+
+  position:relative;
+  overflow:hidden;
+  cursor:pointer;
+  transition:all .3s ease;
+  border-radius:28px;
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+  border:1px solid rgba(255,255,255,.15);
+  box-shadow:
+    0 8px 32px 0 rgba(0,0,0,.37),
+    inset 0 1px 0 rgba(255,255,255,.2),
+    inset 0 -1px 0 rgba(0,0,0,.2);
+}
+/* label (dark): #fff + text-shadow, weight 500 — :43-50 */
+.chip .MuiChip-label{
+  display:block;
+  padding-left:12px;padding-right:12px;
+  white-space:nowrap;
+  color:#ffffff;
+  text-shadow:0 1px 3px rgba(0,0,0,.5);
+  font-weight:500;
+  font-size:.8125rem;
+  position:relative;z-index:1;
+}
+/* shine sweep — :51-62 (rgba .15, skewX(-15deg), left -100% → 100% on hover) */
+.chip::before{
+  content:"";
+  position:absolute;top:0;left:-100%;
+  width:100%;height:100%;
+  background:linear-gradient(90deg, transparent, rgba(255,255,255,.15), transparent);
+  transform:skewX(-15deg);
+  transform-origin:center center;
+  transition:left .5s ease;
+}
+/* top arched glass highlight — :63-73 (static; no hover morph in source) */
+.chip::after{
+  content:"";
+  position:absolute;
+  top:0;left:0;right:0;
+  height:50%;
+  background:linear-gradient(180deg, rgba(255,255,255,.15) 0%, transparent 100%);
+  border-radius:28px 28px 100px 100px / 28px 28px 50px 50px;
+  pointer-events:none;
+}
+/* hover — :74-83 */
+.chip:hover{
+  transform:translateY(-2px);
+  box-shadow:
+    0 12px 40px 0 rgba(0,0,0,.5),
+    inset 0 1px 0 rgba(255,255,255,.3),
+    inset 0 -1px 0 rgba(0,0,0,.3);
+}
+.chip:hover::before{left:100%}
+
+/* variant tints (dark) — :95-165. Merge overrides ONLY background + borderColor
+   + color. NOTE: green/blue/lightBlue/purple/gold/silver set root `color`
+   (label stays white); indigo + champion* override the LABEL color instead. */
+.v-green      {background:linear-gradient(135deg, rgba(76,217,100,.25) 0%, rgba(76,217,100,.15) 50%, rgba(76,217,100,.08) 100%);  border-color:rgba(76,217,100,.3);  color:#5ce572}
+.v-blue       {background:linear-gradient(135deg, rgba(0,122,255,.25)  0%, rgba(0,122,255,.15)  50%, rgba(0,122,255,.08)  100%);  border-color:rgba(0,122,255,.3);  color:#4da3ff}
+.v-lightblue  {background:linear-gradient(135deg, rgba(94,234,255,.25) 0%, rgba(94,234,255,.15) 50%, rgba(94,234,255,.08) 100%);  border-color:rgba(94,234,255,.35);color:#7ee8ff}
+.v-purple     {background:linear-gradient(135deg, rgba(175,82,222,.25) 0%, rgba(175,82,222,.15) 50%, rgba(175,82,222,.08) 100%);  border-color:rgba(175,82,222,.3); color:#c57fff}
+.v-gold       {background:linear-gradient(135deg, rgba(255,193,7,.25)  0%, rgba(255,193,7,.15)  50%, rgba(255,193,7,.08)  100%);  border-color:rgba(255,193,7,.35); color:#ffd54f}
+.v-silver     {background:linear-gradient(135deg, rgba(236,240,241,.25) 0%, rgba(236,240,241,.15) 50%, rgba(236,240,241,.08) 100%);border-color:rgba(236,240,241,.35);color:#ecf0f1}
+.v-indigo     {background:linear-gradient(135deg, rgba(88,86,214,.25)  0%, rgba(88,86,214,.15)  50%, rgba(88,86,214,.08)  100%);  border-color:rgba(88,86,214,.3)}
+.v-indigo .MuiChip-label{color:#8583ff}
+.v-cpred      {background:linear-gradient(135deg, rgba(255,68,68,.25)  0%, rgba(255,68,68,.15)  50%, rgba(255,68,68,.08)  100%);  border-color:rgba(255,68,68,.3)}
+.v-cpred .MuiChip-label{color:#ff6666}
+.v-cpblue     {background:linear-gradient(135deg, rgba(68,136,255,.25) 0%, rgba(68,136,255,.15) 50%, rgba(68,136,255,.08) 100%);  border-color:rgba(68,136,255,.3)}
+.v-cpblue .MuiChip-label{color:#66aaff}
+.v-cpgreen    {background:linear-gradient(135deg, rgba(68,255,136,.25) 0%, rgba(68,255,136,.15) 50%, rgba(68,255,136,.08) 100%);  border-color:rgba(68,255,136,.3)}
+.v-cpgreen .MuiChip-label{color:#66ffaa}
+
+@keyframes legendaryGlow{
+  0%,100%{box-shadow:0 8px 32px 0 rgba(255,0,150,.3), inset 0 1px 0 rgba(255,255,255,.3)}
+  50%    {box-shadow:0 8px 32px 0 rgba(0,150,255,.3), inset 0 1px 0 rgba(255,255,255,.3)}
+}
+.v-legendary{
+  background:linear-gradient(135deg, rgba(255,0,150,.2) 0%, rgba(255,150,0,.2) 20%, rgba(255,255,0,.2) 40%, rgba(0,255,0,.2) 60%, rgba(0,150,255,.2) 80%, rgba(150,0,255,.2) 100%);
+  border:1px solid transparent;
+  border-image:linear-gradient(135deg, #ff0096, #ff9600, #ffff00, #00ff00, #0096ff, #9600ff) 1;
+  animation:legendaryGlow 3s ease-in-out infinite;
+}
+.v-legendary .MuiChip-label{color:#ffffff}
+</style>
+
+<div class="group">
+  <div class="lbl">gear sets — all variant classes from the source</div>
+  <div class="row">
+    <span class="chip v-gold"><span class="MuiChip-label">1 Oakensoul Ring</span></span>
+    <span class="chip v-blue"><span class="MuiChip-label">2 Maelstrom</span></span>
+    <span class="chip v-green"><span class="MuiChip-label">5 Perfected Saxhleel Champion</span></span>
+    <span class="chip v-green"><span class="MuiChip-label">7 War Machine</span></span>
+    <span class="chip v-lightblue"><span class="MuiChip-label">1 Slimecraw</span></span>
+    <span class="chip v-purple"><span class="MuiChip-label">2 Nazaray</span></span>
+    <span class="chip v-silver"><span class="MuiChip-label">3 Random</span></span>
+  </div>
+  <div class="caption">variant mapping: gold=mythic · blue=arena · green=5pc (and 4pc Highland Sentinel) · purple=2pc monster · lightBlue=1pc monster · silver=default — getGearChipProps, playerCardStyleUtils.ts:252-296</div>
+</div>
+
+<div class="group">
+  <div class="lbl">champion points (label color set per-variant)</div>
+  <div class="row">
+    <span class="chip v-cpred"><span class="MuiChip-label" style="font-size:.58rem">Fighting Finesse</span></span>
+    <span class="chip v-cpblue"><span class="MuiChip-label" style="font-size:.58rem">Reaving Blows</span></span>
+    <span class="chip v-cpgreen"><span class="MuiChip-label" style="font-size:.58rem">Steed's Blessing</span></span>
+    <span class="chip v-indigo"><span class="MuiChip-label" style="font-size:.58rem">Rejuvenation</span></span>
+  </div>
+  <div class="caption">call-site override: <code>'&amp; .MuiChip-label': { fontSize: '0.58rem' }</code> — PlayerCard.tsx:2178</div>
+</div>
+
+<div class="group">
+  <div class="lbl">legendary (animated, 3s glow pulse)</div>
+  <div class="row">
+    <span class="chip v-legendary"><span class="MuiChip-label">Perfect Roe</span></span>
+  </div>
+  <div class="caption">source: src/utils/playerCardStyleUtils.ts — glossyBaseSx :30-84 · dark variants :95-165 (values verified 2026-07-26)</div>
+</div>
