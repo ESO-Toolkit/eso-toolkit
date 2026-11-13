@@ -1,0 +1,3 @@
+node_modules/
+# Renders, stills and the synthesized soundtrack (all generated).
+out/
