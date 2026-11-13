@@ -1,0 +1,48 @@
+name: DPS Sync Status (read-only)
+
+# Prints the DPS leaderboard sync cursor so a stale board can be diagnosed
+# without Cloudflare credentials on a developer machine.
+#
+# Read-only by construction: the SQL is a single fixed SELECT, there are no
+# inputs, and nothing user-supplied reaches the command line.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  status:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require protected main ref
+        run: |
+          if [ "$GITHUB_REF" != "refs/heads/main" ]; then
+            echo "::error::Dispatch this workflow from protected main."
+            exit 1
+          fi
+
+      - name: Checkout Repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: roster-hub-api/package-lock.json
+
+      - name: Install locked worker dependencies
+        working-directory: roster-hub-api
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Read dps_parse_sync_state
+        uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0 # v4.0.0
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          workingDirectory: roster-hub-api
+          wranglerVersion: '4.125.0'
+          command: d1 execute "roster-hub-db" --remote --command "SELECT encounter_id, difficulty, encounter_name, last_synced_at, last_status, substr(last_error, 1, 300) AS last_error, rows_ingested, empty_streak FROM dps_parse_sync_state ORDER BY last_synced_at"
